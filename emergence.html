@@ -65,6 +65,7 @@
   .era.obsolete { filter: grayscale(0.85) brightness(0.6); opacity: 0.5; }
   .era.obsolete .era-body { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; }
   .era-header { display: flex; align-items: center; gap: 12px; }
+  .era-sigil { width: 30px; height: 30px; object-fit: contain; opacity: 0.92; flex: none; filter: drop-shadow(0 0 6px rgba(201,162,107,0.25)); }
   .era-tag { font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 15px; color: var(--text); }
   .era-name small { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0.5px; }
@@ -199,7 +200,7 @@
     tech: {}, obsolete: {}, flags: {}, clicks: 0,
   };
   const ERAS = {
-    1: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand' },
+    1: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'images/era1_sigil_true_transparent_fullres.png' },
     2: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns, not rules' },
     3: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability' },
     4: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical' },
@@ -386,7 +387,9 @@
   }
   function eraShell(n, obsolete, body){
     const e=ERAS[n];
-    return '<div class="era '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header"><span class="era-tag">'+e.tag+
+    return '<div class="era '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header">'+
+      (e.sigil?'<img class="era-sigil" src="'+e.sigil+'" alt="">':'')+
+      '<span class="era-tag">'+e.tag+
       '</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span><span class="era-status" id="status-'+n+'"></span></div><div class="era-body">'+body+'</div></div>';
   }
   function nodePos(n){ return { x: 50 + n.col*14, y: 34 + n.row*58 }; }
