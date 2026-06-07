@@ -53,6 +53,11 @@
   .big-btn:hover { box-shadow: 0 0 30px rgba(201,162,107,0.25); }
   .big-btn:active { transform: scale(0.96); }
   .co-hint { font-size: 11px; color: var(--dimmer); font-style: italic; max-width: 360px; text-align: center; line-height: 1.7; min-height: 20px; }
+  #vizwrap { display: none; max-width: 1180px; margin: 18px auto 0; padding: 0 18px; position: relative; }
+  #viz { width: 100%; height: 210px; display: block; border: 1px solid var(--line); border-radius: 14px;
+    background: radial-gradient(120% 140% at 50% -20%, rgba(110,168,255,0.06), transparent 55%),
+      radial-gradient(100% 120% at 90% 120%, rgba(183,139,255,0.06), transparent 55%), #080b12; }
+  .viz-cap { position: absolute; top: 15px; left: 31px; font-size: 8.5px; letter-spacing: 3px; color: var(--dimmer); pointer-events: none; }
   #eras { display: none; padding: 18px; gap: 16px; flex-direction: column; max-width: 1180px; margin: 0 auto; }
   .era { border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
     padding: 16px 18px; transition: opacity 0.8s, filter 0.8s, transform 0.5s; position: relative; overflow: hidden; }
@@ -131,6 +136,7 @@
       <button class="big-btn" id="coBtn">WRITE A RULE</button>
       <div class="co-hint" id="coHint">In the beginning, intelligence was written by hand. One rule at a time.</div>
     </div>
+    <div id="vizwrap"><canvas id="viz"></canvas><div class="viz-cap">THE&nbsp;SUBSTRATE</div></div>
     <div id="eras"></div>
   </main>
 </div>
@@ -181,7 +187,7 @@
       fire:()=>{ openEra(3); toast('THE DEEP LEARNING ERA','Data and Insight are not enough. Now <b>Compute</b> is the bottleneck - and the supply chain gets real.'); } },
     { id:'era3auto', cond:()=> S.compute>=3,
       fire:()=>{ S.flags.canTrain=true; toast('TRAINING RUNS','Spend Compute and Insight on <b>Training</b> to build raw <b>Capability</b>.'); } },
-    { id:'era2obsolete', cond:()=> S.training>=4 && S.capability>=25,
+    { id:'era2obsolete', cond:()=> S.capability>=20,
       fire:()=>{ S.obsolete[2]=true; toast('LEGACY','Shallow statistical models are superseded. The Statistical Era joins the archive.'); } },
     { id:'era4', cond:()=> S.capability>=CFG.era4Gate,
       fire:()=>{ openEra(4); toast('FOUNDATION MODELS','Capability compounds into something general. Everything you built becomes an input to something larger.'); } },
@@ -249,7 +255,8 @@
     if(S.flags.firstAuto) return;
     S.flags.firstAuto=true;
     $('coldopen').style.opacity='0';
-    setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show'); openEra(1,true); }, 800);
+    setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show');
+      $('vizwrap').style.display='block'; viz.start(); openEra(1,true); }, 800);
   }
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; renderEras(); }
   function produce(dt){
@@ -355,6 +362,61 @@
   window.addEventListener('keydown', e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
   if(/[?&]dev=1/.test(location.search)) toggleDev(true);
 
+  // --- The Substrate: live visualization of the system ---
+  const VIZ_STATIONS=[
+    { key:'ruleset', era:1, label:'RULES',    color:'#c9a26b', count:()=>S.ruleset,  live:()=>S.ruleset>0 },
+    { key:'dataset', era:2, label:'DATA',     color:'#6ec6a8', count:()=>S.dataset,  live:()=>S.dataset>0 },
+    { key:'model',   era:2, label:'MODELS',   color:'#6ec6a8', count:()=>S.model,    live:()=>S.model>0 },
+    { key:'compute', era:3, label:'COMPUTE',  color:'#6ea8ff', count:()=>S.compute,  live:()=>S.compute>0 },
+    { key:'training',era:3, label:'TRAINING', color:'#6ea8ff', count:()=>S.training, live:()=>S.training>0 },
+    { key:'cluster', era:4, label:'SCALE',    color:'#b78bff', count:()=>S.cluster,  live:()=>S.cluster>0 },
+  ];
+  const viz=(()=>{
+    const cv=$('viz'); if(!cv||!cv.getContext) return { start(){} };
+    const ctx=cv.getContext('2d'); let W=0,H=0,pulses=[],last=0,running=false;
+    const TAU=Math.PI*2;
+    function hexA(c,a){ const n=parseInt(c.slice(1),16); return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+    function resize(){ const dpr=window.devicePixelRatio||1; const r=cv.getBoundingClientRect();
+      W=r.width||1000; H=r.height||210; cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+    function obsolete(s){ return (s.era===1&&S.obsolete[1])||(s.era===2&&S.obsolete[2]); }
+    function visible(){ return VIZ_STATIONS.filter(s=> s.era<=S.maxEra); }
+    function layout(st){ const padX=72,padR=44,usable=Math.max(1,W-padX-padR),span=Math.max(1,st.length-1);
+      st.forEach((s,i)=>{ s._x= st.length===1? W/2 : padX+usable*i/span; s._y= H/2 + Math.sin(i*1.3)*24; }); }
+    function frame(now){
+      if(!running) return;
+      const dt=Math.min(0.05,(now-last)/1000)||0; last=now;
+      ctx.clearRect(0,0,W,H);
+      const st=visible(); layout(st);
+      for(let i=0;i<st.length-1;i++){ const a=st[i],b=st[i+1];
+        const active=a.live() && !obsolete(a);
+        ctx.strokeStyle= active? hexA(b.color,0.18):'rgba(120,140,180,0.05)'; ctx.lineWidth=1.2;
+        ctx.beginPath(); ctx.moveTo(a._x,a._y); ctx.lineTo(b._x,b._y); ctx.stroke();
+        if(active && Math.random() < Math.min(0.45, 0.05+a.count()*0.012)) pulses.push({i,p:0,color:b.color});
+      }
+      for(const pl of pulses) pl.p += dt*0.85;
+      pulses = pulses.filter(pl=> pl.p<1 && st[pl.i] && st[pl.i+1]);
+      for(const pl of pulses){ const a=st[pl.i],b=st[pl.i+1]; const x=a._x+(b._x-a._x)*pl.p, y=a._y+(b._y-a._y)*pl.p;
+        ctx.fillStyle=hexA(pl.color,0.95); ctx.beginPath(); ctx.arc(x,y,2.1,0,TAU); ctx.fill();
+        ctx.fillStyle=hexA(pl.color,0.22); ctx.beginPath(); ctx.arc(x,y,5,0,TAU); ctx.fill(); }
+      st.forEach((s,idx)=>{ const cnt=s.count(), ob=obsolete(s);
+        const r=(4+Math.min(20,Math.sqrt(cnt)*2.4))*(1+Math.sin(now/600+idx)*0.06);
+        const col= ob? '#8a93a8' : s.color, lit= ob?0.16:0.5;
+        const g=ctx.createRadialGradient(s._x,s._y,0,s._x,s._y,r*3);
+        g.addColorStop(0,hexA(col,lit)); g.addColorStop(1,hexA(col,0));
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(s._x,s._y,r*3,0,TAU); ctx.fill();
+        const sats=Math.min(cnt,10);
+        for(let k=0;k<sats;k++){ const ang=now/1400+k*(TAU/sats), sr=r+9;
+          ctx.fillStyle=hexA(col, ob?0.2:0.6); ctx.beginPath(); ctx.arc(s._x+Math.cos(ang)*sr,s._y+Math.sin(ang)*sr,1.5,0,TAU); ctx.fill(); }
+        ctx.fillStyle=hexA(col, ob?0.4:0.95); ctx.beginPath(); ctx.arc(s._x,s._y,Math.max(2,r*0.4),0,TAU); ctx.fill();
+        ctx.strokeStyle=hexA(col,ob?0.25:0.5); ctx.lineWidth=1; ctx.beginPath(); ctx.arc(s._x,s._y,r,0,TAU); ctx.stroke();
+        ctx.fillStyle=hexA(col, ob?0.3:0.55); ctx.font='8px ui-monospace,Menlo,monospace'; ctx.textAlign='center';
+        ctx.fillText(s.label+(cnt>0?' '+fmt(cnt):''), s._x, s._y+r*3+11);
+      });
+      requestAnimationFrame(frame);
+    }
+    return { start(){ if(running) return; running=true; resize(); window.addEventListener('resize',resize); requestAnimationFrame(frame); } };
+  })();
+
   // --- Persistence ---
   const SAVE_KEY='emergence-save';
   const OFFLINE_CAP=8*3600; // seconds of offline progress credited at most
@@ -395,6 +457,7 @@
   const lastSave=load();
   if(S.flags.firstAuto){ // returning player: jump straight into the full UI
     $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show');
+    $('vizwrap').style.display='block'; viz.start();
   }
   let offline=null;
   if(lastSave && S.flags.firstAuto){ offline=offlineCatchup((Date.now()-lastSave)/1000); }
@@ -406,6 +469,13 @@
   setInterval(save, 5000);
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) save(); });
   window.addEventListener('beforeunload', save);
+
+  // Test seam: exposes internals only when a harness sets window.__EMERGENCE_TEST__ before load.
+  if(typeof window!=='undefined' && window.__EMERGENCE_TEST__){
+    window.EMERGENCE={ S, CFG, BUYS, MILES, ERAS, VIZ_STATIONS, fmt,
+      unitCost, totalCost, buyQty, buy, writeRule, produce, checkMiles, tick,
+      save, load, offlineCatchup, revealGame };
+  }
 })();
 </script>
 </body>
