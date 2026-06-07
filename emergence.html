@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMERGENCE</title>
+<style>
+  :root {
+    --bg: #06080d; --panel: #0d1220; --panel-2: #121a2c; --line: #1c2740;
+    --text: #ccd6ea; --dim: #5d6d8a; --dimmer: #3a4660;
+    --e1: #c9a26b; --e2: #6ec6a8; --e3: #6ea8ff; --e4: #b78bff;
+    --accent: #ffcd6b; --good: #5ee07f; --danger: #ff6b8b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text);
+    font-family: "SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace; overflow: hidden; }
+  body { background:
+      radial-gradient(1100px 600px at 75% -10%, rgba(110,168,255,0.05), transparent 60%),
+      radial-gradient(900px 500px at 5% 110%, rgba(183,139,255,0.05), transparent 60%),
+      var(--bg); }
+  #app { display: flex; flex-direction: column; height: 100%; }
+  header { display: flex; align-items: center; gap: 16px; padding: 9px 18px;
+    border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(18,26,44,0.5), transparent);
+    opacity: 0; transform: translateY(-100%); transition: opacity 0.6s, transform 0.6s; }
+  header.show { opacity: 1; transform: translateY(0); }
+  .logo { font-weight: 700; letter-spacing: 4px; font-size: 14px; }
+  .logo b { color: var(--e3); }
+  .era-indicator { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+  .res-bar { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .res { text-align: right; min-width: 80px; opacity: 0; transition: opacity 0.5s; }
+  .res.show { opacity: 1; }
+  .res .label { font-size: 8.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
+  .res .val { font-size: 16px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  main { flex: 1; overflow-y: auto; padding: 0; min-height: 0; }
+  main::-webkit-scrollbar { width: 9px; }
+  main::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
+  #coldopen { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 40px; transition: opacity 0.8s; }
+  .co-title { font-size: 12px; letter-spacing: 6px; color: var(--dimmer); text-transform: uppercase; }
+  .co-count { font-size: 40px; font-variant-numeric: tabular-nums; color: var(--e1); min-height: 48px; transition: transform 0.08s; text-align:center; }
+  .co-count small { font-size: 13px; color: var(--dim); letter-spacing: 2px; display: block; margin-top: 4px; }
+  .big-btn { padding: 26px 56px; border-radius: 16px; border: 1px solid var(--e1);
+    background: radial-gradient(circle at 50% 0%, rgba(201,162,107,0.14), var(--panel));
+    color: var(--e1); font-family: inherit; font-size: 16px; letter-spacing: 3px; cursor: pointer;
+    transition: transform 0.06s, box-shadow 0.2s; user-select: none; }
+  .big-btn:hover { box-shadow: 0 0 30px rgba(201,162,107,0.25); }
+  .big-btn:active { transform: scale(0.96); }
+  .co-hint { font-size: 11px; color: var(--dimmer); font-style: italic; max-width: 360px; text-align: center; line-height: 1.7; min-height: 20px; }
+  #eras { display: none; padding: 18px; gap: 16px; flex-direction: column; max-width: 1180px; margin: 0 auto; }
+  .era { border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+    padding: 16px 18px; transition: opacity 0.8s, filter 0.8s, transform 0.5s; position: relative; overflow: hidden; }
+  .era::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ec, var(--dim)); opacity: 0.8; }
+  .era.obsolete { filter: grayscale(0.85) brightness(0.6); opacity: 0.5; }
+  .era.obsolete .era-body { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; }
+  .era-header { display: flex; align-items: center; gap: 12px; }
+  .era-tag { font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
+  .era-name { font-size: 15px; color: var(--text); }
+  .era-name small { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0.5px; }
+  .era-status { margin-left: auto; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+  .era-status.legacy { color: var(--dimmer); }
+  .era-status.live { color: var(--good); }
+  .era-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; transition: max-height 0.6s, opacity 0.5s, margin 0.5s; max-height: 800px; }
+  .panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 13px; }
+  .panel-label { font-size: 9px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
+  .act-btn { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--ec);
+    background: rgba(255,255,255,0.02); color: var(--ec); font-family: inherit; font-size: 12px;
+    letter-spacing: 1.5px; cursor: pointer; transition: transform 0.05s, box-shadow 0.15s; }
+  .act-btn:hover:not(:disabled) { box-shadow: 0 0 18px rgba(255,255,255,0.06); }
+  .act-btn:active:not(:disabled) { transform: scale(0.98); }
+  .act-sub { font-size: 10px; color: var(--dim); text-align: center; margin-top: 8px; line-height: 1.5; }
+  .up { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-bottom: 1px solid rgba(28,39,64,0.5); }
+  .up:last-child { border-bottom: none; }
+  .up-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .up-name { font-size: 12px; }
+  .up-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .up-desc { font-size: 10px; color: var(--dim); line-height: 1.5; }
+  .up-buy { margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
+    padding: 7px; font-family: inherit; font-size: 10.5px; color: var(--text); cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
+  .up-buy:hover:not(:disabled) { border-color: var(--ec); }
+  .up-buy:disabled { opacity: 0.4; cursor: not-allowed; }
+  .up-buy .c { color: var(--ec); }
+  .up-buy:disabled .c { color: var(--danger); }
+  .meter { height: 5px; background: var(--panel); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .meter > i { display: block; height: 100%; background: var(--ec); border-radius: 3px; transition: width 0.2s; }
+  .meter-label { font-size: 9px; color: var(--dim); margin-top: 4px; display: flex; justify-content: space-between; }
+  #toasts { position: fixed; top: 60px; right: 18px; z-index: 60; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+  .toast { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 16px;
+    max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out; }
+  .toast .th { font-size: 9px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
+  .toast .tb { font-size: 12px; line-height: 1.5; color: var(--text); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
+  #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+  .float { position: absolute; font-size: 14px; font-weight: 600; animation: floatUp 0.9s ease-out forwards; font-variant-numeric: tabular-nums; }
+  @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-46px) scale(1.1); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hdr">
+    <div>
+      <div class="logo"><b>&#9670;</b> EMERGENCE</div>
+      <div class="era-indicator" id="eraInd">SYMBOLIC ERA</div>
+    </div>
+    <div class="res-bar" id="resBar"></div>
+  </header>
+  <main>
+    <div id="coldopen">
+      <div class="co-title">a system, beginning</div>
+      <div class="co-count" id="coCount">0<small>RULES</small></div>
+      <button class="big-btn" id="coBtn">WRITE A RULE</button>
+      <div class="co-hint" id="coHint">In the beginning, intelligence was written by hand. One rule at a time.</div>
+    </div>
+    <div id="eras"></div>
+  </main>
+</div>
+<div id="fx"></div>
+<div id="toasts"></div>
+<script>
+(() => {
+  const CFG = {
+    tickMs: 100,
+    rulePerClick: 1,
+    rulesetCost: 10, rulesetGrowth: 1.15, rulesetYield: 0.3,
+    logicCost: 40, logicGrowth: 1.3, logicMult: 0.5,
+    era2Gate: 60,
+    datasetCost: 50, datasetGrowth: 1.2, datasetYield: 0.4,
+    modelCost: 120, modelGrowth: 1.25,
+    era3Gate: 40,
+    computeCost: 200, computeGrowth: 1.22, computePer: 0.5,
+    trainCost: 500, trainGrowth: 1.3,
+    era4Gate: 30,
+    scaleCost: 1000, scaleGrowth: 1.28,
+  };
+  const S = {
+    t: 0, started: false, era: 1, maxEra: 1,
+    rules: 0, insight: 0, data: 0, capability: 0, scale: 0,
+    ruleset: 0, logic: 0, dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
+    obsolete: {}, flags: {}, clicks: 0,
+  };
+  const ERAS = {
+    1: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand' },
+    2: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns, not rules' },
+    3: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability' },
+    4: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical' },
+  };
+  const MILES = [
+    { id:'firstAuto', cond:()=> S.rules>=CFG.rulesetCost,
+      fire:()=>{ S.flags.canRuleset=true; revealGame();
+        toast('FIRST AUTOMATION','You can now build a <b>Ruleset</b> that writes rules on its own. You are no longer the only worker.'); } },
+    { id:'logicUnlock', cond:()=> S.ruleset>=2,
+      fire:()=>{ S.flags.canLogic=true; toast('UPGRADE PATH','<b>Formal Logic</b> available - make every rule worth more.'); } },
+    { id:'era2', cond:()=> S.rules>=CFG.era2Gate,
+      fire:()=>{ openEra(2); toast('PARADIGM SHIFT','Hand-written rules do not scale. A new approach emerges: <b>learning from Data</b>. The Statistical Era begins.'); } },
+    { id:'era2auto', cond:()=> S.dataset>=2,
+      fire:()=>{ S.flags.canModel=true; toast('STATISTICAL MODELS','Build a <b>Model</b> to turn raw Data into <b>Insight</b>.'); } },
+    { id:'era1obsolete', cond:()=> S.model>=3 && S.insight>=20,
+      fire:()=>{ S.obsolete[1]=true; toast('LEGACY','Hand-written rules are now obsolete. The Symbolic Era fades to legacy - preserved, but no longer where progress happens.'); } },
+    { id:'era3', cond:()=> S.insight>=CFG.era3Gate,
+      fire:()=>{ openEra(3); toast('THE DEEP LEARNING ERA','Data and Insight are not enough. Now <b>Compute</b> is the bottleneck - and the supply chain gets real.'); } },
+    { id:'era3auto', cond:()=> S.compute>=3,
+      fire:()=>{ S.flags.canTrain=true; toast('TRAINING RUNS','Spend Compute and Insight on <b>Training</b> to build raw <b>Capability</b>.'); } },
+    { id:'era2obsolete', cond:()=> S.training>=4 && S.capability>=25,
+      fire:()=>{ S.obsolete[2]=true; toast('LEGACY','Shallow statistical models are superseded. The Statistical Era joins the archive.'); } },
+    { id:'era4', cond:()=> S.capability>=CFG.era4Gate,
+      fire:()=>{ openEra(4); toast('FOUNDATION MODELS','Capability compounds into something general. Everything you built becomes an input to something larger.'); } },
+    { id:'emergent', cond:()=> S.scale>=50,
+      fire:()=>{ toast('EMERGENCE','The authored content of this prototype ends here. The system keeps accelerating. This is where the real design work begins.'); } },
+  ];
+  const $ = id => document.getElementById(id);
+  function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
+  const cost=(base,growth,count)=> Math.floor(base*Math.pow(growth,count));
+  function toast(head, body){
+    const el=document.createElement('div'); el.className='toast';
+    el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>';
+    $('toasts').appendChild(el); playSound('milestone');
+    setTimeout(()=>{ el.style.animation='toastOut 0.4s forwards'; setTimeout(()=>el.remove(),400); }, 5200);
+  }
+  function floatNum(text,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=text; el.style.color=color; el.style.left=(x+(Math.random()*24-12))+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
+  let actx=null; const ac=()=>actx||(actx=new(window.AudioContext||window.webkitAudioContext)());
+  function playSound(type){ try{ const ctx=ac();
+    if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='triangle'; o.frequency.setValueAtTime(330,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(520,ctx.currentTime+0.05); g.gain.setValueAtTime(0.1,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09); o.start();o.stop(ctx.currentTime+0.09); }
+    else if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(440,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.1); g.gain.setValueAtTime(0.13,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15); o.start();o.stop(ctx.currentTime+0.15); }
+    else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(f,ctx.currentTime+i*0.07); g.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.11,ctx.currentTime+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.07+0.35); o.start(ctx.currentTime+i*0.07);o.stop(ctx.currentTime+i*0.07+0.35); }); }
+  }catch(e){} }
+  function writeRule(ev){
+    S.clicks++;
+    const mult = 1 + S.logic*CFG.logicMult;
+    const gain = CFG.rulePerClick*mult;
+    S.rules += gain; S.started=true;
+    playSound('click');
+    const r=ev.currentTarget.getBoundingClientRect();
+    floatNum('+'+fmt(gain),'var(--e1)', r.left+r.width/2, r.top-6);
+    if(S.clicks===1) $('coHint').textContent='Keep going. Build enough, and you can make something that writes rules for you.';
+    if(!S.flags.firstAuto) renderCold();
+  }
+  const BUYS = {
+    ruleset: { res:'rules', get cost(){return cost(CFG.rulesetCost,CFG.rulesetGrowth,S.ruleset);}, do(){S.ruleset++;} },
+    logic:   { res:'rules', get cost(){return cost(CFG.logicCost,CFG.logicGrowth,S.logic);}, do(){S.logic++;} },
+    dataset: { res:'rules', get cost(){return cost(CFG.datasetCost,CFG.datasetGrowth,S.dataset);}, do(){S.dataset++;} },
+    model:   { res:'data',  get cost(){return cost(CFG.modelCost,CFG.modelGrowth,S.model);}, do(){S.model++;} },
+    compute: { res:'insight',get cost(){return cost(CFG.computeCost,CFG.computeGrowth,S.compute);}, do(){S.compute++;} },
+    training:{ res:'insight',get cost(){return cost(CFG.trainCost,CFG.trainGrowth,S.training);}, do(){S.training++;} },
+    cluster: { res:'capability',get cost(){return cost(CFG.scaleCost,CFG.scaleGrowth,S.cluster);}, do(){S.cluster++;} },
+  };
+  function buy(key){ const b=BUYS[key]; if(S[b.res] < b.cost) return; S[b.res]-=b.cost; b.do(); playSound('buy'); renderEras(); }
+  function revealGame(){
+    if(S.flags.firstAuto) return;
+    S.flags.firstAuto=true;
+    $('coldopen').style.opacity='0';
+    setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show'); openEra(1,true); }, 800);
+  }
+  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; renderEras(); }
+  function tick(){
+    const dt=CFG.tickMs/1000; if(S.started) S.t+=dt;
+    const mult = 1 + S.logic*CFG.logicMult;
+    if(S.ruleset>0) S.rules += S.ruleset*CFG.rulesetYield*mult*dt;
+    if(S.dataset>0) S.data += S.dataset*CFG.datasetYield*dt;
+    if(S.model>0){ const conv=Math.min(S.data, S.model*0.6*dt); S.data-=conv; S.insight+=conv*1.5; }
+    if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
+    if(S.cluster>0){ const c=Math.min(S.capability, S.cluster*0.4*dt); S.capability-=c; S.scale+=c*2; }
+    for(const m of MILES){ if(!S.flags[m.id] && m.cond()){ S.flags[m.id]=true; m.fire(); } }
+    if(S.flags.firstAuto) renderEras(); else renderCold();
+    renderHeader();
+  }
+  function renderCold(){ $('coCount').innerHTML = fmt(S.rules)+'<small>RULES</small>'; }
+  function renderHeader(){
+    if(!S.flags.firstAuto) return;
+    $('eraInd').textContent = ERAS[S.maxEra].tag.toUpperCase()+' ERA';
+    const defs = [
+      {k:'rules', show:true, color:'var(--e1)', label:'Rules'},
+      {k:'data', show:S.maxEra>=2, color:'var(--e2)', label:'Data'},
+      {k:'insight', show:S.maxEra>=2, color:'var(--e2)', label:'Insight'},
+      {k:'capability', show:S.maxEra>=3, color:'var(--e3)', label:'Capability'},
+      {k:'scale', show:S.maxEra>=4, color:'var(--e4)', label:'Scale'},
+    ];
+    $('resBar').innerHTML = defs.filter(d=>d.show).map(d=>'<div class="res show"><div class="label">'+d.label+'</div><div class="val" style="color:'+d.color+'">'+fmt(S[d.k])+'</div></div>').join('');
+  }
+  function eraUpgrade(key, name, desc){
+    const b=BUYS[key]; const c=b.cost; const can=S[b.res]>=c; const count=S[key];
+    return '<div class="up"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count">x'+count+'</div></div><div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" '+(can?'':'disabled')+'>BUILD &middot; <span class="c">'+fmt(c)+' '+b.res+'</span></button></div>';
+  }
+  function eraShell(n, obsolete, status, body){
+    const e=ERAS[n];
+    const statusTxt = obsolete?'LEGACY':(status==='live'?'&#9679; RUNNING':'ACTIVE');
+    const statusCls = obsolete?'legacy':(status==='live'?'live':'');
+    return '<div class="era '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header"><span class="era-tag">'+e.tag+'</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span><span class="era-status '+statusCls+'">'+statusTxt+'</span></div><div class="era-body">'+body+'</div></div>';
+  }
+  function renderEras(){
+    let html='';
+    {
+      const ob=S.obsolete[1];
+      html += eraShell(1, ob, S.ruleset>0?'live':'active',
+        '<div class="panel"><div class="panel-label">Manual Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub">+'+fmt(1+S.logic*CFG.logicMult)+' rules &middot; the original verb</div></div>'+
+        '<div class="panel"><div class="panel-label">Automation &amp; Upgrades</div>'+
+          (S.flags.canRuleset?eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.'):'')+
+          (S.flags.canLogic?eraUpgrade('logic','Formal Logic','Each Ruleset and click produces more. Compounds everything.'):'')+
+        '</div>');
+    }
+    if(S.maxEra>=2){
+      const ob=S.obsolete[2];
+      html += eraShell(2, ob, S.model>0?'live':'active',
+        '<div class="panel"><div class="panel-label">Data Pipeline</div>'+eraUpgrade('dataset','Dataset','Generates raw Data over time. Bought with legacy Rules.')+
+          '<div class="meter"><i style="width:'+Math.min(100,(S.data/(Math.max(1,S.model)*10))*100)+'%; background:var(--e2)"></i></div><div class="meter-label"><span>Data buffer</span><span>'+fmt(S.data)+'</span></div></div>'+
+        '<div class="panel"><div class="panel-label">Models</div>'+(S.flags.canModel?eraUpgrade('model','Statistical Model','Consumes Data, produces Insight. Patterns replace hand-written rules.'):'<div class="up-desc">Gather Data first...</div>')+'</div>');
+    }
+    if(S.maxEra>=3){
+      const ob=S.obsolete[3];
+      html += eraShell(3, ob, S.training>0?'live':'active',
+        '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('compute','Compute Node','The new bottleneck. More nodes, stronger training runs.')+'</div>'+
+        '<div class="panel"><div class="panel-label">Training</div>'+(S.flags.canTrain?eraUpgrade('training','Training Run','Consumes Insight + Compute to produce raw Capability.'):'<div class="up-desc">Build Compute first...</div>')+'</div>');
+    }
+    if(S.maxEra>=4){
+      html += eraShell(4, false, S.cluster>0?'live':'active',
+        '<div class="panel"><div class="panel-label">Scaling</div>'+eraUpgrade('cluster','Cluster','Turns Capability into Scale. Everything below feeds this.')+'</div>'+
+        '<div class="panel"><div class="panel-label">Emergence</div><div class="up-desc" style="line-height:1.7">At sufficient Scale, behavior appears that no single component was designed to produce. This is the frontier - and the end of this prototype\'s authored content.</div><div class="meter"><i style="width:'+Math.min(100,(S.scale/50)*100)+'%; background:var(--e4)"></i></div><div class="meter-label"><span>Toward emergence</span><span>'+fmt(S.scale)+' / 50</span></div></div>');
+    }
+    $('eras').innerHTML=html;
+    const rb=$('ruleBtn2'); if(rb) rb.onclick=writeRule;
+    document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
+  }
+  $('coBtn').onclick=writeRule;
+  renderCold();
+  setInterval(tick, CFG.tickMs);
+})();
+</script>
+</body>
+</html>
