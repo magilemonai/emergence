@@ -1,0 +1,9 @@
+{
+  "name": "emergence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser incremental game about an AI bootstrapping itself across four eras",
+  "scripts": {
+    "test": "node test.js"
+  }
+}
