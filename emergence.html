@@ -26,7 +26,15 @@
   .logo { font-weight: 700; letter-spacing: 4px; font-size: 14px; }
   .logo b { color: var(--e3); }
   .era-indicator { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
-  .res-bar { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+  .hdr-right { margin-left: auto; display: flex; gap: 22px; align-items: center; }
+  .res-bar { display: flex; gap: 20px; align-items: center; }
+  .buymode { display: flex; gap: 0; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; opacity: 0; transition: opacity 0.5s; }
+  .buymode.show { opacity: 1; }
+  .buymode button { font-family: inherit; font-size: 10px; letter-spacing: 0.5px; padding: 5px 10px; border: none;
+    border-right: 1px solid var(--line); background: transparent; color: var(--dim); cursor: pointer; transition: all 0.12s; }
+  .buymode button:last-child { border-right: none; }
+  .buymode button:hover { color: var(--text); }
+  .buymode button.on { background: rgba(255,205,107,0.1); color: var(--accent); }
   .res { text-align: right; min-width: 80px; opacity: 0; transition: opacity 0.5s; }
   .res.show { opacity: 1; }
   .res .label { font-size: 8.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
@@ -111,7 +119,10 @@
       <div class="logo"><b>&#9670;</b> EMERGENCE</div>
       <div class="era-indicator" id="eraInd">SYMBOLIC ERA</div>
     </div>
-    <div class="res-bar" id="resBar"></div>
+    <div class="hdr-right">
+      <div class="buymode" id="buyMode"></div>
+      <div class="res-bar" id="resBar"></div>
+    </div>
   </header>
   <main>
     <div id="coldopen">
@@ -143,7 +154,7 @@
     scaleCost: 45, scaleGrowth: 1.26,
   };
   const S = {
-    t: 0, started: false, era: 1, maxEra: 1, speed: 1, dev: false,
+    t: 0, started: false, era: 1, maxEra: 1, speed: 1, dev: false, buyMode: '1',
     rules: 0, insight: 0, data: 0, capability: 0, scale: 0,
     ruleset: 0, logic: 0, dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
     obsolete: {}, flags: {}, clicks: 0,
@@ -180,7 +191,9 @@
   const $ = id => document.getElementById(id);
   function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
   const cost=(base,growth,count)=> Math.floor(base*Math.pow(growth,count));
+  let MUTE=false;
   function toast(head, body){
+    if(MUTE) return;
     const el=document.createElement('div'); el.className='toast';
     el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>';
     $('toasts').appendChild(el); playSound('milestone');
@@ -205,15 +218,33 @@
     if(!S.flags.firstAuto) renderCold();
   }
   const BUYS = {
-    ruleset: { res:'rules', get cost(){return cost(CFG.rulesetCost,CFG.rulesetGrowth,S.ruleset);}, do(){S.ruleset++;} },
-    logic:   { res:'rules', get cost(){return cost(CFG.logicCost,CFG.logicGrowth,S.logic);}, do(){S.logic++;} },
-    dataset: { res:'rules', get cost(){return cost(CFG.datasetCost,CFG.datasetGrowth,S.dataset);}, do(){S.dataset++;} },
-    model:   { res:'data',  get cost(){return cost(CFG.modelCost,CFG.modelGrowth,S.model);}, do(){S.model++;} },
-    compute: { res:'insight',get cost(){return cost(CFG.computeCost,CFG.computeGrowth,S.compute);}, do(){S.compute++;} },
-    training:{ res:'insight',get cost(){return cost(CFG.trainCost,CFG.trainGrowth,S.training);}, do(){S.training++;} },
-    cluster: { res:'capability',get cost(){return cost(CFG.scaleCost,CFG.scaleGrowth,S.cluster);}, do(){S.cluster++;} },
+    ruleset: { res:'rules', key:'ruleset', base:CFG.rulesetCost, growth:CFG.rulesetGrowth },
+    logic:   { res:'rules', key:'logic',   base:CFG.logicCost,   growth:CFG.logicGrowth },
+    dataset: { res:'rules', key:'dataset', base:CFG.datasetCost, growth:CFG.datasetGrowth },
+    model:   { res:'data',  key:'model',   base:CFG.modelCost,   growth:CFG.modelGrowth },
+    compute: { res:'insight',key:'compute',base:CFG.computeCost, growth:CFG.computeGrowth },
+    training:{ res:'insight',key:'training',base:CFG.trainCost,  growth:CFG.trainGrowth },
+    cluster: { res:'capability',key:'cluster',base:CFG.scaleCost,growth:CFG.scaleGrowth },
   };
-  function buy(key){ const b=BUYS[key]; if(S[b.res] < b.cost) return; S[b.res]-=b.cost; b.do(); playSound('buy'); renderEras(); }
+  // unit cost of the (count)th building of this type
+  const unitCost=(b,count)=> Math.floor(b.base*Math.pow(b.growth,count));
+  Object.values(BUYS).forEach(b=> Object.defineProperty(b,'cost',{get(){return unitCost(b,S[b.key]);}}));
+  // total cost to buy n more, accounting for geometric scaling
+  function totalCost(b,n){ let t=0,c=S[b.key]; for(let i=0;i<n;i++) t+=unitCost(b,c+i); return t; }
+  // how many of this building the current buy-mode wants (and can afford for 'max')
+  function buyQty(key){
+    const b=BUYS[key], mode=S.buyMode;
+    if(mode==='1') return 1;
+    if(mode==='10') return 10;
+    let have=S[b.res], c=S[b.key], n=0;
+    while(n<100000){ const nx=unitCost(b,c); if(have<nx) break; have-=nx; c++; n++; }
+    return n;
+  }
+  function buy(key){
+    const b=BUYS[key], n=buyQty(key); if(n<=0) return;
+    const tc=totalCost(b,n); if(S[b.res] < tc) return;
+    S[b.res]-=tc; S[b.key]+=n; playSound('buy'); renderEras();
+  }
   function revealGame(){
     if(S.flags.firstAuto) return;
     S.flags.firstAuto=true;
@@ -221,15 +252,18 @@
     setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show'); openEra(1,true); }, 800);
   }
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; renderEras(); }
-  function tick(){
-    const dt=CFG.tickMs/1000*S.speed; if(S.started) S.t+=dt;
+  function produce(dt){
     const mult = 1 + S.logic*CFG.logicMult;
     if(S.ruleset>0) S.rules += S.ruleset*CFG.rulesetYield*mult*dt;
     if(S.dataset>0) S.data += S.dataset*CFG.datasetYield*dt;
     if(S.model>0){ const conv=Math.min(S.data, S.model*0.6*dt); S.data-=conv; S.insight+=conv*1.5; }
     if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
     if(S.cluster>0){ const c=Math.min(S.capability, S.cluster*0.4*dt); S.capability-=c; S.scale+=c*2; }
-    for(const m of MILES){ if(!S.flags[m.id] && m.cond()){ S.flags[m.id]=true; m.fire(); } }
+  }
+  function checkMiles(){ for(const m of MILES){ if(!S.flags[m.id] && m.cond()){ S.flags[m.id]=true; m.fire(); } } }
+  function tick(){
+    const dt=CFG.tickMs/1000*S.speed; if(S.started) S.t+=dt;
+    produce(dt); checkMiles();
     if(S.flags.firstAuto) renderEras(); else renderCold();
     renderHeader();
   }
@@ -245,10 +279,19 @@
       {k:'scale', show:S.maxEra>=4, color:'var(--e4)', label:'Scale'},
     ];
     $('resBar').innerHTML = defs.filter(d=>d.show).map(d=>'<div class="res show"><div class="label">'+d.label+'</div><div class="val" style="color:'+d.color+'">'+fmt(S[d.k])+'</div></div>').join('');
+    const bm=$('buyMode'); bm.classList.add('show');
+    const modes=[['1','×1'],['10','×10'],['max','MAX']];
+    bm.innerHTML = modes.map(m=>'<button data-mode="'+m[0]+'" class="'+(S.buyMode===m[0]?'on':'')+'">'+m[1]+'</button>').join('');
+    bm.querySelectorAll('[data-mode]').forEach(btn=> btn.onclick=()=>{ S.buyMode=btn.dataset.mode; renderHeader(); renderEras(); });
   }
   function eraUpgrade(key, name, desc){
-    const b=BUYS[key]; const c=b.cost; const can=S[b.res]>=c; const count=S[key];
-    return '<div class="up"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count">x'+count+'</div></div><div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" '+(can?'':'disabled')+'>BUILD &middot; <span class="c">'+fmt(c)+' '+b.res+'</span></button></div>';
+    const b=BUYS[key], count=S[key], mode=S.buyMode;
+    let qty, label, can;
+    if(mode==='max'){ qty=buyQty(key); can=qty>0; const c=totalCost(b, can?qty:1);
+      label='BUILD'+(can?' &times;'+qty:' MAX')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>'; }
+    else { qty=(mode==='10')?10:1; const c=totalCost(b,qty); can=S[b.res]>=c;
+      label='BUILD'+(qty>1?' &times;'+qty:'')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>'; }
+    return '<div class="up"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count">x'+count+'</div></div><div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" '+(can?'':'disabled')+'>'+label+'</button></div>';
   }
   function eraShell(n, obsolete, status, body){
     const e=ERAS[n];
@@ -312,9 +355,57 @@
   window.addEventListener('keydown', e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
   if(/[?&]dev=1/.test(location.search)) toggleDev(true);
 
+  // --- Persistence ---
+  const SAVE_KEY='emergence-save';
+  const OFFLINE_CAP=8*3600; // seconds of offline progress credited at most
+  function save(){
+    try{ const out={...S}; delete out.dev; delete out.speed;
+      localStorage.setItem(SAVE_KEY, JSON.stringify({S:out, lastSave:Date.now(), v:1})); }catch(e){}
+  }
+  function load(){
+    try{ const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
+      const d=JSON.parse(raw); if(!d||!d.S) return null;
+      Object.assign(S, d.S);            // saved fields override defaults; dev/speed stay at literal defaults
+      return d.lastSave||null;
+    }catch(e){ return null; }
+  }
+  function offlineCatchup(elapsedSec){
+    const eff=Math.min(elapsedSec, OFFLINE_CAP);
+    if(eff < 1) return null;
+    const keys=['rules','data','insight','capability','scale'];
+    const before={}; keys.forEach(k=> before[k]=S[k]);
+    MUTE=true;
+    const step=CFG.tickMs/1000; let rem=eff, iter=0;
+    while(rem>0 && iter<300000){ const d=Math.min(step,rem); produce(d); S.t+=d; checkMiles(); rem-=d; iter++; }
+    MUTE=false;
+    const g={}; let any=false;
+    keys.forEach(k=>{ g[k]=S[k]-before[k]; if(g[k]>0.05) any=true; });
+    if(!any) return null;
+    return { eff, g, capped: elapsedSec>OFFLINE_CAP };
+  }
+  function offlineToast(o){
+    const names={rules:'Rules',data:'Data',insight:'Insight',capability:'Capability',scale:'Scale'};
+    const parts=Object.keys(names).filter(k=>o.g[k]>0.05).map(k=>'+'+fmt(o.g[k])+' '+names[k]);
+    const mins=Math.floor(o.eff/60);
+    const dur = mins>=60 ? Math.floor(mins/60)+'h '+(mins%60)+'m' : mins+'m';
+    toast('WHILE YOU WERE AWAY', 'Away for '+dur+(o.capped?' (capped)':'')+'. The system kept running:<br>'+parts.join(' &middot; '));
+  }
+
+  // --- Boot ---
+  const lastSave=load();
+  if(S.flags.firstAuto){ // returning player: jump straight into the full UI
+    $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show');
+  }
+  let offline=null;
+  if(lastSave && S.flags.firstAuto){ offline=offlineCatchup((Date.now()-lastSave)/1000); }
+  renderCold(); renderHeader(); if(S.flags.firstAuto) renderEras();
+  if(offline) setTimeout(()=>offlineToast(offline), 600);
+
   $('coBtn').onclick=writeRule;
-  renderCold();
   setInterval(tick, CFG.tickMs);
+  setInterval(save, 5000);
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) save(); });
+  window.addEventListener('beforeunload', save);
 })();
 </script>
 </body>
