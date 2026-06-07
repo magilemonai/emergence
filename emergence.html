@@ -221,7 +221,7 @@
     const r=ev.currentTarget.getBoundingClientRect();
     floatNum('+'+fmt(gain),'var(--e1)', r.left+r.width/2, r.top-6);
     if(S.clicks===1) $('coHint').textContent='Keep going. Build enough, and you can make something that writes rules for you.';
-    if(!S.flags.firstAuto) renderCold();
+    if(!S.flags.firstAuto) renderCold(); else refresh();
   }
   const BUYS = {
     ruleset: { res:'rules', key:'ruleset', base:CFG.rulesetCost, growth:CFG.rulesetGrowth },
@@ -249,7 +249,7 @@
   function buy(key){
     const b=BUYS[key], n=buyQty(key); if(n<=0) return;
     const tc=totalCost(b,n); if(S[b.res] < tc) return;
-    S[b.res]-=tc; S[b.key]+=n; playSound('buy'); renderEras();
+    S[b.res]-=tc; S[b.key]+=n; playSound('buy'); refresh();
   }
   function revealGame(){
     if(S.flags.firstAuto) return;
@@ -258,7 +258,7 @@
     setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show');
       $('vizwrap').style.display='block'; viz.start(); openEra(1,true); }, 800);
   }
-  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; renderEras(); }
+  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; render(); }
   function produce(dt){
     const mult = 1 + S.logic*CFG.logicMult;
     if(S.ruleset>0) S.rules += S.ruleset*CFG.rulesetYield*mult*dt;
@@ -267,77 +267,97 @@
     if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
     if(S.cluster>0){ const c=Math.min(S.capability, S.cluster*0.4*dt); S.capability-=c; S.scale+=c*2; }
   }
-  function checkMiles(){ for(const m of MILES){ if(!S.flags[m.id] && m.cond()){ S.flags[m.id]=true; m.fire(); } } }
+  function checkMiles(){
+    let fired=false;
+    for(const m of MILES){ if(!S.flags[m.id] && m.cond()){ S.flags[m.id]=true; m.fire(); fired=true; } }
+    if(fired && S.flags.firstAuto) render(); // a milestone changed structure (unlock / new era / legacy)
+  }
   function tick(){
     const dt=CFG.tickMs/1000*S.speed; if(S.started) S.t+=dt;
     produce(dt); checkMiles();
-    if(S.flags.firstAuto) renderEras(); else renderCold();
-    renderHeader();
+    if(S.flags.firstAuto) refresh(); else renderCold();
   }
   function renderCold(){ $('coCount').innerHTML = fmt(S.rules)+'<small>RULES</small>'; }
-  function renderHeader(){
+  // ---- Rendering: build DOM structure rarely, update live numbers every tick. ----
+  // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
+  const RES_DEFS=[
+    {k:'rules', show:()=>true,        color:'var(--e1)', label:'Rules'},
+    {k:'data', show:()=>S.maxEra>=2,  color:'var(--e2)', label:'Data'},
+    {k:'insight', show:()=>S.maxEra>=2,color:'var(--e2)', label:'Insight'},
+    {k:'capability', show:()=>S.maxEra>=3,color:'var(--e3)', label:'Capability'},
+    {k:'scale', show:()=>S.maxEra>=4, color:'var(--e4)', label:'Scale'},
+  ];
+  function buildHeader(){
     if(!S.flags.firstAuto) return;
-    $('eraInd').textContent = ERAS[S.maxEra].tag.toUpperCase()+' ERA';
-    const defs = [
-      {k:'rules', show:true, color:'var(--e1)', label:'Rules'},
-      {k:'data', show:S.maxEra>=2, color:'var(--e2)', label:'Data'},
-      {k:'insight', show:S.maxEra>=2, color:'var(--e2)', label:'Insight'},
-      {k:'capability', show:S.maxEra>=3, color:'var(--e3)', label:'Capability'},
-      {k:'scale', show:S.maxEra>=4, color:'var(--e4)', label:'Scale'},
-    ];
-    $('resBar').innerHTML = defs.filter(d=>d.show).map(d=>'<div class="res show"><div class="label">'+d.label+'</div><div class="val" style="color:'+d.color+'">'+fmt(S[d.k])+'</div></div>').join('');
+    $('resBar').innerHTML = RES_DEFS.filter(d=>d.show()).map(d=>
+      '<div class="res show"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div></div>').join('');
     const bm=$('buyMode'); bm.classList.add('show');
     const modes=[['1','×1'],['10','×10'],['max','MAX']];
     bm.innerHTML = modes.map(m=>'<button data-mode="'+m[0]+'" class="'+(S.buyMode===m[0]?'on':'')+'">'+m[1]+'</button>').join('');
-    bm.querySelectorAll('[data-mode]').forEach(btn=> btn.onclick=()=>{ S.buyMode=btn.dataset.mode; renderHeader(); renderEras(); });
+    bm.querySelectorAll('[data-mode]').forEach(btn=> btn.onclick=()=>{ S.buyMode=btn.dataset.mode; render(); });
   }
   function eraUpgrade(key, name, desc){
-    const b=BUYS[key], count=S[key], mode=S.buyMode;
-    let qty, label, can;
-    if(mode==='max'){ qty=buyQty(key); can=qty>0; const c=totalCost(b, can?qty:1);
-      label='BUILD'+(can?' &times;'+qty:' MAX')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>'; }
-    else { qty=(mode==='10')?10:1; const c=totalCost(b,qty); can=S[b.res]>=c;
-      label='BUILD'+(qty>1?' &times;'+qty:'')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>'; }
-    return '<div class="up"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count">x'+count+'</div></div><div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" '+(can?'':'disabled')+'>'+label+'</button></div>';
+    return '<div class="up"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count" id="cnt-'+key+'"></div></div>'+
+      '<div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" id="buy-'+key+'"></button></div>';
   }
-  function eraShell(n, obsolete, status, body){
+  function eraShell(n, obsolete, body){
     const e=ERAS[n];
-    const statusTxt = obsolete?'LEGACY':(status==='live'?'&#9679; RUNNING':'ACTIVE');
-    const statusCls = obsolete?'legacy':(status==='live'?'live':'');
-    return '<div class="era '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header"><span class="era-tag">'+e.tag+'</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span><span class="era-status '+statusCls+'">'+statusTxt+'</span></div><div class="era-body">'+body+'</div></div>';
+    return '<div class="era '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header"><span class="era-tag">'+e.tag+
+      '</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span><span class="era-status" id="status-'+n+'"></span></div><div class="era-body">'+body+'</div></div>';
   }
-  function renderEras(){
-    let html='';
-    {
-      const ob=S.obsolete[1];
-      html += eraShell(1, ob, S.ruleset>0?'live':'active',
-        '<div class="panel"><div class="panel-label">Manual Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub">+'+fmt(1+S.logic*CFG.logicMult)+' rules &middot; the original verb</div></div>'+
-        '<div class="panel"><div class="panel-label">Automation &amp; Upgrades</div>'+
-          (S.flags.canRuleset?eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.'):'')+
-          (S.flags.canLogic?eraUpgrade('logic','Formal Logic','Each Ruleset and click produces more. Compounds everything.'):'')+
-        '</div>');
-    }
-    if(S.maxEra>=2){
-      const ob=S.obsolete[2];
-      html += eraShell(2, ob, S.model>0?'live':'active',
-        '<div class="panel"><div class="panel-label">Data Pipeline</div>'+eraUpgrade('dataset','Dataset','Generates raw Data over time. Bought with legacy Rules.')+
-          '<div class="meter"><i style="width:'+Math.min(100,(S.data/(Math.max(1,S.model)*10))*100)+'%; background:var(--e2)"></i></div><div class="meter-label"><span>Data buffer</span><span>'+fmt(S.data)+'</span></div></div>'+
-        '<div class="panel"><div class="panel-label">Models</div>'+(S.flags.canModel?eraUpgrade('model','Statistical Model','Consumes Data, produces Insight. Patterns replace hand-written rules.'):'<div class="up-desc">Gather Data first...</div>')+'</div>');
-    }
-    if(S.maxEra>=3){
-      const ob=S.obsolete[3];
-      html += eraShell(3, ob, S.training>0?'live':'active',
-        '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('compute','Compute Node','The new bottleneck. More nodes, stronger training runs.')+'</div>'+
-        '<div class="panel"><div class="panel-label">Training</div>'+(S.flags.canTrain?eraUpgrade('training','Training Run','Consumes Insight + Compute to produce raw Capability.'):'<div class="up-desc">Build Compute first...</div>')+'</div>');
-    }
-    if(S.maxEra>=4){
-      html += eraShell(4, false, S.cluster>0?'live':'active',
-        '<div class="panel"><div class="panel-label">Scaling</div>'+eraUpgrade('cluster','Cluster','Turns Capability into Scale. Everything below feeds this.')+'</div>'+
-        '<div class="panel"><div class="panel-label">Emergence</div><div class="up-desc" style="line-height:1.7">At sufficient Scale, behavior appears that no single component was designed to produce. This is the frontier - and the end of this prototype\'s authored content.</div><div class="meter"><i style="width:'+Math.min(100,(S.scale/50)*100)+'%; background:var(--e4)"></i></div><div class="meter-label"><span>Toward emergence</span><span>'+fmt(S.scale)+' / 50</span></div></div>');
-    }
-    $('eras').innerHTML=html;
+  function buildEras(){
+    let html = eraShell(1, S.obsolete[1],
+      '<div class="panel"><div class="panel-label">Manual Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub" id="manualSub"></div></div>'+
+      '<div class="panel"><div class="panel-label">Automation &amp; Upgrades</div>'+
+        (S.flags.canRuleset?eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.'):'')+
+        (S.flags.canLogic?eraUpgrade('logic','Formal Logic','Each Ruleset and click produces more. Compounds everything.'):'')+
+      '</div>');
+    if(S.maxEra>=2) html += eraShell(2, S.obsolete[2],
+      '<div class="panel"><div class="panel-label">Data Pipeline</div>'+eraUpgrade('dataset','Dataset','Generates raw Data over time. Bought with legacy Rules.')+
+        '<div class="meter"><i id="meter-data" style="background:var(--e2)"></i></div><div class="meter-label"><span>Data buffer</span><span id="meter-data-val"></span></div></div>'+
+      '<div class="panel"><div class="panel-label">Models</div>'+(S.flags.canModel?eraUpgrade('model','Statistical Model','Consumes Data, produces Insight. Patterns replace hand-written rules.'):'<div class="up-desc">Gather Data first...</div>')+'</div>');
+    if(S.maxEra>=3) html += eraShell(3, S.obsolete[3],
+      '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('compute','Compute Node','The new bottleneck. More nodes, stronger training runs.')+'</div>'+
+      '<div class="panel"><div class="panel-label">Training</div>'+(S.flags.canTrain?eraUpgrade('training','Training Run','Consumes Insight + Compute to produce raw Capability.'):'<div class="up-desc">Build Compute first...</div>')+'</div>');
+    if(S.maxEra>=4) html += eraShell(4, false,
+      '<div class="panel"><div class="panel-label">Scaling</div>'+eraUpgrade('cluster','Cluster','Turns Capability into Scale. Everything below feeds this.')+'</div>'+
+      '<div class="panel"><div class="panel-label">Emergence</div><div class="up-desc" style="line-height:1.7">At sufficient Scale, behavior appears that no single component was designed to produce. This is the frontier - and the end of this prototype\'s authored content.</div><div class="meter"><i id="meter-scale" style="background:var(--e4)"></i></div><div class="meter-label"><span>Toward emergence</span><span id="meter-scale-val"></span></div></div>');
+    return html;
+  }
+  function render(){ // structural rebuild — only on unlocks, era changes, or buy-mode change
+    if(!S.flags.firstAuto) return;
+    buildHeader();
+    $('eras').innerHTML = buildEras();
     const rb=$('ruleBtn2'); if(rb) rb.onclick=writeRule;
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
+    refresh();
+  }
+  function upLabel(key){ // {can, html} for a buy button under the current buy mode
+    const b=BUYS[key], mode=S.buyMode;
+    if(mode==='max'){ const qty=buyQty(key), can=qty>0, c=totalCost(b, can?qty:1);
+      return { can, html:'BUILD'+(can?' &times;'+qty:' MAX')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>' }; }
+    const qty=(mode==='10')?10:1, c=totalCost(b,qty), can=S[b.res]>=c;
+    return { can, html:'BUILD'+(qty>1?' &times;'+qty:'')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>' };
+  }
+  function setText(id,txt){ const el=$(id); if(el && el.textContent!==txt) el.textContent=txt; }
+  function setStatus(n, live){ const el=$('status-'+n); if(!el) return;
+    if(S.obsolete[n]){ el.textContent='LEGACY'; el.className='era-status legacy'; return; }
+    const txt= live?'● RUNNING':'ACTIVE', cls='era-status'+(live?' live':'');
+    if(el.textContent!==txt) el.textContent=txt; if(el.className!==cls) el.className=cls; }
+  function refresh(){ // cheap per-tick value update; the DOM (and your buttons) stay put
+    if(!S.flags.firstAuto) return;
+    setText('eraInd', ERAS[S.maxEra].tag.toUpperCase()+' ERA');
+    for(const d of RES_DEFS) setText('rv-'+d.k, fmt(S[d.k]));
+    for(const key in BUYS){ const cnt=$('cnt-'+key); if(!cnt) continue;
+      setText('cnt-'+key, 'x'+S[key]);
+      const btn=$('buy-'+key), st=upLabel(key);
+      if(btn._html!==st.html){ btn.innerHTML=st.html; btn._html=st.html; }
+      if(btn.disabled!==!st.can) btn.disabled=!st.can;
+    }
+    setText('manualSub', '+'+fmt(1+S.logic*CFG.logicMult)+' rules · the original verb');
+    setStatus(1,S.ruleset>0); setStatus(2,S.model>0); setStatus(3,S.training>0); setStatus(4,S.cluster>0);
+    const md=$('meter-data'); if(md){ md.style.width=Math.min(100,(S.data/(Math.max(1,S.model)*10))*100)+'%'; setText('meter-data-val',fmt(S.data)); }
+    const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
   const SPEEDS=[1,3,10,50];
@@ -346,7 +366,7 @@
     else if(S.maxEra>=3) S.insight+=500;
     else if(S.maxEra>=2){ S.data+=500; S.rules+=500; }
     else { S.rules+=200; if(!S.flags.firstAuto) revealGame(); }
-    renderEras(); renderHeader();
+    if(S.flags.firstAuto) render();
   }
   function renderDev(){
     if(!S.dev) return;
@@ -461,7 +481,7 @@
   }
   let offline=null;
   if(lastSave && S.flags.firstAuto){ offline=offlineCatchup((Date.now()-lastSave)/1000); }
-  renderCold(); renderHeader(); if(S.flags.firstAuto) renderEras();
+  renderCold(); if(S.flags.firstAuto) render();
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
   $('coBtn').onclick=writeRule;

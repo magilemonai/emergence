@@ -172,6 +172,25 @@ function testNoNaN(){
   ok(S.data >= 0 && S.insight >= 0 && S.capability >= 0, 'no resource goes negative from conversion');
 }
 
+function testNoIdleRebuild(){
+  // Regression guard: rebuilding #eras' innerHTML every tick destroyed buttons
+  // mid-click (visible strobe + lost clicks). Idle ticks must NOT rebuild structure.
+  section('No DOM rebuild on idle ticks (anti-strobe guard)');
+  const EM = freshGame(); const { S, MILES } = EM;
+  S.started = true; S.rules = 5;
+  EM.revealGame();                          // builds Era 1 (reveal setTimeout runs synchronously)
+  S.ruleset = 4;                            // passive rule income so values keep changing
+  MILES.forEach(m => S.flags[m.id] = true); // freeze milestones: nothing structural should fire
+  EM.tick();                                // settle
+  const eras = global.document.getElementById('eras');
+  let writes = 0, store = eras.innerHTML;
+  Object.defineProperty(eras, 'innerHTML', { configurable:true, get(){ return store; }, set(v){ writes++; store = v; } });
+  const before = S.rules;
+  for(let i=0;i<20;i++) EM.tick();          // 20 idle ticks: no buys, no new milestones
+  ok(writes === 0, 'era DOM is not rebuilt on idle ticks (saw '+writes+' rebuilds — buttons would strobe)');
+  ok(S.rules > before, 'resource values still advance while the DOM stays put');
+}
+
 // ====================================================================
 // 2. PROGRESSION — milestone-driven autoplayer
 // ====================================================================
@@ -257,6 +276,7 @@ testBuy();
 testSaveLoad();
 testOffline();
 testNoNaN();
+testNoIdleRebuild();
 testProgression();
 
 console.log('\n====================');
