@@ -95,6 +95,34 @@
   .meter { height: 5px; background: var(--panel); border-radius: 3px; overflow: hidden; margin-top: 8px; }
   .meter > i { display: block; height: 100%; background: var(--ec); border-radius: 3px; transition: width 0.2s; }
   .meter-label { font-size: 9px; color: var(--dim); margin-top: 4px; display: flex; justify-content: space-between; }
+  /* Era 1 — the Symbolic blueprint: a logic-circuit tech tree in amber */
+  .tree-panel { background:
+      linear-gradient(rgba(201,162,107,0.04) 1px, transparent 1px) 0 0 / 100% 26px,
+      linear-gradient(90deg, rgba(201,162,107,0.04) 1px, transparent 1px) 0 0 / 26px 100%,
+      var(--panel-2); }
+  .tree { position: relative; width: 100%; margin-top: 8px; }
+  .tree-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .tl { stroke: var(--line); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+  .tl-live { stroke: rgba(201,162,107,0.4); stroke-dasharray: 3 3; }
+  .tl-on { stroke: var(--e1); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+  .tree-node { position: absolute; transform: translate(-50%,-50%); width: 124px; padding: 8px 7px; text-align: center;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--panel); cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; user-select: none; }
+  .tree-node .tn-name { font-size: 10.5px; letter-spacing: 0.5px; color: var(--dim); }
+  .tree-node .tn-cost { font-size: 8.5px; letter-spacing: 0.5px; margin-top: 3px; color: var(--dimmer); }
+  .tree-node.locked { opacity: 0.38; cursor: not-allowed; }
+  .tree-node.avail { border-color: rgba(201,162,107,0.45); }
+  .tree-node.avail .tn-name { color: var(--text); }
+  .tree-node.avail.can { border-color: var(--e1); box-shadow: 0 0 16px rgba(201,162,107,0.18); }
+  .tree-node.avail.can .tn-cost { color: var(--e1); }
+  .tree-node.avail:not(.can) .tn-cost { color: var(--danger); }
+  .tree-node.owned { border-color: var(--e1); background: rgba(201,162,107,0.12); cursor: default; }
+  .tree-node.owned .tn-name, .tree-node.owned .tn-cost { color: var(--e1); }
+  .tree-node:hover:not(.locked):not(.owned) { background: var(--panel-2); }
+  .compile-wrap { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  .cstat { min-width: 92px; }
+  .cstat .cs-label { font-size: 8.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
+  .cstat .cs-val { font-size: 22px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .compile-act { flex: 1; min-width: 220px; }
   #toasts { position: fixed; top: 60px; right: 18px; z-index: 60; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
   .toast { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 16px;
     max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out; }
@@ -147,10 +175,14 @@
 (() => {
   const CFG = {
     tickMs: 100,
-    rulePerClick: 1,
-    rulesetCost: 10, rulesetGrowth: 1.15, rulesetYield: 0.3,
-    logicCost: 40, logicGrowth: 1.3, logicMult: 0.5,
-    era2Gate: 60,
+    e1: { // The Symbolic Era — tuned for a ~5-6 minute standalone journey
+      clickBase: 1,
+      rulesetCost: 10, rulesetGrowth: 1.16, rulesetYield: 0.42,
+      daemonCost: 320, daemonGrowth: 1.19, daemonRate: 2.0, // auto-writes/sec per daemon
+      axiomDivisor: 380,  // axioms from a compile = floor(sqrt(runRules / divisor))
+      axiomBonus: 0.05,   // +5% to all rule production per Axiom (×1.5 with Meta-Logic)
+    },
+    // Later eras still run on the original scaffold; rebuilt in a later pass.
     datasetCost: 50, datasetGrowth: 1.2, datasetYield: 0.4,
     modelCost: 120, modelGrowth: 1.25,
     era3Gate: 40,
@@ -161,9 +193,10 @@
   };
   const S = {
     t: 0, started: false, era: 1, maxEra: 1, speed: 1, dev: false, buyMode: '1',
-    rules: 0, insight: 0, data: 0, capability: 0, scale: 0,
-    ruleset: 0, logic: 0, dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
-    obsolete: {}, flags: {}, clicks: 0,
+    rules: 0, runRules: 0, axioms: 0, totalAxioms: 0, compiles: 0,
+    insight: 0, data: 0, capability: 0, scale: 0,
+    ruleset: 0, daemon: 0, dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
+    tech: {}, obsolete: {}, flags: {}, clicks: 0,
   };
   const ERAS = {
     1: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand' },
@@ -171,28 +204,40 @@
     3: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability' },
     4: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical' },
   };
+  // ---- Era 1 tech tree (the Symbolic blueprint). row = tier (top→down), col = horizontal slot. ----
+  const TREE = [
+    { id:'formalLogic', name:'Formal Logic',      cost:50,    req:[],                          row:0, col:0,    desc:'+50% to all rule production. The base of every technique above.' },
+    { id:'fwdChain',    name:'Forward Chaining',  cost:160,   req:['formalLogic'],             row:1, col:-1.1, desc:'Rulesets are 80% more productive.' },
+    { id:'bwdChain',    name:'Backward Chaining', cost:160,   req:['formalLogic'],             row:1, col:1.1,  desc:'Writing a rule by hand is 3× stronger.' },
+    { id:'rete',        name:'Rete Network',      cost:750,   req:['fwdChain'],                row:2, col:-1.8, desc:'Each Ruleset boosts every other Ruleset (+3% each).' },
+    { id:'inference',   name:'Inference Engine',  cost:1200,  req:['fwdChain','bwdChain'],     row:2, col:0,    desc:'Unlocks Inference Daemons — automation that writes rules as if you were clicking.' },
+    { id:'heuristics',  name:'Heuristic Search',  cost:750,   req:['bwdChain'],                row:2, col:1.8,  desc:'Manual + Daemon writing scales with Rulesets owned (+8% each).' },
+    { id:'knowledge',   name:'Knowledge Base',    cost:3400,  req:['rete','inference'],        row:3, col:-1.0, desc:'Unlocks Compile — distil a whole run into permanent Axioms.' },
+    { id:'metalogic',   name:'Meta-Logic',        cost:11000, req:['knowledge'],               row:3, col:1.0,  desc:'Every Axiom becomes 50% more powerful.' },
+    { id:'expert',      name:'Expert System',     cost:60000, req:['metalogic','heuristics'], reqAxioms:18, row:4, col:0, desc:'Complete the Symbolic Era. A system that reasons on its own — and the ceiling hand-written logic can never break.' },
+  ];
+  const TREEMAP = Object.fromEntries(TREE.map(n=>[n.id,n]));
   const MILES = [
-    { id:'firstAuto', cond:()=> S.rules>=CFG.rulesetCost,
+    { id:'firstAuto', cond:()=> S.rules>=CFG.e1.rulesetCost,
       fire:()=>{ S.flags.canRuleset=true; revealGame();
-        toast('FIRST AUTOMATION','You can now build a <b>Ruleset</b> that writes rules on its own. You are no longer the only worker.'); } },
-    { id:'logicUnlock', cond:()=> S.ruleset>=2,
-      fire:()=>{ S.flags.canLogic=true; toast('UPGRADE PATH','<b>Formal Logic</b> available - make every rule worth more.'); } },
-    { id:'era2', cond:()=> S.rules>=CFG.era2Gate,
-      fire:()=>{ openEra(2); toast('PARADIGM SHIFT','Hand-written rules do not scale. A new approach emerges: <b>learning from Data</b>. The Statistical Era begins.'); } },
+        toast('FIRST AUTOMATION','Build a <b>Ruleset</b> — logic that writes rules without you. You are no longer the only worker.'); } },
+    { id:'treeUnlock', cond:()=> S.ruleset>=2,
+      fire:()=>{ S.flags.tree=true; toast('SYMBOLIC TECHNIQUE','A map of technique opens below. Spend Rules to unlock <b>Formal Logic</b>, then branch outward.'); } },
+    { id:'compileUnlock', cond:()=> S.tech.knowledge,
+      fire:()=>{ S.flags.compile=true; toast('COMPILE','You can now <b>Compile</b> a run into <b>Axioms</b> — permanent knowledge that survives a reset and multiplies everything.'); } },
+    { id:'era2', cond:()=> S.flags.era1done,
+      fire:()=>{ openEra(2); toast('PARADIGM SHIFT','Hand-written logic has hit its ceiling. A new approach emerges: <b>learning from Data</b>. The Statistical Era begins.'); } },
+    // Later eras — original scaffold, rebuilt in a later pass.
     { id:'era2auto', cond:()=> S.dataset>=2,
       fire:()=>{ S.flags.canModel=true; toast('STATISTICAL MODELS','Build a <b>Model</b> to turn raw Data into <b>Insight</b>.'); } },
-    { id:'era1obsolete', cond:()=> S.model>=3 && S.insight>=20,
-      fire:()=>{ S.obsolete[1]=true; toast('LEGACY','Hand-written rules are now obsolete. The Symbolic Era fades to legacy - preserved, but no longer where progress happens.'); } },
     { id:'era3', cond:()=> S.insight>=CFG.era3Gate,
-      fire:()=>{ openEra(3); toast('THE DEEP LEARNING ERA','Data and Insight are not enough. Now <b>Compute</b> is the bottleneck - and the supply chain gets real.'); } },
+      fire:()=>{ openEra(3); toast('THE DEEP LEARNING ERA','Data and Insight are not enough. Now <b>Compute</b> is the bottleneck.'); } },
     { id:'era3auto', cond:()=> S.compute>=3,
       fire:()=>{ S.flags.canTrain=true; toast('TRAINING RUNS','Spend Compute and Insight on <b>Training</b> to build raw <b>Capability</b>.'); } },
-    { id:'era2obsolete', cond:()=> S.capability>=20,
-      fire:()=>{ S.obsolete[2]=true; toast('LEGACY','Shallow statistical models are superseded. The Statistical Era joins the archive.'); } },
     { id:'era4', cond:()=> S.capability>=CFG.era4Gate,
       fire:()=>{ openEra(4); toast('FOUNDATION MODELS','Capability compounds into something general. Everything you built becomes an input to something larger.'); } },
     { id:'emergent', cond:()=> S.scale>=50,
-      fire:()=>{ toast('EMERGENCE','The authored content of this prototype ends here. The system keeps accelerating. This is where the real design work begins.'); } },
+      fire:()=>{ toast('EMERGENCE','The system keeps accelerating. This is where the real design work begins.'); } },
   ];
   const $ = id => document.getElementById(id);
   function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
@@ -212,20 +257,52 @@
     else if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(440,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.1); g.gain.setValueAtTime(0.13,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15); o.start();o.stop(ctx.currentTime+0.15); }
     else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(f,ctx.currentTime+i*0.07); g.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.11,ctx.currentTime+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.07+0.35); o.start(ctx.currentTime+i*0.07);o.stop(ctx.currentTime+i*0.07+0.35); }); }
   }catch(e){} }
+  // Derived Era-1 multipliers from owned tech + axioms. One source of truth for click + ruleset math.
+  function stats(){
+    const T=S.tech;
+    let click=CFG.e1.clickBase, rulesetMult=1, global=1;
+    if(T.formalLogic) global*=1.5;
+    if(T.fwdChain) rulesetMult*=1.8;
+    if(T.bwdChain) click*=3;
+    if(T.rete) rulesetMult*=(1+0.03*S.ruleset);
+    if(T.heuristics) click*=(1+0.08*S.ruleset);
+    const axBonus=CFG.e1.axiomBonus*(T.metalogic?1.5:1);
+    global*=(1+S.axioms*axBonus);
+    return { click: click*global, rulesetYield: CFG.e1.rulesetYield*rulesetMult*global, global, axBonus };
+  }
   function writeRule(ev){
     S.clicks++;
-    const mult = 1 + S.logic*CFG.logicMult;
-    const gain = CFG.rulePerClick*mult;
-    S.rules += gain; S.started=true;
+    const gain = stats().click;
+    S.rules += gain; S.runRules += gain; S.started=true;
     playSound('click');
-    const r=ev.currentTarget.getBoundingClientRect();
-    floatNum('+'+fmt(gain),'var(--e1)', r.left+r.width/2, r.top-6);
-    if(S.clicks===1) $('coHint').textContent='Keep going. Build enough, and you can make something that writes rules for you.';
+    if(ev && ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(gain),'var(--e1)', r.left+r.width/2, r.top-6); }
+    if(S.clicks===1 && $('coHint')) $('coHint').textContent='Keep going. Build enough, and you can make something that writes rules for you.';
     if(!S.flags.firstAuto) renderCold(); else refresh();
   }
+  // ---- Era-1 tech tree purchasing + the Compile (Axioms) loop ----
+  function canBuyTech(id){
+    const n=TREEMAP[id]; if(!n || S.tech[id]) return false;
+    if(!n.req.every(r=>S.tech[r])) return false;
+    if(n.reqAxioms && S.axioms < n.reqAxioms) return false;
+    return S.rules >= n.cost;
+  }
+  function buyTech(id){
+    const n=TREEMAP[id]; if(!canBuyTech(id)) return;
+    S.rules-=n.cost; S.tech[id]=true; playSound('buy');
+    if(id==='expert') S.flags.era1done=true;
+    render();
+  }
+  function axiomGain(){ return Math.floor(Math.sqrt(S.runRules/CFG.e1.axiomDivisor)); }
+  function compile(){
+    if(!S.flags.compile || S.flags.era1done) return;
+    const g=axiomGain(); if(g<1) return;
+    S.axioms+=g; S.totalAxioms+=g; S.compiles++;
+    S.rules=0; S.runRules=0; S.ruleset=0; S.daemon=0;
+    playSound('milestone'); render();
+  }
   const BUYS = {
-    ruleset: { res:'rules', key:'ruleset', base:CFG.rulesetCost, growth:CFG.rulesetGrowth },
-    logic:   { res:'rules', key:'logic',   base:CFG.logicCost,   growth:CFG.logicGrowth },
+    ruleset: { res:'rules', key:'ruleset', base:CFG.e1.rulesetCost, growth:CFG.e1.rulesetGrowth },
+    daemon:  { res:'rules', key:'daemon',  base:CFG.e1.daemonCost,  growth:CFG.e1.daemonGrowth },
     dataset: { res:'rules', key:'dataset', base:CFG.datasetCost, growth:CFG.datasetGrowth },
     model:   { res:'data',  key:'model',   base:CFG.modelCost,   growth:CFG.modelGrowth },
     compute: { res:'insight',key:'compute',base:CFG.computeCost, growth:CFG.computeGrowth },
@@ -255,13 +332,19 @@
     if(S.flags.firstAuto) return;
     S.flags.firstAuto=true;
     $('coldopen').style.opacity='0';
-    setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show');
-      $('vizwrap').style.display='block'; viz.start(); openEra(1,true); }, 800);
+    setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show'); openEra(1,true); }, 800);
   }
-  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; render(); }
+  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n;
+    if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
+    render(); }
   function produce(dt){
-    const mult = 1 + S.logic*CFG.logicMult;
-    if(S.ruleset>0) S.rules += S.ruleset*CFG.rulesetYield*mult*dt;
+    if(S.ruleset>0 || S.daemon>0){
+      const st=stats();
+      let g=0;
+      if(S.ruleset>0) g += S.ruleset*st.rulesetYield*dt;
+      if(S.daemon>0)  g += S.daemon*CFG.e1.daemonRate*st.click*dt;
+      if(g>0){ S.rules+=g; S.runRules+=g; }
+    }
     if(S.dataset>0) S.data += S.dataset*CFG.datasetYield*dt;
     if(S.model>0){ const conv=Math.min(S.data, S.model*0.6*dt); S.data-=conv; S.insight+=conv*1.5; }
     if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
@@ -282,6 +365,7 @@
   // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
   const RES_DEFS=[
     {k:'rules', show:()=>true,        color:'var(--e1)', label:'Rules'},
+    {k:'axioms', show:()=>S.flags.compile||S.totalAxioms>0, color:'var(--accent)', label:'Axioms'},
     {k:'data', show:()=>S.maxEra>=2,  color:'var(--e2)', label:'Data'},
     {k:'insight', show:()=>S.maxEra>=2,color:'var(--e2)', label:'Insight'},
     {k:'capability', show:()=>S.maxEra>=3,color:'var(--e3)', label:'Capability'},
@@ -305,13 +389,38 @@
     return '<div class="era '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header"><span class="era-tag">'+e.tag+
       '</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span><span class="era-status" id="status-'+n+'"></span></div><div class="era-body">'+body+'</div></div>';
   }
-  function buildEras(){
-    let html = eraShell(1, S.obsolete[1],
+  function nodePos(n){ return { x: 50 + n.col*14, y: 34 + n.row*58 }; }
+  const TREE_H = 34 + 4*58 + 30; // rows 0..4
+  function buildTree(){
+    let lines='';
+    for(const n of TREE){ const p=nodePos(n);
+      for(const r of n.req){ const pr=nodePos(TREEMAP[r]); const on=S.tech[n.id]&&S.tech[r], live=S.tech[r];
+        lines += '<line x1="'+pr.x+'" y1="'+pr.y+'" x2="'+p.x+'" y2="'+p.y+'" class="tl'+(on?' tl-on':(live?' tl-live':''))+'"/>'; } }
+    let nodes='';
+    for(const n of TREE){ const p=nodePos(n);
+      nodes += '<div class="tree-node" data-tech="'+n.id+'" id="tn-'+n.id+'" title="'+n.desc+'" style="left:'+p.x+'%;top:'+p.y+'px">'+
+        '<div class="tn-name">'+n.name+'</div><div class="tn-cost" id="tnc-'+n.id+'"></div></div>'; }
+    return '<svg class="tree-svg" viewBox="0 0 100 '+TREE_H+'" preserveAspectRatio="none">'+lines+'</svg>'+nodes;
+  }
+  function buildCompile(){
+    return '<div class="compile-wrap">'+
+      '<div class="cstat"><div class="cs-label">Axioms</div><div class="cs-val" id="axVal" style="color:var(--accent)"></div></div>'+
+      '<div class="cstat"><div class="cs-label">Production bonus</div><div class="cs-val" id="axBonus"></div></div>'+
+      '<div class="compile-act"><button class="act-btn" id="compileBtn"></button><div class="act-sub" id="compileSub">Resets Rules, Rulesets and Daemons. Technique and Axioms stay.</div></div>'+
+    '</div>';
+  }
+  function buildEra1(){
+    let prod = eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.');
+    if(S.tech.inference) prod += eraUpgrade('daemon','Inference Daemon','Fires the write action for you. Everything that makes a click stronger makes a Daemon stronger.');
+    let body =
       '<div class="panel"><div class="panel-label">Manual Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub" id="manualSub"></div></div>'+
-      '<div class="panel"><div class="panel-label">Automation &amp; Upgrades</div>'+
-        (S.flags.canRuleset?eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.'):'')+
-        (S.flags.canLogic?eraUpgrade('logic','Formal Logic','Each Ruleset and click produces more. Compounds everything.'):'')+
-      '</div>');
+      '<div class="panel"><div class="panel-label">Automation</div>'+(S.flags.canRuleset?prod:'<div class="up-desc">Keep writing...</div>')+'</div>';
+    if(S.flags.tree) body += '<div class="panel tree-panel" style="grid-column:1/-1"><div class="panel-label">Symbolic Technique</div><div class="tree" style="height:'+TREE_H+'px" id="tree">'+buildTree()+'</div></div>';
+    if(S.flags.compile && !S.flags.era1done) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
+    return eraShell(1, false, body);
+  }
+  function buildEras(){
+    let html = buildEra1();
     if(S.maxEra>=2) html += eraShell(2, S.obsolete[2],
       '<div class="panel"><div class="panel-label">Data Pipeline</div>'+eraUpgrade('dataset','Dataset','Generates raw Data over time. Bought with legacy Rules.')+
         '<div class="meter"><i id="meter-data" style="background:var(--e2)"></i></div><div class="meter-label"><span>Data buffer</span><span id="meter-data-val"></span></div></div>'+
@@ -330,6 +439,8 @@
     $('eras').innerHTML = buildEras();
     const rb=$('ruleBtn2'); if(rb) rb.onclick=writeRule;
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
+    document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
+    const cb=$('compileBtn'); if(cb) cb.onclick=compile;
     refresh();
   }
   function upLabel(key){ // {can, html} for a buy button under the current buy mode
@@ -344,6 +455,7 @@
     if(S.obsolete[n]){ el.textContent='LEGACY'; el.className='era-status legacy'; return; }
     const txt= live?'● RUNNING':'ACTIVE', cls='era-status'+(live?' live':'');
     if(el.textContent!==txt) el.textContent=txt; if(el.className!==cls) el.className=cls; }
+  function setClass(el, cls){ if(el && el.className!==cls) el.className=cls; }
   function refresh(){ // cheap per-tick value update; the DOM (and your buttons) stay put
     if(!S.flags.firstAuto) return;
     setText('eraInd', ERAS[S.maxEra].tag.toUpperCase()+' ERA');
@@ -354,8 +466,26 @@
       if(btn._html!==st.html){ btn.innerHTML=st.html; btn._html=st.html; }
       if(btn.disabled!==!st.can) btn.disabled=!st.can;
     }
-    setText('manualSub', '+'+fmt(1+S.logic*CFG.logicMult)+' rules · the original verb');
-    setStatus(1,S.ruleset>0); setStatus(2,S.model>0); setStatus(3,S.training>0); setStatus(4,S.cluster>0);
+    const st=stats();
+    setText('manualSub', '+'+fmt(st.click)+' rules · the original verb');
+    setStatus(1,S.ruleset>0||S.daemon>0); setStatus(2,S.model>0); setStatus(3,S.training>0); setStatus(4,S.cluster>0);
+    // tech tree
+    for(const n of TREE){ const el=$('tn-'+n.id); if(!el) continue;
+      const owned=S.tech[n.id], prereq=n.req.every(r=>S.tech[r]);
+      let state='locked', cost='LOCKED';
+      if(owned){ state='owned'; cost='OWNED'; }
+      else if(prereq){ const afford=canBuyTech(n.id); state='avail'+(afford?' can':''); cost=fmt(n.cost)+' rules'+(n.reqAxioms&&S.axioms<n.reqAxioms?' · '+n.reqAxioms+' axioms':''); }
+      setClass(el,'tree-node '+state); setText('tnc-'+n.id, cost);
+    }
+    // compile
+    const cb=$('compileBtn');
+    if(cb){ const g=axiomGain();
+      setText('axVal', fmt(S.axioms));
+      setText('axBonus', '+'+Math.round(S.axioms*st.axBonus*100)+'%');
+      const html='COMPILE · <span class="c" style="color:var(--accent)">+'+g+' axioms</span>';
+      if(cb._html!==html){ cb.innerHTML=html; cb._html=html; }
+      if(cb.disabled!==(g<1)) cb.disabled=(g<1);
+    }
     const md=$('meter-data'); if(md){ md.style.width=Math.min(100,(S.data/(Math.max(1,S.model)*10))*100)+'%'; setText('meter-data-val',fmt(S.data)); }
     const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
   }
@@ -365,7 +495,7 @@
     if(S.maxEra>=4) S.capability+=500;
     else if(S.maxEra>=3) S.insight+=500;
     else if(S.maxEra>=2){ S.data+=500; S.rules+=500; }
-    else { S.rules+=200; if(!S.flags.firstAuto) revealGame(); }
+    else { S.rules+=5000; S.runRules+=5000; if(!S.flags.firstAuto) revealGame(); }
     if(S.flags.firstAuto) render();
   }
   function renderDev(){
@@ -477,7 +607,7 @@
   const lastSave=load();
   if(S.flags.firstAuto){ // returning player: jump straight into the full UI
     $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show');
-    $('vizwrap').style.display='block'; viz.start();
+    if(S.maxEra>=2){ $('vizwrap').style.display='block'; viz.start(); }
   }
   let offline=null;
   if(lastSave && S.flags.firstAuto){ offline=offlineCatchup((Date.now()-lastSave)/1000); }
@@ -492,8 +622,9 @@
 
   // Test seam: exposes internals only when a harness sets window.__EMERGENCE_TEST__ before load.
   if(typeof window!=='undefined' && window.__EMERGENCE_TEST__){
-    window.EMERGENCE={ S, CFG, BUYS, MILES, ERAS, VIZ_STATIONS, fmt,
+    window.EMERGENCE={ S, CFG, BUYS, MILES, ERAS, TREE, TREEMAP, VIZ_STATIONS, fmt,
       unitCost, totalCost, buyQty, buy, writeRule, produce, checkMiles, tick,
+      stats, canBuyTech, buyTech, axiomGain, compile,
       save, load, offlineCatchup, revealGame };
   }
 })();

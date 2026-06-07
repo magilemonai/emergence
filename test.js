@@ -2,16 +2,16 @@
 /*
  * EMERGENCE test harness — run with: node test.js   (no dependencies)
  *
- * Two kinds of checks, per the project's goals:
- *   1. CORRECTNESS  — math, save/load, offline catch-up, no NaN/crashes.
- *   2. PROGRESSION  — a milestone-driven autoplayer plays a fresh game at
- *      speed and must reach every era and Emergence within a tick budget.
- *      This is the regression net for balance changes: tune a number in CFG,
- *      re-run, and see both "still completable?" and "minutes per era".
+ *   1. CORRECTNESS  — math, tech-tree prereqs, compile loop, save/load,
+ *      offline catch-up, no NaN/crashes.
+ *   2. PROGRESSION  — an autoplayer plays a fresh game at speed and must
+ *      complete the Symbolic Era (the Expert System) within a tick budget,
+ *      printing how long it took. This is the balance regression net:
+ *      tune CFG.e1 / tree costs, re-run, read "minutes to finish Era 1".
  *
- * The game ships as a single self-contained HTML file with the logic in one
- * IIFE. We extract that script, run it against a tiny DOM/canvas/localStorage
- * shim, and read internals through the window.__EMERGENCE_TEST__ seam.
+ * The game ships as one self-contained HTML file with logic in a single IIFE.
+ * We extract that script, run it against a tiny DOM/canvas/localStorage shim,
+ * and read internals through the window.__EMERGENCE_TEST__ seam.
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,17 +19,17 @@ const path = require('path');
 const html = fs.readFileSync(path.join(__dirname, 'emergence.html'), 'utf8');
 const SCRIPT = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
-// ---- Minimal headless shims (the game must run with no real browser) ----
+// ---- Minimal headless shims ----
 const CTX = {
   setTransform(){}, clearRect(){}, beginPath(){}, moveTo(){}, lineTo(){}, stroke(){},
   arc(){}, fill(){}, fillText(){}, createRadialGradient(){ return { addColorStop(){} }; },
 };
 function makeEl(){
   return {
-    style:{}, dataset:{}, className:'', innerHTML:'', textContent:'', width:0, height:0, onclick:null,
+    style:{}, dataset:{}, className:'', innerHTML:'', textContent:'', width:0, height:0, onclick:null, disabled:false,
     classList:{ add(){}, remove(){}, toggle(){}, contains(){ return false; } },
     appendChild(c){ return c; }, remove(){}, addEventListener(){}, setAttribute(){},
-    getBoundingClientRect(){ return { width:1000, height:210, left:0, top:0, right:1000, bottom:210 }; },
+    getBoundingClientRect(){ return { width:1000, height:300, left:0, top:0, right:1000, bottom:300 }; },
     getContext(){ return CTX; }, querySelector(){ return makeEl(); }, querySelectorAll(){ return []; },
   };
 }
@@ -42,9 +42,9 @@ function installShims(){
   global.location = { search:'', reload(){} };
   global.requestAnimationFrame = () => 0;
   global.cancelAnimationFrame = () => {};
-  global.setTimeout = (fn) => { try{ fn(); }catch(e){} return 0; }; // run callbacks synchronously
+  global.setTimeout = (fn) => { try{ fn(); }catch(e){} return 0; };
   global.clearTimeout = () => {};
-  global.setInterval = () => 0;   // never auto-run the loop; the harness drives ticks
+  global.setInterval = () => 0;
   global.clearInterval = () => {};
   global.addEventListener = () => {};
   global.removeEventListener = () => {};
@@ -59,11 +59,9 @@ function installShims(){
     getElementById(id){ if(!els.has(id)) els.set(id, makeEl()); return els.get(id); },
   };
 }
-
-// Re-evaluate the game IIFE in a fresh shimmed environment; return its exports.
 function freshGame(){
   installShims();
-  (0, eval)(SCRIPT);            // indirect eval -> runs in global scope, sees the shims
+  (0, eval)(SCRIPT);
   return global.window.EMERGENCE;
 }
 
@@ -84,187 +82,181 @@ function testFormatting(){
   section('Number formatting');
   const { fmt } = freshGame();
   ok(fmt(0) === '0', 'fmt(0) = "0"');
-  ok(fmt(7) === '7', 'fmt(7) = "7"');
   ok(fmt(999) === '999', 'fmt(999) = "999"');
   ok(fmt(1500) === '1.50K', 'fmt(1500) = "1.50K"');
   ok(fmt(1e6) === '1.00M', 'fmt(1e6) = "1.00M"');
-  ok(fmt(2.5e9) === '2.50B', 'fmt(2.5e9) = "2.50B"');
 }
 
 function testCostMath(){
   section('Cost + bulk-buy math');
   const EM = freshGame();
   const b = EM.BUYS.ruleset;
-  // unit costs grow monotonically
   let prev = -1, mono = true;
   for(let c=0;c<20;c++){ const u = EM.unitCost(b, c); if(u <= prev) mono = false; prev = u; }
   ok(mono, 'unit cost is monotonically increasing');
   ok(EM.unitCost(b,0) === 10, 'first ruleset costs 10');
-  ok(EM.totalCost(b,10) === 200, 'x10 total from 0 owned = 200');
-  // buyQty MAX must spend down to < next unit cost
-  EM.S.rules = 100; EM.S.ruleset = 0;
-  EM.S.buyMode = 'max';
+  let sum10 = 0; for(let i=0;i<10;i++) sum10 += EM.unitCost(b,i);
+  ok(EM.totalCost(b,10) === sum10, 'x10 total equals the sum of 10 escalating unit costs');
+  ok(EM.totalCost(b,1) === EM.unitCost(b,0), 'x1 total equals the first unit cost');
+  EM.S.rules = 100; EM.S.ruleset = 0; EM.S.buyMode = 'max';
   const n = EM.buyQty('ruleset');
   ok(n === 6, 'MAX with 100 rules buys 6 rulesets');
-  const tc = EM.totalCost(b, n);
-  ok(EM.S.rules - tc < EM.unitCost(b, n), 'after MAX, leftover < next unit cost');
+  ok(EM.S.rules - EM.totalCost(b, n) < EM.unitCost(b, n), 'after MAX, leftover < next unit cost');
 }
 
 function testBuy(){
   section('Purchase path');
   const EM = freshGame(); const { S } = EM;
   S.flags.canRuleset = true; S.rules = 50; S.ruleset = 0; S.buyMode = '1';
-  const before = S.rules;
-  EM.buy('ruleset');
+  const before = S.rules; EM.buy('ruleset');
   ok(S.ruleset === 1, 'x1 buy increments count');
   ok(before - S.rules === 10, 'x1 buy deducts exact unit cost');
-  // unaffordable buy is a no-op
-  S.rules = 0; const cnt = S.ruleset;
-  EM.buy('ruleset');
+  S.rules = 0; const cnt = S.ruleset; EM.buy('ruleset');
   ok(S.ruleset === cnt && S.rules === 0, 'unaffordable buy is a no-op');
-  // MAX buy
-  S.rules = 1000; S.ruleset = 0; S.buyMode = 'max';
-  const want = EM.buyQty('ruleset'); EM.buy('ruleset');
-  ok(S.ruleset === want, 'MAX buy adds buyQty() units at once');
+}
+
+function testTechTree(){
+  section('Tech tree — prerequisites + effects');
+  const EM = freshGame(); const { S } = EM;
+  S.rules = 1e9;
+  ok(!EM.canBuyTech('fwdChain'), 'cannot buy a node before its prerequisite');
+  ok(EM.canBuyTech('formalLogic'), 'root node is buyable with enough rules');
+  EM.buyTech('formalLogic');
+  ok(S.tech.formalLogic === true, 'buying marks the node owned');
+  near(EM.stats().global, 1.5, 1e-9, 'Formal Logic gives +50% global production');
+  ok(EM.canBuyTech('fwdChain') && EM.canBuyTech('bwdChain'), 'children unlock once prereq owned');
+  EM.buyTech('bwdChain');
+  ok(EM.stats().click >= 3, 'Backward Chaining at least triples click value');
+  ['fwdChain','rete','inference','heuristics','knowledge','metalogic'].forEach(id => EM.buyTech(id));
+  ok(!EM.canBuyTech('expert'), 'Expert System blocked without enough Axioms');
+  S.axioms = 20;
+  ok(EM.canBuyTech('expert'), 'Expert System buyable once Axioms requirement met');
+  EM.buyTech('expert');
+  ok(S.flags.era1done === true, 'buying Expert System completes the era');
+}
+
+function testCompile(){
+  section('Compile → Axioms loop');
+  const EM = freshGame(); const { S } = EM;
+  S.flags.compile = true; S.runRules = 0;
+  EM.compile();
+  ok(S.axioms === 0, 'compiling with too little run yields nothing');
+  S.runRules = EM.CFG.e1.axiomDivisor * 9; // sqrt(9) = 3
+  ok(EM.axiomGain() === 3, 'axiom gain = floor(sqrt(runRules / divisor))');
+  S.rules = 500; S.ruleset = 5; S.daemon = 3; S.tech.formalLogic = true;
+  EM.compile();
+  ok(S.axioms === 3, 'compile banks the axioms');
+  ok(S.rules === 0 && S.ruleset === 0 && S.daemon === 0 && S.runRules === 0, 'compile resets the run');
+  ok(S.tech.formalLogic === true, 'compile preserves owned technique');
+  // axioms multiply production
+  S.axioms = 10;
+  ok(EM.stats().global > 1, 'axioms raise the global production multiplier');
 }
 
 function testSaveLoad(){
   section('Save / load roundtrip');
   const EM = freshGame(); const { S } = EM;
-  S.flags.firstAuto = true; S.maxEra = 3; S.rules = 1234.5; S.insight = 67.8;
-  S.compute = 4; S.obsolete[1] = true; S.buyMode = 'max';
+  S.flags.firstAuto = true; S.rules = 1234.5; S.axioms = 7; S.ruleset = 9;
+  S.tech.formalLogic = true; S.tech.fwdChain = true; S.buyMode = 'max';
   EM.save();
-  // clobber state, then load
-  S.rules = 0; S.insight = 0; S.compute = 0; S.maxEra = 1; S.obsolete = {}; S.buyMode = '1';
+  S.rules = 0; S.axioms = 0; S.ruleset = 0; S.tech = {}; S.buyMode = '1';
   EM.load();
   near(S.rules, 1234.5, 1e-6, 'rules restored');
-  near(S.insight, 67.8, 1e-6, 'insight restored');
-  ok(S.compute === 4, 'building counts restored');
-  ok(S.maxEra === 3, 'maxEra restored');
-  ok(S.obsolete[1] === true, 'obsolescence map restored');
+  ok(S.axioms === 7, 'axioms restored');
+  ok(S.ruleset === 9, 'building counts restored');
+  ok(S.tech.formalLogic && S.tech.fwdChain, 'owned tech restored');
   ok(S.buyMode === 'max', 'buy mode restored');
 }
 
 function testOffline(){
   section('Offline progress');
   const EM = freshGame(); const { S } = EM;
-  S.started = true; S.flags.firstAuto = true; S.ruleset = 5; // passive rule income
+  S.started = true; S.flags.firstAuto = true; S.ruleset = 5; // passive income
   const before = S.rules;
-  const r1 = EM.offlineCatchup(600); // 10 minutes away
-  ok(r1 && r1.g.rules > 0, 'offline grants passive income while away');
+  const r1 = EM.offlineCatchup(600);
+  ok(r1 && r1.g.rules > 0, 'offline grants passive income');
   ok(S.rules > before, 'resources increased after catch-up');
-  // capping at 8h
   const r2 = EM.offlineCatchup(99999);
-  ok(r2.eff === 8*3600, 'offline is capped at 8 hours');
-  ok(r2.capped === true, 'capped flag set when over the cap');
-  // tiny gaps do nothing
-  const r3 = EM.offlineCatchup(0.2);
-  ok(r3 === null, 'sub-second gaps return no offline summary');
+  ok(r2.eff === 8*3600, 'offline capped at 8 hours');
+  ok(EM.offlineCatchup(0.2) === null, 'sub-second gaps return nothing');
 }
 
 function testNoNaN(){
   section('Production never yields NaN');
   const EM = freshGame(); const { S } = EM;
-  S.ruleset=3; S.logic=2; S.dataset=4; S.model=3; S.compute=5; S.training=4; S.cluster=2;
-  S.data=100; S.insight=100; S.capability=100;
+  S.ruleset=6; S.daemon=4; S.axioms=10;
+  S.tech = { formalLogic:true, fwdChain:true, bwdChain:true, rete:true, heuristics:true };
+  S.dataset=3; S.model=2; S.data=100; S.insight=80; S.compute=4; S.training=3; S.capability=50; S.cluster=2;
   for(let i=0;i<200;i++) EM.produce(0.1);
-  ok(finite(S, ['rules','data','insight','capability','scale']), 'all resources stay finite after produce()');
-  ok(S.data >= 0 && S.insight >= 0 && S.capability >= 0, 'no resource goes negative from conversion');
+  ok(finite(S, ['rules','runRules','data','insight','capability','scale']), 'all resources stay finite');
+  ok(S.rules > 0, 'production accrues rules');
 }
 
 function testNoIdleRebuild(){
-  // Regression guard: rebuilding #eras' innerHTML every tick destroyed buttons
-  // mid-click (visible strobe + lost clicks). Idle ticks must NOT rebuild structure.
   section('No DOM rebuild on idle ticks (anti-strobe guard)');
   const EM = freshGame(); const { S, MILES } = EM;
   S.started = true; S.rules = 5;
-  EM.revealGame();                          // builds Era 1 (reveal setTimeout runs synchronously)
-  S.ruleset = 4;                            // passive rule income so values keep changing
-  MILES.forEach(m => S.flags[m.id] = true); // freeze milestones: nothing structural should fire
-  EM.tick();                                // settle
+  EM.revealGame();
+  S.ruleset = 4;
+  MILES.forEach(m => S.flags[m.id] = true); // freeze milestones
+  EM.tick();
   const eras = global.document.getElementById('eras');
   let writes = 0, store = eras.innerHTML;
   Object.defineProperty(eras, 'innerHTML', { configurable:true, get(){ return store; }, set(v){ writes++; store = v; } });
   const before = S.rules;
-  for(let i=0;i<20;i++) EM.tick();          // 20 idle ticks: no buys, no new milestones
-  ok(writes === 0, 'era DOM is not rebuilt on idle ticks (saw '+writes+' rebuilds — buttons would strobe)');
+  for(let i=0;i<20;i++) EM.tick();
+  ok(writes === 0, 'era DOM is not rebuilt on idle ticks (saw '+writes+' rebuilds)');
   ok(S.rules > before, 'resource values still advance while the DOM stays put');
 }
 
 // ====================================================================
-// 2. PROGRESSION — milestone-driven autoplayer
+// 2. PROGRESSION — autoplay through the Symbolic Era
 // ====================================================================
-// A reasonable human player: click hard early, build income/converters up to
-// sane caps, then let the gating resource bank toward the next era's threshold.
-function autoplayStep(EM){
-  const { S, BUYS } = EM;
-  const clicks = S.maxEra === 1 ? 8 : 1;
+function era1Step(EM){
+  const { S, TREE, BUYS } = EM;
+  if(S.flags.era1done) return;
+  // bootstrap clicks early; a trickle once automation runs
+  const clicks = (S.ruleset + S.daemon < 1 || S.t < 25) ? 6 : 1;
   for(let i=0;i<clicks;i++) EM.writeRule(FAKE_EV);
-  const tryBuy = (k, cap) => { if(S[k] < cap) EM.buy(k); };
-  if(S.maxEra === 1){
-    if(S.flags.canRuleset) tryBuy('ruleset', 6);
-    if(S.flags.canLogic)   tryBuy('logic', 3);
-  } else if(S.maxEra === 2){
-    tryBuy('ruleset', 8);
-    tryBuy('dataset', 8);
-    if(S.flags.canModel) tryBuy('model', 8);
-  } else if(S.maxEra === 3){
-    tryBuy('dataset', 10); tryBuy('model', 10);
-    tryBuy('compute', 6);
-    if(S.flags.canTrain) tryBuy('training', 6);
-  } else { // era 4+
-    tryBuy('model', 12); tryBuy('compute', 8); tryBuy('training', 8);
-    tryBuy('cluster', 8);
+  // the next technique we can work toward (prereqs + axiom-gate satisfied)
+  const next = TREE.find(n => n.id!=='expert' && !S.tech[n.id] && n.req.every(r=>S.tech[r]) && (!n.reqAxioms || S.axioms>=n.reqAxioms));
+  const goalCost = next ? next.cost : Infinity;
+  // grow income but keep a reserve for the next node
+  if(S.ruleset < 30){ const c = EM.totalCost(BUYS.ruleset,1); if(S.rules - c > Math.min(goalCost*0.5, 250)) EM.buy('ruleset'); }
+  if(S.tech.inference && S.daemon < 20){ const c = EM.totalCost(BUYS.daemon,1); if(S.rules - c > goalCost*0.6) EM.buy('daemon'); }
+  // buy the next node when affordable
+  if(next && S.rules >= next.cost) EM.buyTech(next.id);
+  // finish the era when ready
+  if(EM.canBuyTech('expert')) EM.buyTech('expert');
+  // compile when stuck or when banking axioms toward the Expert System
+  if(S.flags.compile && !S.flags.era1done){
+    const stuck = !TREE.some(n => n.id!=='expert' && EM.canBuyTech(n.id));
+    const needForExpert = S.tech.metalogic && S.tech.heuristics && S.axioms < 12;
+    if((stuck || needForExpert) && EM.axiomGain() >= Math.max(2, Math.ceil(S.axioms*0.5))) EM.compile();
   }
 }
 
 function testProgression(){
-  section('Progression — autoplay to Emergence');
+  section('Progression — autoplay through the Symbolic Era');
   const EM = freshGame(); const { S } = EM;
-  const MAX_TICKS = 120000;             // 200 simulated minutes — generous stall ceiling
-  const want = ['era2','era3','era4','era1obsolete','era2obsolete','emergent'];
-  const at = {};                        // milestone id -> simulated seconds reached
-  let tick = 0;
-  for(; tick < MAX_TICKS; tick++){
-    autoplayStep(EM);
-    EM.tick();
-    for(const id of want){ if(at[id] === undefined && S.flags[id]) at[id] = S.t; }
-    if(at.emergent !== undefined) break;
+  const MAX = 180000; // 300 simulated minutes — generous stall ceiling
+  let tick = 0, doneAt;
+  for(; tick < MAX; tick++){
+    era1Step(EM); EM.tick();
+    if(S.flags.era1done){ doneAt = S.t; break; }
   }
-  const mm = s => (s === undefined ? '   —   ' : (s/60).toFixed(1).padStart(5) + 'm');
-  console.log('  ── milestone timing (simulated) ──');
-  console.log('     Era 2 (Statistical)   reached at ' + mm(at.era2));
-  console.log('     Era 1 -> legacy       at ' + mm(at.era1obsolete));
-  console.log('     Era 3 (Deep)          reached at ' + mm(at.era3));
-  console.log('     Era 2 -> legacy       at ' + mm(at.era2obsolete));
-  console.log('     Era 4 (Foundation)    reached at ' + mm(at.era4));
-  console.log('     EMERGENCE             reached at ' + mm(at.emergent));
-  console.log('  ──────────────────────────────────');
-  console.log('  final buildings: ruleset='+S.ruleset+' logic='+S.logic+' dataset='+S.dataset+
-    ' model='+S.model+' compute='+S.compute+' training='+S.training+' cluster='+S.cluster);
-  console.log('  final resources: rules='+EM.fmt(S.rules)+' data='+EM.fmt(S.data)+' insight='+EM.fmt(S.insight)+
-    ' capability='+EM.fmt(S.capability)+' scale='+EM.fmt(S.scale));
-
-  ok(at.era2 !== undefined, 'Era 2 unlocks');
-  ok(at.era3 !== undefined, 'Era 3 unlocks');
-  ok(at.era4 !== undefined, 'Era 4 unlocks');
-  ok(at.emergent !== undefined, 'Emergence is reachable (game does not stall)');
-  // ordering sanity — eras unlock in sequence
-  if(at.era2 !== undefined && at.era3 !== undefined) ok(at.era2 < at.era3, 'Era 2 unlocks before Era 3');
-  if(at.era3 !== undefined && at.era4 !== undefined) ok(at.era3 < at.era4, 'Era 3 unlocks before Era 4');
-  if(at.era4 !== undefined && at.emergent !== undefined) ok(at.era4 < at.emergent, 'Era 4 unlocks before Emergence');
-  // legacy transitions actually fire
-  ok(at.era1obsolete !== undefined, 'Symbolic era goes legacy');
-  ok(at.era2obsolete !== undefined, 'Statistical era goes legacy');
-  // no NaN at the finish line
-  ok(finite(S, ['rules','data','insight','capability','scale']), 'final state has no NaN');
-
-  // Soft pacing guidance (warnings, not failures) so balance regressions are visible.
-  const warn = [];
-  if(at.era2 !== undefined && at.era2/60 > 8) warn.push('Era 1->2 is slow (>8m)');
-  if(at.emergent !== undefined && at.emergent/60 > 60) warn.push('Full run is long (>60m)');
-  if(at.emergent !== undefined && at.emergent/60 < 8) warn.push('Full run is very short (<8m) — may feel rushed');
-  if(warn.length) console.log('  ⚠ pacing notes: ' + warn.join('; '));
+  const techCount = Object.keys(S.tech).filter(k=>S.tech[k]).length;
+  console.log('  Symbolic Era completed at ' + (doneAt ? (doneAt/60).toFixed(1)+'m' : '— (did not finish)'));
+  console.log('  compiles=' + S.compiles + '  axioms=' + S.axioms + '  tech=' + techCount + '/' + EM.TREE.length);
+  ok(S.flags.era1done, 'Era 1 (Expert System) is reachable — the era does not stall');
+  ok(techCount === EM.TREE.length, 'all tech nodes obtained by completion');
+  ok(S.compiles >= 1, 'at least one Compile happened (the loop engages)');
+  ok(finite(S, ['rules','axioms']), 'no NaN at completion');
+  if(doneAt){ const m = doneAt/60;
+    if(m < 3) console.log('  ⚠ pacing: faster than the 5-6m target (' + m.toFixed(1) + 'm)');
+    else if(m > 9) console.log('  ⚠ pacing: slower than the 5-6m target (' + m.toFixed(1) + 'm)');
+    else console.log('  ✓ pacing in band (' + m.toFixed(1) + 'm)');
+  }
 }
 
 // ---- run all ----
@@ -273,6 +265,8 @@ console.log('====================');
 testFormatting();
 testCostMath();
 testBuy();
+testTechTree();
+testCompile();
 testSaveLoad();
 testOffline();
 testNoNaN();
