@@ -92,6 +92,16 @@
   #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
   .float { position: absolute; font-size: 14px; font-weight: 600; animation: floatUp 0.9s ease-out forwards; font-variant-numeric: tabular-nums; }
   @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-46px) scale(1.1); } }
+  #dev { position: fixed; left: 14px; bottom: 14px; z-index: 80; display: none; flex-direction: column; gap: 8px;
+    background: rgba(8,11,18,0.92); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; backdrop-filter: blur(4px); }
+  #dev.show { display: flex; }
+  #dev .dh { font-size: 8.5px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; display: flex; justify-content: space-between; gap: 14px; }
+  #dev .dh b { color: var(--accent); }
+  #dev .row { display: flex; gap: 6px; }
+  #dev button { font-family: inherit; font-size: 10px; letter-spacing: 0.5px; padding: 5px 9px; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer; transition: all 0.12s; }
+  #dev button:hover { border-color: var(--accent); color: var(--text); }
+  #dev button.on { border-color: var(--accent); color: var(--accent); background: rgba(255,205,107,0.08); }
 </style>
 </head>
 <body>
@@ -115,6 +125,7 @@
 </div>
 <div id="fx"></div>
 <div id="toasts"></div>
+<div id="dev"></div>
 <script>
 (() => {
   const CFG = {
@@ -126,13 +137,13 @@
     datasetCost: 50, datasetGrowth: 1.2, datasetYield: 0.4,
     modelCost: 120, modelGrowth: 1.25,
     era3Gate: 40,
-    computeCost: 200, computeGrowth: 1.22, computePer: 0.5,
-    trainCost: 500, trainGrowth: 1.3,
+    computeCost: 35, computeGrowth: 1.22, computePer: 0.5,
+    trainCost: 90, trainGrowth: 1.28,
     era4Gate: 30,
-    scaleCost: 1000, scaleGrowth: 1.28,
+    scaleCost: 45, scaleGrowth: 1.26,
   };
   const S = {
-    t: 0, started: false, era: 1, maxEra: 1,
+    t: 0, started: false, era: 1, maxEra: 1, speed: 1, dev: false,
     rules: 0, insight: 0, data: 0, capability: 0, scale: 0,
     ruleset: 0, logic: 0, dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
     obsolete: {}, flags: {}, clicks: 0,
@@ -211,7 +222,7 @@
   }
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; renderEras(); }
   function tick(){
-    const dt=CFG.tickMs/1000; if(S.started) S.t+=dt;
+    const dt=CFG.tickMs/1000*S.speed; if(S.started) S.t+=dt;
     const mult = 1 + S.logic*CFG.logicMult;
     if(S.ruleset>0) S.rules += S.ruleset*CFG.rulesetYield*mult*dt;
     if(S.dataset>0) S.data += S.dataset*CFG.datasetYield*dt;
@@ -278,6 +289,29 @@
     const rb=$('ruleBtn2'); if(rb) rb.onclick=writeRule;
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
   }
+  // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
+  const SPEEDS=[1,3,10,50];
+  function grant(){ // give a generous push to whatever the current era needs
+    if(S.maxEra>=4) S.capability+=500;
+    else if(S.maxEra>=3) S.insight+=500;
+    else if(S.maxEra>=2){ S.data+=500; S.rules+=500; }
+    else { S.rules+=200; if(!S.flags.firstAuto) revealGame(); }
+    renderEras(); renderHeader();
+  }
+  function renderDev(){
+    if(!S.dev) return;
+    $('dev').innerHTML =
+      '<div class="dh"><span>DEV &middot; <b>'+S.speed+'×</b></span><span>` to hide</span></div>'+
+      '<div class="row">'+SPEEDS.map(s=>'<button data-spd="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div>'+
+      '<div class="row"><button data-grant="1">+resources</button><button data-reset="1">hard reset</button></div>';
+    $('dev').querySelectorAll('[data-spd]').forEach(b=> b.onclick=()=>{ S.speed=+b.dataset.spd; renderDev(); });
+    $('dev').querySelector('[data-grant]').onclick=grant;
+    $('dev').querySelector('[data-reset]').onclick=()=>{ if(confirm('Wipe all progress and reload?')){ try{localStorage.removeItem('emergence-save');}catch(e){} location.reload(); } };
+  }
+  function toggleDev(on){ S.dev = on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); if(S.dev) renderDev(); }
+  window.addEventListener('keydown', e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
+  if(/[?&]dev=1/.test(location.search)) toggleDev(true);
+
   $('coBtn').onclick=writeRule;
   renderCold();
   setInterval(tick, CFG.tickMs);
