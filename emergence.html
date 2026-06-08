@@ -24,6 +24,17 @@
     --text: #c8dcea; --dim: #8fa9bd; --dimmer: #5f7589; --accent: #ffcd6b;
     --era-font: "SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
   }
+  /* ERA 3 — Statistical: cool teal, scientific / data-viz. Clean sans. */
+  .theme-3, .era-e3 {
+    --bg: #051210; --panel: #0a221c; --panel-2: #0d2c24; --line: #1e4d41;
+    --text: #d2efe4; --dim: #84baa9; --dimmer: #4f7d6f; --accent: #7fe6c4;
+    --era-font: "Inter", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  }
+  body.theme-3 { background: radial-gradient(1000px 620px at 50% -10%, rgba(110,198,168,0.08), transparent 60%), var(--bg); }
+  .era-e3 { background:
+      linear-gradient(rgba(5,18,16,0.92), rgba(5,18,16,0.95)),
+      repeating-linear-gradient(rgba(110,198,168,0.045) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, rgba(110,198,168,0.045) 0 1px, transparent 1px 28px), var(--panel); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text);
     font-family: var(--era-font); overflow: hidden; transition: background 0.9s ease, color 0.7s ease; }
