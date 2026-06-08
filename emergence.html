@@ -657,7 +657,9 @@
     return { accGain, dataMult, insMult, discMult, regMult, effBonus };
   }
   function curFocus(){ return CFG.e3.focus[S.focus] || CFG.e3.focus.fit; }
-  function effAccuracy(){ const st=e3Stats(); return Math.max(0, Math.min(1, S.accuracy + st.effBonus - S.gap)); }
+  function effAccuracy(){ const st=e3Stats();
+    const cap = S.methods.regularization ? 1 : 0.80; // can't generalize past 80% until Regularization is discovered (Explore matters)
+    return Math.max(0, Math.min(cap, S.accuracy + st.effBonus - S.gap)); }
   function runExperiment(amount){ // amount can be fractional (auto from Models) or 1 (manual click)
     const e=CFG.e3, st=e3Stats(), f=curFocus();
     amount = Math.min(amount, S.data / e.expDataCost); if(amount<=0) return;
@@ -1016,7 +1018,7 @@
     let html='', shownUnknown=false;
     for(const m of METHODS){
       if(S.methods[m.id]) html += '<div class="proof-item lemma">'+(METHOD_ICON[m.id]?'<img class="pf-ic" src="'+METHOD_ICON[m.id]+'">':'<div class="pf-ic glyph">&#9670;</div>')+'<div class="pf-main"><div class="pf-name">'+m.name+'</div><div class="pf-desc"><i>'+m.flavor+'</i><br>'+m.desc+'</div></div></div>';
-      else if(!shownUnknown){ shownUnknown=true; html += '<div class="proof-item"><div class="pf-ic glyph">?</div><div class="pf-main"><div class="pf-name">Undiscovered Method</div><div class="pf-desc">Keep running experiments — more Data improves the odds a method surfaces.</div></div></div>'; }
+      else if(!shownUnknown){ shownUnknown=true; html += '<div class="proof-item"><div class="pf-ic glyph">?</div><div class="pf-main"><div class="pf-name">Undiscovered Method</div><div class="pf-desc" id="disc-feed">Run experiments to discover Methods — odds rise with Data and the <b>Explore</b> focus.</div></div></div>'; }
     }
     return '<div class="proof-list">'+html+'</div>';
   }
@@ -1179,7 +1181,11 @@
       ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Models draw '+fmt(S.model*CFG.e3.modelSilicon)+'/s');
-      for(const key of ['dataset','model']){ const el=$('eff-'+key); if(el){ const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } } } }
+      for(const key of ['dataset','model']){ const el=$('eff-'+key); if(el){ const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } } }
+      const df=$('disc-feed'); if(df){ const f=curFocus(), st=e3Stats(), exps=S.model*CFG.e3.expPerModel;
+        const pSec=Math.min(0.95, (CFG.e3.discoverBase + S.data*CFG.e3.dataDiscover)*f.disc*st.discMult*Math.max(exps,0));
+        const h='~'+(pSec*100).toFixed(0)+'%/s chance to discover the next Method'+(S.focus==='explore'?' · <b>Explore is boosting this</b>':' · switch to <b>Explore</b> to boost it');
+        if(df._html!==h){ df.innerHTML=h; df._html=h; } } }
     const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
