@@ -265,6 +265,12 @@ function testOffline(){
   ok(S.marks > before, 'resources increased after catch-up');
   ok(EM.offlineCatchup(99999).eff === 8*3600, 'offline capped at 8 hours');
   ok(EM.offlineCatchup(0.2) === null, 'sub-second gaps return nothing');
+  // Era 3 offline is deterministic: experiments accrue but Methods do NOT silently discover while away
+  const EM2 = freshGame(); const T = EM2.S;
+  T.started = true; T.flags.firstAuto = true; T.maxEra = 3; T.dataset = 10; T.model = 6; T.data = 80000; T.silicon = 50000;
+  EM2.offlineCatchup(3600);
+  ok(Object.keys(T.methods).length === 0, 'no Method discovery during offline catch-up (deterministic)');
+  ok(T.accuracy > 0, 'accuracy still accrues offline');
 }
 
 function testNoNaN(){

@@ -660,10 +660,11 @@
     // Fit grows the overfit gap; Generalize shrinks it (×2 with Regularization)
     S.gap = Math.max(0, Math.min(e.gapMax, S.gap + (e.gapGrow*f.gap - e.gapReduce*f.red*st.regMult)*amount));
     S.insight += e.insightPerExp*f.ins*effAccuracy()*st.insMult*amount;
+    // discovery only rolls during live play — never during offline replay (MUTE), so catch-up is deterministic and doesn't churn render()
     const next = METHODS.find(mm=>!S.methods[mm.id]);
-    if(next){ const p=(e.discoverBase + S.data*e.dataDiscover)*f.disc*st.discMult*amount;
+    if(next && !MUTE){ const p=(e.discoverBase + S.data*e.dataDiscover)*f.disc*st.discMult*amount;
       if(Math.random() < p){ S.methods[next.id]=true; recEvent('method:'+next.id);
-        if(!MUTE){ toast('METHOD DISCOVERED','<b>'+next.name+'</b> — '+next.desc); } render(); } }
+        toast('METHOD DISCOVERED','<b>'+next.name+'</b> — '+next.desc); render(); } }
   }
   const BUYS = {
     scribe:      { res:'marks', key:'scribe',      base:CFG.e1.scribeCost,      growth:CFG.e1.scribeGrowth },
