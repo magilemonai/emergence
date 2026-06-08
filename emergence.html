@@ -109,7 +109,7 @@
   .era-e2 .panel-label { color: #8fb1c6; }
   .era-e2 .era-tag { color: var(--accent); border-color: var(--accent); }
   .era-e2 .up-name, .era-e2 .pf-name, .era-e2 .rate-amt, .era-e2 .tile-name { color: #cfe0ec; }
-  .era-sigil { width: 42px; height: 42px; object-fit: contain; opacity: 0.92; flex: none; filter: drop-shadow(0 0 6px rgba(201,162,107,0.25)); }
+  .era-sigil { width: 56px; height: 56px; object-fit: contain; opacity: 0.95; flex: none; filter: drop-shadow(0 0 8px rgba(201,162,107,0.3)); }
   .era-tag { font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 15px; color: var(--text); }
   .era-name small { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0.5px; }
@@ -127,7 +127,7 @@
   .act-sub { font-size: 10px; color: var(--dim); text-align: center; margin-top: 8px; line-height: 1.5; }
   .up { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-bottom: 1px solid rgba(28,39,64,0.5); }
   .up.has-ic { flex-direction: row; gap: 11px; align-items: flex-start; }
-  .up-ic { width: 50px; height: 50px; object-fit: contain; flex: none; }
+  .up-ic { width: 58px; height: 58px; object-fit: contain; flex: none; }
   .up-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .up:last-child { border-bottom: none; }
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
@@ -164,7 +164,7 @@
   .pa-idle { font-size: 10px; color: var(--dim); font-style: italic; }
   .proof-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
   .proof-item { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s; }
-  .pf-ic { width: 48px; height: 48px; object-fit: contain; flex: none; }
+  .pf-ic { width: 58px; height: 58px; object-fit: contain; flex: none; }
   .pf-ic.glyph { display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--ec); border: 1px solid var(--line); border-radius: 8px; }
   .pf-main { flex: 1; min-width: 0; }
   .proof-item.lemma { border-color: rgba(201,162,107,0.4); }
@@ -207,7 +207,7 @@
   .rates { margin-top: 4px; display: flex; flex-direction: column; }
   .rate { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(28,39,64,0.45); }
   .rate:last-child { border-bottom: none; }
-  .rate-ic { width: 38px; height: 38px; object-fit: contain; flex: none; opacity: 0.95; }
+  .rate-ic { width: 46px; height: 46px; object-fit: contain; flex: none; opacity: 0.95; }
   .rate-tx { display: flex; flex-direction: column; line-height: 1.1; }
   .rate-lab { font-size: 8px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
   .rate-amt { font-size: 15px; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -218,14 +218,14 @@
   /* Works vs Research sections */
   .research-panel { background: linear-gradient(180deg, rgba(201,146,95,0.05), transparent 40%), var(--panel-2); }
   .ogrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
-  .tile { display: flex; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, opacity 0.4s; }
+  .tile { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, opacity 0.4s; }
   .tile.disco.can { border-color: rgba(201,146,95,0.55); box-shadow: 0 0 14px rgba(201,146,95,0.12); }
   .tile.disco.owned { opacity: 0.6; border-color: rgba(201,146,95,0.4); background: rgba(201,146,95,0.07); }
-  .tile-ic { width: 60px; height: 60px; object-fit: contain; flex: none; }
-  .tile-ic.glyph { display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--e0);
+  .tile-ic { width: 92px; height: 92px; object-fit: contain; flex: none; align-self: center; }
+  .tile-ic.glyph { width: 92px; height: 92px; align-self: center; display: flex; align-items: center; justify-content: center; font-size: 44px; color: var(--e0);
     border: 1px solid rgba(201,146,95,0.45); border-radius: 9px; }
-  .tile-body { flex: 1; min-width: 0; }
-  .tile-name { font-size: 12px; color: var(--text); }
+  .tile-body { width: 100%; min-width: 0; }
+  .tile-name { font-size: 13px; color: var(--text); text-align: center; }
   .tile-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .tile-flavor { font-size: 10.5px; font-style: italic; color: var(--dim); opacity: 0.85; line-height: 1.45; margin: 2px 0; }
   .tile-mech { font-size: 10.5px; color: var(--dim); line-height: 1.45; }
@@ -255,7 +255,7 @@
     font-family: inherit; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
   .research-btn:hover { border-color: var(--e0); }
   .research-btn.has { box-shadow: 0 0 16px rgba(255,205,107,0.22); border-color: var(--accent); }
-  .rb-ic { width: 28px; height: 28px; object-fit: contain; }
+  .rb-ic { width: 32px; height: 32px; object-fit: contain; }
   .rb-badge { min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--accent); color: #1a1206;
     font-size: 9px; font-weight: 700; display: none; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
   .rb-badge.show { display: inline-flex; }
