@@ -189,6 +189,26 @@ function testInferenceCap(){
   ok(S.inference > EM.CFG.e2.infCapBase, 'banking now exceeds the old base cap');
 }
 
+function testStatistical(){
+  section('Era 3 — experiments, accuracy, discovery, overfit');
+  let EM = freshGame(); let S = EM.S;
+  S.maxEra = 3; S.data = 100000;
+  const a0 = S.accuracy; EM.runExperiment(20);
+  ok(S.accuracy > a0 && S.accuracy < 1, 'experiments raise accuracy toward 1 (diminishing)');
+  ok(S.insight > 0, 'experiments yield Insight');
+  ok(S.gap > 0, 'experiments grow the overfit gap');
+  // discovery: many experiments with lots of Data surface Methods
+  let guard = 0; while(Object.keys(S.methods).length < 2 && guard++ < 1000){ S.data += 2000; EM.runExperiment(30); }
+  ok(Object.keys(S.methods).length >= 2, 'methods are discovered by running experiments');
+  // Regularization is the cure — it lowers the overfit-gap cap
+  EM = freshGame(); S = EM.S; const baseCap = EM.e3Stats().gapCap; S.methods.regularization = true;
+  ok(EM.e3Stats().gapCap < baseCap, 'Regularization lowers the overfit-gap cap (the cure)');
+  // effective accuracy = accuracy − gap, raised by Ensembles
+  EM = freshGame(); S = EM.S; S.accuracy = 0.8; S.gap = 0.1;
+  near(EM.effAccuracy(), 0.7, 1e-9, 'effective accuracy = accuracy − gap');
+  S.methods.ensembles = true; ok(EM.effAccuracy() > 0.7, 'Ensembles raises effective accuracy');
+}
+
 function testTechTree(){
   section('Symbolic tech tree — prerequisites + effects');
   const EM = freshGame(); const S = EM.S; S.rules = 1e9;
@@ -306,17 +326,28 @@ function symbolicStep(EM){
     if((stuck || needForExpert) && EM.axiomGain() >= Math.max(2, Math.ceil(S.axioms*0.5))) EM.compile();
   }
 }
+function statisticalStep(EM){
+  const { S, BUYS } = EM;
+  if(S.maxEra !== 3) return;
+  if(S.dataset < 25 && S.rules >= EM.totalCost(BUYS.dataset,1)) EM.buy('dataset');
+  // build Models from accumulated Data (the idle engine); don't drain Data with manual experiments
+  if(S.model < 18 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');
+}
 function testProgression(){
-  section('Progression — autoplay Origins → Symbolic');
+  section('Progression — autoplay Origins → Symbolic → Statistical');
   const EM = freshGame(); const { S } = EM;
-  const MAX = 200000;
-  let tick = 0, origAt, symAt;
+  const MAX = 300000;
+  let tick = 0, origAt, symAt, statAt;
   for(; tick < MAX; tick++){
-    if(S.maxEra === 1) originsStep(EM); else symbolicStep(EM);
+    if(S.maxEra === 1) originsStep(EM); else if(S.maxEra === 2) symbolicStep(EM); else statisticalStep(EM);
     EM.tick();
     if(origAt === undefined && S.flags.origindone) origAt = S.t;
-    if(S.flags.symbolicDone){ symAt = S.t; break; }
+    if(symAt === undefined && S.flags.symbolicDone) symAt = S.t;
+    if(S.maxEra >= 4){ statAt = S.t; break; }
   }
+  if(statAt !== undefined) console.log('  Era 3 (Statistical) generalized at ' + (statAt/60).toFixed(1) + 'm');
+  else console.log('  Era 3 STALLED: acc='+(S.accuracy*100).toFixed(0)+'% gap='+(S.gap*100).toFixed(0)+'% eff='+(EM.effAccuracy()*100).toFixed(0)+'% data='+Math.round(S.data)+' dataset='+S.dataset+' model='+S.model+' methods='+Object.keys(S.methods).join(',')+' rules='+Math.round(S.rules));
+  ok(S.maxEra >= 4, 'Era 3 generalizes and opens Era 4 (full chain completes)');
   const mm = s => s===undefined ? '—' : (s/60).toFixed(1)+'m';
   console.log('  Era 1 (Origins) fabricated at ' + mm(origAt));
   console.log('  Era 2 (Symbolic) completed at ' + mm(symAt) + (origAt&&symAt?('  (Era 2 took '+((symAt-origAt)/60).toFixed(1)+'m)'):''));
@@ -419,6 +450,7 @@ testDiscovery();
 testFabrication();
 testEra2Playable();
 testProofProcess();
+testStatistical();
 testInferenceCap();
 testTechTree();
 testCompile();

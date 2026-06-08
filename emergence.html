@@ -337,10 +337,18 @@
       infCapBase: 120, infCapStep: 220,                  // banked Inference cap = base + level×step
       capLemmaBase: 80, capLemmaGrowth: 1.7,             // cost to prove the next Inference Capacity level
     },
-    // Later eras still run on the original scaffold; rebuilt in a later pass.
-    datasetCost: 50, datasetGrowth: 1.2, datasetYield: 0.4,
-    modelCost: 120, modelGrowth: 1.25,
-    era3Gate: 40,
+    e3: { // ERA 3 — Statistical (experiments + accuracy curve + probabilistic discovery)
+      datasetCost: 60, datasetGrowth: 1.18, datasetYield: 1.4,   // Data/sec per Dataset (bought with Rules)
+      modelCost: 120, modelGrowth: 1.2, expPerModel: 0.7,        // experiments/sec per Model (bought with Data)
+      expDataCost: 4,        // Data spent per experiment
+      accGain: 0.02,         // accuracy gained per experiment × (1 - accuracy)  [diminishing curve]
+      insightPerExp: 2,      // Insight per experiment × effective accuracy
+      overfitRate: 0.005,    // generalization-gap growth per experiment (cut hard by Regularization)
+      discoverBase: 0.02, dataDiscover: 0.00003, // method-discovery odds per experiment (rise with Data)
+      genThreshold: 0.85,    // effective accuracy that generalizes → Era 4
+      seedDatasets: 3,
+    },
+    // Eras 4-5 still run on the original scaffold; rebuilt in a later pass.
     computeCost: 35, computeGrowth: 1.22, computePer: 0.5,
     trainCost: 90, trainGrowth: 1.28,
     era4Gate: 30,
@@ -355,9 +363,11 @@
     rules: 0, runRules: 0, axioms: 0, totalAxioms: 0, compiles: 0,
     ruleset: 0, daemon: 0,
     inference: 0, activeProof: null, proofAcc: {}, optLevel: 0, infCapLevel: 0, // theorem-proving research
-    // Era 3+ scaffold
-    insight: 0, data: 0, capability: 0, scale: 0,
-    dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
+    // Era 3 — Statistical
+    data: 0, insight: 0, accuracy: 0, gap: 0, methods: {},
+    dataset: 0, model: 0,
+    // Era 4-5 scaffold
+    capability: 0, scale: 0, compute: 0, training: 0, cluster: 0,
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
   }; }
   const S = freshState();
@@ -434,12 +444,11 @@
     { id:'compileUnlock', cond:()=> S.tech.knowledge,
       fire:()=>{ S.flags.compile=true; toast('COMPILE','<b>Compile</b> a run into permanent <b>Axioms</b> that multiply everything.'); } },
     { id:'era3', cond:()=> S.flags.symbolicDone,
-      fire:()=>{ openEra(3); toast('THE STATISTICAL ERA','Hand-written logic has hit its ceiling. A new approach: <b>learning from Data</b>.'); } },
-    // ERA 3+ — original scaffold, rebuilt in a later pass.
-    { id:'era3auto', cond:()=> S.dataset>=2,
-      fire:()=>{ S.flags.canModel=true; toast('STATISTICAL MODELS','Build a <b>Model</b> to turn raw Data into <b>Insight</b>.'); } },
-    { id:'era4', cond:()=> S.insight>=CFG.era3Gate,
-      fire:()=>{ openEra(4); toast('THE DEEP LEARNING ERA','Data and Insight are not enough. Now <b>Compute</b> is the bottleneck.'); } },
+      fire:()=>{ S.dataset += CFG.e3.seedDatasets; openEra(3); // seeded Datasets start the Data flowing
+        toast('THE STATISTICAL ERA','Hand-written logic has hit its ceiling. Now intelligence is <b>learned from Data</b> — build Datasets, train Models, and run experiments until the methods reveal themselves.'); } },
+    // ERA 4-5 — original scaffold, rebuilt in a later pass.
+    { id:'era4', cond:()=> S.maxEra>=3 && effAccuracy()>=CFG.e3.genThreshold,
+      fire:()=>{ openEra(4); toast('THE DEEP LEARNING ERA','Your model generalizes. Data and statistics are no longer enough — now <b>Compute</b> is the bottleneck.'); } },
     { id:'era4auto', cond:()=> S.compute>=3,
       fire:()=>{ S.flags.canTrain=true; toast('TRAINING RUNS','Spend Compute and Insight on <b>Training</b> to build raw <b>Capability</b>.'); } },
     { id:'era5', cond:()=> S.capability>=CFG.era4Gate,
@@ -576,6 +585,40 @@
     S.rules=0; S.runRules=0; S.ruleset=0; S.daemon=0;
     playSound('milestone'); render();
   }
+  // ---- Era 3 (Statistical): experiments push Accuracy up a curve; Methods are discovered by chance ----
+  const METHODS = [
+    { id:'regression',     name:'Regression',         flavor:'A line drawn through the noise.',          desc:'Experiments raise accuracy 40% faster.' },
+    { id:'features',       name:'Feature Engineering', flavor:'Asking the data better questions.',        desc:'Datasets yield 50% more Data.' },
+    { id:'regularization', name:'Regularization',      flavor:'Prefer the simpler explanation.',          desc:'Cuts the overfitting gap by 80% — the cure for poor generalization.' },
+    { id:'clustering',     name:'Clustering',          flavor:'Like finds like.',                         desc:'Discoveries surface 60% more readily.' },
+    { id:'bayesian',       name:'Bayesian Inference',  flavor:'Belief, updated by evidence.',             desc:'Each experiment yields 80% more Insight.' },
+    { id:'ensembles',      name:'Ensembles',           flavor:'A crowd of guesses, wiser than any one.',  desc:'+12% effective accuracy (many weak models, one strong vote).' },
+  ];
+  function e3Stats(){
+    const m=S.methods, e=CFG.e3;
+    let accGain=e.accGain, dataMult=1, insMult=1, discMult=1, effBonus=0;
+    if(m.regression) accGain*=1.4;
+    if(m.features) dataMult*=1.5;
+    if(m.clustering) discMult*=1.6;
+    if(m.bayesian) insMult*=1.8;
+    if(m.ensembles) effBonus+=0.12;
+    // Regularization is the cure: it lowers the overfit-gap CAP (without it the gap caps high and you can't generalize)
+    const gapCap = m.regularization ? 0.05 : 0.5;
+    return { accGain, dataMult, insMult, discMult, effBonus, gapCap };
+  }
+  function effAccuracy(){ const st=e3Stats(); return Math.max(0, Math.min(1, S.accuracy + st.effBonus - Math.min(S.gap, st.gapCap))); }
+  function runExperiment(amount){ // amount can be fractional (auto) or 1 (manual click)
+    const e=CFG.e3, st=e3Stats();
+    amount = Math.min(amount, S.data / e.expDataCost); if(amount<=0) return;
+    S.data -= amount*e.expDataCost;
+    S.accuracy = Math.min(1, S.accuracy + st.accGain*(1-S.accuracy)*amount);
+    S.gap = Math.min(st.gapCap, S.gap + e.overfitRate*amount);
+    S.insight += e.insightPerExp*effAccuracy()*st.insMult*amount;
+    const next = METHODS.find(mm=>!S.methods[mm.id]);
+    if(next){ const p=(e.discoverBase + S.data*e.dataDiscover)*st.discMult*amount;
+      if(Math.random() < p){ S.methods[next.id]=true; recEvent('method:'+next.id);
+        if(!MUTE){ toast('METHOD DISCOVERED','<b>'+next.name+'</b> — '+next.desc); } render(); } }
+  }
   const BUYS = {
     scribe:      { res:'marks', key:'scribe',      base:CFG.e1.scribeCost,      growth:CFG.e1.scribeGrowth },
     miner:       { res:'ore',   key:'miner',       base:CFG.e1.minerCost,       growth:CFG.e1.minerGrowth },
@@ -584,8 +627,8 @@
     foundry:     { res:'metal', key:'foundry',     base:CFG.e1.foundryCost,     growth:CFG.e1.foundryGrowth },
     ruleset: { res:'rules', key:'ruleset', base:CFG.e2.rulesetCost, growth:CFG.e2.rulesetGrowth },
     daemon:  { res:'rules', key:'daemon',  base:CFG.e2.daemonCost,  growth:CFG.e2.daemonGrowth },
-    dataset: { res:'rules', key:'dataset', base:CFG.datasetCost, growth:CFG.datasetGrowth },
-    model:   { res:'data',  key:'model',   base:CFG.modelCost,   growth:CFG.modelGrowth },
+    dataset: { res:'rules', key:'dataset', base:CFG.e3.datasetCost, growth:CFG.e3.datasetGrowth },
+    model:   { res:'data',  key:'model',   base:CFG.e3.modelCost,   growth:CFG.e3.modelGrowth },
     compute: { res:'insight',key:'compute',base:CFG.computeCost, growth:CFG.computeGrowth },
     training:{ res:'insight',key:'training',base:CFG.trainCost,  growth:CFG.trainGrowth },
     cluster: { res:'capability',key:'cluster',base:CFG.scaleCost,growth:CFG.scaleGrowth },
@@ -655,8 +698,10 @@
         else S.inference = Math.min(infCap(), S.inference + inf); // banked Inference is capped
       }
     }
-    if(S.dataset>0) S.data += S.dataset*CFG.datasetYield*dt;
-    if(S.model>0){ const conv=Math.min(S.data, S.model*0.6*dt); S.data-=conv; S.insight+=conv*1.5; }
+    // ERA 3 — Statistical: Datasets make Data; Models auto-run experiments (push Accuracy, yield Insight, discover Methods)
+    if(S.dataset>0) S.data += S.dataset*CFG.e3.datasetYield*e3Stats().dataMult*dt;
+    if(S.model>0) runExperiment(S.model*CFG.e3.expPerModel*dt);
+    // ERA 4-5 scaffold
     if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
     if(S.cluster>0){ const c=Math.min(S.capability, S.cluster*0.4*dt); S.capability-=c; S.scale+=c*2; }
   }
@@ -881,13 +926,30 @@
     }
     return eraShell(1, false, body);
   }
+  function buildMethods(){
+    let html='', shownUnknown=false;
+    for(const m of METHODS){
+      if(S.methods[m.id]) html += '<div class="proof-item lemma"><div class="pf-ic glyph">&#9670;</div><div class="pf-main"><div class="pf-name">'+m.name+'</div><div class="pf-desc"><i>'+m.flavor+'</i><br>'+m.desc+'</div></div></div>';
+      else if(!shownUnknown){ shownUnknown=true; html += '<div class="proof-item"><div class="pf-ic glyph">?</div><div class="pf-main"><div class="pf-name">Undiscovered Method</div><div class="pf-desc">Keep running experiments — more Data improves the odds a method surfaces.</div></div></div>'; }
+    }
+    return '<div class="proof-list">'+html+'</div>';
+  }
+  function buildStatistical(){ // ERA 3 — the Model: train accuracy, discover methods
+    let body =
+      '<div class="panel sym-hero" style="grid-column:1/-1"><div class="panel-label">The Model · train toward generalization</div>'+
+      '<div class="proof-rate" id="accRate"></div>'+
+      '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
+      '<div class="meter-label"><span>Effective accuracy (accuracy − overfit gap)</span><span id="acc-val"></span></div>'+
+      '<button class="act-btn" id="expBtn" style="margin-top:12px">RUN EXPERIMENT</button></div>'+
+      '<div class="panel"><div class="panel-label">Data</div>'+eraUpgrade('dataset','Dataset','Generates Data over time. Bought with Rules.')+'</div>'+
+      '<div class="panel"><div class="panel-label">Models</div>'+eraUpgrade('model','Model','Runs experiments on their own, spending Data.')+'</div>'+
+      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods · discovered by experiment</div>'+buildMethods()+'</div>';
+    return eraShell(3, false, body);
+  }
   function buildEras(){
     let html = buildOrigins();
     if(S.maxEra>=2) html += buildSymbolic();
-    if(S.maxEra>=3) html += eraShell(3, S.obsolete[3],
-      '<div class="panel"><div class="panel-label">Data Pipeline</div>'+eraUpgrade('dataset','Dataset','Generates raw Data over time. Bought with Rules.')+
-        '<div class="meter"><i id="meter-data" style="background:var(--e2)"></i></div><div class="meter-label"><span>Data buffer</span><span id="meter-data-val"></span></div></div>'+
-      '<div class="panel"><div class="panel-label">Models</div>'+(S.flags.canModel?eraUpgrade('model','Statistical Model','Consumes Data, produces Insight. Patterns replace hand-written rules.'):'<div class="up-desc">Gather Data first...</div>')+'</div>');
+    if(S.maxEra>=3) html += buildStatistical();
     if(S.maxEra>=4) html += eraShell(4, S.obsolete[4],
       '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('compute','Compute Node','The new bottleneck. More nodes, stronger training runs.')+'</div>'+
       '<div class="panel"><div class="panel-label">Training</div>'+(S.flags.canTrain?eraUpgrade('training','Training Run','Consumes Insight + Compute to produce raw Capability.'):'<div class="up-desc">Build Compute first...</div>')+'</div>');
@@ -907,6 +969,7 @@
     const ib=$('inscribeBtn'); if(ib) ib.onclick=inscribe;
     const qb=$('quarryBtn'); if(qb) qb.onclick=quarry;
     const fb=$('fabricateBtn'); if(fb) fb.onclick=fabricate;
+    const eb=$('expBtn'); if(eb) eb.onclick=()=>{ runExperiment(1); playSound('click'); refresh(); };
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
     document.querySelectorAll('[data-disco]').forEach(b=> b.onclick=e=>buyDisco(e.currentTarget.dataset.disco));
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
@@ -1003,7 +1066,12 @@
       if(cb._html!==html){ cb.innerHTML=html; cb._html=html; }
       if(cb.disabled!==(g<1)) cb.disabled=(g<1);
     }
-    const md=$('meter-data'); if(md){ md.style.width=Math.min(100,(S.data/(Math.max(1,S.model)*10))*100)+'%'; setText('meter-data-val',fmt(S.data)); }
+    const ma=$('meter-acc');
+    if(ma){ const eff=effAccuracy();
+      ma.style.width=Math.min(100, eff/CFG.e3.genThreshold*100)+'%';
+      setText('acc-val', (eff*100).toFixed(1)+'%  (raw '+(S.accuracy*100).toFixed(0)+'%, gap '+(S.gap*100).toFixed(0)+'%)  ·  generalize at '+(CFG.e3.genThreshold*100).toFixed(0)+'%');
+      const exps=S.model*CFG.e3.expPerModel;
+      setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s'+(S.data<CFG.e3.expDataCost?' (need Data)':'')); }
     const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
@@ -1176,6 +1244,7 @@
       unitCost, totalCost, buyQty, buy, writeRule, inscribe, quarry, fabricate, produce, checkMiles, tick,
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
+      METHODS, e3Stats, effAccuracy, runExperiment,
       save, load, offlineCatchup, revealGame };
   }
 })();
