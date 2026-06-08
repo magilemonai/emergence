@@ -155,7 +155,16 @@
   .core-side { flex: 1; min-width: 260px; }
   .core-verbs { display: flex; gap: 10px; }
   .core-verbs .act-btn { flex: 1; }
-  .core-rates { margin-top: 10px; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
+  .rates { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px 16px; }
+  .rate { display: flex; align-items: center; gap: 8px; }
+  .rate-ic { width: 24px; height: 24px; object-fit: contain; flex: none; opacity: 0.9; }
+  .rate-tx { flex: 1; min-width: 0; line-height: 1.15; }
+  .rate-lab { font-size: 8px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
+  .rate-amt { font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .rate-ps { font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rate-ps.pos { color: var(--good); }
+  .rate-ps.neg { color: var(--danger); }
+  .rate-ps.zero { color: var(--dimmer); }
   /* Works vs Research sections */
   .research-panel { background: linear-gradient(180deg, rgba(201,146,95,0.05), transparent 40%), var(--panel-2); }
   .ogrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
@@ -267,6 +276,7 @@
     tech: {}, obsolete: {}, flags: {}, clicks: 0,
   }; }
   const S = freshState();
+  const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0 }; // net per-second flow, captured each tick
   const ERAS = {
     1: { color: 'var(--e0)', tag: 'Origins', name: 'From Marks to Matter', sub: 'recording the world, then reshaping it', sigil: 'assets/era1-sigil.png' },
     2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'assets/sigil-symbolic.png' },
@@ -479,6 +489,7 @@
     // ERA 1 — Origins: sources feed stocks; converters draw from upstream and starve if it's empty.
     const os=oStats();
     const e1=CFG.e1;
+    const _b={marks:S.marks,knowledge:S.knowledge,ore:S.ore,metal:S.metal,silicon:S.silicon};
     if(S.scribe>0) S.marks += S.scribe*os.scribeY*dt;
     if(S.miner>0)  S.ore   += S.miner*os.minerY*dt;
     // Scriptorium: Marks -> Knowledge, but each unit also burns Ore (tablets). Throttled by whichever runs short.
@@ -494,6 +505,7 @@
       S.ore-=out; S.knowledge-=out*e1.smelterUpkeep; S.metal+=out;
     }
     if(S.foundry>0){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c; }
+    if(dt>0){ for(const k in _b) RATES[k]=(S[k]-_b[k])/dt; }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
       const st=stats();
@@ -650,13 +662,28 @@
     for(const n of DISCO){ if(discoVisible(n.id)) html += buildTile('disco', n.id); }
     return '<div class="ogrid">'+html+'</div>';
   }
+  const RATE_DEFS = [
+    ['marks','Marks','assets/icon-marks.png', ()=>true],
+    ['knowledge','Knowledge','assets/icon-knowledge.png', ()=>true],
+    ['ore','Ore','assets/icon-ore.png', ()=>S.flags.o_materials],
+    ['metal','Metal','assets/icon-ingot.png', ()=>S.flags.o_smelter],
+    ['silicon','Silicon','assets/icon-silicon.png', ()=>S.flags.o_foundry],
+  ];
+  function buildRates(){
+    let html='';
+    for(const [k,lab,icon,show] of RATE_DEFS){ if(!show()) continue;
+      html += '<div class="rate"><img class="rate-ic" src="'+icon+'"><div class="rate-tx"><div class="rate-lab">'+lab+'</div>'+
+        '<div class="rate-amt" id="ramt-'+k+'"></div></div><div class="rate-ps" id="rps-'+k+'"></div></div>';
+    }
+    return '<div class="rates">'+html+'</div>';
+  }
   function buildCore(){
     return '<div class="panel core-panel" style="grid-column:1/-1">'+
       '<div class="core"><div class="core-ring"></div><div class="core-ring core-ring2"></div><div class="core-mid" id="coreAge">STONE AGE</div></div>'+
       '<div class="core-side">'+
         '<div class="core-verbs"><button class="act-btn" id="inscribeBtn">INSCRIBE A MARK</button>'+
           (S.flags.o_materials?'<button class="act-btn" id="quarryBtn">QUARRY ORE</button>':'')+'</div>'+
-        '<div class="core-rates" id="coreRates"></div>'+
+        buildRates()+
       '</div></div>';
   }
   function fnode(label, icon, id){
@@ -743,13 +770,12 @@
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
-      const os=oStats(), rate=[];
-      if(S.scribe) rate.push('Marks +'+fmt(S.scribe*os.scribeY)+'/s');
-      if(S.miner) rate.push('Ore +'+fmt(S.miner*os.minerY)+'/s');
-      if(S.scriptorium) rate.push('Knowledge +'+fmt(S.scriptorium*os.scrR)+'/s');
-      if(S.smelter) rate.push('Metal +'+fmt(S.smelter*os.smR)+'/s');
-      if(S.foundry) rate.push('Silicon +'+fmt(S.foundry*os.foR)+'/s');
-      setText('coreRates', rate.length?rate.join('   ·   '):'Inscribe to begin.');
+      for(const [k] of RATE_DEFS){ if(!$('ramt-'+k)) continue;
+        setText('ramt-'+k, fmt(S[k]));
+        const rt=RATES[k]||0, ps=$('rps-'+k), cls='rate-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero'));
+        setText('rps-'+k, (rt>=0?'+':'')+fmt(rt)+'/s');
+        if(ps && ps.className!==cls) ps.className=cls;
+      }
       for(const n of DISCO){ const btn=$('dsc-'+n.id); if(!btn) continue; const tile=$('dtile-'+n.id);
         if(S.disco[n.id]){ setClass(tile,'tile disco owned'); if(btn._html!=='DISCOVERED'){ btn.innerHTML='DISCOVERED'; btn._html='DISCOVERED'; } if(!btn.disabled) btn.disabled=true; }
         else { const can=canBuyDisco(n.id);
