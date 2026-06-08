@@ -361,11 +361,11 @@ function testProgression(){
     EM.tick();
     if(origAt === undefined && S.flags.origindone) origAt = S.t;
     if(symAt === undefined && S.flags.symbolicDone) symAt = S.t;
-    if(S.maxEra >= 4){ statAt = S.t; break; }
+    if(S.flags.frontier){ statAt = S.t; break; }
   }
   if(statAt !== undefined) console.log('  Era 3 (Statistical) generalized at ' + (statAt/60).toFixed(1) + 'm');
   else console.log('  Era 3 STALLED: acc='+(S.accuracy*100).toFixed(0)+'% gap='+(S.gap*100).toFixed(0)+'% eff='+(EM.effAccuracy()*100).toFixed(0)+'% data='+Math.round(S.data)+' dataset='+S.dataset+' model='+S.model+' methods='+Object.keys(S.methods).join(',')+' rules='+Math.round(S.rules));
-  ok(S.maxEra >= 4, 'Era 3 generalizes and opens Era 4 (full chain completes)');
+  ok(S.flags.frontier, 'Era 3 generalizes and reaches the frontier endcard (full built chain completes)');
   const mm = s => s===undefined ? '—' : (s/60).toFixed(1)+'m';
   console.log('  Era 1 (Origins) fabricated at ' + mm(origAt));
   console.log('  Era 2 (Symbolic) completed at ' + mm(symAt) + (origAt&&symAt?('  (Era 2 took '+((symAt-origAt)/60).toFixed(1)+'m)'):''));
