@@ -178,6 +178,7 @@
   .pf-lv { color: var(--accent); font-size: 10px; }
   .pf-desc { font-size: 14px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
+  .scatter { width: 100%; height: 150px; display: block; margin: 4px 0 10px; }
   .auto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
   .proven-wrap { grid-column: 1 / -1; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
   .proven-lab { font-size: 10.5px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
@@ -1030,6 +1031,7 @@
     let body =
       '<div class="panel sym-hero" style="grid-column:1/-1">'+
         '<div class="panel-label">The Model · train toward generalization</div>'+
+        '<canvas id="scatter" class="scatter"></canvas>'+
         '<div class="proof-rate" id="accRate"></div>'+
         '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
         '<div class="meter-label"><span>Effective accuracy (accuracy − overfit gap)</span><span id="acc-val"></span></div>'+
@@ -1043,6 +1045,27 @@
         '<div class="sup-rate" id="supSi"></div></div>'+
       '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods · discovered by experiment</div>'+buildMethods()+'</div>';
     return eraShell(3, false, body);
+  }
+  function drawScatter(){ // Era 3 signature viz: data points + a model curve that fits as accuracy rises and wiggles when overfit
+    const cv=$('scatter'); if(!cv || !cv.getContext) return;
+    const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return; // headless stub safety
+    const w=cv.width=cv.clientWidth||640, h=cv.height=150, pad=16, gw=w-pad*2, gh=h-pad*2;
+    const acc=S.accuracy, gap=S.gap;
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='rgba(127,230,196,0.22)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad,pad-4); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+    const f=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5); // the true underlying function
+    const N=26; ctx.fillStyle='rgba(127,230,196,0.75)';
+    for(let i=0;i<N;i++){ const x=(i+0.5)/N, hsh=Math.abs(Math.sin(i*12.9898)*43758.5453)%1, ny=(hsh-0.5)*0.32;
+      const y=Math.max(0.04,Math.min(0.96,f(x)+ny)); ctx.beginPath(); ctx.arc(pad+x*gw, h-pad-y*gh, 2.3,0,6.3); ctx.fill(); }
+    ctx.beginPath();
+    for(let px=0;px<=gw;px+=2){ const x=px/gw;
+      let y=0.5+(f(x)-0.5)*acc + Math.sin(x*42)*gap*0.16*acc; // flat→true by accuracy; overfit wiggle by gap
+      y=Math.max(0.03,Math.min(0.97,y));
+      const cx=pad+px, cy=h-pad-y*gh; if(px===0) ctx.moveTo(cx,cy); else ctx.lineTo(cx,cy); }
+    ctx.lineWidth=2.2; ctx.strokeStyle='#c8f5e6';
+    if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(127,230,196,0.5)'; ctx.shadowBlur=6; }
+    ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0;
   }
   function buildEndcard(){
     return '<div class="panel endcard" style="grid-column:1/-1">'+
@@ -1192,7 +1215,8 @@
       const df=$('disc-feed'); if(df){ const f=curFocus(), st=e3Stats(), exps=S.model*CFG.e3.expPerModel;
         const pSec=Math.min(0.95, (CFG.e3.discoverBase + S.data*CFG.e3.dataDiscover)*f.disc*st.discMult*Math.max(exps,0));
         const h='~'+(pSec*100).toFixed(0)+'%/s chance to discover the next Method'+(S.focus==='explore'?' · <b>Explore is boosting this</b>':' · switch to <b>Explore</b> to boost it');
-        if(df._html!==h){ df.innerHTML=h; df._html=h; } } }
+        if(df._html!==h){ df.innerHTML=h; df._html=h; } }
+      drawScatter(); }
     const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
