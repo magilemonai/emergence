@@ -181,15 +181,13 @@
   .proven-wrap { grid-column: 1 / -1; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
   .proven-lab { font-size: 10.5px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
   .proven-row { display: flex; flex-wrap: wrap; gap: 8px; }
-  .proven-chip { width: 48px; height: 48px; border: 1px solid var(--ec); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,205,107,0.08); cursor: help; }
+  .proven-chip { width: 48px; height: 48px; border: 1px solid var(--ec); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,205,107,0.08); }
   .proven-ic { width: 36px; height: 36px; object-fit: contain; }
   .proven-ic.glyph { color: var(--ec); font-size: 20px; }
   /* Era 3 — Statistical: objective banner, Training Focus, Origins supply strip */
   #tip { position: fixed; z-index: 95; max-width: 300px; background: var(--panel-2); border: 1px solid var(--ec, var(--accent)); border-radius: 9px; padding: 11px 13px; font-size: 13.5px; color: var(--text); line-height: 1.55; pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity 0.12s, transform 0.12s; box-shadow: 0 8px 28px rgba(0,0,0,0.55); }
   #tip.show { opacity: 1; transform: translateY(0); }
   #tip i { color: var(--dim); }
-  [data-tip] { cursor: help; }
-  [data-tip] .up-buy, [data-tip] .tile-btn, [data-tip] button { cursor: pointer; }
   .objective { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 9px 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
   .focus-row { display: flex; gap: 8px; }
   .focus-btn { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); cursor: pointer; text-align: left; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
