@@ -182,9 +182,12 @@
   .tile-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .tile-flavor { font-size: 9.5px; font-style: italic; color: #8a7a66; line-height: 1.4; margin: 2px 0; }
   .tile-mech { font-size: 9.5px; color: var(--dim); line-height: 1.4; }
-  .tile-eff { font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; margin-top: 4px; line-height: 1.5; }
-  .tile-eff .pos { color: var(--good); }
-  .tile-eff .neg { color: var(--danger); }
+  .tile-eff { margin-top: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,0.18); }
+  .eff-cap { font-size: 7.5px; letter-spacing: 1px; color: var(--dimmer); text-transform: uppercase; margin-bottom: 4px; }
+  .eff-row { display: flex; justify-content: space-between; font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.55; }
+  .eff-row span:first-child { color: var(--dim); text-transform: capitalize; }
+  .eff-row.pos span:last-child { color: var(--good); }
+  .eff-row.neg span:last-child { color: var(--danger); }
   .tile-btn { margin-top: 7px; width: 100%; }
   .tile.disco.owned .tile-btn { opacity: 0.5; }
   /* Research drawer */
@@ -700,7 +703,8 @@
       foundry:     [['+',os.foR,'silicon'],['−',os.foR,'metal'],['−',os.foR,'knowledge']],
     }[key];
     if(!flows) return '';
-    return flows.map(([s,v,r])=>'<span class="'+(s==='+'?'pos':'neg')+'">'+s+fmt(v)+' '+r+'/s</span>').join(' · ');
+    return '<div class="eff-cap">each · per second</div>'+
+      flows.map(([s,v,r])=>'<div class="eff-row '+(s==='+'?'pos':'neg')+'"><span>'+r+'</span><span>'+s+fmt(v)+'</span></div>').join('');
   }
   function buildTile(type, key){
     if(type==='build'){
