@@ -24,7 +24,7 @@ The game ships as one self-contained HTML file with all logic in a single IIFE. 
 - Save/load roundtrip; offline catch-up (8h cap); no-NaN production
 - **Anti-strobe guard:** idle ticks must NOT rebuild the era DOM (build-once/update-in-place)
 
-**Progression (full chain):** `testProgression` autoplays Origins → Symbolic → Statistical (steering Training Focus + reaching back to Origins for Silicon) and asserts it reaches Era 4; prints per-era timings. ~80 tests total.
+**Progression (full chain):** `testProgression` autoplays the whole arc — Origins → Symbolic → Statistical → Deep → Foundation → **Emergence** (steering Training Focus, reaching back to Origins for Silicon, allocating Compute for breadth, then recursing to the emergent agent) and asserts every era handoff fires; prints per-era timings. ~85 tests total.
 
 **Pacing models** (diagnostic tables, not pass/fail beyond "completes")
 - `reportPacing()` — Origins via a human-model autoplayer at 1/2/4 clicks-per-second, beats vs the 30/60/120/300s targets

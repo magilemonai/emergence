@@ -1246,8 +1246,26 @@
     return '<div class="panel endcard" style="grid-column:1/-1">'+
       '<img class="endcard-wm" src="assets/wordmark.png" alt="EMERGENCE">'+
       '<div class="endcard-title">Emergence</div>'+
+      '<canvas id="emergeViz" class="scatter" style="height:120px"></canvas>'+
       '<div class="endcard-body">Something you did not build is now improving itself. An autonomous agent has appeared in the substrate — allocating, scaling, recursing on its own. You set the conditions; the behavior emerged. <span id="agentLine"></span></div>'+
       '</div>';
+  }
+  function drawEmergence(){ // the curve bends vertical: an exponential that the emergent agent is driving up on its own
+    const cv=$('emergeViz'); if(!cv || !cv.getContext) return;
+    const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return;
+    const w=cv.width=cv.clientWidth||640, h=cv.height=120, pad=14, gw=w-pad*2, gh=h-pad*2;
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='rgba(183,139,255,0.22)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad,pad-4); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+    // steepness grows with the agent's self-rate — the more it improves itself, the more vertical the curve
+    const k=2.2+Math.min(6, Math.log(1+S.agentRate));
+    ctx.beginPath();
+    for(let px=0;px<=gw;px+=2){ const x=px/gw;
+      const y=(Math.exp(x*k)-1)/(Math.exp(k)-1); // 0→1, bending sharply up at the right
+      const cx=pad+px, cy=h-pad-Math.max(0.01,Math.min(0.99,y))*gh; if(px===0) ctx.moveTo(cx,cy); else ctx.lineTo(cx,cy); }
+    ctx.lineWidth=2.4; ctx.strokeStyle='#d7b3ff';
+    if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(183,139,255,0.6)'; ctx.shadowBlur=8; }
+    ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0;
   }
   function buildEras(){
     let html = buildOrigins();
@@ -1412,6 +1430,7 @@
       setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · Capability '+fmt(S.capability)+' (+'+fmt(RATES.capability||0)+'/s)');
       for(const c of CAPS){ const b=$('capb-'+c.id); if(b){ const h='ACQUIRE · <span class="c">'+fmt(c.cost)+' Capability</span>'; if(b._html!==h){ b.innerHTML=h; b._html=h; } b.disabled=S.capability<c.cost; } }
       const al=$('agentLine'); if(al && S.emerged){ const h='The agent is producing <b>'+fmt(S.agentRate)+' Scale/s</b> and rising. This is the end of the authored game — what happens next, you are watching it decide.'; if(al._html!==h){ al.innerHTML=h; al._html=h; } }
+      if(S.emerged) drawEmergence();
     }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
