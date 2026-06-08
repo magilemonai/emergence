@@ -59,9 +59,13 @@
   /* Era-4 compute allocation controls */
   .alloc-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .alloc { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
-  .alloc-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+  .alloc-head { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+  .alloc-ic { width: 26px; height: 26px; object-fit: contain; flex: none; filter: drop-shadow(0 0 5px rgba(110,168,255,0.4)); }
   .alloc-nm { font-size: 12px; font-weight: 600; color: var(--text); }
-  .alloc-lv { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .alloc-lv { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--accent); margin-left: auto; }
+  .agent-hero { width: min(150px, 40%); height: auto; display: block; margin: 0 auto 6px;
+    filter: drop-shadow(0 0 22px rgba(183,139,255,0.55)); animation: agentPulse 3.4s ease-in-out infinite; }
+  @keyframes agentPulse { 0%,100% { opacity: 0.82; transform: scale(0.99); } 50% { opacity: 1; transform: scale(1.02); } }
   .alloc-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; margin-bottom: 9px; }
   .alloc-bar i { display: block; height: 100%; width: 0; transition: width 0.3s; }
   .alloc-ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -502,8 +506,8 @@
     1: { color: 'var(--e0)', tag: 'Origins', name: 'From Marks to Matter', sub: 'recording the world, then reshaping it', sigil: 'assets/era1-sigil.png' },
     2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'assets/sigil-symbolic.png' },
     3: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns drawn from examples', sigil: 'assets/sigil-statistical.png' },
-    4: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability' },
-    5: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical' },
+    4: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability', sigil: 'assets/era4-sigil.png' },
+    5: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical', sigil: 'assets/era5-sigil.png' },
   };
   // ---- Era 1 tech tree (the Symbolic blueprint). row = tier (top→down), col = horizontal slot. ----
   const TREE = [
@@ -932,8 +936,10 @@
     capability:'What the system can actually do.',
     scale:'The point where more becomes different.',
   };
-  const UPICON = { ruleset:'assets/icon-ruleset.png', daemon:'assets/icon-daemon.png', dataset:'assets/e3-dataset.png', model:'assets/e3-model.png' };
+  const UPICON = { ruleset:'assets/icon-ruleset.png', daemon:'assets/icon-daemon.png', dataset:'assets/e3-dataset.png', model:'assets/e3-model.png', node:'assets/icon-node.png' };
   const METHOD_ICON = { regression:'assets/e3-regression.png', features:'assets/e3-features.png', regularization:'assets/e3-regularization.png', clustering:'assets/e3-clustering.png', bayesian:'assets/e3-bayesian.png', ensembles:'assets/e3-ensembles.png' };
+  const RUN_ICON = { vision:'assets/e4-vision.png', language:'assets/e4-language.png', reasoning:'assets/e4-reasoning.png' }; // Era 4 training-run glyphs
+  const CAP_ICON = { selfModel:'assets/cap-selfModel.png', transfer:'assets/cap-transfer.png', worldModel:'assets/cap-worldModel.png' }; // Era 5 capabilities
   function eraUpgrade(key, name, desc){
     const ic = UPICON[key] ? '<img class="up-ic" src="'+UPICON[key]+'">' : '';
     const tip = '<i>'+(FLAVOR[key]||'')+'</i><br>'+desc;
@@ -1163,8 +1169,9 @@
   // ---- ERA 4 (Deep): allocate Compute across three training runs; breadth (geometric mean) makes Capability ----
   function deepBreadth(){ return Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)); }
   function allocRow(d){
+    const ic = RUN_ICON[d.k] ? '<img class="alloc-ic" src="'+RUN_ICON[d.k]+'">' : '';
     return '<div class="alloc" id="alloc-'+d.k+'" data-tip="'+esc('<i>'+d.desc+'</i>')+'">'+
-      '<div class="alloc-head"><span class="alloc-nm">'+d.label+'</span><span class="alloc-lv" id="alv-'+d.k+'"></span></div>'+
+      '<div class="alloc-head">'+ic+'<span class="alloc-nm">'+d.label+'</span><span class="alloc-lv" id="alv-'+d.k+'"></span></div>'+
       '<div class="alloc-bar"><i id="albar-'+d.k+'" style="background:var(--e3)"></i></div>'+
       '<div class="alloc-ctl"><button class="alloc-btn" data-alloc="'+d.k+':-1">−</button>'+
         '<span class="alloc-w" id="aw-'+d.k+'"></span>'+
@@ -1224,7 +1231,8 @@
     S.capability-=c.cost; S.caps[id]=true; recEvent('cap:'+id);
     toast('CAPABILITY: '+c.name.toUpperCase(), '<i>'+c.flavor+'</i><br>'+c.desc); render(); }
   function capTile(c){ const owned=S.caps[c.id];
-    return '<div class="proof-item'+(owned?' lemma':'')+'" id="cap-'+c.id+'" data-tip="'+esc('<i>'+c.flavor+'</i>')+'"><div class="pf-ic glyph">'+(owned?'&#9670;':'&#9671;')+'</div>'+
+    const ic = CAP_ICON[c.id] ? '<img class="pf-ic" src="'+CAP_ICON[c.id]+'">' : '<div class="pf-ic glyph">'+(owned?'&#9670;':'&#9671;')+'</div>';
+    return '<div class="proof-item'+(owned?' lemma':'')+'" id="cap-'+c.id+'" data-tip="'+esc('<i>'+c.flavor+'</i>')+'">'+ic+
       '<div class="pf-main"><div class="pf-name">'+c.name+'</div><div class="pf-desc">'+c.desc+'</div>'+
       (owned?'<div class="pf-desc" style="color:var(--accent)">ACQUIRED</div>':'<button class="up-buy" data-cap="'+c.id+'" id="capb-'+c.id+'"></button>')+'</div></div>';
   }
@@ -1244,6 +1252,7 @@
   }
   function buildEmergence(){
     return '<div class="panel endcard" style="grid-column:1/-1">'+
+      '<img class="agent-hero" src="assets/agent-emergent.png" alt="">'+
       '<img class="endcard-wm" src="assets/wordmark.png" alt="EMERGENCE">'+
       '<div class="endcard-title">Emergence</div>'+
       '<canvas id="emergeViz" class="scatter" style="height:120px"></canvas>'+

@@ -25,8 +25,8 @@ eras (scroll-driven theme switch). Completed eras collapse to a slim bar.
 | 1 | Origins | Two cross-gated tracks (Knowledge + Materials) + rate-based converters with upkeep, converging on Silicon → fabricate the Logic Machine | warm stone, **serif**, ochre | **Built**; evolving-core art (Stone→Bronze→Silicon) |
 | 2 | Symbolic | Theorem-proving as a process: Rulesets emit Inference, aimed at one proof at a time; repeatable Optimization + Inference-Capacity lemmas; Compile→Axioms prestige; proven-theorems row | cold terminal, **mono**, amber + schematic bg | **Built**, ~5-7 min |
 | 3 | Statistical | **Training Focus** (Fit / Generalize / Explore) steers the bias-variance trade: Datasets→Data→Models run experiments to push Accuracy up a diminishing curve; **discover** Methods by chance (Explore; odds rise with Data); overfit gap grows under Fit, shrinks under Generalize (×2 with **Regularization**); generalize at 88% effective accuracy → Era 4. **Reaches back to Origins**: Datasets cost Silicon + Models draw Silicon upkeep | cool teal, **sans**, graph-paper | **Built + reworked**; pacing ~7-9 (autoplay ~3 min) |
-| 4 | Deep | **Allocate Compute across three training runs** (Vision/Language/Reasoning): Nodes built from **Silicon** (Origins) draw **Data + Insight** (Statistical) to run; Capability accrues from **breadth** (geometric mean, so balance beats specialty); breadth gate → Era 5 | blue | **Built**; signature loss-curve viz; glyph icons (art pending) |
-| 5 | Foundation | **Recursive self-improvement**: Self-Improve spends Capability for recursion levels that multiply **all** production every era (the supply chain feeds itself); Emergent Capabilities; at the Scale gate an **unbought agent emerges** and compounds on its own | violet | **Built**; emergence finale + curve viz; glyph icons (art pending) |
+| 4 | Deep | **Allocate Compute across three training runs** (Vision/Language/Reasoning): Nodes built from **Silicon** (Origins) draw **Data + Insight** (Statistical) to run; Capability accrues from **breadth** (geometric mean, so balance beats specialty); breadth gate → Era 5 | blue | **Built + art wired**; loss-curve viz, sigil + node + run glyphs |
+| 5 | Foundation | **Recursive self-improvement**: Self-Improve spends Capability for recursion levels that multiply **all** production every era (the supply chain feeds itself); Emergent Capabilities; at the Scale gate an **unbought agent emerges** and compounds on its own | violet | **Built + art wired**; emergence finale + curve viz, sigil + capability icons + agent hero |
 
 **Living supply chain (committed direction, see `DESIGN.md`):** later eras require infrastructure from earlier ones, so old eras stay alive (backbone resources: **Silicon** from Origins, **Data** from Statistical). Reach-back is now built across **all five eras**: Era 3 → Origins (Datasets/Models on Silicon), Era 4 → Origins + Statistical (Compute Nodes on Silicon, drawing Data + Insight), Era 5 → **everything** (recursion multiplies all earlier production via `rMult()`). The full arc plays first-mark → emergence. Era-fading/obsolescence is **paused** (`S.obsolete` scaffold kept, unused).
 
@@ -99,18 +99,19 @@ A six-persona board (engineer, product, UX, asset, story, alpha-tester) reviewed
 **DONE next session (Eras 4-5 build):**
 - ✅ **Era 4 — Deep**: Compute allocation across Vision/Language/Reasoning; Nodes from Silicon draw Data + Insight; Capability from geometric-mean breadth; breadth gate → Era 5; loss-curve viz. Glyph icons (art pending).
 - ✅ **Era 5 — Foundation**: recursive Self-Improve (`rMult()` multiplies all production every era — the supply chain feeds itself); Emergent Capabilities (Self-Modeling/Transfer/World Model); **unbought agent emerges** at the Scale gate + curve-bends-vertical viz; replaces the endcard.
-- ✅ Themes (blue/violet), test autoplayer extended through Deep+Foundation to emergence (85 green), art prompts written (`ART-PROMPTS.md`).
+- ✅ Themes (blue/violet), test autoplayer extended through Deep+Foundation to emergence (85 green).
+- ✅ **Era 4-5 art generated + wired** (10 ChatGPT icons keyed to alpha): Era 4 sigil/node/run glyphs, Era 5 sigil/3 capabilities/agent-hero. No outstanding art.
 
 **Still open:**
 1. **Watch Zach play the full arc** (first mark → emergence) + read the export; tune all five eras toward 7-9 min. First autoplay read: Origins 1.9m, Symbolic 5.9m, Statistical ~4.4m, Deep 5.7m, Foundation ~8.4m. Origins/Statistical run fast.
-2. **Generate Era 4-5 art** (`ART-PROMPTS.md`: blue Deep set + sigil, violet Foundation set + sigil) → Claude keys + wires (`UPICON.node`, `ERAS[4/5].sigil`, a `CAPICON` map).
-3. (L) **Modularize per-era logic** into `{produce,build,refresh}` descriptors + a resource registry + MILES-id guardrail (now 5 eras of copy-paste pattern).
+2. **Sanity-check the rendered look in a real browser** — Eras 4-5 were built/wired headless; verify themes, the allocation grid, the three canvases (loss/scatter/emergence), and the agent-hero pulse actually render.
+3. (M) Era 4 balance: balanced 1/1/1 allocation may dominate — make specialization-then-rebalance a real pull. (L) Modularize per-era logic into descriptors + resource registry + MILES-id guardrail (5 eras of copy-paste now).
 4. (M) Deepen Era 2's back-half; narrative heart per era; a11y (keyboard/touch tooltips, bigger min type, reduced-motion).
 
 (Board flagged core-bronze/logic-machine as un-keyed — false alarm, verified clean. Personas read code/files, not the rendered game; treat art-render claims as hypotheses.)
 
 ## Art status
-Eras 1-3 are **fully wired**: all icons, three sigils (Origins/Symbolic/Statistical), the evolving Origins core (Stone/Bronze/Silicon), the Inference Capacity icon, the wordmark, and the title card. Eras 4-5 are **mechanically complete but run on glyph fallbacks** — they need their art generated (see `ART-PROMPTS.md`): **Era 4** sigil + Compute Node + optional run glyphs (blue), **Era 5** sigil + 3 Capability icons + optional agent glyph (violet).
+**All five eras are now fully wired.** Eras 1-3: all icons, sigils, evolving Origins core, wordmark, title card. **Era 4** (blue): sigil, Compute Node, three run glyphs (Vision/Language/Reasoning). **Era 5** (violet): sigil, three Capability icons (Self-Modeling/Transfer/World Model), and the Emergent Agent hero glyph in the finale. Keyed from ChatGPT exports (white-bg → 255−min(rgb) alpha; black-bg → max(rgb) alpha) into `assets/`. No outstanding art.
 
 ## Docs
 - `CLAUDE.md` (this file) — current state. `DESIGN.md` — the living-supply-chain redesign + decisions + build order. `TESTING.md` — the suite (85 tests). `ART-PROMPTS.md` — Era 4-5 icon prompts (ChatGPT → key → wire).
