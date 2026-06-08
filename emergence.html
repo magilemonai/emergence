@@ -66,6 +66,9 @@
   main::-webkit-scrollbar { width: 9px; }
   main::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
   #coldopen { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 40px; transition: opacity 0.8s; }
+  .co-wordmark { width: min(560px, 72vw); height: auto; display: block; margin-bottom: 4px;
+    filter: drop-shadow(0 0 24px rgba(232,184,118,0.25)); animation: wordmarkIn 1.2s ease-out; }
+  @keyframes wordmarkIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   .co-title { font-size: 12px; letter-spacing: 6px; color: var(--dimmer); text-transform: uppercase; }
   .co-count { font-size: 40px; font-variant-numeric: tabular-nums; color: var(--e0); min-height: 48px; transition: transform 0.08s; text-align:center; }
   .co-count small { font-size: 13px; color: var(--dim); letter-spacing: 2px; display: block; margin-top: 4px; }
@@ -292,6 +295,7 @@
   </header>
   <main>
     <div id="coldopen">
+      <img class="co-wordmark" src="assets/title-card.png" alt="EMERGENCE">
       <div class="co-title">a record, beginning</div>
       <div class="co-count" id="coCount">0<small>MARKS</small></div>
       <button class="big-btn" id="coBtn">INSCRIBE A MARK</button>

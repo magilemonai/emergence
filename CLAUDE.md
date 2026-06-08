@@ -1,7 +1,7 @@
-# EMERGENCE — Project Handoff
+# EMERGENCE — Project State (CLAUDE.md)
 
-> Context for continuing development. Hand this to Claude Code at the start of a session.
-> Last rewritten 2026-06-08 (five-era restructure). Supersedes the original 4-era doc.
+> The living source of truth for this project. Auto-loaded by Claude Code each session —
+> keep it current as the game evolves. Last updated 2026-06-08.
 
 ## What this is
 
@@ -50,6 +50,7 @@ Systems:
 - **Dev tools:** backtick (or `?dev=1`) → speed 1/3/10/50×, +resources, instant reset, hard reset, export run, live `t=` clock.
 - **Persistence:** localStorage autosave (5s + on hide/unload), offline catch-up (8h cap), bulk-buy x1/x10/MAX.
 - **Icons:** bronze line-art PNGs. Raw ChatGPT exports have a baked checkerboard — key it to alpha with the PIL one-liner (luminance threshold ~150–212) before wiring. `DICON`/`BICON`/`UPICON`/`TH_ICON` map keys → asset paths; missing ones fall back to a glyph.
+- **Title card / wordmark:** `assets/title-card.png` (amber circuit-node "EMERGENCE") is the cold-open title screen (`.co-wordmark`).
 
 ## How to add an era (the pattern)
 
