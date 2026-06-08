@@ -282,6 +282,45 @@ function testProgression(){
   }
 }
 
+// ====================================================================
+// 3. PACING MODEL — human-ish autoplayer at different click rates
+// ====================================================================
+// Plays Origins clicking at a fixed rate (alternating Inscribe/Quarry once
+// Materials open), buying discoveries/buildings greedily. Records when each
+// beat is reached so I can compare against the 30/60/120/300s targets and
+// tune the cost math without waiting on live sessions.
+function runOrigins(EM, clicksPerSec){
+  const { S, DISCO } = EM;
+  const beats = {}; const mark = (k)=>{ if(beats[k]===undefined) beats[k]=S.t; };
+  let acc=0, alt=0;
+  for(let tk=0; tk<300000 && !S.flags.origindone; tk++){
+    acc += clicksPerSec*0.1;
+    while(acc>=1){ acc--; if(S.flags.o_materials && (alt++ %2)) EM.quarry(FAKE_EV); else EM.inscribe(FAKE_EV); }
+    for(const n of DISCO) if(EM.canBuyDisco(n.id)){ EM.buyDisco(n.id); mark(n.id); }
+    if(S.flags.canScribe && S.scribe<25) EM.buy('scribe');
+    if(S.flags.o_materials && S.miner<25) EM.buy('miner');
+    if(S.flags.o_scriptorium && S.scriptorium<S.scribe) EM.buy('scriptorium');
+    if(S.flags.o_smelter && S.smelter<S.miner) EM.buy('smelter');
+    if(S.flags.o_foundry && S.foundry<Math.min(S.scriptorium,S.smelter)) EM.buy('foundry');
+    if(S.flags.canFabricate) EM.fabricate();
+    EM.tick();
+  }
+  beats.done = S.flags.origindone ? S.t : undefined;
+  return beats;
+}
+function reportPacing(){
+  section('Pacing model — beats vs targets across click rates');
+  const cols=[['stoneworking',30],['clayTablets',60],['kiln',120],['theFoundry',300]];
+  const T=s=> s===undefined?'—':(Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0'));
+  console.log('  rate(c/s) │ '+cols.map(([k])=>k.slice(0,10).padStart(11)).join('')+' │  fabricate');
+  console.log('  TARGET    │ '+cols.map(([,t])=>T(t).padStart(11)).join('')+' │');
+  console.log('  ──────────┼'+'─'.repeat(cols.length*11+1)+'┼───────────');
+  for(const cps of [1,2,4]){
+    const b=runOrigins(freshGame(), cps);
+    console.log('  '+String(cps).padStart(7)+'   │ '+cols.map(([k])=>T(b[k]).padStart(11)).join('')+' │ '+T(b.done).padStart(10));
+  }
+}
+
 // ---- run all ----
 console.log('EMERGENCE test suite');
 console.log('====================');
@@ -298,6 +337,7 @@ testOffline();
 testNoNaN();
 testNoIdleRebuild();
 testProgression();
+reportPacing();
 
 console.log('\n====================');
 console.log(`${passed} passed, ${failed} failed`);

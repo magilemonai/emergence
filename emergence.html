@@ -282,6 +282,19 @@
   // Progressive UI: each section animates in only the first time it appears (survives re-renders).
   const _seen = new Set();
   function intro(key){ if(_seen.has(key)) return ''; _seen.add(key); return ' intro'; }
+  // --- Run Recorder: semantic telemetry for pacing analysis (exported from the dev panel) ---
+  const REC = { v:2, events:[], snaps:[], clicks:{}, lastSnap:-1 };
+  function recEvent(ev, extra){ REC.events.push(Object.assign({ gt:+S.t.toFixed(1) }, extra||{}, { ev })); }
+  function recClick(kind){ const b=Math.floor(S.t/5)*5; (REC.clicks[b]=REC.clicks[b]||{inscribe:0,quarry:0})[kind]++; }
+  function recSnap(){ const b=Math.floor(S.t/10)*10; if(b===REC.lastSnap) return; REC.lastSnap=b;
+    REC.snaps.push({ gt:b, mk:+S.marks.toFixed(1), or:+S.ore.toFixed(1), kn:+S.knowledge.toFixed(1), mt:+S.metal.toFixed(1), si:+S.silicon.toFixed(1),
+      sc:S.scribe, mi:S.miner, scr:S.scriptorium, sm:S.smelter, fo:S.foundry }); }
+  function exportRun(){
+    const out=JSON.stringify({ ...REC, speed:S.speed, age:S.age, done:!!S.flags.origindone,
+      targets:Object.fromEntries(DISCO.filter(d=>d.target).map(d=>[d.id,d.target])) });
+    try{ navigator.clipboard.writeText(out); toast('RUN COPIED','Pacing data on your clipboard — paste it to me to tune.'); }
+    catch(e){ console.log('EMERGENCE_RUN '+out); toast('RUN LOGGED','Clipboard blocked; full data is in the console.'); }
+  }
   const ERAS = {
     1: { color: 'var(--e0)', tag: 'Origins', name: 'From Marks to Matter', sub: 'recording the world, then reshaping it', sigil: 'assets/era1-sigil.png' },
     2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'assets/sigil-symbolic.png' },
@@ -400,22 +413,22 @@
   }
   function buyDisco(id){
     const n=DISCOMAP[id]; if(!canBuyDisco(id)) return;
-    S[n.res]-=n.cost; S.disco[id]=true; if(n.effect) n.effect(); playSound('buy'); render();
+    S[n.res]-=n.cost; S.disco[id]=true; if(n.effect) n.effect(); recEvent('disco:'+id,{target:n.target||null}); playSound('buy'); render();
   }
   function inscribe(ev){
-    S.clicks++; const g=oStats().inscribe; S.marks+=g; S.started=true; playSound('click');
+    S.clicks++; const g=oStats().inscribe; S.marks+=g; S.started=true; playSound('click'); recClick('inscribe');
     if(ev && ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),'var(--e0)', r.left+r.width/2, r.top-6); }
     if(S.clicks===1 && $('coHint')) $('coHint').textContent='Keep inscribing. Enough marks and the work begins to copy itself.';
     if(!S.flags.firstAuto) renderCold(); else refresh();
   }
   function quarry(ev){
-    const g=oStats().quarry; S.ore+=g; playSound('click');
+    const g=oStats().quarry; S.ore+=g; playSound('click'); recClick('quarry');
     if(ev && ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),'#c08552', r.left+r.width/2, r.top-6); }
     refresh();
   }
   function fabricate(){
     if(!S.flags.canFabricate || S.flags.origindone) return;
-    S.silicon-=CFG.e1.siliconGate; S.flags.origindone=true; playSound('milestone'); render();
+    S.silicon-=CFG.e1.siliconGate; S.flags.origindone=true; recEvent('fabricate'); playSound('milestone'); render();
   }
   function writeRule(ev){
     S.clicks++;
@@ -478,7 +491,7 @@
   function buy(key){
     const b=BUYS[key], n=buyQty(key); if(n<=0) return;
     const tc=totalCost(b,n); if(S[b.res] < tc) return;
-    S[b.res]-=tc; S[b.key]+=n; playSound('buy'); refresh();
+    const was=S[b.key]; S[b.res]-=tc; S[b.key]+=n; if(was===0) recEvent('build:'+key); playSound('buy'); refresh();
   }
   function revealGame(){
     if(S.flags.firstAuto) return;
@@ -525,12 +538,13 @@
   }
   function checkMiles(){
     let fired=false;
-    for(const m of MILES){ if(!S.flags[m.id] && m.cond()){ S.flags[m.id]=true; m.fire(); fired=true; } }
+    for(const m of MILES){ if(!S.flags[m.id] && m.cond()){ S.flags[m.id]=true; recEvent('mile:'+m.id); m.fire(); fired=true; } }
     if(fired && S.flags.firstAuto) render(); // a milestone changed structure (unlock / new era / legacy)
   }
   function tick(){
     const dt=CFG.tickMs/1000*S.speed; if(S.started) S.t+=dt;
     produce(dt); checkMiles();
+    if(S.started) recSnap();
     if(S.flags.firstAuto) refresh(); else renderCold();
     if(S.dev){ const e=$('devT'); if(e) e.textContent=Math.floor(S.t); }
   }
@@ -539,8 +553,8 @@
   // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
   const RES_DEFS=[
     {k:'marks', show:()=>S.maxEra===1, color:'var(--e0)', label:'Marks'},
-    {k:'knowledge', show:()=>S.maxEra===1, color:'var(--e0)', label:'Knowledge'},
     {k:'ore', show:()=>S.maxEra===1 && S.flags.o_materials, color:'#c08552', label:'Ore'},
+    {k:'knowledge', show:()=>S.maxEra===1 && S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
     {k:'metal', show:()=>S.maxEra===1 && S.flags.o_smelter, color:'#c08552', label:'Metal'},
     {k:'silicon', show:()=>S.maxEra===1 && S.flags.o_foundry, color:'var(--accent)', label:'Silicon'},
     {k:'rules', show:()=>S.maxEra>=2,  color:'var(--e1)', label:'Rules'},
@@ -682,8 +696,8 @@
   }
   const RATE_DEFS = [
     ['marks','Marks','assets/icon-marks.png', ()=>true],
-    ['knowledge','Knowledge','assets/icon-knowledge.png', ()=>true],
     ['ore','Ore','assets/icon-ore.png', ()=>S.flags.o_materials],
+    ['knowledge','Knowledge','assets/icon-knowledge.png', ()=>S.flags.o_scriptorium],
     ['metal','Metal','assets/icon-ingot.png', ()=>S.flags.o_smelter],
     ['silicon','Silicon','assets/icon-silicon.png', ()=>S.flags.o_foundry],
   ];
@@ -858,9 +872,11 @@
     $('dev').innerHTML =
       '<div class="dh"><span>DEV &middot; <b>'+S.speed+'×</b> &middot; t=<b id="devT">'+Math.floor(S.t)+'</b>s</span><span>` to hide</span></div>'+
       '<div class="row">'+SPEEDS.map(s=>'<button data-spd="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div>'+
-      '<div class="row"><button data-grant="1">+resources</button><button data-soft="1">reset</button><button data-reset="1">hard reset</button></div>';
+      '<div class="row"><button data-grant="1">+resources</button><button data-soft="1">reset</button><button data-reset="1">hard reset</button></div>'+
+      '<div class="row"><button data-export="1">export run (copy JSON)</button></div>';
     $('dev').querySelectorAll('[data-spd]').forEach(b=> b.onclick=()=>{ S.speed=+b.dataset.spd; renderDev(); });
     $('dev').querySelector('[data-grant]').onclick=grant;
+    $('dev').querySelector('[data-export]').onclick=exportRun;
     $('dev').querySelector('[data-soft]').onclick=softReset;
     $('dev').querySelector('[data-reset]').onclick=()=>{ if(confirm('Wipe all progress and reload?')){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); } };
   }
