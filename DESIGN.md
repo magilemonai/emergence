@@ -96,8 +96,8 @@ The **objective line** is a persistent banner per era ("▸ Generalize: 62% / 85
 
 *Deferred:* Era 4 (Deep — Compute = Silicon + Data + Insight, compute-allocation, blue) and Era 5 (Foundation — convergence + recursive feedback, violet). The backbone is designed for them; we build them later.
 
-## Open questions for Cody
+## Decisions (locked 2026-06-08)
 
-- **Reach-back as build-cost vs upkeep:** I lean build-cost primary (scale infrastructure) + a little upkeep on marquee items (Compute power draw). OK, or do you want upkeep to bite harder for more tension?
-- **Reviving old eras:** compact "reach-back" strip inside the current era (invest without leaving), or make you scroll back up and expand the old era (more physical, more friction)? I lean compact strip.
-- **Foundation recursion:** should Era 5 capabilities feed *back* and multiply earlier production (a true loop), or just consume? I lean feedback loop (it's the thesis of the game).
+- **Reach-back cost = build-cost primary + light upkeep.** Scaling a building costs the earlier-era resource up front (sends you back to expand infrastructure); marquee items also carry a small per-second draw for live tension. Reads as "grow the factory," not punishment.
+- **Reviving old eras = compact reach-back strip.** A small panel inside the current era lets you buy more of the earlier era's automation in place, so scaling Silicon never makes you lose your spot.
+- **Foundation recursion** (Era 5, deferred): leaning feedback loop (capabilities multiply earlier production) — revisit when we build Era 5.
