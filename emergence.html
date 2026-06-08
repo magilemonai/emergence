@@ -367,16 +367,16 @@
     },
     e3: { // ERA 3 — Statistical (experiments + accuracy curve + Training Focus + probabilistic discovery)
       datasetCost: 30, datasetGrowth: 1.16, datasetYield: 1.2,   // Data/sec per Dataset (bought with SILICON — reach-back to Origins)
-      modelCost: 90, modelGrowth: 1.2, expPerModel: 0.4,         // experiments/sec per Model (bought with Data)
+      modelCost: 90, modelGrowth: 1.2, expPerModel: 0.3,         // experiments/sec per Model (bought with Data)
       modelSilicon: 0.05,    // light upkeep: Silicon/sec drawn per Model (keeps Origins' Foundry relevant)
       expDataCost: 4,        // Data spent per experiment
-      accGain: 0.006,        // accuracy gained per experiment × (1 - accuracy)  [diminishing curve; slow climb toward 7-9 min]
+      accGain: 0.004,        // accuracy gained per experiment × (1 - accuracy)  [slow diminishing climb, ~7-9 min]
       insightPerExp: 2,      // Insight per experiment × effective accuracy
-      gapGrow: 0.006,        // overfit gap growth per experiment (Fit focus)
-      gapReduce: 0.012,      // gap reduction per experiment (Generalize focus); ×2 with Regularization
+      gapGrow: 0.0035,       // overfit gap growth per experiment (Fit) — below Fit's accuracy gain, so Fit still nets forward
+      gapReduce: 0.007,      // gap reduction per experiment (Generalize); ×2 with Regularization — so Regularization really matters
       gapMax: 0.6,
       discoverBase: 0.012, dataDiscover: 0.00002, // method-discovery odds per experiment (rise with Data; Explore focus)
-      genThreshold: 0.85,    // effective accuracy that generalizes → Era 4
+      genThreshold: 0.88,    // effective accuracy that generalizes → Era 4 (high enough that you need the Methods)
       seedDatasets: 3, seedSilicon: 220,
       // Training Focus — the live decision. {acc, gap-grow, gap-reduce, discovery, insight} multipliers
       focus: {
