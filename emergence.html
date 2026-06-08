@@ -134,10 +134,10 @@
   .up-main { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .up:last-child { border-bottom: none; }
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
-  .up-name { font-size: 12px; }
-  .up-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .up-flavor { font-size: 11px; font-style: italic; color: var(--dim); line-height: 1.5; margin-bottom: 3px; }
-  .up-desc { font-size: 11px; color: var(--dim); line-height: 1.55; }
+  .up-name { font-size: 14px; }
+  .up-count { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .up-flavor { font-size: 12.5px; font-style: italic; color: var(--dim); line-height: 1.5; margin-bottom: 3px; }
+  .up-desc { font-size: 12.5px; color: var(--dim); line-height: 1.55; }
   .up-buy { margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
     padding: 7px; font-family: inherit; font-size: 10.5px; color: var(--text); cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
   .up-buy:hover:not(:disabled) { border-color: var(--ec); }
@@ -172,9 +172,9 @@
   .pf-main { width: 100%; min-width: 0; }
   .proof-item.lemma { border-color: rgba(201,162,107,0.4); }
   .proof-item.active { border-color: var(--e1); box-shadow: 0 0 14px rgba(201,162,107,0.2); }
-  .pf-name { font-size: 13px; color: var(--text); text-align: center; }
+  .pf-name { font-size: 15px; color: var(--text); text-align: center; }
   .pf-lv { color: var(--accent); font-size: 10px; }
-  .pf-desc { font-size: 11px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
+  .pf-desc { font-size: 12.5px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
   /* Era 3 — Statistical: objective banner, Training Focus, Origins supply strip */
   .objective { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 9px 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
@@ -244,10 +244,10 @@
   .tile-ic.glyph { width: 92px; height: 92px; align-self: center; display: flex; align-items: center; justify-content: center; font-size: 44px; color: var(--e0);
     border: 1px solid rgba(201,146,95,0.45); border-radius: 9px; }
   .tile-body { width: 100%; min-width: 0; }
-  .tile-name { font-size: 13px; color: var(--text); text-align: center; }
-  .tile-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .tile-flavor { font-size: 10.5px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
-  .tile-mech { font-size: 10.5px; color: var(--dim); line-height: 1.45; }
+  .tile-name { font-size: 15px; color: var(--text); text-align: center; }
+  .tile-count { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .tile-flavor { font-size: 12px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
+  .tile-mech { font-size: 12px; color: var(--dim); line-height: 1.45; }
   .tile-eff { margin-top: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,0.18); }
   .eff-cap { font-size: 9.5px; letter-spacing: 1px; color: var(--dimmer); text-transform: uppercase; margin-bottom: 4px; }
   .eff-row { display: flex; justify-content: space-between; font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.55; }
@@ -358,10 +358,10 @@
     },
     e3: { // ERA 3 — Statistical (experiments + accuracy curve + Training Focus + probabilistic discovery)
       datasetCost: 30, datasetGrowth: 1.16, datasetYield: 1.2,   // Data/sec per Dataset (bought with SILICON — reach-back to Origins)
-      modelCost: 90, modelGrowth: 1.2, expPerModel: 0.45,        // experiments/sec per Model (bought with Data)
+      modelCost: 90, modelGrowth: 1.2, expPerModel: 0.4,         // experiments/sec per Model (bought with Data)
       modelSilicon: 0.05,    // light upkeep: Silicon/sec drawn per Model (keeps Origins' Foundry relevant)
       expDataCost: 4,        // Data spent per experiment
-      accGain: 0.011,        // accuracy gained per experiment × (1 - accuracy)  [diminishing curve]
+      accGain: 0.006,        // accuracy gained per experiment × (1 - accuracy)  [diminishing curve; slow climb toward 7-9 min]
       insightPerExp: 2,      // Insight per experiment × effective accuracy
       gapGrow: 0.006,        // overfit gap growth per experiment (Fit focus)
       gapReduce: 0.012,      // gap reduction per experiment (Generalize focus); ×2 with Regularization
@@ -842,7 +842,7 @@
   function buildSymbolic(){ // ERA 2 — the Inference Engine: a proving bench, distinct from Origins
     let prod = eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.');
     if(S.tech.inference) prod += eraUpgrade('daemon','Inference Daemon','Fires the write action for you. Everything that makes a click stronger makes a Daemon stronger.');
-    let body = '';
+    let body = '<div class="objective" id="sym-obj" style="grid-column:1/-1"></div>';
     // Hero: the active proof + inference rate take the stage
     if(S.flags.tree) body += '<div class="panel sym-hero" style="grid-column:1/-1"><div class="panel-label">The Inference Engine · prove a theorem</div>'+
       '<div class="proof-rate" id="infRate"></div><div class="proof-active" id="proofActive"></div></div>';
@@ -953,7 +953,7 @@
   }
   function buildOrigins(){ // ERA 1
     // Progressive disclosure: sections appear as the player earns them.
-    let body = buildCore();                                   // 1. the core + Research button (at reveal)
+    let body = '<div class="objective" id="o-obj" style="grid-column:1/-1"></div>' + buildCore(); // objective + core
     if(S.flags.canScribe) body += buildRatesPanel();          // 2. Flows (with your first automation)
     if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // 3. Works (Research lives in the drawer)
     if(S.flags.o_foundry){                                    // 5. Fabrication (silicon age)
@@ -1060,6 +1060,12 @@
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
+      const oo=$('o-obj'); if(oo){ let t;
+        if(!S.flags.o_materials) t='Discover Stoneworking to mine Ore';
+        else if(!S.disco.theFoundry) t='Reach the Foundry to forge Silicon';
+        else if(!S.flags.origindone) t='Fabricate the Logic Machine — Silicon '+fmt(S.silicon)+' / '+CFG.e1.siliconGate;
+        else t='The Logic Machine runs.';
+        setText('o-obj','▸ OBJECTIVE — '+t); }
       const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);
       const badge=$('researchBadge'), resb=$('researchBtn');
       if(badge){ if(avail>0){ setText('researchBadge', avail+''); badge.classList.add('show'); } else badge.classList.remove('show'); }
@@ -1086,6 +1092,11 @@
       const fbtn=$('fabricateBtn'); if(fbtn && fbtn.disabled!==!S.flags.canFabricate) fbtn.disabled=!S.flags.canFabricate;
     }
     // theorem-proving
+    const so=$('sym-obj'); if(so){ const need=(TREEMAP.expert&&TREEMAP.expert.reqAxioms)||6; let t;
+      if(S.flags.symbolicDone) t='The Expert System is proven.';
+      else if(!S.flags.compile) t='Prove theorems toward the Expert System';
+      else t='Prove the Expert System — Axioms '+fmt(S.axioms)+' / '+need;
+      setText('sym-obj','▸ OBJECTIVE — '+t); }
     const ir=$('infRate');
     if(ir){
       setText('infRate', 'Inference  '+fmt(S.inference)+' / '+fmt(infCap())+'   ·   +'+fmt(symInfRate())+'/s'+(S.ruleset===0?' (build Rulesets to reason)':''));
