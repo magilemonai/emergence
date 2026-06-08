@@ -185,6 +185,28 @@
   .tile-eff { font-size: 10px; color: var(--e0); font-variant-numeric: tabular-nums; margin-top: 4px; }
   .tile-btn { margin-top: 7px; width: 100%; }
   .tile.disco.owned .tile-btn { opacity: 0.5; }
+  /* Research drawer */
+  #drawerBg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 70; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  #drawerBg.show { opacity: 1; pointer-events: auto; }
+  #drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(460px, 92vw); z-index: 71; background: var(--panel);
+    border-left: 1px solid var(--line); transform: translateX(100%); transition: transform 0.3s ease-out;
+    display: flex; flex-direction: column; box-shadow: -14px 0 44px rgba(0,0,0,0.55); }
+  #drawer.show { transform: translateX(0); }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
+    border-bottom: 1px solid var(--line); font-size: 10px; letter-spacing: 2px; color: var(--e0); text-transform: uppercase; }
+  .drawer-head button { background: none; border: none; color: var(--dim); font-size: 20px; line-height: 1; cursor: pointer; }
+  .drawer-head button:hover { color: var(--text); }
+  #drawerBody { padding: 14px 16px; overflow-y: auto; }
+  #drawerBody .ogrid { grid-template-columns: 1fr; }
+  .research-btn { margin-top: 12px; position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px;
+    border: 1px solid rgba(201,146,95,0.5); border-radius: 9px; background: rgba(201,146,95,0.06); color: var(--e0);
+    font-family: inherit; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+  .research-btn:hover { border-color: var(--e0); }
+  .research-btn.has { box-shadow: 0 0 16px rgba(255,205,107,0.22); border-color: var(--accent); }
+  .rb-ic { width: 20px; height: 20px; object-fit: contain; }
+  .rb-badge { min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--accent); color: #1a1206;
+    font-size: 9px; font-weight: 700; display: none; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
+  .rb-badge.show { display: inline-flex; }
   #toasts { position: fixed; top: 60px; right: 18px; z-index: 60; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
   .toast { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 16px;
     max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out; }
@@ -233,6 +255,8 @@
 <div id="fx"></div>
 <div id="toasts"></div>
 <div id="dev"></div>
+<div id="drawerBg"></div>
+<div id="drawer"><div class="drawer-head"><span>RESEARCH &middot; one-time discoveries</span><button id="drawerClose">&times;</button></div><div id="drawerBody"></div></div>
 <script>
 (() => {
   const CFG = {
@@ -715,6 +739,7 @@
       '<div class="core-side">'+
         '<div class="core-verbs"><button class="act-btn" id="inscribeBtn">INSCRIBE A MARK</button>'+
           (S.flags.o_materials?'<button class="act-btn" id="quarryBtn">QUARRY ORE</button>':'')+'</div>'+
+        '<button class="research-btn" id="researchBtn"><img class="rb-ic" src="assets/era1-sigil.png">RESEARCH<span class="rb-badge" id="researchBadge"></span></button>'+
       '</div></div>';
   }
   function buildRatesPanel(){
@@ -735,10 +760,9 @@
   }
   function buildOrigins(){ // ERA 1
     // Progressive disclosure: sections appear as the player earns them.
-    let body = buildCore();                                   // 1. the core (at reveal)
-    if(S.flags.canScribe) body += buildRatesPanel();          // 3. Flows (with your first automation)
-    body += '<div class="panel ogrid-panel research-panel'+intro('research')+'" style="grid-column:1/-1"><div class="panel-label">Research · one-time discoveries</div>'+buildResearch()+'</div>'; // 2. Research (at reveal)
-    if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // 3. Works
+    let body = buildCore();                                   // 1. the core + Research button (at reveal)
+    if(S.flags.canScribe) body += buildRatesPanel();          // 2. Flows (with your first automation)
+    if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // 3. Works (Research lives in the drawer)
     if(S.flags.o_scriptorium) body += '<div class="panel flow-panel'+intro('chain')+'" style="grid-column:1/-1"><div class="panel-label">The Chain · what feeds what</div>'+buildFlow()+'</div>'; // 4. The Chain (when conversion begins)
     if(S.flags.o_foundry){                                    // 5. Fabrication (silicon age)
       body += '<div class="panel'+intro('fab')+'" style="grid-column:1/-1"><div class="panel-label">Fabrication</div>'+
@@ -767,6 +791,9 @@
     if(!S.flags.firstAuto) return;
     buildHeader();
     $('eras').innerHTML = buildEras();
+    if(S.maxEra===1) $('drawerBody').innerHTML = buildResearch(); // research tiles live in the drawer now
+    const resb=$('researchBtn'); if(resb) resb.onclick=()=>toggleDrawer();
+    $('drawerClose').onclick=()=>toggleDrawer(false); $('drawerBg').onclick=()=>toggleDrawer(false);
     const rb=$('ruleBtn2'); if(rb) rb.onclick=writeRule;
     const ib=$('inscribeBtn'); if(ib) ib.onclick=inscribe;
     const qb=$('quarryBtn'); if(qb) qb.onclick=quarry;
@@ -806,6 +833,10 @@
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
+      const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);
+      const badge=$('researchBadge'), resb=$('researchBtn');
+      if(badge){ if(avail>0){ setText('researchBadge', avail+''); badge.classList.add('show'); } else badge.classList.remove('show'); }
+      if(resb) resb.classList.toggle('has', avail>0);
       for(const key of WORKS_ORDER){ if($('eff-'+key)) setText('eff-'+key, buildEffect(key)); }
       for(const [k] of RATE_DEFS){ if(!$('ramt-'+k)) continue;
         setText('ramt-'+k, fmt(S[k]));
@@ -861,7 +892,7 @@
   function softReset(){ // instant in-memory restart to the cold open (keeps dev panel + speed)
     try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
     const dev=S.dev, speed=S.speed;
-    Object.assign(S, freshState()); S.dev=dev; S.speed=speed; _seen.clear();
+    Object.assign(S, freshState()); S.dev=dev; S.speed=speed; _seen.clear(); toggleDrawer(false);
     $('eras').style.display='none'; $('hdr').classList.remove('show'); $('vizwrap').style.display='none';
     const co=$('coldopen'); co.style.display='flex'; co.style.opacity='1';
     $('coHint').textContent='Before intelligence could grow, it had to be written down. One mark at a time.';
@@ -881,6 +912,8 @@
     $('dev').querySelector('[data-reset]').onclick=()=>{ if(confirm('Wipe all progress and reload?')){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); } };
   }
   function toggleDev(on){ S.dev = on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); if(S.dev) renderDev(); }
+  let uiDrawer=false;
+  function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer); $('drawerBg').classList.toggle('show',uiDrawer); }
   window.addEventListener('keydown', e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
   if(/[?&]dev=1/.test(location.search)) toggleDev(true);
 
