@@ -96,7 +96,7 @@ function testDiscovery(){
   section('Origins — discovery web (prereqs, cross-gates, effects)');
   const EM = freshGame(); const S = EM.S;
   ok(EM.discoVisible('tally') && !EM.discoVisible('scribe'), 'only root discoveries are visible at start');
-  S.marks = 100000;
+  S.marks = 100000; S.t = 1000; // past all time gates; timing is covered by testTimeGate
   EM.buyDisco('tally');
   ok(EM.discoVisible('scribe') && EM.discoVisible('stoneworking'), 'buying Tally reveals its children');
   near(EM.oStats().inscribe, EM.CFG.e1.inscribeBase * 2, 1e-9, 'Tally Marks doubles inscribe');
@@ -106,6 +106,15 @@ function testDiscovery(){
   S.ore = 0; ok(!EM.canBuyDisco('clayTablets'), 'Clay Tablets blocked without ore');
   S.ore = 20; ok(EM.canBuyDisco('clayTablets'), 'Clay Tablets buyable once ore is present');
   EM.buyDisco('clayTablets'); ok(S.flags.o_scriptorium, 'Clay Tablets unlocks the scriptorium');
+}
+
+function testTimeGate(){
+  section('Origins — timed unlocks');
+  const EM = freshGame(); const S = EM.S;
+  S.marks = 100000; S.t = 0; EM.buyDisco('tally');
+  ok(!EM.canBuyDisco('stoneworking'), 'a time-gated discovery stays locked before its time, even when affordable');
+  S.t = 31;
+  ok(EM.canBuyDisco('stoneworking'), 'it unlocks once the clock passes the gate (~30s)');
 }
 
 function testFabrication(){
@@ -270,6 +279,7 @@ testFormatting();
 testCostMath();
 testOriginsChain();
 testDiscovery();
+testTimeGate();
 testFabrication();
 testTechTree();
 testCompile();

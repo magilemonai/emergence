@@ -161,6 +161,8 @@
   .tile { display: flex; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, opacity 0.4s; }
   .tile.disco.can { border-color: rgba(201,146,95,0.55); box-shadow: 0 0 14px rgba(201,146,95,0.12); }
   .tile.disco.owned { opacity: 0.6; border-color: rgba(201,146,95,0.4); background: rgba(201,146,95,0.07); }
+  .tile.disco.timed { border-style: dashed; border-color: rgba(201,146,95,0.3); }
+  .tile.disco.timed .tile-btn { letter-spacing: 1px; }
   .tile-ic { width: 42px; height: 42px; object-fit: contain; flex: none; }
   .tile-ic.glyph { display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--e0);
     border: 1px solid rgba(201,146,95,0.45); border-radius: 9px; }
@@ -230,7 +232,7 @@
       scriptoriumCost: 60, scriptoriumGrowth: 1.19, scriptoriumRate: 0.7,  // marks -> knowledge /sec
       smelterCost: 80, smelterGrowth: 1.19, smelterRate: 0.7,      // ore -> metal /sec
       foundryCost: 700, foundryGrowth: 1.2, foundryRate: 0.5,      // metal+knowledge -> silicon /sec
-      siliconGate: 260,        // silicon needed to fabricate the Logic Machine
+      siliconGate: 150,        // silicon needed to fabricate the Logic Machine (after the 5-min Foundry gate)
     },
     e2: { // ERA 2 — Symbolic (the tech-tree + compile journey, ~5-6 min)
       clickBase: 1,
@@ -248,7 +250,7 @@
     era4Gate: 30,
     scaleCost: 45, scaleGrowth: 1.26,
   };
-  const S = {
+  function freshState(){ return {
     t: 0, started: false, era: 1, maxEra: 1, speed: 1, dev: false, buyMode: '1',
     // Era 1 — Origins
     marks: 0, knowledge: 0, ore: 0, metal: 0, silicon: 0, age: 1,
@@ -260,7 +262,8 @@
     insight: 0, data: 0, capability: 0, scale: 0,
     dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
     tech: {}, obsolete: {}, flags: {}, clicks: 0,
-  };
+  }; }
+  const S = freshState();
   const ERAS = {
     1: { color: 'var(--e0)', tag: 'Origins', name: 'From Marks to Matter', sub: 'recording the world, then reshaping it', sigil: 'assets/era1-sigil.png' },
     2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'assets/sigil-symbolic.png' },
@@ -285,14 +288,14 @@
   const DISCO = [
     { id:'tally',        name:'Tally Marks',    res:'marks',     cost:10,  req:[],                         flavor:'A notch for each thing worth counting.',           mech:'Inscribing by hand is twice as productive.' },
     { id:'scribe',       name:'The Scribe',     res:'marks',     cost:40,  req:['tally'],                  flavor:'Hands trained to the work, and only the work.',     mech:'Unlocks the Scribe — automates Marks.',               effect(){ S.flags.canScribe=true; } },
-    { id:'stoneworking', name:'Stoneworking',   res:'marks',     cost:80,  req:['tally'],                  flavor:'The first deliberate reshaping of the world.',      mech:'Unlocks Quarrying and Miners.',                       effect(){ S.flags.o_materials=true; } },
-    { id:'clayTablets',  name:'Clay Tablets',   res:'marks',     cost:150, req:['scribe','stoneworking'],  reqRes:{ore:15},      flavor:'Something firmer than memory to hold a thought.',   mech:'Unlocks the Scriptorium — Marks become Knowledge.',   effect(){ S.flags.o_scriptorium=true; } },
-    { id:'kiln',         name:'The Kiln',       res:'ore',       cost:70,  req:['clayTablets'],            reqRes:{knowledge:20},flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
+    { id:'stoneworking', name:'Stoneworking',   res:'marks',     cost:80,  req:['tally'],                  reqTime:30,  flavor:'The first deliberate reshaping of the world.',      mech:'Unlocks Quarrying and Miners.',                       effect(){ S.flags.o_materials=true; } },
+    { id:'clayTablets',  name:'Clay Tablets',   res:'marks',     cost:150, req:['scribe','stoneworking'],  reqRes:{ore:15},  reqTime:60,  flavor:'Something firmer than memory to hold a thought.',   mech:'Unlocks the Scriptorium — Marks become Knowledge.',   effect(){ S.flags.o_scriptorium=true; } },
+    { id:'kiln',         name:'The Kiln',       res:'ore',       cost:70,  req:['clayTablets'],            reqRes:{knowledge:20}, reqTime:120, flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
     { id:'alphabet',     name:'The Alphabet',   res:'knowledge', cost:120, req:['clayTablets'],            flavor:'A handful of signs that can spell anything at all.',mech:'Scriptoria work 60% faster.' },
     { id:'bronzeCasting',name:'Bronze Casting', res:'metal',     cost:90,  req:['kiln'],                   flavor:'Pour the metal; let the mold decide its shape.',    mech:'Smelters work 60% faster.' },
     { id:'numerals',     name:'Numerals',       res:'knowledge', cost:340, req:['alphabet'],               flavor:'Number slips free of the things it counts.',        mech:'Every converter works 30% faster.' },
     { id:'glassmaking',  name:'Glassmaking',    res:'metal',     cost:260, req:['bronzeCasting'],          flavor:'Sand, melted, taught to hold the light.',           mech:'Foundries run 50% faster.' },
-    { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:520, req:['numerals','glassmaking'], reqRes:{metal:150},   flavor:'Knowledge and matter, fused on purpose.',          mech:'Unlocks the Foundry — Metal + Knowledge become Silicon. (Silicon Age)', effect(){ S.flags.o_foundry=true; S.age=3; } },
+    { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:520, req:['numerals','glassmaking'], reqRes:{metal:150}, reqTime:300, flavor:'Knowledge and matter, fused on purpose.',          mech:'Unlocks the Foundry — Metal + Knowledge become Silicon. (Silicon Age)', effect(){ S.flags.o_foundry=true; S.age=3; } },
   ];
   const DISCOMAP = Object.fromEntries(DISCO.map(n=>[n.id,n]));
   // Ordered grid: discoveries and the buildings they unlock, interleaved as they reveal.
@@ -381,6 +384,7 @@
   function discoVisible(id){ const n=DISCOMAP[id]; return n.req.every(r=>S.disco[r]); }
   function canBuyDisco(id){
     const n=DISCOMAP[id]; if(!n || S.disco[id] || !discoVisible(id)) return false;
+    if(n.reqTime && S.t < n.reqTime) return false;
     if(n.reqRes){ for(const k in n.reqRes) if(S[k] < n.reqRes[k]) return false; }
     return S[n.res] >= n.cost;
   }
@@ -505,6 +509,7 @@
     const dt=CFG.tickMs/1000*S.speed; if(S.started) S.t+=dt;
     produce(dt); checkMiles();
     if(S.flags.firstAuto) refresh(); else renderCold();
+    if(S.dev){ const e=$('devT'); if(e) e.textContent=Math.floor(S.t); }
   }
   function renderCold(){ $('coCount').innerHTML = fmt(S.marks)+'<small>MARKS</small>'; }
   // ---- Rendering: build DOM structure rarely, update live numbers every tick. ----
@@ -737,12 +742,17 @@
       setText('coreRates', rate.length?rate.join('   ·   '):'Inscribe to begin.');
       for(const n of DISCO){ const btn=$('dsc-'+n.id); if(!btn) continue; const tile=$('dtile-'+n.id);
         if(S.disco[n.id]){ setClass(tile,'tile disco owned'); if(btn._html!=='DISCOVERED'){ btn.innerHTML='DISCOVERED'; btn._html='DISCOVERED'; } if(!btn.disabled) btn.disabled=true; }
-        else { const can=canBuyDisco(n.id); let req='';
-          if(n.reqRes){ for(const k in n.reqRes){ if(S[k]<n.reqRes[k]) req+=' · needs '+n.reqRes[k]+' '+k; } }
-          const h='DISCOVER · <span class="c">'+fmt(n.cost)+' '+n.res+'</span>'+req;
+        else { const can=canBuyDisco(n.id);
+          let h;
+          if(n.reqTime && S.t < n.reqTime){
+            const r=Math.ceil(n.reqTime-S.t); h='IN '+Math.floor(r/60)+':'+String(r%60).padStart(2,'0');
+          } else {
+            let req=''; if(n.reqRes){ for(const k in n.reqRes){ if(S[k]<n.reqRes[k]) req+=' · needs '+n.reqRes[k]+' '+k; } }
+            h='DISCOVER · <span class="c">'+fmt(n.cost)+' '+n.res+'</span>'+req;
+          }
           if(btn._html!==h){ btn.innerHTML=h; btn._html=h; }
           if(btn.disabled!==!can) btn.disabled=!can;
-          setClass(tile,'tile disco'+(can?' can':''));
+          setClass(tile,'tile disco'+(can?' can':'')+(n.reqTime&&S.t<n.reqTime?' timed':''));
         }
       }
       setClass($('frow-m'),'flow-row'+(S.flags.o_materials?'':' locked'));
@@ -780,15 +790,25 @@
     else { S.marks+=500; S.ore+=500; S.knowledge+=200; S.metal+=200; S.silicon+=50; if(!S.flags.firstAuto) revealGame(); }
     if(S.flags.firstAuto) render();
   }
+  function softReset(){ // instant in-memory restart to the cold open (keeps dev panel + speed)
+    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+    const dev=S.dev, speed=S.speed;
+    Object.assign(S, freshState()); S.dev=dev; S.speed=speed;
+    $('eras').style.display='none'; $('hdr').classList.remove('show'); $('vizwrap').style.display='none';
+    const co=$('coldopen'); co.style.display='flex'; co.style.opacity='1';
+    $('coHint').textContent='Before intelligence could grow, it had to be written down. One mark at a time.';
+    renderCold(); renderDev();
+  }
   function renderDev(){
     if(!S.dev) return;
     $('dev').innerHTML =
-      '<div class="dh"><span>DEV &middot; <b>'+S.speed+'×</b></span><span>` to hide</span></div>'+
+      '<div class="dh"><span>DEV &middot; <b>'+S.speed+'×</b> &middot; t=<b id="devT">'+Math.floor(S.t)+'</b>s</span><span>` to hide</span></div>'+
       '<div class="row">'+SPEEDS.map(s=>'<button data-spd="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div>'+
-      '<div class="row"><button data-grant="1">+resources</button><button data-reset="1">hard reset</button></div>';
+      '<div class="row"><button data-grant="1">+resources</button><button data-soft="1">reset</button><button data-reset="1">hard reset</button></div>';
     $('dev').querySelectorAll('[data-spd]').forEach(b=> b.onclick=()=>{ S.speed=+b.dataset.spd; renderDev(); });
     $('dev').querySelector('[data-grant]').onclick=grant;
-    $('dev').querySelector('[data-reset]').onclick=()=>{ if(confirm('Wipe all progress and reload?')){ try{localStorage.removeItem('emergence-save');}catch(e){} location.reload(); } };
+    $('dev').querySelector('[data-soft]').onclick=softReset;
+    $('dev').querySelector('[data-reset]').onclick=()=>{ if(confirm('Wipe all progress and reload?')){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); } };
   }
   function toggleDev(on){ S.dev = on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); if(S.dev) renderDev(); }
   window.addEventListener('keydown', e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
