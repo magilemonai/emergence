@@ -8,7 +8,7 @@
   :root {
     --bg: #06080d; --panel: #0d1220; --panel-2: #121a2c; --line: #1c2740;
     --text: #ccd6ea; --dim: #5d6d8a; --dimmer: #3a4660;
-    --e1: #c9a26b; --e2: #6ec6a8; --e3: #6ea8ff; --e4: #b78bff;
+    --e0: #c9925f; --e1: #c9a26b; --e2: #6ec6a8; --e3: #6ea8ff; --e4: #b78bff;
     --accent: #ffcd6b; --good: #5ee07f; --danger: #ff6b8b;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,13 +44,13 @@
   main::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
   #coldopen { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 40px; transition: opacity 0.8s; }
   .co-title { font-size: 12px; letter-spacing: 6px; color: var(--dimmer); text-transform: uppercase; }
-  .co-count { font-size: 40px; font-variant-numeric: tabular-nums; color: var(--e1); min-height: 48px; transition: transform 0.08s; text-align:center; }
+  .co-count { font-size: 40px; font-variant-numeric: tabular-nums; color: var(--e0); min-height: 48px; transition: transform 0.08s; text-align:center; }
   .co-count small { font-size: 13px; color: var(--dim); letter-spacing: 2px; display: block; margin-top: 4px; }
-  .big-btn { padding: 26px 56px; border-radius: 16px; border: 1px solid var(--e1);
-    background: radial-gradient(circle at 50% 0%, rgba(201,162,107,0.14), var(--panel));
-    color: var(--e1); font-family: inherit; font-size: 16px; letter-spacing: 3px; cursor: pointer;
+  .big-btn { padding: 26px 56px; border-radius: 16px; border: 1px solid var(--e0);
+    background: radial-gradient(circle at 50% 0%, rgba(201,146,95,0.14), var(--panel));
+    color: var(--e0); font-family: inherit; font-size: 16px; letter-spacing: 3px; cursor: pointer;
     transition: transform 0.06s, box-shadow 0.2s; user-select: none; }
-  .big-btn:hover { box-shadow: 0 0 30px rgba(201,162,107,0.25); }
+  .big-btn:hover { box-shadow: 0 0 30px rgba(201,146,95,0.25); }
   .big-btn:active { transform: scale(0.96); }
   .co-hint { font-size: 11px; color: var(--dimmer); font-style: italic; max-width: 360px; text-align: center; line-height: 1.7; min-height: 20px; }
   #vizwrap { display: none; max-width: 1180px; margin: 18px auto 0; padding: 0 18px; position: relative; }
@@ -86,6 +86,7 @@
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
   .up-name { font-size: 12px; }
   .up-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .up-flavor { font-size: 10px; font-style: italic; color: #8a7a66; line-height: 1.45; margin-bottom: 3px; }
   .up-desc { font-size: 10px; color: var(--dim); line-height: 1.5; }
   .up-buy { margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
     padding: 7px; font-family: inherit; font-size: 10.5px; color: var(--text); cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
@@ -124,6 +125,23 @@
   .cstat .cs-label { font-size: 8.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
   .cstat .cs-val { font-size: 22px; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .compile-act { flex: 1; min-width: 220px; }
+  .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Era 1 — Origins: the refinement pipeline, warm ochre/stone */
+  .flow-panel { background:
+      linear-gradient(rgba(201,146,95,0.04) 1px, transparent 1px) 0 0 / 100% 30px,
+      var(--panel-2); }
+  .flow { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+  .flow-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; transition: opacity 0.4s; }
+  .flow-row.locked { opacity: 0.3; }
+  .fnode { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 90px; padding: 8px 6px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .ficon { width: 40px; height: 40px; object-fit: contain; }
+  .fglyph { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--e0); border: 1px solid rgba(201,146,95,0.5); border-radius: 9px; }
+  .flab { font-size: 8.5px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; text-align: center; }
+  .fval { font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; min-height: 14px; }
+  .farrow { color: var(--dimmer); font-size: 16px; }
+  .age-label { color: var(--e0); font-size: 9px; letter-spacing: 1px; margin-left: 6px; }
   #toasts { position: fixed; top: 60px; right: 18px; z-index: 60; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
   .toast { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 16px;
     max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out; }
@@ -160,10 +178,10 @@
   </header>
   <main>
     <div id="coldopen">
-      <div class="co-title">a system, beginning</div>
-      <div class="co-count" id="coCount">0<small>RULES</small></div>
-      <button class="big-btn" id="coBtn">WRITE A RULE</button>
-      <div class="co-hint" id="coHint">In the beginning, intelligence was written by hand. One rule at a time.</div>
+      <div class="co-title">a record, beginning</div>
+      <div class="co-count" id="coCount">0<small>MARKS</small></div>
+      <button class="big-btn" id="coBtn">INSCRIBE A MARK</button>
+      <div class="co-hint" id="coHint">Before intelligence could grow, it had to be written down. One mark at a time.</div>
     </div>
     <div id="vizwrap"><canvas id="viz"></canvas><div class="viz-cap">THE&nbsp;SUBSTRATE</div></div>
     <div id="eras"></div>
@@ -176,7 +194,17 @@
 (() => {
   const CFG = {
     tickMs: 100,
-    e1: { // The Symbolic Era — tuned for a ~5-6 minute standalone journey
+    e1: { // ERA 1 — Origins (inscription + materials, converging on silicon)
+      inscribeBase: 1, quarryBase: 1,
+      scribeCost: 12, scribeGrowth: 1.16, scribeYield: 0.5,        // marks/sec
+      minerCost: 16, minerGrowth: 1.16, minerYield: 0.5,           // ore/sec
+      scriptoriumCost: 60, scriptoriumGrowth: 1.18, scriptoriumRate: 0.8,  // marks -> knowledge /sec
+      smelterCost: 80, smelterGrowth: 1.18, smelterRate: 0.8,      // ore -> metal /sec
+      foundryCost: 600, foundryGrowth: 1.2, foundryRate: 0.5,      // metal+knowledge -> silicon /sec
+      knowledgePerMark: 0.5,   // a scriptorium turns this much marks into 1 knowledge unit of flow
+      siliconGate: 100,        // silicon needed to fabricate the Logic Machine
+    },
+    e2: { // ERA 2 — Symbolic (the tech-tree + compile journey, ~5-6 min)
       clickBase: 1,
       rulesetCost: 10, rulesetGrowth: 1.16, rulesetYield: 0.42,
       daemonCost: 320, daemonGrowth: 1.19, daemonRate: 2.0, // auto-writes/sec per daemon
@@ -194,16 +222,23 @@
   };
   const S = {
     t: 0, started: false, era: 1, maxEra: 1, speed: 1, dev: false, buyMode: '1',
+    // Era 1 — Origins
+    marks: 0, knowledge: 0, ore: 0, metal: 0, silicon: 0, age: 1,
+    scribe: 0, miner: 0, scriptorium: 0, smelter: 0, foundry: 0,
+    // Era 2 — Symbolic
     rules: 0, runRules: 0, axioms: 0, totalAxioms: 0, compiles: 0,
+    ruleset: 0, daemon: 0,
+    // Era 3+ scaffold
     insight: 0, data: 0, capability: 0, scale: 0,
-    ruleset: 0, daemon: 0, dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
+    dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
     tech: {}, obsolete: {}, flags: {}, clicks: 0,
   };
   const ERAS = {
-    1: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'images/era1_sigil_true_transparent_fullres.png' },
-    2: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns, not rules' },
-    3: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability' },
-    4: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical' },
+    1: { color: 'var(--e0)', tag: 'Origins', name: 'From Marks to Matter', sub: 'recording the world, then reshaping it', sigil: 'assets/era1-sigil.png' },
+    2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'assets/sigil-symbolic.png' },
+    3: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns drawn from examples' },
+    4: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability' },
+    5: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical' },
   };
   // ---- Era 1 tech tree (the Symbolic blueprint). row = tier (top→down), col = horizontal slot. ----
   const TREE = [
@@ -219,24 +254,40 @@
   ];
   const TREEMAP = Object.fromEntries(TREE.map(n=>[n.id,n]));
   const MILES = [
-    { id:'firstAuto', cond:()=> S.rules>=CFG.e1.rulesetCost,
-      fire:()=>{ S.flags.canRuleset=true; revealGame();
-        toast('FIRST AUTOMATION','Build a <b>Ruleset</b> — logic that writes rules without you. You are no longer the only worker.'); } },
+    // ERA 1 — Origins: two linear tracks (Knowledge, Materials) cross-gating into Silicon.
+    { id:'o_reveal', cond:()=> S.marks>=10,
+      fire:()=>{ S.flags.canScribe=true; revealGame();
+        toast('IT COPIES ITSELF','Train a <b>Scribe</b> to inscribe marks for you. The first labor that runs without you.'); } },
+    { id:'o_materials', cond:()=> S.marks>=40,
+      fire:()=>{ S.flags.o_materials=true; toast('STONE &amp; ORE','To build better tools you must work matter. <b>Quarry</b> ore by hand, then train <b>Miners</b>.'); } },
+    { id:'o_scriptorium', cond:()=> S.flags.o_materials && S.ore>=25,
+      fire:()=>{ S.flags.o_scriptorium=true; toast('THE SCRIPTORIUM','With tablets to write on, raw Marks can be organized into <b>Knowledge</b>. (It idles if Marks run out.)'); } },
+    { id:'o_smelter', cond:()=> S.knowledge>=15,
+      fire:()=>{ S.flags.o_smelter=true; S.age=2; toast('THE BRONZE AGE','Knowledge of fire and metal. Build a <b>Smelter</b> to turn Ore into <b>Metal</b>.'); } },
+    { id:'o_foundry', cond:()=> S.knowledge>=40 && S.metal>=25,
+      fire:()=>{ S.flags.o_foundry=true; S.age=3; toast('THE SILICON AGE','Knowledge and Metal together refine <b>Silicon</b>. The <b>Foundry</b> consumes both — keep both flowing.'); } },
+    { id:'o_fabricate', cond:()=> S.silicon>=CFG.e1.siliconGate,
+      fire:()=>{ S.flags.canFabricate=true; toast('FABRICATION','Enough Silicon to build the first <b>Logic Machine</b>. The age of matter ends; the age of logic begins.'); } },
+    { id:'era2', cond:()=> S.flags.origindone,
+      fire:()=>{ openEra(2); toast('PARADIGM SHIFT','The Logic Machine runs. On your silicon, with your writing, the <b>Symbolic Era</b> begins — intelligence authored by hand.'); } },
+    // ERA 2 — Symbolic internals
+    { id:'firstAuto', cond:()=> S.maxEra>=2 && S.rules>=CFG.e2.rulesetCost,
+      fire:()=>{ S.flags.canRuleset=true; toast('FIRST AUTOMATION','Build a <b>Ruleset</b> — logic that writes rules without you.'); } },
     { id:'treeUnlock', cond:()=> S.ruleset>=2,
-      fire:()=>{ S.flags.tree=true; toast('SYMBOLIC TECHNIQUE','A map of technique opens below. Spend Rules to unlock <b>Formal Logic</b>, then branch outward.'); } },
+      fire:()=>{ S.flags.tree=true; toast('SYMBOLIC TECHNIQUE','A map of technique opens. Spend Rules to unlock <b>Formal Logic</b>, then branch outward.'); } },
     { id:'compileUnlock', cond:()=> S.tech.knowledge,
-      fire:()=>{ S.flags.compile=true; toast('COMPILE','You can now <b>Compile</b> a run into <b>Axioms</b> — permanent knowledge that survives a reset and multiplies everything.'); } },
-    { id:'era2', cond:()=> S.flags.era1done,
-      fire:()=>{ openEra(2); toast('PARADIGM SHIFT','Hand-written logic has hit its ceiling. A new approach emerges: <b>learning from Data</b>. The Statistical Era begins.'); } },
-    // Later eras — original scaffold, rebuilt in a later pass.
-    { id:'era2auto', cond:()=> S.dataset>=2,
+      fire:()=>{ S.flags.compile=true; toast('COMPILE','<b>Compile</b> a run into permanent <b>Axioms</b> that multiply everything.'); } },
+    { id:'era3', cond:()=> S.flags.symbolicDone,
+      fire:()=>{ openEra(3); toast('THE STATISTICAL ERA','Hand-written logic has hit its ceiling. A new approach: <b>learning from Data</b>.'); } },
+    // ERA 3+ — original scaffold, rebuilt in a later pass.
+    { id:'era3auto', cond:()=> S.dataset>=2,
       fire:()=>{ S.flags.canModel=true; toast('STATISTICAL MODELS','Build a <b>Model</b> to turn raw Data into <b>Insight</b>.'); } },
-    { id:'era3', cond:()=> S.insight>=CFG.era3Gate,
-      fire:()=>{ openEra(3); toast('THE DEEP LEARNING ERA','Data and Insight are not enough. Now <b>Compute</b> is the bottleneck.'); } },
-    { id:'era3auto', cond:()=> S.compute>=3,
+    { id:'era4', cond:()=> S.insight>=CFG.era3Gate,
+      fire:()=>{ openEra(4); toast('THE DEEP LEARNING ERA','Data and Insight are not enough. Now <b>Compute</b> is the bottleneck.'); } },
+    { id:'era4auto', cond:()=> S.compute>=3,
       fire:()=>{ S.flags.canTrain=true; toast('TRAINING RUNS','Spend Compute and Insight on <b>Training</b> to build raw <b>Capability</b>.'); } },
-    { id:'era4', cond:()=> S.capability>=CFG.era4Gate,
-      fire:()=>{ openEra(4); toast('FOUNDATION MODELS','Capability compounds into something general. Everything you built becomes an input to something larger.'); } },
+    { id:'era5', cond:()=> S.capability>=CFG.era4Gate,
+      fire:()=>{ openEra(5); toast('FOUNDATION MODELS','Capability compounds into something general. Everything you built becomes an input to something larger.'); } },
     { id:'emergent', cond:()=> S.scale>=50,
       fire:()=>{ toast('EMERGENCE','The system keeps accelerating. This is where the real design work begins.'); } },
   ];
@@ -261,15 +312,31 @@
   // Derived Era-1 multipliers from owned tech + axioms. One source of truth for click + ruleset math.
   function stats(){
     const T=S.tech;
-    let click=CFG.e1.clickBase, rulesetMult=1, global=1;
+    let click=CFG.e2.clickBase, rulesetMult=1, global=1;
     if(T.formalLogic) global*=1.5;
     if(T.fwdChain) rulesetMult*=1.8;
     if(T.bwdChain) click*=3;
     if(T.rete) rulesetMult*=(1+0.03*S.ruleset);
     if(T.heuristics) click*=(1+0.08*S.ruleset);
-    const axBonus=CFG.e1.axiomBonus*(T.metalogic?1.5:1);
+    const axBonus=CFG.e2.axiomBonus*(T.metalogic?1.5:1);
     global*=(1+S.axioms*axBonus);
-    return { click: click*global, rulesetYield: CFG.e1.rulesetYield*rulesetMult*global, global, axBonus };
+    return { click: click*global, rulesetYield: CFG.e2.rulesetYield*rulesetMult*global, global, axBonus };
+  }
+  // --- Era 1 (Origins) manual verbs + fabrication ---
+  function inscribe(ev){
+    S.clicks++; const g=CFG.e1.inscribeBase; S.marks+=g; S.started=true; playSound('click');
+    if(ev && ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),'var(--e0)', r.left+r.width/2, r.top-6); }
+    if(S.clicks===1 && $('coHint')) $('coHint').textContent='Keep inscribing. Enough marks and the work begins to copy itself.';
+    if(!S.flags.firstAuto) renderCold(); else refresh();
+  }
+  function quarry(ev){
+    const g=CFG.e1.quarryBase; S.ore+=g; playSound('click');
+    if(ev && ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),'#c08552', r.left+r.width/2, r.top-6); }
+    refresh();
+  }
+  function fabricate(){
+    if(!S.flags.canFabricate || S.flags.origindone) return;
+    S.silicon-=CFG.e1.siliconGate; S.flags.origindone=true; playSound('milestone'); render();
   }
   function writeRule(ev){
     S.clicks++;
@@ -290,20 +357,25 @@
   function buyTech(id){
     const n=TREEMAP[id]; if(!canBuyTech(id)) return;
     S.rules-=n.cost; S.tech[id]=true; playSound('buy');
-    if(id==='expert') S.flags.era1done=true;
+    if(id==='expert') S.flags.symbolicDone=true;
     render();
   }
-  function axiomGain(){ return Math.floor(Math.sqrt(S.runRules/CFG.e1.axiomDivisor)); }
+  function axiomGain(){ return Math.floor(Math.sqrt(S.runRules/CFG.e2.axiomDivisor)); }
   function compile(){
-    if(!S.flags.compile || S.flags.era1done) return;
+    if(!S.flags.compile || S.flags.symbolicDone) return;
     const g=axiomGain(); if(g<1) return;
     S.axioms+=g; S.totalAxioms+=g; S.compiles++;
     S.rules=0; S.runRules=0; S.ruleset=0; S.daemon=0;
     playSound('milestone'); render();
   }
   const BUYS = {
-    ruleset: { res:'rules', key:'ruleset', base:CFG.e1.rulesetCost, growth:CFG.e1.rulesetGrowth },
-    daemon:  { res:'rules', key:'daemon',  base:CFG.e1.daemonCost,  growth:CFG.e1.daemonGrowth },
+    scribe:      { res:'marks', key:'scribe',      base:CFG.e1.scribeCost,      growth:CFG.e1.scribeGrowth },
+    miner:       { res:'ore',   key:'miner',       base:CFG.e1.minerCost,       growth:CFG.e1.minerGrowth },
+    scriptorium: { res:'marks', key:'scriptorium', base:CFG.e1.scriptoriumCost, growth:CFG.e1.scriptoriumGrowth },
+    smelter:     { res:'ore',   key:'smelter',     base:CFG.e1.smelterCost,     growth:CFG.e1.smelterGrowth },
+    foundry:     { res:'metal', key:'foundry',     base:CFG.e1.foundryCost,     growth:CFG.e1.foundryGrowth },
+    ruleset: { res:'rules', key:'ruleset', base:CFG.e2.rulesetCost, growth:CFG.e2.rulesetGrowth },
+    daemon:  { res:'rules', key:'daemon',  base:CFG.e2.daemonCost,  growth:CFG.e2.daemonGrowth },
     dataset: { res:'rules', key:'dataset', base:CFG.datasetCost, growth:CFG.datasetGrowth },
     model:   { res:'data',  key:'model',   base:CFG.modelCost,   growth:CFG.modelGrowth },
     compute: { res:'insight',key:'compute',base:CFG.computeCost, growth:CFG.computeGrowth },
@@ -339,11 +411,19 @@
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
     render(); }
   function produce(dt){
+    // ERA 1 — Origins: sources feed stocks; converters draw from upstream and starve if it's empty.
+    const e1=CFG.e1;
+    if(S.scribe>0) S.marks += S.scribe*e1.scribeYield*dt;
+    if(S.miner>0)  S.ore   += S.miner*e1.minerYield*dt;
+    if(S.scriptorium>0){ const c=Math.min(S.marks, S.scriptorium*e1.scriptoriumRate*dt); S.marks-=c; S.knowledge+=c; }
+    if(S.smelter>0){ const c=Math.min(S.ore, S.smelter*e1.smelterRate*dt); S.ore-=c; S.metal+=c; }
+    if(S.foundry>0){ const c=Math.min(S.metal, S.knowledge, S.foundry*e1.foundryRate*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c; }
+    // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
       const st=stats();
       let g=0;
       if(S.ruleset>0) g += S.ruleset*st.rulesetYield*dt;
-      if(S.daemon>0)  g += S.daemon*CFG.e1.daemonRate*st.click*dt;
+      if(S.daemon>0)  g += S.daemon*CFG.e2.daemonRate*st.click*dt;
       if(g>0){ S.rules+=g; S.runRules+=g; }
     }
     if(S.dataset>0) S.data += S.dataset*CFG.datasetYield*dt;
@@ -361,29 +441,63 @@
     produce(dt); checkMiles();
     if(S.flags.firstAuto) refresh(); else renderCold();
   }
-  function renderCold(){ $('coCount').innerHTML = fmt(S.rules)+'<small>RULES</small>'; }
+  function renderCold(){ $('coCount').innerHTML = fmt(S.marks)+'<small>MARKS</small>'; }
   // ---- Rendering: build DOM structure rarely, update live numbers every tick. ----
   // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
   const RES_DEFS=[
-    {k:'rules', show:()=>true,        color:'var(--e1)', label:'Rules'},
-    {k:'axioms', show:()=>S.flags.compile||S.totalAxioms>0, color:'var(--accent)', label:'Axioms'},
-    {k:'data', show:()=>S.maxEra>=2,  color:'var(--e2)', label:'Data'},
-    {k:'insight', show:()=>S.maxEra>=2,color:'var(--e2)', label:'Insight'},
-    {k:'capability', show:()=>S.maxEra>=3,color:'var(--e3)', label:'Capability'},
-    {k:'scale', show:()=>S.maxEra>=4, color:'var(--e4)', label:'Scale'},
+    {k:'marks', show:()=>S.maxEra===1, color:'var(--e0)', label:'Marks'},
+    {k:'knowledge', show:()=>S.maxEra===1, color:'var(--e0)', label:'Knowledge'},
+    {k:'ore', show:()=>S.maxEra===1 && S.flags.o_materials, color:'#c08552', label:'Ore'},
+    {k:'metal', show:()=>S.maxEra===1 && S.flags.o_smelter, color:'#c08552', label:'Metal'},
+    {k:'silicon', show:()=>S.maxEra===1 && S.flags.o_foundry, color:'var(--accent)', label:'Silicon'},
+    {k:'rules', show:()=>S.maxEra>=2,  color:'var(--e1)', label:'Rules'},
+    {k:'axioms', show:()=>S.maxEra>=2 && (S.flags.compile||S.totalAxioms>0), color:'var(--accent)', label:'Axioms'},
+    {k:'data', show:()=>S.maxEra>=3,  color:'var(--e2)', label:'Data'},
+    {k:'insight', show:()=>S.maxEra>=3,color:'var(--e2)', label:'Insight'},
+    {k:'capability', show:()=>S.maxEra>=4,color:'var(--e3)', label:'Capability'},
+    {k:'scale', show:()=>S.maxEra>=5, color:'var(--e4)', label:'Scale'},
   ];
   function buildHeader(){
     if(!S.flags.firstAuto) return;
     $('resBar').innerHTML = RES_DEFS.filter(d=>d.show()).map(d=>
-      '<div class="res show"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div></div>').join('');
+      '<div class="res show" title="'+(RESFLAVOR[d.k]||'')+'"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div></div>').join('');
     const bm=$('buyMode'); bm.classList.add('show');
     const modes=[['1','×1'],['10','×10'],['max','MAX']];
     bm.innerHTML = modes.map(m=>'<button data-mode="'+m[0]+'" class="'+(S.buyMode===m[0]?'on':'')+'">'+m[1]+'</button>').join('');
     bm.querySelectorAll('[data-mode]').forEach(btn=> btn.onclick=()=>{ S.buyMode=btn.dataset.mode; render(); });
   }
+  // A line of flavor (the feeling) above each building's literal mechanical description.
+  const FLAVOR = {
+    scribe:'A trained hand that never tires of the work.',
+    scriptorium:'Where loose marks are copied, ordered, and made to mean something.',
+    miner:'Picks against the rock face, hour after hour.',
+    smelter:'Fire coaxes metal out of plain stone.',
+    foundry:'A recipe and a furnace, together making something the world had never held.',
+    ruleset:'Logic that begets more logic.',
+    daemon:'A patient process that keeps working while you look away.',
+    dataset:'The world, written down in numbers.',
+    model:'It stops being told the answer and starts guessing it.',
+    compute:'Raw thinking, measured by the ton.',
+    training:'Ten thousand mistakes, each one slightly smaller.',
+    cluster:'Enough machines that the whole begins to exceed its parts.',
+  };
+  const RESFLAVOR = {
+    marks:'The first attempt to hold a thought in place.',
+    knowledge:'Marks made meaningful.',
+    ore:'The world before we reshaped it.',
+    metal:'Stone, disciplined by fire.',
+    silicon:'Sand, taught to carry thought.',
+    rules:'Intelligence spelled out by hand, one clause at a time.',
+    axioms:'Truths kept across every reset.',
+    data:'Experience, stored for the machine to study.',
+    insight:'The pattern beneath the noise.',
+    capability:'What the system can actually do.',
+    scale:'The point where more becomes different.',
+  };
   function eraUpgrade(key, name, desc){
+    const fl = FLAVOR[key] ? '<div class="up-flavor">'+FLAVOR[key]+'</div>' : '';
     return '<div class="up"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count" id="cnt-'+key+'"></div></div>'+
-      '<div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" id="buy-'+key+'"></button></div>';
+      fl+'<div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" id="buy-'+key+'"></button></div>';
   }
   function eraShell(n, obsolete, body){
     const e=ERAS[n];
@@ -412,26 +526,70 @@
       '<div class="compile-act"><button class="act-btn" id="compileBtn"></button><div class="act-sub" id="compileSub">Resets Rules, Rulesets and Daemons. Technique and Axioms stay.</div></div>'+
     '</div>';
   }
-  function buildEra1(){
+  function buildSymbolic(){ // ERA 2
     let prod = eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.');
     if(S.tech.inference) prod += eraUpgrade('daemon','Inference Daemon','Fires the write action for you. Everything that makes a click stronger makes a Daemon stronger.');
     let body =
       '<div class="panel"><div class="panel-label">Manual Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub" id="manualSub"></div></div>'+
       '<div class="panel"><div class="panel-label">Automation</div>'+(S.flags.canRuleset?prod:'<div class="up-desc">Keep writing...</div>')+'</div>';
     if(S.flags.tree) body += '<div class="panel tree-panel" style="grid-column:1/-1"><div class="panel-label">Symbolic Technique</div><div class="tree" style="height:'+TREE_H+'px" id="tree">'+buildTree()+'</div></div>';
-    if(S.flags.compile && !S.flags.era1done) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
+    if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
+    return eraShell(2, false, body);
+  }
+  // ---- ERA 1 (Origins): horizontal refinement pipeline, two tracks converging on Silicon ----
+  function fnode(label, icon, id){
+    return '<div class="fnode" id="'+id+'">'+
+      (icon?'<img class="ficon" src="'+icon+'">':'<div class="fglyph">&#9670;</div>')+
+      '<div class="flab">'+label+'</div><div class="fval" id="'+id+'-v"></div></div>';
+  }
+  function buildFlow(){
+    const A='<div class="farrow">&rarr;</div>';
+    return '<div class="flow">'+
+      '<div class="flow-row" id="frow-k">'+fnode('Marks','','fn-marks')+A+fnode('Scriptorium','assets/era1-sigil.png','fn-scriptorium')+A+fnode('Knowledge','','fn-knowledge')+'</div>'+
+      '<div class="flow-row" id="frow-m">'+fnode('Ore','assets/icon-ore.png','fn-ore')+A+fnode('Smelter','assets/icon-crucible.png','fn-smelter')+A+fnode('Metal','assets/icon-ingot.png','fn-metal')+'</div>'+
+      '<div class="flow-row flow-converge" id="frow-f">'+fnode('Knowledge+Metal','','fn-conv')+A+fnode('Foundry','assets/icon-crucible.png','fn-foundry2')+A+fnode('Silicon','assets/icon-silicon.png','fn-silicon')+A+fnode('Logic Machine','','fn-logic')+'</div>'+
+    '</div>';
+  }
+  function buildOrigins(){ // ERA 1
+    const f=S.flags;
+    let kn='<div class="panel"><div class="panel-label">Inscription &middot; Knowledge</div>'+
+      '<button class="act-btn" id="inscribeBtn">INSCRIBE A MARK</button><div class="act-sub" id="inscribeSub"></div>'+
+      (f.canScribe?eraUpgrade('scribe','Scribe','Inscribes Marks for you, endlessly.'):'')+
+      (f.o_scriptorium?eraUpgrade('scriptorium','Scriptorium','Organizes Marks into Knowledge. Idles if it runs out of Marks.'):'')+
+      '</div>';
+    let mat;
+    if(f.o_materials){
+      mat='<div class="panel"><div class="panel-label">Extraction &middot; Materials</div>'+
+        '<button class="act-btn" id="quarryBtn">QUARRY ORE</button><div class="act-sub" id="quarrySub"></div>'+
+        eraUpgrade('miner','Miner','Quarries Ore for you.')+
+        (f.o_smelter?eraUpgrade('smelter','Smelter','Smelts Ore into Metal. Idles without Ore.'):'')+
+        '</div>';
+    } else {
+      mat='<div class="panel"><div class="panel-label">Extraction &middot; Materials</div><div class="up-desc">Inscribe enough to plan your first tools...</div></div>';
+    }
+    let body=kn+mat;
+    body+='<div class="panel flow-panel" style="grid-column:1/-1"><div class="panel-label">The Chain <span class="age-label" id="ageLabel"></span></div>'+buildFlow()+'</div>';
+    if(f.o_foundry){
+      body+='<div class="panel" style="grid-column:1/-1"><div class="panel-label">The Foundry &middot; Convergence</div>'+
+        '<div class="up-desc" style="margin-bottom:8px">Refines Silicon from Metal <b>and</b> Knowledge at once. Starves if either runs dry — keep both tracks flowing.</div>'+
+        eraUpgrade('foundry','Foundry','Metal + Knowledge &rarr; Silicon.')+
+        '<div class="meter"><i id="meter-silicon" style="background:var(--accent)"></i></div>'+
+        '<div class="meter-label"><span>Silicon toward the Logic Machine</span><span id="meter-silicon-val"></span></div>'+
+        '<button class="act-btn" id="fabricateBtn" style="margin-top:12px">FABRICATE THE LOGIC MACHINE</button></div>';
+    }
     return eraShell(1, false, body);
   }
   function buildEras(){
-    let html = buildEra1();
-    if(S.maxEra>=2) html += eraShell(2, S.obsolete[2],
-      '<div class="panel"><div class="panel-label">Data Pipeline</div>'+eraUpgrade('dataset','Dataset','Generates raw Data over time. Bought with legacy Rules.')+
+    let html = buildOrigins();
+    if(S.maxEra>=2) html += buildSymbolic();
+    if(S.maxEra>=3) html += eraShell(3, S.obsolete[3],
+      '<div class="panel"><div class="panel-label">Data Pipeline</div>'+eraUpgrade('dataset','Dataset','Generates raw Data over time. Bought with Rules.')+
         '<div class="meter"><i id="meter-data" style="background:var(--e2)"></i></div><div class="meter-label"><span>Data buffer</span><span id="meter-data-val"></span></div></div>'+
       '<div class="panel"><div class="panel-label">Models</div>'+(S.flags.canModel?eraUpgrade('model','Statistical Model','Consumes Data, produces Insight. Patterns replace hand-written rules.'):'<div class="up-desc">Gather Data first...</div>')+'</div>');
-    if(S.maxEra>=3) html += eraShell(3, S.obsolete[3],
+    if(S.maxEra>=4) html += eraShell(4, S.obsolete[4],
       '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('compute','Compute Node','The new bottleneck. More nodes, stronger training runs.')+'</div>'+
       '<div class="panel"><div class="panel-label">Training</div>'+(S.flags.canTrain?eraUpgrade('training','Training Run','Consumes Insight + Compute to produce raw Capability.'):'<div class="up-desc">Build Compute first...</div>')+'</div>');
-    if(S.maxEra>=4) html += eraShell(4, false,
+    if(S.maxEra>=5) html += eraShell(5, false,
       '<div class="panel"><div class="panel-label">Scaling</div>'+eraUpgrade('cluster','Cluster','Turns Capability into Scale. Everything below feeds this.')+'</div>'+
       '<div class="panel"><div class="panel-label">Emergence</div><div class="up-desc" style="line-height:1.7">At sufficient Scale, behavior appears that no single component was designed to produce. This is the frontier - and the end of this prototype\'s authored content.</div><div class="meter"><i id="meter-scale" style="background:var(--e4)"></i></div><div class="meter-label"><span>Toward emergence</span><span id="meter-scale-val"></span></div></div>');
     return html;
@@ -441,6 +599,9 @@
     buildHeader();
     $('eras').innerHTML = buildEras();
     const rb=$('ruleBtn2'); if(rb) rb.onclick=writeRule;
+    const ib=$('inscribeBtn'); if(ib) ib.onclick=inscribe;
+    const qb=$('quarryBtn'); if(qb) qb.onclick=quarry;
+    const fb=$('fabricateBtn'); if(fb) fb.onclick=fabricate;
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
@@ -471,7 +632,21 @@
     }
     const st=stats();
     setText('manualSub', '+'+fmt(st.click)+' rules · the original verb');
-    setStatus(1,S.ruleset>0||S.daemon>0); setStatus(2,S.model>0); setStatus(3,S.training>0); setStatus(4,S.cluster>0);
+    setStatus(1,S.scribe>0||S.miner>0); setStatus(2,S.ruleset>0||S.daemon>0); setStatus(3,S.model>0); setStatus(4,S.training>0); setStatus(5,S.cluster>0);
+    // Era 1 — Origins live values
+    if(S.maxEra===1){
+      setText('inscribeSub','+'+fmt(CFG.e1.inscribeBase)+' marks · the first verb');
+      setText('quarrySub','+'+fmt(CFG.e1.quarryBase)+' ore');
+      setText('ageLabel', ['','· Stone Age','· Bronze Age','· Silicon Age'][S.age]||'');
+      setText('fn-marks-v',fmt(S.marks)); setText('fn-knowledge-v',fmt(S.knowledge));
+      setText('fn-ore-v',fmt(S.ore)); setText('fn-metal-v',fmt(S.metal)); setText('fn-silicon-v',fmt(S.silicon));
+      setText('fn-scriptorium-v', S.scriptorium?'x'+S.scriptorium:''); setText('fn-smelter-v', S.smelter?'x'+S.smelter:'');
+      setText('fn-foundry2-v', S.foundry?'x'+S.foundry:''); setText('fn-logic-v', S.flags.canFabricate?'ready':'');
+      setClass($('frow-m'),'flow-row'+(S.flags.o_materials?'':' locked'));
+      setClass($('frow-f'),'flow-row flow-converge'+(S.flags.o_foundry?'':' locked'));
+      const ms=$('meter-silicon'); if(ms){ ms.style.width=Math.min(100,(S.silicon/CFG.e1.siliconGate)*100)+'%'; setText('meter-silicon-val',fmt(S.silicon)+' / '+CFG.e1.siliconGate); }
+      const fbtn=$('fabricateBtn'); if(fbtn && fbtn.disabled!==!S.flags.canFabricate) fbtn.disabled=!S.flags.canFabricate;
+    }
     // tech tree
     for(const n of TREE){ const el=$('tn-'+n.id); if(!el) continue;
       const owned=S.tech[n.id], prereq=n.req.every(r=>S.tech[r]);
@@ -495,10 +670,11 @@
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
   const SPEEDS=[1,3,10,50];
   function grant(){ // give a generous push to whatever the current era needs
-    if(S.maxEra>=4) S.capability+=500;
-    else if(S.maxEra>=3) S.insight+=500;
-    else if(S.maxEra>=2){ S.data+=500; S.rules+=500; }
-    else { S.rules+=5000; S.runRules+=5000; if(!S.flags.firstAuto) revealGame(); }
+    if(S.maxEra>=5) S.capability+=500;
+    else if(S.maxEra>=4) S.insight+=500;
+    else if(S.maxEra>=3){ S.data+=500; S.rules+=500; }
+    else if(S.maxEra>=2){ S.rules+=5000; S.runRules+=5000; }
+    else { S.marks+=500; S.ore+=500; S.knowledge+=200; S.metal+=200; S.silicon+=50; if(!S.flags.firstAuto) revealGame(); }
     if(S.flags.firstAuto) render();
   }
   function renderDev(){
@@ -517,12 +693,12 @@
 
   // --- The Substrate: live visualization of the system ---
   const VIZ_STATIONS=[
-    { key:'ruleset', era:1, label:'RULES',    color:'#c9a26b', count:()=>S.ruleset,  live:()=>S.ruleset>0 },
-    { key:'dataset', era:2, label:'DATA',     color:'#6ec6a8', count:()=>S.dataset,  live:()=>S.dataset>0 },
-    { key:'model',   era:2, label:'MODELS',   color:'#6ec6a8', count:()=>S.model,    live:()=>S.model>0 },
-    { key:'compute', era:3, label:'COMPUTE',  color:'#6ea8ff', count:()=>S.compute,  live:()=>S.compute>0 },
-    { key:'training',era:3, label:'TRAINING', color:'#6ea8ff', count:()=>S.training, live:()=>S.training>0 },
-    { key:'cluster', era:4, label:'SCALE',    color:'#b78bff', count:()=>S.cluster,  live:()=>S.cluster>0 },
+    { key:'ruleset', era:2, label:'RULES',    color:'#c9a26b', count:()=>S.ruleset,  live:()=>S.ruleset>0 },
+    { key:'dataset', era:3, label:'DATA',     color:'#6ec6a8', count:()=>S.dataset,  live:()=>S.dataset>0 },
+    { key:'model',   era:3, label:'MODELS',   color:'#6ec6a8', count:()=>S.model,    live:()=>S.model>0 },
+    { key:'compute', era:4, label:'COMPUTE',  color:'#6ea8ff', count:()=>S.compute,  live:()=>S.compute>0 },
+    { key:'training',era:4, label:'TRAINING', color:'#6ea8ff', count:()=>S.training, live:()=>S.training>0 },
+    { key:'cluster', era:5, label:'SCALE',    color:'#b78bff', count:()=>S.cluster,  live:()=>S.cluster>0 },
   ];
   const viz=(()=>{
     const cv=$('viz'); if(!cv||!cv.getContext) return { start(){} };
@@ -587,7 +763,7 @@
   function offlineCatchup(elapsedSec){
     const eff=Math.min(elapsedSec, OFFLINE_CAP);
     if(eff < 1) return null;
-    const keys=['rules','data','insight','capability','scale'];
+    const keys=['marks','knowledge','ore','metal','silicon','rules','data','insight','capability','scale'];
     const before={}; keys.forEach(k=> before[k]=S[k]);
     MUTE=true;
     const step=CFG.tickMs/1000; let rem=eff, iter=0;
@@ -599,7 +775,7 @@
     return { eff, g, capped: elapsedSec>OFFLINE_CAP };
   }
   function offlineToast(o){
-    const names={rules:'Rules',data:'Data',insight:'Insight',capability:'Capability',scale:'Scale'};
+    const names={marks:'Marks',knowledge:'Knowledge',ore:'Ore',metal:'Metal',silicon:'Silicon',rules:'Rules',data:'Data',insight:'Insight',capability:'Capability',scale:'Scale'};
     const parts=Object.keys(names).filter(k=>o.g[k]>0.05).map(k=>'+'+fmt(o.g[k])+' '+names[k]);
     const mins=Math.floor(o.eff/60);
     const dur = mins>=60 ? Math.floor(mins/60)+'h '+(mins%60)+'m' : mins+'m';
@@ -617,7 +793,7 @@
   renderCold(); if(S.flags.firstAuto) render();
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
-  $('coBtn').onclick=writeRule;
+  $('coBtn').onclick=inscribe;
   setInterval(tick, CFG.tickMs);
   setInterval(save, 5000);
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) save(); });
@@ -626,7 +802,7 @@
   // Test seam: exposes internals only when a harness sets window.__EMERGENCE_TEST__ before load.
   if(typeof window!=='undefined' && window.__EMERGENCE_TEST__){
     window.EMERGENCE={ S, CFG, BUYS, MILES, ERAS, TREE, TREEMAP, VIZ_STATIONS, fmt,
-      unitCost, totalCost, buyQty, buy, writeRule, produce, checkMiles, tick,
+      unitCost, totalCost, buyQty, buy, writeRule, inscribe, quarry, fabricate, produce, checkMiles, tick,
       stats, canBuyTech, buyTech, axiomGain, compile,
       save, load, offlineCatchup, revealGame };
   }
