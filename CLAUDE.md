@@ -22,13 +22,13 @@ eras (scroll-driven theme switch). Completed eras collapse to a slim bar.
 
 | Era | Name | Mechanic (fun primitive) | Theme | Status |
 |----|------|--------------------------|-------|--------|
-| 1 | Origins | Two cross-gated tracks (Knowledge + Materials) + rate-based converters with upkeep, converging on Silicon → fabricate the Logic Machine | warm stone, **serif**, ochre | **Built**, tuned ~6 min |
-| 2 | Symbolic | Theorem-proving as a process: Rulesets emit Inference, aimed at one proof at a time; repeatable Optimization + Inference-Capacity lemmas; Compile→Axioms prestige | cold terminal, **mono**, amber + schematic bg | **Built**, ~5-7 min |
-| 3 | Statistical | Experiments + accuracy curve: Datasets→Data→Models auto-run experiments to push Accuracy up a diminishing curve; **discover** Methods by chance (odds rise with Data); overfit gap caps high until **Regularization** (the cure); generalize at 85% effective accuracy → Era 4 | cool teal, **sans**, graph-paper | **Built**, autoplay ~1-2 min (real play slower; tune) |
-| 4 | Deep | (planned) compute allocation across parallel training projects | blue | scaffold (old pipeline) |
-| 5 | Foundation | (planned) recursive self-improvement / emergent capabilities | violet | scaffold + endpoint |
+| 1 | Origins | Two cross-gated tracks (Knowledge + Materials) + rate-based converters with upkeep, converging on Silicon → fabricate the Logic Machine | warm stone, **serif**, ochre | **Built**; evolving-core art (Stone→Bronze→Silicon) |
+| 2 | Symbolic | Theorem-proving as a process: Rulesets emit Inference, aimed at one proof at a time; repeatable Optimization + Inference-Capacity lemmas; Compile→Axioms prestige; proven-theorems row | cold terminal, **mono**, amber + schematic bg | **Built**, ~5-7 min |
+| 3 | Statistical | **Training Focus** (Fit / Generalize / Explore) steers the bias-variance trade: Datasets→Data→Models run experiments to push Accuracy up a diminishing curve; **discover** Methods by chance (Explore; odds rise with Data); overfit gap grows under Fit, shrinks under Generalize (×2 with **Regularization**); generalize at 88% effective accuracy → Era 4. **Reaches back to Origins**: Datasets cost Silicon + Models draw Silicon upkeep | cool teal, **sans**, graph-paper | **Built + reworked**; pacing ~7-9 (autoplay ~3 min) |
+| 4 | Deep | (planned) compute allocation; **Compute = Silicon + Data + Insight** (reaches back to Origins + Statistical) | blue | scaffold (old pipeline), deferred |
+| 5 | Foundation | (planned) recursive self-improvement / emergent capabilities | violet | scaffold + endpoint, deferred |
 
-Era-fading/obsolescence is **paused** (the scaffold — `S.obsolete`, `.obsolete` CSS — is kept but unused).
+**Living supply chain (committed direction, see `DESIGN.md`):** later eras require infrastructure from earlier ones, so old eras stay alive (backbone resources: **Silicon** from Origins, **Data** from Statistical). Era 3 → Origins reach-back is built (compact "Origins Supply" strip lets you scale Foundries in place). **Focus right now is Eras 1-3**; 4-5 deferred. Era-fading/obsolescence is **paused** (`S.obsolete` scaffold kept, unused).
 
 ## Architecture (single IIFE in the `<script>` tag)
 
@@ -49,8 +49,12 @@ Systems:
 - **Telemetry (Run Recorder):** `REC` logs beat events (with game-time + target), click cadence, and resource snapshots; persists in the save (survives reloads). Dev panel "export run" copies JSON. Paste a run back to tune pacing.
 - **Dev tools:** backtick (or `?dev=1`) → speed 1/3/10/50×, +resources, instant reset, hard reset, export run, live `t=` clock.
 - **Persistence:** localStorage autosave (5s + on hide/unload), offline catch-up (8h cap), bulk-buy x1/x10/MAX.
-- **Icons:** bronze line-art PNGs. Raw ChatGPT exports have a baked checkerboard — key it to alpha with the PIL one-liner (luminance threshold ~150–212) before wiring. `DICON`/`BICON`/`UPICON`/`TH_ICON` map keys → asset paths; missing ones fall back to a glyph.
-- **Title card / wordmark:** `assets/title-card.png` (amber circuit-node "EMERGENCE") is the cold-open title screen (`.co-wordmark`).
+- **Icons:** per-era-hue line-art PNGs. Raw ChatGPT exports have a baked checkerboard — key it to alpha with the PIL luminance threshold (~150–212) before wiring; amber-on-black art (wordmark) keys on brightness instead. `DICON`/`BICON`/`UPICON`/`TH_ICON`/`METHOD_ICON` map keys → asset paths; missing ones fall back to a glyph.
+- **Wordmark:** `assets/wordmark.png` (transparent amber "EMERGENCE") is the cold-open title (`.co-wordmark`) and the header logo (`.logo-wm`). `assets/title-card.png` is the original black-bg card.
+- **Hover tooltips:** any element with `data-tip="<html>"` shows a floating `#tip` on hover (flavor + mechanical detail). Tiles are compact (icon + name + live impact + buy); the prose lives in the tooltip. `esc()` escapes quotes for the attribute.
+- **Contextual top bar:** `RES_DEFS` show() is keyed to `viewEra` (the era most in view, tracked by the same IntersectionObserver as theming) — scroll up to Origins and its resources return; each shows a live +/−/s rate from `RATES` (captured for all resources at end of `produce`). Prior-era resources still shown when a later era spends them (Silicon in Era 3).
+- **Live mechanical impact:** `buildEffect(key)` returns the per-second resource deltas shown on each building tile (Origins converters, Era-2 Ruleset/Daemon, Era-3 Dataset/Model). The "always-a-near-win" feel + 7-9 min/era + log curve are the design bar — see `DESIGN.md` and the design-principles memory.
+- **No on-screen objective banners** — they were removed deliberately: the player explores and the goal emerges (the game is *Emergence*). Objectives stay a design lens for us, not UI.
 
 ## How to add an era (the pattern)
 
@@ -60,7 +64,8 @@ Systems:
 4. `produce(dt)` slice for the era's economy.
 5. `MILES` entries: the unlock chain + `openEra(N+1)` handoff (seed the next era from a carried resource, like Knowledge→Symbolic and Insight→Deep).
 6. `buildXxx()` builder + `refresh()` updates (stable ids).
-7. Tests: a correctness section + extend the pacing autoplayer/report. Tune toward ~5-6 min.
+7. Tests: a correctness section + extend the pacing autoplayer (`*Step` fn) and `testProgression`. Tune toward **7-9 min**.
+8. Cross-era: if the era reaches back (it should), make its scaling building cost an earlier resource (build-cost primary + light upkeep) and add a compact in-place "supply" strip so the player doesn't lose their spot.
 
 ## Conventions (from Cody)
 
@@ -69,10 +74,18 @@ Systems:
 - Reveal slowly — don't pre-lay future content; sections/eras unlock progressively.
 - Art is generated via **ChatGPT** (higher fidelity); Claude keys/wires it and specifies prompts. Per-era hue: Origins ochre, Symbolic amber, Statistical teal, Deep blue, Foundation violet.
 - Keep the **single-file** constraint and keep tests green.
+- **Core feel (the bar for every change):** always a short-term goal achievable with *small fiddling*; resource balancing should feel compelling, never idle-watching or a far wall. **7-9 min per era**, logarithmic curve (flurry of small actions early → fewer/bigger decisions late). Free to add complexity to any era as long as it deepens the moment-to-moment tradeoff and keeps the near-win feel.
+- **Big icons + readable text + one screen per era** all pull against each other — aim for the middle (icons ~66-92px, body text 12-15px, sections full-width and side-by-side to avoid lopsided voids).
 
-## Known gaps / next
+## Known gaps / next (per `DESIGN.md` build order; focus = Eras 1-3)
 
-1. **Era 3 polish:** scatter-plot core viz (procedural, teal — the signature visual, deferred from V1); pacing tune (autoplay generalizes fast; real play needs verifying); the Data↔Models↔manual-experiment balance (manual experiments can out-drain Datasets).
-2. Pacing fine-tuning from real run exports (Origins early beats slipped slightly with quarry=+1; Era 2 runs ~7 min).
-3. Remaining art: Era-3 icon set (teal — Datasets/Models/Methods currently glyph), the Origins evolving-core (3 age stages), Era 4/5 sigils.
-4. **Build Eras 4-5** — still the original scaffold pipeline (compute/training/cluster). Era 4 Deep = compute allocation; Era 5 Foundation = recursive self-improvement. Each gets its own theme (blue/violet) + mechanic.
+1. **Pacing from real runs:** verify Eras 1-3 land in 7-9 min with the new tunes. Watch the late-Origins lull (player can disengage once discoveries are bought — needs more to do, or faster reveals) and Era-2's burst-then-grind shape. Tune from Run Recorder exports (`do another run` → paste JSON → tune).
+2. **Era 3 scatter-plot core viz** — procedural teal scatter + fitting curve that loosens when you overfit. The signature visual, still deferred. (No image needed; it's canvas.)
+3. **Deepen Eras 1 & 2** — more interacting tradeoffs that keep the near-win feel (late Origins especially).
+4. **Build Eras 4-5** (deferred) — Compute = Silicon + Data + Insight (reach-back); recursive feedback in 5. Each its own theme (blue/violet) + mechanic + icon set.
+
+## Art status
+Eras 1-3 are **fully wired**: all icons, three sigils (Origins/Symbolic/Statistical), the evolving Origins core (Stone/Bronze/Silicon), the Inference Capacity icon, the wordmark, and the title card. **Still needed (later):** Era 4 set + sigil (blue), Era 5 set + sigil (violet).
+
+## Docs
+- `CLAUDE.md` (this file) — current state. `DESIGN.md` — the living-supply-chain redesign + decisions + build order. `TESTING.md` — the suite (80 tests).

@@ -20,8 +20,11 @@ The game ships as one self-contained HTML file with all logic in a single IIFE. 
 - Purchase path (x1 deducts exact, unaffordable = no-op)
 - **Origins:** converter chain + starvation; upkeep drains (Scriptorium burns Ore, Smelter burns Knowledge — "additions contain subtractions"); the Wheel tradeoff; the discovery web (prereqs, cross-gates, multi-resource costs, effects); fabrication completes the era
 - **Symbolic:** Era-2 carryover seed (the Logic Machine seeds Rules/Rulesets from Knowledge so it isn't a cold-start stall — regression for the old `firstAuto` id collision); theorem-proving process (aim Inference at a proof, completes over time, lemmas repeat); Inference cap + Capacity lemma; tech effects; compile→Axioms
+- **Statistical:** Training Focus (Fit raises accuracy + grows the gap; Generalize shrinks it; Explore discovers Methods); Regularization strengthens the cure; effective accuracy = accuracy − gap (+ Ensembles); experiments yield Insight
 - Save/load roundtrip; offline catch-up (8h cap); no-NaN production
 - **Anti-strobe guard:** idle ticks must NOT rebuild the era DOM (build-once/update-in-place)
+
+**Progression (full chain):** `testProgression` autoplays Origins → Symbolic → Statistical (steering Training Focus + reaching back to Origins for Silicon) and asserts it reaches Era 4; prints per-era timings. ~80 tests total.
 
 **Pacing models** (diagnostic tables, not pass/fail beyond "completes")
 - `reportPacing()` — Origins via a human-model autoplayer at 1/2/4 clicks-per-second, beats vs the 30/60/120/300s targets

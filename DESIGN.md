@@ -87,12 +87,14 @@ The **objective line** is a persistent banner per era ("▸ Generalize: 62% / 85
 4. **Slow it** to ~7-9 min: lower accuracy gain per experiment, the threshold becomes a climb you manage with Focus, and Data is gated by Silicon so it can't trivially explode.
 5. **Signature visual:** the teal scatter-plot core (points + a curve fitting tighter as accuracy rises; the fit visibly *loosens* when you over-fit) — now it also *shows* the decision.
 
-## Build order (after approval) — Eras 1-3 only for now
+## Build order — Eras 1-3 only for now
 
-1. **Era 3 rework** (objective banner + Training Focus decision + Silicon/Rules reach-back + retune to 7-9 min + scatter viz) — proves the pattern end to end.
-2. **Revive Origins/Symbolic as live suppliers** — make collapsed eras investable from the current screen (a compact "reach-back" strip) so scaling Silicon for Era 3 doesn't force full re-expansion.
-3. **Deepen Eras 1 & 2** — add complexity that strengthens the moment-to-moment tradeoff (more interacting discoveries/converters in Origins; a richer theorem economy + tighter Compile loop in Symbolic), each passing the core-feel test.
-4. **Pacing pass on 1-3** to 7-9 min/era with the log curve, from real run exports.
+1. **Era 3 rework** — ✅ DONE: Training Focus (Fit/Generalize/Explore), Silicon reach-back (Datasets cost Silicon + Model upkeep), compact "Origins Supply" strip, retuned (accGain/threshold). Objective banner was added then **removed** (let gameplay emerge). Scatter-plot viz still pending.
+2. **Revive Origins/Symbolic as suppliers** — ✅ mostly: the Era-3 supply strip scales Foundries in place; contextual resource bar keeps prior resources + rates visible.
+3. **Deepen Eras 1 & 2** — ⏳ next: more interacting tradeoffs that hold the near-win feel (late Origins lull; Era-2 burst-then-grind). 
+4. **Pacing pass on 1-3** ⏳ — verify 7-9 min from real run exports; add the Era-3 scatter viz.
+
+(Lots of UX landed this session too: hover tooltips + per-tile mechanical impact, big-icon cards, one-screen density, contextual top bar with live rates, proven-theorems row, evolving Origins core, transparent wordmark.)
 
 *Deferred:* Era 4 (Deep — Compute = Silicon + Data + Insight, compute-allocation, blue) and Era 5 (Foundation — convergence + recursive feedback, violet). The backbone is designed for them; we build them later.
 

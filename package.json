@@ -2,7 +2,7 @@
   "name": "emergence",
   "version": "0.1.0",
   "private": true,
-  "description": "Browser incremental game about an AI bootstrapping itself across four eras",
+  "description": "EMERGENCE — browser incremental game about the evolution of intelligence across five eras",
   "scripts": {
     "test": "node test.js"
   }
