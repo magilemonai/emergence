@@ -768,13 +768,14 @@
   // ---- Rendering: build DOM structure rarely, update live numbers every tick. ----
   // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
   const RES_DEFS=[
-    {k:'marks', show:()=>true, color:'var(--e0)', label:'Marks'},
-    {k:'ore', show:()=>S.flags.o_materials, color:'#c08552', label:'Ore'},
-    {k:'knowledge', show:()=>S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
-    {k:'metal', show:()=>S.flags.o_smelter, color:'#c08552', label:'Metal'},
-    {k:'silicon', show:()=>S.flags.o_foundry, color:'var(--accent)', label:'Silicon'},
-    {k:'rules', show:()=>S.maxEra>=2,  color:'var(--e1)', label:'Rules'},
-    {k:'axioms', show:()=>S.maxEra>=2 && (S.flags.compile||S.totalAxioms>0), color:'var(--accent)', label:'Axioms'},
+    // Contextual to the current era: its own resources, plus any earlier resource it still spends (e.g. Silicon in Era 3)
+    {k:'marks', show:()=>S.maxEra===1, color:'var(--e0)', label:'Marks'},
+    {k:'ore', show:()=>S.maxEra===1 && S.flags.o_materials, color:'#c08552', label:'Ore'},
+    {k:'knowledge', show:()=>S.maxEra===1 && S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
+    {k:'metal', show:()=>S.maxEra===1 && S.flags.o_smelter, color:'#c08552', label:'Metal'},
+    {k:'silicon', show:()=>S.flags.o_foundry && (S.maxEra===1 || S.maxEra>=3), color:'var(--accent)', label:'Silicon'}, // Era 3 spends it
+    {k:'rules', show:()=>S.maxEra===2,  color:'var(--e1)', label:'Rules'},
+    {k:'axioms', show:()=>S.maxEra===2 && (S.flags.compile||S.totalAxioms>0), color:'var(--accent)', label:'Axioms'},
     {k:'data', show:()=>S.maxEra>=3,  color:'var(--e2)', label:'Data'},
     {k:'insight', show:()=>S.maxEra>=3,color:'var(--e2)', label:'Insight'},
     {k:'capability', show:()=>S.maxEra>=4,color:'var(--e3)', label:'Capability'},
