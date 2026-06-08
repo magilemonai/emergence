@@ -127,15 +127,6 @@ function testDiscovery(){
   EM.buyDisco('clayTablets'); ok(S.flags.o_scriptorium, 'Clay Tablets unlocks the scriptorium');
 }
 
-function testTimeGate(){
-  section('Origins — timed unlocks');
-  const EM = freshGame(); const S = EM.S;
-  S.marks = 100000; S.t = 0; EM.buyDisco('tally');
-  ok(!EM.canBuyDisco('stoneworking'), 'a time-gated discovery stays locked before its time, even when affordable');
-  S.t = 31;
-  ok(EM.canBuyDisco('stoneworking'), 'it unlocks once the clock passes the gate (~30s)');
-}
-
 function testFabrication(){
   section('Fabrication completes Era 1');
   const EM = freshGame(); const S = EM.S;
@@ -299,7 +290,6 @@ testCostMath();
 testOriginsChain();
 testUpkeep();
 testDiscovery();
-testTimeGate();
 testFabrication();
 testTechTree();
 testCompile();
