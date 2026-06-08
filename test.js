@@ -92,12 +92,28 @@ function testOriginsChain(){
   ok(S.silicon > 0 && S.metal < 10 && S.knowledge < 10, 'foundry consumes metal AND knowledge to make silicon');
 }
 
+function testDiscovery(){
+  section('Origins — discovery web (prereqs, cross-gates, effects)');
+  const EM = freshGame(); const S = EM.S;
+  ok(EM.discoVisible('tally') && !EM.discoVisible('scribe'), 'only root discoveries are visible at start');
+  S.marks = 100000;
+  EM.buyDisco('tally');
+  ok(EM.discoVisible('scribe') && EM.discoVisible('stoneworking'), 'buying Tally reveals its children');
+  near(EM.oStats().inscribe, EM.CFG.e1.inscribeBase * 2, 1e-9, 'Tally Marks doubles inscribe');
+  EM.buyDisco('scribe'); ok(S.flags.canScribe, 'The Scribe unlocks the scribe building');
+  EM.buyDisco('stoneworking'); ok(S.flags.o_materials, 'Stoneworking unlocks the materials track');
+  // clayTablets is cross-gated by ore (materials gates knowledge)
+  S.ore = 0; ok(!EM.canBuyDisco('clayTablets'), 'Clay Tablets blocked without ore');
+  S.ore = 20; ok(EM.canBuyDisco('clayTablets'), 'Clay Tablets buyable once ore is present');
+  EM.buyDisco('clayTablets'); ok(S.flags.o_scriptorium, 'Clay Tablets unlocks the scriptorium');
+}
+
 function testFabrication(){
   section('Fabrication completes Era 1');
   const EM = freshGame(); const S = EM.S;
-  S.silicon = EM.CFG.e1.siliconGate;
+  S.flags.o_foundry = true; S.silicon = EM.CFG.e1.siliconGate;
   EM.checkMiles();
-  ok(S.flags.canFabricate, 'fabrication unlocks at the silicon gate');
+  ok(S.flags.canFabricate, 'fabrication unlocks at the silicon gate once the Foundry exists');
   EM.fabricate();
   ok(S.flags.origindone, 'fabricate() completes Origins');
   EM.checkMiles();
@@ -190,13 +206,15 @@ function testNoIdleRebuild(){
 // 2. PROGRESSION — autoplay Origins → Symbolic
 // ====================================================================
 function originsStep(EM){
-  const { S } = EM;
+  const { S, DISCO } = EM;
   if(S.flags.origindone) return;
   for(let i=0;i<5;i++) EM.inscribe(FAKE_EV);
   if(S.flags.o_materials) for(let i=0;i<5;i++) EM.quarry(FAKE_EV);
+  // unlock the next tier: buy any affordable discovery
+  for(const n of DISCO) if(EM.canBuyDisco(n.id)) EM.buyDisco(n.id);
+  // grow sources, keep converters below their feeding source so upstream stays ahead
   if(S.flags.canScribe && S.scribe < 25) EM.buy('scribe');
   if(S.flags.o_materials && S.miner < 25) EM.buy('miner');
-  // converters kept below their source count so upstream keeps them fed
   if(S.flags.o_scriptorium && S.scriptorium < S.scribe) EM.buy('scriptorium');
   if(S.flags.o_smelter && S.smelter < S.miner) EM.buy('smelter');
   if(S.flags.o_foundry && S.foundry < Math.min(S.scriptorium, S.smelter)) EM.buy('foundry');
@@ -251,6 +269,7 @@ console.log('====================');
 testFormatting();
 testCostMath();
 testOriginsChain();
+testDiscovery();
 testFabrication();
 testTechTree();
 testCompile();
