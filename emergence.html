@@ -20,8 +20,8 @@
   }
   /* ERA 2 — Symbolic: cold, digital, terminal. Monospace. */
   .theme-2, .era-e2 {
-    --bg: #04070e; --panel: #0a0f18; --panel-2: #0e1421; --line: #243048;
-    --text: #d8c9a2; --dim: #8b8064; --dimmer: #494436; --accent: #ffcd6b;
+    --bg: #04070e; --panel: #0a0f18; --panel-2: #0e1421; --line: #233246;
+    --text: #aec6d6; --dim: #6f879a; --dimmer: #3f5161; --accent: #ffcd6b;
     --era-font: "SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -110,6 +110,9 @@
   .act-btn:active:not(:disabled) { transform: scale(0.98); }
   .act-sub { font-size: 10px; color: var(--dim); text-align: center; margin-top: 8px; line-height: 1.5; }
   .up { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-bottom: 1px solid rgba(28,39,64,0.5); }
+  .up.has-ic { flex-direction: row; gap: 11px; align-items: flex-start; }
+  .up-ic { width: 50px; height: 50px; object-fit: contain; flex: none; }
+  .up-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .up:last-child { border-bottom: none; }
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
   .up-name { font-size: 12px; }
@@ -164,7 +167,10 @@
   .pa-top b { color: var(--text); }
   .pa-idle { font-size: 10px; color: var(--dim); font-style: italic; }
   .proof-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
-  .proof-item { border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s; }
+  .proof-item { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s; }
+  .pf-ic { width: 48px; height: 48px; object-fit: contain; flex: none; }
+  .pf-ic.glyph { display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--ec); border: 1px solid var(--line); border-radius: 8px; }
+  .pf-main { flex: 1; min-width: 0; }
   .proof-item.lemma { border-color: rgba(201,162,107,0.4); }
   .proof-item.active { border-color: var(--e1); box-shadow: 0 0 14px rgba(201,162,107,0.2); }
   .pf-name { font-size: 12px; color: var(--text); }
@@ -298,8 +304,8 @@
       <button class="big-btn" id="coBtn">INSCRIBE A MARK</button>
       <div class="co-hint" id="coHint">Before intelligence could grow, it had to be written down. One mark at a time.</div>
     </div>
-    <div id="vizwrap"><canvas id="viz"></canvas><div class="viz-cap">THE&nbsp;SUBSTRATE</div></div>
     <div id="eras"></div>
+    <div id="vizwrap"><canvas id="viz"></canvas><div class="viz-cap">THE&nbsp;SUBSTRATE</div></div>
   </main>
 </div>
 <div id="fx"></div>
@@ -718,10 +724,12 @@
     capability:'What the system can actually do.',
     scale:'The point where more becomes different.',
   };
+  const UPICON = { ruleset:'assets/icon-ruleset.png', daemon:'assets/icon-daemon.png' };
   function eraUpgrade(key, name, desc){
     const fl = FLAVOR[key] ? '<div class="up-flavor">'+FLAVOR[key]+'</div>' : '';
-    return '<div class="up"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count" id="cnt-'+key+'"></div></div>'+
-      fl+'<div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" id="buy-'+key+'"></button></div>';
+    const ic = UPICON[key] ? '<img class="up-ic" src="'+UPICON[key]+'">' : '';
+    return '<div class="up'+(ic?' has-ic':'')+'">'+ic+'<div class="up-main"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count" id="cnt-'+key+'"></div></div>'+
+      fl+'<div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" id="buy-'+key+'"></button></div></div>';
   }
   function eraShell(n, obsolete, body){
     const e=ERAS[n];
@@ -771,12 +779,15 @@
     if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
     return eraShell(2, false, body);
   }
+  const TH_ICON = { optimization:'assets/th-optimization.png', formalLogic:'assets/th-formalLogic.png',
+    fwdChain:'assets/th-fwdChain.png', bwdChain:'assets/th-bwdChain.png', rete:'assets/th-rete.png', inference:'assets/th-inference.png' };
   function proofItem(id){
     const isLem=id==='optimization';
     const name = isLem ? ('Optimization <span class="pf-lv">Lv '+(S.optLevel+1)+'</span>') : TREEMAP[id].name;
     const desc = isLem ? ('+'+Math.round(CFG.e2.lemmaBonus*100)+'% to all rule production per level — repeatable.') : TREEMAP[id].desc;
-    return '<div class="proof-item'+(isLem?' lemma':'')+'" id="pf-'+id+'"><div class="pf-body"><div class="pf-name">'+name+'</div><div class="pf-desc">'+desc+'</div></div>'+
-      '<button class="up-buy pf-btn" data-proof="'+id+'" id="pfb-'+id+'"></button></div>';
+    const ic = TH_ICON[id] ? '<img class="pf-ic" src="'+TH_ICON[id]+'">' : '<div class="pf-ic glyph">&#9670;</div>';
+    return '<div class="proof-item'+(isLem?' lemma':'')+'" id="pf-'+id+'">'+ic+'<div class="pf-main"><div class="pf-name">'+name+'</div><div class="pf-desc">'+desc+'</div>'+
+      '<button class="up-buy pf-btn" data-proof="'+id+'" id="pfb-'+id+'"></button></div></div>';
   }
   function buildProofList(){
     let items = proofItem('optimization');
