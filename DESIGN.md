@@ -14,6 +14,16 @@ From playtest telemetry + Cody's read:
 
 The single change that addresses all four: **later eras require new infrastructure from earlier eras.** That revives old eras, creates the cross-era flurry, and gives every late era a concrete objective chain.
 
+## Core feel principle (the test every change must pass)
+
+**At every moment there is a short-term goal that feels achievable with small fiddling.** You should never be staring at a bar filling with nothing to do, and never be facing a wall that's minutes away with no nearer win. There's always a cheap next nudge — a buy, a proof, a focus tweak — that visibly moves a near target. Resource balancing should feel *compelling and interesting* (live tradeoffs), not solved or idle.
+
+This is the bar for adding complexity: **add freely to any era, as long as it deepens the moment-to-moment tradeoff and preserves the always-a-near-win feel.** Depth that creates dead stretches (the Era-2 axiom grind, the Era-3 watch) fails the test.
+
+## Scope right now: Eras 1-3
+
+Focus is **Eras 1, 2, and 3** — make those three genuinely compelling (depth + the cross-era links among them). **Eras 4-5 are deferred** (kept on the scaffold). The Silicon/Data backbone is designed with 4-5 in mind, but the reach-back we build now lives *inside 1-3*: Era 3 reaching back to Origins (Silicon) and Symbolic (Rules) is the full proof of the pattern.
+
 ## The spine: one supply chain
 
 Two backbone resources thread the whole game:
@@ -77,13 +87,14 @@ The **objective line** is a persistent banner per era ("▸ Generalize: 62% / 85
 4. **Slow it** to ~7-9 min: lower accuracy gain per experiment, the threshold becomes a climb you manage with Focus, and Data is gated by Silicon so it can't trivially explode.
 5. **Signature visual:** the teal scatter-plot core (points + a curve fitting tighter as accuracy rises; the fit visibly *loosens* when you over-fit) — now it also *shows* the decision.
 
-## Build order (after approval)
+## Build order (after approval) — Eras 1-3 only for now
 
-1. **Era 3 rework** (objective + Training Focus + Silicon reach-back + retune + scatter viz) — proves the pattern end to end.
-2. **Revive Origins/Symbolic as live suppliers** — make collapsed eras investable from the current screen (a compact "reach-back" strip) so scaling Silicon doesn't force full re-expansion.
-3. **Build Era 4 (Deep)** on the pattern — Compute = Silicon + Data + Insight; compute-allocation decision; blue theme.
-4. **Build Era 5 (Foundation)** — convergence + recursive feedback; violet theme.
-5. **Global pacing pass** to 7-9 min/era with the log curve, from real run exports.
+1. **Era 3 rework** (objective banner + Training Focus decision + Silicon/Rules reach-back + retune to 7-9 min + scatter viz) — proves the pattern end to end.
+2. **Revive Origins/Symbolic as live suppliers** — make collapsed eras investable from the current screen (a compact "reach-back" strip) so scaling Silicon for Era 3 doesn't force full re-expansion.
+3. **Deepen Eras 1 & 2** — add complexity that strengthens the moment-to-moment tradeoff (more interacting discoveries/converters in Origins; a richer theorem economy + tighter Compile loop in Symbolic), each passing the core-feel test.
+4. **Pacing pass on 1-3** to 7-9 min/era with the log curve, from real run exports.
+
+*Deferred:* Era 4 (Deep — Compute = Silicon + Data + Insight, compute-allocation, blue) and Era 5 (Foundation — convergence + recursive feedback, violet). The backbone is designed for them; we build them later.
 
 ## Open questions for Cody
 
