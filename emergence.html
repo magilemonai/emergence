@@ -65,7 +65,7 @@
   .era.obsolete { filter: grayscale(0.85) brightness(0.6); opacity: 0.5; }
   .era.obsolete .era-body { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; }
   .era-header { display: flex; align-items: center; gap: 12px; }
-  .era-sigil { width: 30px; height: 30px; object-fit: contain; opacity: 0.92; flex: none; filter: drop-shadow(0 0 6px rgba(201,162,107,0.25)); }
+  .era-sigil { width: 42px; height: 42px; object-fit: contain; opacity: 0.92; flex: none; filter: drop-shadow(0 0 6px rgba(201,162,107,0.25)); }
   .era-tag { font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 15px; color: var(--text); }
   .era-name small { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0.5px; }
@@ -174,7 +174,7 @@
   .rates { margin-top: 4px; display: flex; flex-direction: column; }
   .rate { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(28,39,64,0.45); }
   .rate:last-child { border-bottom: none; }
-  .rate-ic { width: 26px; height: 26px; object-fit: contain; flex: none; opacity: 0.9; }
+  .rate-ic { width: 38px; height: 38px; object-fit: contain; flex: none; opacity: 0.95; }
   .rate-tx { display: flex; flex-direction: column; line-height: 1.1; }
   .rate-lab { font-size: 8px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
   .rate-amt { font-size: 15px; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -188,8 +188,8 @@
   .tile { display: flex; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, opacity 0.4s; }
   .tile.disco.can { border-color: rgba(201,146,95,0.55); box-shadow: 0 0 14px rgba(201,146,95,0.12); }
   .tile.disco.owned { opacity: 0.6; border-color: rgba(201,146,95,0.4); background: rgba(201,146,95,0.07); }
-  .tile-ic { width: 42px; height: 42px; object-fit: contain; flex: none; }
-  .tile-ic.glyph { display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--e0);
+  .tile-ic { width: 60px; height: 60px; object-fit: contain; flex: none; }
+  .tile-ic.glyph { display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--e0);
     border: 1px solid rgba(201,146,95,0.45); border-radius: 9px; }
   .tile-body { flex: 1; min-width: 0; }
   .tile-name { font-size: 12px; color: var(--text); }
@@ -222,7 +222,7 @@
     font-family: inherit; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
   .research-btn:hover { border-color: var(--e0); }
   .research-btn.has { box-shadow: 0 0 16px rgba(255,205,107,0.22); border-color: var(--accent); }
-  .rb-ic { width: 20px; height: 20px; object-fit: contain; }
+  .rb-ic { width: 28px; height: 28px; object-fit: contain; }
   .rb-badge { min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--accent); color: #1a1206;
     font-size: 9px; font-weight: 700; display: none; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
   .rb-badge.show { display: inline-flex; }
@@ -295,10 +295,10 @@
       clickBase: 1,
       rulesetCost: 10, rulesetGrowth: 1.16, rulesetYield: 0.42,
       daemonCost: 320, daemonGrowth: 1.19, daemonRate: 2.0, // auto-writes/sec per daemon
-      axiomDivisor: 380,  // axioms from a compile = floor(sqrt(runRules / divisor))
+      axiomDivisor: 200,  // axioms from a compile = floor(sqrt(runRules / divisor))
       axiomBonus: 0.05,   // +5% to all rule production per Axiom (×1.5 with Meta-Logic)
-      infPerRuleset: 0.6, // Inference/sec generated per Ruleset (drives proving)
-      infScale: 0.18,     // a Theorem's proof cost (inference) = node.cost × this
+      infPerRuleset: 1.3, // Inference/sec generated per Ruleset (drives proving)
+      infScale: 0.11,     // a Theorem's proof cost (inference) = node.cost × this
       lemmaBase: 50, lemmaGrowth: 1.9, lemmaBonus: 0.08, // repeatable Optimization lemma
     },
     // Later eras still run on the original scaffold; rebuilt in a later pass.
@@ -359,7 +359,7 @@
     { id:'heuristics',  name:'Heuristic Search',  cost:750,   req:['bwdChain'],                row:2, col:1.8,  desc:'Manual + Daemon writing scales with Rulesets owned (+8% each).' },
     { id:'knowledge',   name:'Knowledge Base',    cost:3400,  req:['rete','inference'],        row:3, col:-1.0, desc:'Unlocks Compile — distil a whole run into permanent Axioms.' },
     { id:'metalogic',   name:'Meta-Logic',        cost:11000, req:['knowledge'],               row:3, col:1.0,  desc:'Every Axiom becomes 50% more powerful.' },
-    { id:'expert',      name:'Expert System',     cost:60000, req:['metalogic','heuristics'], reqAxioms:18, row:4, col:0, desc:'Complete the Symbolic Era. A system that reasons on its own — and the ceiling hand-written logic can never break.' },
+    { id:'expert',      name:'Expert System',     cost:60000, req:['metalogic','heuristics'], reqAxioms:6, row:4, col:0, desc:'Complete the Symbolic Era. A system that reasons on its own — and the ceiling hand-written logic can never break.' },
   ];
   const TREEMAP = Object.fromEntries(TREE.map(n=>[n.id,n]));
   // ---- Era 1 (Origins) discoveries: a web of one-time unlocks; Knowledge (K) and Materials (M) interleave and cross-gate. ----

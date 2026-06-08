@@ -355,6 +355,42 @@ function reportPacing(){
   }
 }
 
+// Era 2: clicks rules, builds rulesets (which emit Inference), proves theorems one
+// at a time, compiles for Axioms until it can prove the Expert System capstone.
+function runSymbolic(cps){
+  const EM = freshGame(); const { S, TREE, BUYS } = EM;
+  S.maxEra = 2; S.flags.firstAuto = true;
+  const beats = {}; const mark = k => { if(beats[k]===undefined) beats[k] = S.t; };
+  const expReq = (TREE.find(n=>n.id==='expert').reqAxioms) || 0;
+  let acc = 0;
+  for(let tk=0; tk<400000 && !S.flags.symbolicDone; tk++){
+    acc += cps*0.1; while(acc>=1){ acc--; EM.writeRule(FAKE_EV); }
+    if(S.ruleset < 25){ const c = EM.totalCost(BUYS.ruleset,1); if(S.rules >= c) EM.buy('ruleset'); }
+    if(S.flags.tree && !S.activeProof){
+      const t = TREE.find(n => n.id!=='expert' && !S.tech[n.id] && EM.canProve(n.id));
+      if(t) EM.selectProof(t.id);
+      else if(EM.canProve('expert')) EM.selectProof('expert');
+      else EM.selectProof('optimization'); // bank into the lemma while farming axioms
+    }
+    if(S.flags.compile && S.axioms < expReq && EM.axiomGain() >= Math.max(2, Math.ceil(S.axioms*0.5))) EM.compile();
+    EM.tick();
+    if(S.flags.tree) mark('tree'); if(S.flags.compile) mark('compile');
+    if(S.tech.knowledge) mark('knowledge'); if(S.tech.metalogic) mark('metalogic');
+  }
+  beats.done = S.flags.symbolicDone ? S.t : undefined; beats.compiles = S.compiles; beats.axioms = S.axioms;
+  return beats;
+}
+function reportPacingEra2(){
+  section('Pacing model — Era 2 (Symbolic) across click rates  [target: full era ~5-6m]');
+  const T = s => s===undefined?'—':(Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0'));
+  console.log('  rate(c/s) │   tree  compile knowledge metalogic │  era done   (compiles/axioms)');
+  for(const cps of [1,2,4]){
+    const b = runSymbolic(cps);
+    console.log('  '+String(cps).padStart(7)+'   │ '+T(b.tree).padStart(6)+' '+T(b.compile).padStart(7)+' '+
+      T(b.knowledge).padStart(9)+' '+T(b.metalogic).padStart(9)+' │ '+T(b.done).padStart(8)+'   ('+b.compiles+'/'+b.axioms+')');
+  }
+}
+
 // ---- run all ----
 console.log('EMERGENCE test suite');
 console.log('====================');
@@ -374,6 +410,7 @@ testNoNaN();
 testNoIdleRebuild();
 testProgression();
 reportPacing();
+reportPacingEra2();
 
 console.log('\n====================');
 console.log(`${passed} passed, ${failed} failed`);
