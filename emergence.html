@@ -758,25 +758,11 @@
   function buildRatesPanel(){
     return '<div class="panel rates-panel'+intro('flows')+'"><div class="panel-label">Flows · per second</div>'+buildRates()+'</div>';
   }
-  function fnode(label, icon, id){
-    return '<div class="fnode" id="'+id+'">'+
-      (icon?'<img class="ficon" src="'+icon+'">':'<div class="fglyph">&#9670;</div>')+
-      '<div class="flab">'+label+'</div></div>';
-  }
-  function buildFlow(){
-    const A='<div class="farrow">&rarr;</div>', P='<div class="farrow">+</div>';
-    return '<div class="flow">'+
-      '<div class="flow-row" id="frow-k">'+fnode('Marks','assets/icon-marks.png','fn-marks')+A+fnode('Scriptorium','assets/icon-scriptorium.png','fn-scriptorium')+A+fnode('Knowledge','assets/icon-knowledge.png','fn-knowledge')+'</div>'+
-      '<div class="flow-row" id="frow-m">'+fnode('Ore','assets/icon-ore.png','fn-ore')+A+fnode('Smelter','assets/icon-crucible.png','fn-smelter')+A+fnode('Metal','assets/icon-ingot.png','fn-metal')+'</div>'+
-      '<div class="flow-row flow-converge" id="frow-f">'+fnode('Knowledge','assets/icon-knowledge.png','fn-ck')+P+fnode('Metal','assets/icon-ingot.png','fn-cm')+A+fnode('Foundry','assets/icon-foundry.png','fn-foundry2')+A+fnode('Silicon','assets/icon-silicon.png','fn-silicon')+A+fnode('Logic Machine','','fn-logic')+'</div>'+
-    '</div>';
-  }
   function buildOrigins(){ // ERA 1
     // Progressive disclosure: sections appear as the player earns them.
     let body = buildCore();                                   // 1. the core + Research button (at reveal)
     if(S.flags.canScribe) body += buildRatesPanel();          // 2. Flows (with your first automation)
     if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // 3. Works (Research lives in the drawer)
-    if(S.flags.o_scriptorium) body += '<div class="panel flow-panel'+intro('chain')+'" style="grid-column:1/-1"><div class="panel-label">The Chain · what feeds what</div>'+buildFlow()+'</div>'; // 4. The Chain (when conversion begins)
     if(S.flags.o_foundry){                                    // 5. Fabrication (silicon age)
       body += '<div class="panel'+intro('fab')+'" style="grid-column:1/-1"><div class="panel-label">Fabrication</div>'+
         '<div class="meter"><i id="meter-silicon" style="background:var(--accent)"></i></div>'+
@@ -868,8 +854,6 @@
           setClass(tile,'tile disco'+(can?' can':''));
         }
       }
-      setClass($('frow-m'),'flow-row'+(S.flags.o_materials?'':' locked'));
-      setClass($('frow-f'),'flow-row flow-converge'+(S.flags.o_foundry?'':' locked'));
       const ms=$('meter-silicon'); if(ms){ ms.style.width=Math.min(100,(S.silicon/CFG.e1.siliconGate)*100)+'%'; setText('meter-silicon-val',fmt(S.silicon)+' / '+CFG.e1.siliconGate); }
       const fbtn=$('fabricateBtn'); if(fbtn && fbtn.disabled!==!S.flags.canFabricate) fbtn.disabled=!S.flags.canFabricate;
     }
