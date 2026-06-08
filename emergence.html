@@ -65,11 +65,14 @@
   .era.obsolete { filter: grayscale(0.85) brightness(0.6); opacity: 0.5; }
   .era.obsolete .era-body { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; }
   .era-header { display: flex; align-items: center; gap: 12px; }
-  .era.collapsed { cursor: pointer; padding: 11px 18px; opacity: 0.7; transition: opacity 0.2s; }
-  .era.collapsed:hover { opacity: 1; }
-  .era.collapsed .era-status::after { content: " ▸"; color: var(--dim); }
-  .era-toggle { font-size: 9px; letter-spacing: 1px; color: var(--dim); cursor: pointer; margin-left: 12px; white-space: nowrap; }
-  .era-toggle:hover { color: var(--text); }
+  .era.collapsed { cursor: pointer; padding: 16px 18px; transition: border-color 0.2s, background 0.2s; }
+  .era.collapsed:hover { border-color: var(--ec); background: var(--panel-2); }
+  .era-expand-btn { margin-left: 14px; border: 1px solid var(--ec); color: var(--ec); font-size: 11px; font-weight: 700;
+    letter-spacing: 1.5px; padding: 8px 18px; border-radius: 9px; white-space: nowrap; }
+  .era.collapsed:hover .era-expand-btn { background: var(--ec); color: #0a0d14; }
+  .era-toggle { margin-left: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--ec); color: var(--ec);
+    font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 7px 14px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .era-toggle:hover { background: var(--ec); color: #0a0d14; }
   /* Era 2 — Symbolic: amber schematic environment, distinct from Origins' warm stone */
   .era-e2 { background:
       linear-gradient(rgba(8,11,18,0.9), rgba(8,11,18,0.94)),
@@ -710,13 +713,14 @@
     const e=ERAS[n];
     const sig = e.sigil?'<img class="era-sigil" src="'+e.sigil+'" alt="">':'';
     const done = n < S.maxEra; // a completed era can be folded
-    const head = (withToggle) => '<div class="era-header">'+sig+'<span class="era-tag">'+e.tag+'</span>'+
-      '<span class="era-name">'+e.name+'<small>'+e.sub+'</small></span>'+
-      (done?'<span class="era-status legacy">complete</span>':'<span class="era-status" id="status-'+n+'"></span>')+
-      (withToggle?'<span class="era-toggle" data-toggle="'+n+'">▾ collapse</span>':'')+'</div>';
-    if(S.collapsed[n]) // whole card is the expand target
-      return '<div class="era collapsed era-e'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'">'+head(false)+'</div>';
-    return '<div class="era era-e'+n+' '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'">'+head(done)+'<div class="era-body">'+body+'</div></div>';
+    const nameBlock = sig+'<span class="era-tag">'+e.tag+'</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span>';
+    if(S.collapsed[n]) // whole bar is the expand target
+      return '<div class="era collapsed era-e'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'"><div class="era-header">'+nameBlock+
+        '<span class="era-status legacy">complete</span><span class="era-expand-btn">▸ EXPAND</span></div></div>';
+    const right = done
+      ? '<span class="era-status legacy">complete</span><button class="era-toggle" data-toggle="'+n+'">▾ COLLAPSE</button>'
+      : '<span class="era-status" id="status-'+n+'"></span>';
+    return '<div class="era era-e'+n+' '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header">'+nameBlock+right+'</div><div class="era-body">'+body+'</div></div>';
   }
   function nodePos(n){ return { x: 50 + n.col*14, y: 34 + n.row*58 }; }
   const TREE_H = 34 + 4*58 + 30; // rows 0..4
