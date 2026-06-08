@@ -63,6 +63,8 @@
   .res.show { opacity: 1; }
   .res .label { font-size: 10px; letter-spacing: 1.4px; color: var(--dim); text-transform: uppercase; }
   .res .val { font-size: 18px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .res-ps { font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.2; margin-top: 1px; }
+  .res-ps.pos { color: var(--good); } .res-ps.neg { color: var(--danger); } .res-ps.zero { color: var(--dimmer); }
   main { flex: 1; overflow-y: auto; padding: 0; min-height: 0; }
   main::-webkit-scrollbar { width: 9px; }
   main::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
@@ -177,6 +179,11 @@
   .pf-desc { font-size: 14px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
   /* Era 3 — Statistical: objective banner, Training Focus, Origins supply strip */
+  #tip { position: fixed; z-index: 95; max-width: 300px; background: var(--panel-2); border: 1px solid var(--ec, var(--accent)); border-radius: 9px; padding: 11px 13px; font-size: 13.5px; color: var(--text); line-height: 1.55; pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity 0.12s, transform 0.12s; box-shadow: 0 8px 28px rgba(0,0,0,0.55); }
+  #tip.show { opacity: 1; transform: translateY(0); }
+  #tip i { color: var(--dim); }
+  [data-tip] { cursor: help; }
+  [data-tip] .up-buy, [data-tip] .tile-btn, [data-tip] button { cursor: pointer; }
   .objective { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 9px 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
   .focus-row { display: flex; gap: 8px; }
   .focus-btn { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); cursor: pointer; text-align: left; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
@@ -327,6 +334,7 @@
 </div>
 <div id="fx"></div>
 <div id="toasts"></div>
+<div id="tip"></div>
 <div id="dev"></div>
 <div id="drawerBg"></div>
 <div id="drawer"><div class="drawer-head"><span>RESEARCH &middot; one-time discoveries</span><button id="drawerClose">&times;</button></div><div id="drawerBody"></div></div>
@@ -400,7 +408,7 @@
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
   }; }
   const S = freshState();
-  const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0 }; // net per-second flow, captured each tick
+  const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0, rules:0, data:0, insight:0 }; // net per-second flow, captured each tick
   // Progressive UI: each section animates in only the first time it appears (survives re-renders).
   const _seen = new Set();
   function intro(key){ if(_seen.has(key)) return ''; _seen.add(key); return ' intro'; }
@@ -700,7 +708,7 @@
     // ERA 1 — Origins: sources feed stocks; converters draw from upstream and starve if it's empty.
     const os=oStats();
     const e1=CFG.e1;
-    const _b={marks:S.marks,knowledge:S.knowledge,ore:S.ore,metal:S.metal,silicon:S.silicon};
+    const _b={marks:S.marks,knowledge:S.knowledge,ore:S.ore,metal:S.metal,silicon:S.silicon,rules:S.rules,data:S.data,insight:S.insight};
     if(S.scribe>0) S.marks += S.scribe*os.scribeY*dt;
     if(S.miner>0)  S.ore   += S.miner*os.minerY*dt;
     // Scriptorium: Marks -> Knowledge, but each unit also burns Ore (tablets). Throttled by whichever runs short.
@@ -716,7 +724,6 @@
       S.ore-=out; S.knowledge-=out*e1.smelterUpkeep; S.metal+=out;
     }
     if(S.foundry>0){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c; }
-    if(dt>0){ for(const k in _b) RATES[k]=(S[k]-_b[k])/dt; }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
       const st=stats();
@@ -743,6 +750,7 @@
     // ERA 4-5 scaffold
     if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
     if(S.cluster>0){ const c=Math.min(S.capability, S.cluster*0.4*dt); S.capability-=c; S.scale+=c*2; }
+    if(dt>0){ for(const k in _b) RATES[k]=(S[k]-_b[k])/dt; } // net per-second flow for every resource (all eras)
   }
   function checkMiles(){
     let fired=false;
@@ -760,11 +768,11 @@
   // ---- Rendering: build DOM structure rarely, update live numbers every tick. ----
   // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
   const RES_DEFS=[
-    {k:'marks', show:()=>S.maxEra===1, color:'var(--e0)', label:'Marks'},
-    {k:'ore', show:()=>S.maxEra===1 && S.flags.o_materials, color:'#c08552', label:'Ore'},
-    {k:'knowledge', show:()=>S.maxEra===1 && S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
-    {k:'metal', show:()=>S.maxEra===1 && S.flags.o_smelter, color:'#c08552', label:'Metal'},
-    {k:'silicon', show:()=>S.maxEra===1 && S.flags.o_foundry, color:'var(--accent)', label:'Silicon'},
+    {k:'marks', show:()=>true, color:'var(--e0)', label:'Marks'},
+    {k:'ore', show:()=>S.flags.o_materials, color:'#c08552', label:'Ore'},
+    {k:'knowledge', show:()=>S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
+    {k:'metal', show:()=>S.flags.o_smelter, color:'#c08552', label:'Metal'},
+    {k:'silicon', show:()=>S.flags.o_foundry, color:'var(--accent)', label:'Silicon'},
     {k:'rules', show:()=>S.maxEra>=2,  color:'var(--e1)', label:'Rules'},
     {k:'axioms', show:()=>S.maxEra>=2 && (S.flags.compile||S.totalAxioms>0), color:'var(--accent)', label:'Axioms'},
     {k:'data', show:()=>S.maxEra>=3,  color:'var(--e2)', label:'Data'},
@@ -775,7 +783,7 @@
   function buildHeader(){
     if(!S.flags.firstAuto) return;
     $('resBar').innerHTML = RES_DEFS.filter(d=>d.show()).map(d=>
-      '<div class="res show" title="'+(RESFLAVOR[d.k]||'')+'"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div></div>').join('');
+      '<div class="res show" data-tip="'+esc('<i>'+(RESFLAVOR[d.k]||'')+'</i>')+'"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div><div class="res-ps" id="rr-'+d.k+'"></div></div>').join('');
     const bm=$('buyMode');
     if(S.flags.canScribe){ // buy-mode only matters once you have repeatable things to build
       bm.classList.add('show');
@@ -815,10 +823,12 @@
   const UPICON = { ruleset:'assets/icon-ruleset.png', daemon:'assets/icon-daemon.png', dataset:'assets/e3-dataset.png', model:'assets/e3-model.png' };
   const METHOD_ICON = { regression:'assets/e3-regression.png', features:'assets/e3-features.png', regularization:'assets/e3-regularization.png', clustering:'assets/e3-clustering.png', bayesian:'assets/e3-bayesian.png', ensembles:'assets/e3-ensembles.png' };
   function eraUpgrade(key, name, desc){
-    const fl = FLAVOR[key] ? '<div class="up-flavor">'+FLAVOR[key]+'</div>' : '';
     const ic = UPICON[key] ? '<img class="up-ic" src="'+UPICON[key]+'">' : '';
-    return '<div class="up'+(ic?' has-ic':'')+'">'+ic+'<div class="up-main"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count" id="cnt-'+key+'"></div></div>'+
-      fl+'<div class="up-desc">'+desc+'</div><button class="up-buy" data-buy="'+key+'" id="buy-'+key+'"></button></div></div>';
+    const tip = '<i>'+(FLAVOR[key]||'')+'</i><br>'+desc;
+    const hasEff = key==='dataset' || key==='model' || key==='ruleset' || key==='daemon'; // show live mechanical impact like Origins builds
+    const eff = hasEff ? '<div class="tile-eff" id="eff-'+key+'"></div>' : '<div class="up-desc">'+desc+'</div>';
+    return '<div class="up'+(ic?' has-ic':'')+'" data-tip="'+esc(tip)+'">'+ic+'<div class="up-main"><div class="up-top"><div class="up-name">'+name+'</div><div class="up-count" id="cnt-'+key+'"></div></div>'+
+      eff+'<button class="up-buy" data-buy="'+key+'" id="buy-'+key+'"></button></div></div>';
   }
   function eraShell(n, obsolete, body){
     const e=ERAS[n];
@@ -888,30 +898,37 @@
   function tileIcon(src){ return src ? '<img class="tile-ic" src="'+src+'">' : '<div class="tile-ic glyph">&#9670;</div>'; }
   // Full per-unit flow of one more of this building across EVERY resource it touches (in & out).
   function buildEffect(key){
-    const os=oStats(), e=CFG.e1;
+    const os=oStats(), e=CFG.e1, st=(S.maxEra>=2?stats():null);
     const flows = {
       scribe:      [['+',os.scribeY,'marks']],
       miner:       [['+',os.minerY,'ore']],
       scriptorium: [['+',os.scrR,'knowledge'],['−',os.scrR,'marks'],['−',os.scrR*e.scriptoriumUpkeep,'ore']],
       smelter:     [['+',os.smR,'metal'],['−',os.smR,'ore'],['−',os.smR*e.smelterUpkeep,'knowledge']],
       foundry:     [['+',os.foR,'silicon'],['−',os.foR,'metal'],['−',os.foR,'knowledge']],
+      ruleset:     st?[['+',st.rulesetYield,'rules'],['+',CFG.e2.infPerRuleset,'inference']]:null,
+      daemon:      st?[['+',CFG.e2.daemonRate*st.click,'rules']]:null,
+      dataset:     [['+',CFG.e3.datasetYield*e3Stats().dataMult,'data']],
+      model:       [['+',CFG.e3.expPerModel,'experiments'],['−',CFG.e3.modelSilicon,'silicon']],
     }[key];
     if(!flows) return '';
     return '<div class="eff-cap">each · per second</div>'+
       flows.map(([s,v,r])=>'<div class="eff-row '+(s==='+'?'pos':'neg')+'"><span>'+r+'</span><span>'+s+fmt(v)+'</span></div>').join('');
   }
+  function esc(s){ return String(s).replace(/"/g,'&quot;'); }
   function buildTile(type, key){
     if(type==='build'){
-      const b=OBUILD[key], fl=FLAVOR[key]?'<div class="tile-flavor">'+FLAVOR[key]+'</div>':'';
-      return '<div class="tile build" id="btile-'+key+'">'+tileIcon(BICON[key]||'')+
+      const b=OBUILD[key];
+      const tip = '<i>'+(FLAVOR[key]||'')+'</i><br>'+b.mech;
+      return '<div class="tile build" id="btile-'+key+'" data-tip="'+esc(tip)+'">'+tileIcon(BICON[key]||'')+
         '<div class="tile-body"><div class="tile-name">'+b.name+' <span class="tile-count" id="cnt-'+key+'"></span></div>'+
-        fl+'<div class="tile-mech">'+b.mech+'</div><div class="tile-eff" id="eff-'+key+'"></div>'+
+        '<div class="tile-eff" id="eff-'+key+'"></div>'+
         '<button class="up-buy tile-btn" data-buy="'+key+'" id="buy-'+key+'"></button></div></div>';
     }
     const n=DISCOMAP[key];
-    return '<div class="tile disco" id="dtile-'+key+'">'+tileIcon(DICON[key]||'')+
+    const tip = '<i>'+n.flavor+'</i><br>'+n.mech;
+    return '<div class="tile disco" id="dtile-'+key+'" data-tip="'+esc(tip)+'">'+tileIcon(DICON[key]||'')+
       '<div class="tile-body"><div class="tile-name">'+n.name+'</div>'+
-      '<div class="tile-flavor">'+n.flavor+'</div><div class="tile-mech">'+n.mech+'</div>'+
+      '<div class="tile-mech">'+n.mech+'</div>'+
       '<button class="up-buy tile-btn" data-disco="'+key+'" id="dsc-'+key+'"></button></div></div>';
   }
   const WORKS_ORDER = ['scribe','miner','scriptorium','smelter','foundry'];
@@ -1048,7 +1065,9 @@
   function refresh(){ // cheap per-tick value update; the DOM (and your buttons) stay put
     if(!S.flags.firstAuto) return;
     setText('eraInd', ERAS[S.maxEra].tag.toUpperCase()+' ERA');
-    for(const d of RES_DEFS) setText('rv-'+d.k, fmt(S[d.k]));
+    for(const d of RES_DEFS){ setText('rv-'+d.k, fmt(S[d.k]));
+      const rt=RATES[d.k]||0, re=$('rr-'+d.k);
+      if(re){ const t=(rt>0.0005?'+':'')+(Math.abs(rt)<0.0005?'':fmt(rt)+'/s'); re.textContent=t; re.className='res-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero')); } }
     for(const key in BUYS){ const cnt=$('cnt-'+key); if(!cnt) continue;
       setText('cnt-'+key, 'x'+S[key]);
       const btn=$('buy-'+key), st=upLabel(key);
@@ -1087,6 +1106,7 @@
       const fbtn=$('fabricateBtn'); if(fbtn && fbtn.disabled!==!S.flags.canFabricate) fbtn.disabled=!S.flags.canFabricate;
     }
     // theorem-proving
+    for(const key of ['ruleset','daemon']){ const el=$('eff-'+key); if(el){ const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } } }
     const ir=$('infRate');
     if(ir){
       setText('infRate', 'Inference  '+fmt(S.inference)+' / '+fmt(infCap())+'   ·   +'+fmt(symInfRate())+'/s'+(S.ruleset===0?' (build Rulesets to reason)':''));
@@ -1127,7 +1147,8 @@
       setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':''));
       ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
-      setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Models draw '+fmt(S.model*CFG.e3.modelSilicon)+'/s'); }
+      setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Models draw '+fmt(S.model*CFG.e3.modelSilicon)+'/s');
+      for(const key of ['dataset','model']){ const el=$('eff-'+key); if(el){ const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } } } }
     const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
@@ -1182,6 +1203,15 @@
     document.querySelectorAll('#eras .era').forEach(el=> _eraIO.observe(el));
   }
   window.addEventListener('keydown', e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
+  // Hover tooltips: any [data-tip] element reveals its flavor + mechanical detail
+  const _tip=$('tip'); let _tipEl=null;
+  function placeTip(e){ const m=16; let x=e.clientX+m, y=e.clientY+m; const w=_tip.offsetWidth, h=_tip.offsetHeight;
+    if(x+w>window.innerWidth-8) x=e.clientX-w-m; if(y+h>window.innerHeight-8) y=window.innerHeight-h-8; if(x<8)x=8; if(y<8)y=8;
+    _tip.style.left=x+'px'; _tip.style.top=y+'px'; }
+  document.addEventListener('mouseover', e=>{ const t=e.target.closest?e.target.closest('[data-tip]'):null;
+    if(t && t!==_tipEl){ _tipEl=t; _tip.innerHTML=t.getAttribute('data-tip'); _tip.classList.add('show'); placeTip(e); } });
+  document.addEventListener('mousemove', e=>{ if(_tipEl) placeTip(e); });
+  document.addEventListener('mouseout', e=>{ if(_tipEl){ const to=e.relatedTarget; if(!to || !(to.closest && to.closest('[data-tip]'))){ _tip.classList.remove('show'); _tipEl=null; } } });
   if(/[?&]dev=1/.test(location.search)) toggleDev(true);
 
   // --- The Substrate: live visualization of the system ---
