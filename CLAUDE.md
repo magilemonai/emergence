@@ -24,7 +24,7 @@ eras (scroll-driven theme switch). Completed eras collapse to a slim bar.
 |----|------|--------------------------|-------|--------|
 | 1 | Origins | Two cross-gated tracks (Knowledge + Materials) + rate-based converters with upkeep, converging on Silicon → fabricate the Logic Machine | warm stone, **serif**, ochre | **Built**, tuned ~6 min |
 | 2 | Symbolic | Theorem-proving as a process: Rulesets emit Inference, aimed at one proof at a time; repeatable Optimization + Inference-Capacity lemmas; Compile→Axioms prestige | cold terminal, **mono**, amber + schematic bg | **Built**, ~5-7 min |
-| 3 | Statistical | Experiments + accuracy curve: spend Data on probabilistic experiments to push Accuracy up a diminishing curve; **discover** Methods by chance; manage bias↔variance (overfit gap, cured by Regularization) | cool teal, **sans**, graph-paper | **Theme built; mechanic = next build** |
+| 3 | Statistical | Experiments + accuracy curve: Datasets→Data→Models auto-run experiments to push Accuracy up a diminishing curve; **discover** Methods by chance (odds rise with Data); overfit gap caps high until **Regularization** (the cure); generalize at 85% effective accuracy → Era 4 | cool teal, **sans**, graph-paper | **Built**, autoplay ~1-2 min (real play slower; tune) |
 | 4 | Deep | (planned) compute allocation across parallel training projects | blue | scaffold (old pipeline) |
 | 5 | Foundation | (planned) recursive self-improvement / emergent capabilities | violet | scaffold + endpoint |
 
@@ -72,7 +72,7 @@ Systems:
 
 ## Known gaps / next
 
-1. **Build Era 3 (Statistical) mechanic** — theme is in; economy/experiments/discovery/overfit/handoff + scatter-plot viz to come.
+1. **Era 3 polish:** scatter-plot core viz (procedural, teal — the signature visual, deferred from V1); pacing tune (autoplay generalizes fast; real play needs verifying); the Data↔Models↔manual-experiment balance (manual experiments can out-drain Datasets).
 2. Pacing fine-tuning from real run exports (Origins early beats slipped slightly with quarry=+1; Era 2 runs ~7 min).
-3. Remaining art: Era-3 icon set (teal), the Origins evolving-core (3 age stages), Era 4/5 sigils.
-4. Eras 4-5 are still the original scaffold pipeline — rebuild with their own mechanics/themes.
+3. Remaining art: Era-3 icon set (teal — Datasets/Models/Methods currently glyph), the Origins evolving-core (3 age stages), Era 4/5 sigils.
+4. **Build Eras 4-5** — still the original scaffold pipeline (compute/training/cluster). Era 4 Deep = compute allocation; Era 5 Foundation = recursive self-improvement. Each gets its own theme (blue/violet) + mechanic.
