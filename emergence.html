@@ -198,11 +198,11 @@
   /* Origins central core */
   .core-panel { display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
     background: radial-gradient(120% 160% at 18% 0%, rgba(201,146,95,0.08), transparent 60%), var(--panel-2); }
-  .core { position: relative; width: 116px; height: 116px; flex: none; display: flex; align-items: center; justify-content: center; }
-  .core-ring { position: absolute; inset: 8px; border: 2px solid rgba(201,146,95,0.5); border-top-color: var(--e0); border-radius: 50%; animation: coreSpin 6s linear infinite; }
-  .core-ring2 { inset: 22px; border-width: 1px; border-top-color: transparent; border-left-color: var(--e0); animation: coreSpin 9s linear infinite reverse; }
-  .core::after { content: ""; position: absolute; inset: 30px; border-radius: 50%; background: radial-gradient(circle, rgba(201,146,95,0.35), transparent 70%); animation: corePulse 3s ease-in-out infinite; }
-  .core-mid { position: relative; z-index: 1; font-size: 9px; letter-spacing: 1.5px; color: var(--e0); text-align: center; width: 70px; line-height: 1.3; }
+  .core { position: relative; width: 174px; height: 174px; flex: none; display: flex; align-items: center; justify-content: center; }
+  .core-ring { position: absolute; inset: 12px; border: 2px solid rgba(201,146,95,0.5); border-top-color: var(--e0); border-radius: 50%; animation: coreSpin 6s linear infinite; }
+  .core-ring2 { inset: 33px; border-width: 1px; border-top-color: transparent; border-left-color: var(--e0); animation: coreSpin 9s linear infinite reverse; }
+  .core::after { content: ""; position: absolute; inset: 45px; border-radius: 50%; background: radial-gradient(circle, rgba(201,146,95,0.35), transparent 70%); animation: corePulse 3s ease-in-out infinite; }
+  .core-mid { position: relative; z-index: 1; font-size: 13px; letter-spacing: 1.5px; color: var(--e0); text-align: center; width: 110px; line-height: 1.3; }
   @keyframes coreSpin { to { transform: rotate(360deg); } }
   @keyframes corePulse { 0%,100% { opacity: 0.5; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.06); } }
   @keyframes panelIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -210,14 +210,6 @@
   .core-side { flex: 1; min-width: 260px; }
   .core-verbs { display: flex; gap: 10px; }
   .core-verbs .act-btn { flex: 1; }
-  .ages { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 14px; }
-  .age-step { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.5px; color: var(--dimmer); white-space: nowrap; }
-  .age-step .age-dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--dimmer); }
-  .age-step.done { color: var(--dim); }
-  .age-step.done .age-dot { background: var(--ec); border-color: var(--ec); }
-  .age-step.now { color: var(--ec); font-weight: 700; }
-  .age-step.now .age-dot { background: var(--ec); border-color: var(--ec); box-shadow: 0 0 8px var(--ec); }
-  .age-link { flex: 1; min-width: 14px; height: 1px; background: var(--line); }
   .rates { margin-top: 4px; display: flex; flex-direction: column; }
   .rate { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(28,39,64,0.45); }
   .rate:last-child { border-bottom: none; }
@@ -817,7 +809,7 @@
   };
   // Icons we have art for today; the rest fall back to a glyph until the icon set lands.
   const BICON = { scribe:'assets/icon-scribe.png', miner:'assets/icon-miner.png', scriptorium:'assets/icon-scriptorium.png', smelter:'assets/icon-crucible.png', foundry:'assets/icon-foundry.png' };
-  const DICON = { tally:'assets/icon-marks.png', scribe:'assets/icon-scribe.png', stoneworking:'assets/icon-ore.png', clayTablets:'assets/disco-clay.png', alphabet:'assets/disco-alphabet.png', bronzeCasting:'assets/icon-ingot.png', numerals:'assets/disco-numerals.png', glassmaking:'assets/icon-silicon.png', theFoundry:'assets/icon-foundry.png', wheel:'assets/disco-wheel.png' };
+  const DICON = { tally:'assets/icon-marks.png', scribe:'assets/icon-scribe.png', stoneworking:'assets/disco-stoneworking.png', apprenticeship:'assets/disco-apprenticeship.png', clayTablets:'assets/disco-clay.png', kiln:'assets/disco-kiln.png', alphabet:'assets/disco-alphabet.png', bronzeCasting:'assets/disco-bronze.png', numerals:'assets/disco-numerals.png', glassmaking:'assets/disco-glass.png', theFoundry:'assets/icon-foundry.png', wheel:'assets/disco-wheel.png' };
   function tileIcon(src){ return src ? '<img class="tile-ic" src="'+src+'">' : '<div class="tile-ic glyph">&#9670;</div>'; }
   // Full per-unit flow of one more of this building across EVERY resource it touches (in & out).
   function buildEffect(key){
@@ -880,7 +872,6 @@
         '<div class="core-verbs"><button class="act-btn" id="inscribeBtn">INSCRIBE A MARK</button>'+
           (S.flags.o_materials?'<button class="act-btn" id="quarryBtn">QUARRY ORE</button>':'')+'</div>'+
         '<button class="research-btn" id="researchBtn"><img class="rb-ic" src="assets/era1-sigil.png">RESEARCH<span class="rb-badge" id="researchBadge"></span></button>'+
-        '<div class="ages" id="agesJourney"></div>'+
       '</div></div>';
   }
   function buildRatesPanel(){
@@ -963,15 +954,6 @@
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
-      const aj=$('agesJourney');
-      if(aj){ const ages=[[1,'Stone'],[2,'Bronze'],[3,'Silicon'],[4,'Logic Machine']];
-        const cur = S.flags.origindone?4:S.age;
-        // only reveal ages reached; one mystery marker hints at what's beyond
-        const steps = ages.filter(([n])=>n<=cur).map(([n,lab])=>'<span class="age-step '+(n<cur?'done':'now')+'"><span class="age-dot"></span>'+lab+'</span>');
-        if(cur<4) steps.push('<span class="age-step next"><span class="age-dot"></span>?</span>');
-        const html = steps.join('<span class="age-link"></span>');
-        if(aj._html!==html){ aj.innerHTML=html; aj._html=html; }
-      }
       const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);
       const badge=$('researchBadge'), resb=$('researchBtn');
       if(badge){ if(avail>0){ setText('researchBadge', avail+''); badge.classList.add('show'); } else badge.classList.remove('show'); }
