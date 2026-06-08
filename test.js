@@ -173,6 +173,22 @@ function testProofProcess(){
   ok(S.optLevel === lv+1, 'the Optimization lemma levels up when proven (repeatable)');
 }
 
+function testInferenceCap(){
+  section('Era 2 — Inference cap + capacity lemma');
+  const EM = freshGame(); const S = EM.S;
+  S.maxEra = 2; S.flags.firstAuto = true; S.flags.tree = true; S.ruleset = 50; // strong inference, no active proof
+  for(let i=0;i<6000;i++) EM.produce(0.1);
+  ok(S.inference <= EM.infCap() + 1e-6, 'banked Inference is capped');
+  ok(Math.abs(S.inference - EM.CFG.e2.infCapBase) < 1, 'idle banks up to the base cap');
+  const lv = S.infCapLevel; EM.selectProof('capacity');
+  for(let i=0;i<6000 && S.infCapLevel===lv;i++) EM.produce(0.1);
+  ok(S.infCapLevel === lv+1, 'Inference Capacity lemma levels up (repeatable)');
+  ok(EM.infCap() > EM.CFG.e2.infCapBase, 'leveling capacity raises the cap');
+  S.activeProof = null;
+  for(let i=0;i<8000;i++) EM.produce(0.1);
+  ok(S.inference > EM.CFG.e2.infCapBase, 'banking now exceeds the old base cap');
+}
+
 function testTechTree(){
   section('Symbolic tech tree — prerequisites + effects');
   const EM = freshGame(); const S = EM.S; S.rules = 1e9;
@@ -403,6 +419,7 @@ testDiscovery();
 testFabrication();
 testEra2Playable();
 testProofProcess();
+testInferenceCap();
 testTechTree();
 testCompile();
 testSaveLoad();
