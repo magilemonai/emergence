@@ -891,6 +891,7 @@
     try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
     const dev=S.dev, speed=S.speed;
     Object.assign(S, freshState()); S.dev=dev; S.speed=speed; _seen.clear(); toggleDrawer(false);
+    REC.events.length=0; REC.snaps.length=0; REC.clicks={}; REC.lastSnap=-1;
     $('eras').style.display='none'; $('hdr').classList.remove('show'); $('vizwrap').style.display='none';
     const co=$('coldopen'); co.style.display='flex'; co.style.opacity='1';
     $('coHint').textContent='Before intelligence could grow, it had to be written down. One mark at a time.';
@@ -975,12 +976,14 @@
   const OFFLINE_CAP=8*3600; // seconds of offline progress credited at most
   function save(){
     try{ const out={...S}; delete out.dev; delete out.speed;
-      localStorage.setItem(SAVE_KEY, JSON.stringify({S:out, lastSave:Date.now(), v:1})); }catch(e){}
+      if(REC.snaps.length>5000) REC.snaps=REC.snaps.slice(-5000); // cap telemetry growth
+      localStorage.setItem(SAVE_KEY, JSON.stringify({S:out, REC, lastSave:Date.now(), v:1})); }catch(e){}
   }
   function load(){
     try{ const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
       const d=JSON.parse(raw); if(!d||!d.S) return null;
       Object.assign(S, d.S);            // saved fields override defaults; dev/speed stay at literal defaults
+      if(d.REC) Object.assign(REC, d.REC); // resume telemetry so a run survives reloads (full start->finish)
       return d.lastSave||null;
     }catch(e){ return null; }
   }
