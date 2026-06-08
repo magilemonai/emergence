@@ -84,6 +84,23 @@ Systems:
 3. **Deepen Eras 1 & 2** — more interacting tradeoffs that keep the near-win feel (late Origins especially).
 4. **Build Eras 4-5** (deferred) — Compute = Silicon + Data + Insight (reach-back); recursive feedback in 5. Each its own theme (blue/violet) + mechanic + icon set.
 
+## Next sprint — from the design-board review (2026-06-08)
+
+A six-persona board (engineer, product, UX, asset, story, alpha-tester) reviewed the game. Consensus: strong bones + premise + engineering, but **all three built eras go passive in their back half**, and the core promises (a stated goal, a living economy, real "emergence") are diagrammed not felt. **Biggest risk:** no goal → passive lull → closed-box economy → placeholder ending compounds into quitters. Fix the feel loop before architecture/art.
+
+Stack-ranked (cheap feel-fixes first; the L refactor gates Eras 4-5, not this polish):
+1. **Per-era objective with live progress** (5/6 personas) — *DECISION PENDING from Cody:* the banner was removed deliberately; board says re-add quiet + dismissible, on by default. Don't re-add without his call.
+2. **Kill each era's passive back-half**, starting the **late-Origins lull** (~6-10 min): add a cheap repeatable mid-tier sink between "workers maxed" and Foundry/fabricate.
+3. **Watch Zach play one full run** + read the export before tuning further (happens ~tomorrow).
+4. **Era 3 Training Focus must be a real decision** — Fit not strictly dominant; add discovery-progress feedback on the Undiscovered Method card.
+5. **Designed endcard + gate the unbuilt Eras 4-5** so no one hits "real design work begins."
+6. **Offline-catch-up bug (real):** `offlineCatchup`→`runExperiment` rolls `Math.random()` (silent Method unlocks while away) and calls `render()` mid-replay. Gate RNG + render during catch-up; assert determinism.
+7. (L) **Era-3 scatter-plot core viz** (3 personas) — fixes "watching" feel + Era-3 art identity.
+8. (L) **Modularize per-era logic** into `{produce,build,refresh}` descriptors — precondition for Eras 4-5.
+9. (M) One more **reach-back link**; resource registry + MILES-id guardrail; keyboard/touch tooltips + bigger min type; narrative heart per era; a real Emergence finale where something you didn't buy emerges.
+
+(Board flagged core-bronze/logic-machine as un-keyed — false alarm, verified clean. Personas read code/files, not the rendered game; treat art-render claims as hypotheses.)
+
 ## Art status
 Eras 1-3 are **fully wired**: all icons, three sigils (Origins/Symbolic/Statistical), the evolving Origins core (Stone/Bronze/Silicon), the Inference Capacity icon, the wordmark, and the title card. **Still needed (later):** Era 4 set + sigil (blue), Era 5 set + sigil (violet).
 
