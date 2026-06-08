@@ -190,19 +190,22 @@ function testInferenceCap(){
 }
 
 function testStatistical(){
-  section('Era 3 — experiments, accuracy, discovery, overfit');
+  section('Era 3 — Training Focus, experiments, discovery, overfit');
   let EM = freshGame(); let S = EM.S;
-  S.maxEra = 3; S.data = 100000;
+  S.maxEra = 3; S.data = 100000; S.focus = 'fit';
   const a0 = S.accuracy; EM.runExperiment(20);
-  ok(S.accuracy > a0 && S.accuracy < 1, 'experiments raise accuracy toward 1 (diminishing)');
+  ok(S.accuracy > a0 && S.accuracy < 1, 'Fit raises accuracy toward 1 (diminishing)');
   ok(S.insight > 0, 'experiments yield Insight');
-  ok(S.gap > 0, 'experiments grow the overfit gap');
-  // discovery: many experiments with lots of Data surface Methods
-  let guard = 0; while(Object.keys(S.methods).length < 2 && guard++ < 1000){ S.data += 2000; EM.runExperiment(30); }
-  ok(Object.keys(S.methods).length >= 2, 'methods are discovered by running experiments');
-  // Regularization is the cure — it lowers the overfit-gap cap
-  EM = freshGame(); S = EM.S; const baseCap = EM.e3Stats().gapCap; S.methods.regularization = true;
-  ok(EM.e3Stats().gapCap < baseCap, 'Regularization lowers the overfit-gap cap (the cure)');
+  ok(S.gap > 0, 'Fit grows the overfit gap');
+  S.focus = 'generalize'; const g0 = S.gap; EM.runExperiment(20);
+  ok(S.gap < g0, 'Generalize shrinks the overfit gap');
+  // Explore discovers methods
+  EM = freshGame(); S = EM.S; S.maxEra = 3; S.focus = 'explore';
+  let guard = 0; while(Object.keys(S.methods).length < 2 && guard++ < 2000){ S.data += 3000; EM.runExperiment(20); }
+  ok(Object.keys(S.methods).length >= 2, 'Explore discovers methods');
+  // Regularization strengthens the gap cure (generalize ×2)
+  EM = freshGame(); S = EM.S; const r0 = EM.e3Stats().regMult; S.methods.regularization = true;
+  ok(EM.e3Stats().regMult > r0, 'Regularization strengthens the Generalize cure');
   // effective accuracy = accuracy − gap, raised by Ensembles
   EM = freshGame(); S = EM.S; S.accuracy = 0.8; S.gap = 0.1;
   near(EM.effAccuracy(), 0.7, 1e-9, 'effective accuracy = accuracy − gap');
@@ -329,9 +332,15 @@ function symbolicStep(EM){
 function statisticalStep(EM){
   const { S, BUYS } = EM;
   if(S.maxEra !== 3) return;
-  if(S.dataset < 25 && S.rules >= EM.totalCost(BUYS.dataset,1)) EM.buy('dataset');
-  // build Models from accumulated Data (the idle engine); don't drain Data with manual experiments
-  if(S.model < 18 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');
+  // reach-back to Origins: keep Silicon flowing (build Foundries) for Datasets + Model upkeep
+  if(S.silicon < 80 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
+  if(S.dataset < 22 && S.silicon >= EM.totalCost(BUYS.dataset,1)) EM.buy('dataset');
+  if(S.model < 16 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');
+  // steer Training Focus: Explore for methods early, Generalize when the gap is high, else Fit
+  const nM = Object.keys(S.methods).length;
+  if(nM < 3 && S.accuracy < 0.75) S.focus = 'explore';
+  else if(S.gap > 0.18) S.focus = 'generalize';
+  else S.focus = 'fit';
 }
 function testProgression(){
   section('Progression — autoplay Origins → Symbolic → Statistical');

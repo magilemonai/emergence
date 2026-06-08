@@ -176,6 +176,22 @@
   .pf-lv { color: var(--accent); font-size: 10px; }
   .pf-desc { font-size: 11px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
+  /* Era 3 — Statistical: objective banner, Training Focus, Origins supply strip */
+  .objective { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 9px 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
+  .focus-row { display: flex; gap: 8px; }
+  .focus-btn { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); cursor: pointer; text-align: left; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
+  .focus-btn b { font-size: 12px; color: var(--text); letter-spacing: 0.5px; }
+  .focus-btn span { font-size: 10px; color: var(--dim); line-height: 1.4; }
+  .focus-btn.active { border-color: var(--accent); background: var(--panel-2); box-shadow: 0 0 12px rgba(127,230,196,0.18); }
+  .focus-btn.active b { color: var(--accent); }
+  .sup-lab { font-size: 10px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
+  .sup-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sup-btn { flex: 1; min-width: 150px; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; color: var(--text); transition: border-color 0.15s; }
+  .sup-btn:hover:not(:disabled) { border-color: var(--accent); }
+  .sup-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .sup-nm { font-size: 11px; } .sup-nm b { color: var(--accent); }
+  .sup-cost { font-size: 10px; color: var(--dim); }
+  .sup-rate { font-size: 10px; color: var(--dim); margin-top: 8px; font-variant-numeric: tabular-nums; }
   /* Era 1 — Origins: the refinement pipeline, warm ochre/stone */
   .flow-panel { background:
       linear-gradient(rgba(201,146,95,0.04) 1px, transparent 1px) 0 0 / 100% 30px,
@@ -340,16 +356,25 @@
       infCapBase: 120, infCapStep: 220,                  // banked Inference cap = base + level×step
       capLemmaBase: 80, capLemmaGrowth: 1.7,             // cost to prove the next Inference Capacity level
     },
-    e3: { // ERA 3 — Statistical (experiments + accuracy curve + probabilistic discovery)
-      datasetCost: 60, datasetGrowth: 1.18, datasetYield: 1.4,   // Data/sec per Dataset (bought with Rules)
-      modelCost: 120, modelGrowth: 1.2, expPerModel: 0.7,        // experiments/sec per Model (bought with Data)
+    e3: { // ERA 3 — Statistical (experiments + accuracy curve + Training Focus + probabilistic discovery)
+      datasetCost: 30, datasetGrowth: 1.16, datasetYield: 1.2,   // Data/sec per Dataset (bought with SILICON — reach-back to Origins)
+      modelCost: 90, modelGrowth: 1.2, expPerModel: 0.45,        // experiments/sec per Model (bought with Data)
+      modelSilicon: 0.05,    // light upkeep: Silicon/sec drawn per Model (keeps Origins' Foundry relevant)
       expDataCost: 4,        // Data spent per experiment
-      accGain: 0.02,         // accuracy gained per experiment × (1 - accuracy)  [diminishing curve]
+      accGain: 0.011,        // accuracy gained per experiment × (1 - accuracy)  [diminishing curve]
       insightPerExp: 2,      // Insight per experiment × effective accuracy
-      overfitRate: 0.005,    // generalization-gap growth per experiment (cut hard by Regularization)
-      discoverBase: 0.02, dataDiscover: 0.00003, // method-discovery odds per experiment (rise with Data)
+      gapGrow: 0.006,        // overfit gap growth per experiment (Fit focus)
+      gapReduce: 0.012,      // gap reduction per experiment (Generalize focus); ×2 with Regularization
+      gapMax: 0.6,
+      discoverBase: 0.012, dataDiscover: 0.00002, // method-discovery odds per experiment (rise with Data; Explore focus)
       genThreshold: 0.85,    // effective accuracy that generalizes → Era 4
-      seedDatasets: 3,
+      seedDatasets: 3, seedSilicon: 220,
+      // Training Focus — the live decision. {acc, gap-grow, gap-reduce, discovery, insight} multipliers
+      focus: {
+        fit:        { acc:1.7, gap:1.5, red:0,   disc:0.3, ins:1.0, label:'Fit',        desc:'Accuracy climbs fast — but the overfit gap grows.' },
+        generalize: { acc:0.3, gap:0,   red:1.0, disc:0.3, ins:1.2, label:'Generalize', desc:'Shrinks the overfit gap. Accuracy only creeps.' },
+        explore:    { acc:0.4, gap:0.5, red:0,   disc:2.6, ins:0.8, label:'Explore',    desc:'Hunts for new Methods. Accuracy holds.' },
+      },
     },
     // Eras 4-5 still run on the original scaffold; rebuilt in a later pass.
     computeCost: 35, computeGrowth: 1.22, computePer: 0.5,
@@ -367,7 +392,7 @@
     ruleset: 0, daemon: 0,
     inference: 0, activeProof: null, proofAcc: {}, optLevel: 0, infCapLevel: 0, // theorem-proving research
     // Era 3 — Statistical
-    data: 0, insight: 0, accuracy: 0, gap: 0, methods: {},
+    data: 0, insight: 0, accuracy: 0, gap: 0, methods: {}, focus: 'fit',
     dataset: 0, model: 0,
     // Era 4-5 scaffold
     capability: 0, scale: 0, compute: 0, training: 0, cluster: 0,
@@ -447,8 +472,8 @@
     { id:'compileUnlock', cond:()=> S.tech.knowledge,
       fire:()=>{ S.flags.compile=true; toast('COMPILE','<b>Compile</b> a run into permanent <b>Axioms</b> that multiply everything.'); } },
     { id:'era3', cond:()=> S.flags.symbolicDone,
-      fire:()=>{ S.dataset += CFG.e3.seedDatasets; openEra(3); // seeded Datasets start the Data flowing
-        toast('THE STATISTICAL ERA','Hand-written logic has hit its ceiling. Now intelligence is <b>learned from Data</b> — build Datasets, train Models, and run experiments until the methods reveal themselves.'); } },
+      fire:()=>{ S.dataset += CFG.e3.seedDatasets; S.silicon += CFG.e3.seedSilicon; openEra(3); // seed Datasets + Silicon so it starts in motion; scaling needs more Silicon (Origins)
+        toast('THE STATISTICAL ERA','Hand-written logic has hit its ceiling. Now intelligence is <b>learned from Data</b>. Datasets run on <b>Silicon</b> — to grow, you reopen the Foundry. Set your <b>Training Focus</b> and experiment toward a model that generalizes.'); } },
     // ERA 4-5 — original scaffold, rebuilt in a later pass.
     { id:'era4', cond:()=> S.maxEra>=3 && effAccuracy()>=CFG.e3.genThreshold,
       fire:()=>{ openEra(4); toast('THE DEEP LEARNING ERA','Your model generalizes. Data and statistics are no longer enough — now <b>Compute</b> is the bottleneck.'); } },
@@ -599,26 +624,27 @@
   ];
   function e3Stats(){
     const m=S.methods, e=CFG.e3;
-    let accGain=e.accGain, dataMult=1, insMult=1, discMult=1, effBonus=0;
-    if(m.regression) accGain*=1.4;
-    if(m.features) dataMult*=1.5;
-    if(m.clustering) discMult*=1.6;
-    if(m.bayesian) insMult*=1.8;
-    if(m.ensembles) effBonus+=0.12;
-    // Regularization is the cure: it lowers the overfit-gap CAP (without it the gap caps high and you can't generalize)
-    const gapCap = m.regularization ? 0.05 : 0.5;
-    return { accGain, dataMult, insMult, discMult, effBonus, gapCap };
+    let accGain=e.accGain, dataMult=1, insMult=1, discMult=1, regMult=1, effBonus=0;
+    if(m.regression) accGain*=1.4;     // accuracy per experiment
+    if(m.features) dataMult*=1.5;       // Data yield
+    if(m.bayesian) insMult*=1.8;        // Insight yield
+    if(m.clustering) discMult*=1.6;     // discovery odds
+    if(m.regularization) regMult=2;     // Generalize focus cuts the gap twice as fast
+    if(m.ensembles) effBonus+=0.12;     // effective accuracy bonus
+    return { accGain, dataMult, insMult, discMult, regMult, effBonus };
   }
-  function effAccuracy(){ const st=e3Stats(); return Math.max(0, Math.min(1, S.accuracy + st.effBonus - Math.min(S.gap, st.gapCap))); }
-  function runExperiment(amount){ // amount can be fractional (auto) or 1 (manual click)
-    const e=CFG.e3, st=e3Stats();
+  function curFocus(){ return CFG.e3.focus[S.focus] || CFG.e3.focus.fit; }
+  function effAccuracy(){ const st=e3Stats(); return Math.max(0, Math.min(1, S.accuracy + st.effBonus - S.gap)); }
+  function runExperiment(amount){ // amount can be fractional (auto from Models) or 1 (manual click)
+    const e=CFG.e3, st=e3Stats(), f=curFocus();
     amount = Math.min(amount, S.data / e.expDataCost); if(amount<=0) return;
     S.data -= amount*e.expDataCost;
-    S.accuracy = Math.min(1, S.accuracy + st.accGain*(1-S.accuracy)*amount);
-    S.gap = Math.min(st.gapCap, S.gap + e.overfitRate*amount);
-    S.insight += e.insightPerExp*effAccuracy()*st.insMult*amount;
+    S.accuracy = Math.min(1, S.accuracy + st.accGain*f.acc*(1-S.accuracy)*amount);
+    // Fit grows the overfit gap; Generalize shrinks it (×2 with Regularization)
+    S.gap = Math.max(0, Math.min(e.gapMax, S.gap + (e.gapGrow*f.gap - e.gapReduce*f.red*st.regMult)*amount));
+    S.insight += e.insightPerExp*f.ins*effAccuracy()*st.insMult*amount;
     const next = METHODS.find(mm=>!S.methods[mm.id]);
-    if(next){ const p=(e.discoverBase + S.data*e.dataDiscover)*st.discMult*amount;
+    if(next){ const p=(e.discoverBase + S.data*e.dataDiscover)*f.disc*st.discMult*amount;
       if(Math.random() < p){ S.methods[next.id]=true; recEvent('method:'+next.id);
         if(!MUTE){ toast('METHOD DISCOVERED','<b>'+next.name+'</b> — '+next.desc); } render(); } }
   }
@@ -630,8 +656,8 @@
     foundry:     { res:'metal', key:'foundry',     base:CFG.e1.foundryCost,     growth:CFG.e1.foundryGrowth },
     ruleset: { res:'rules', key:'ruleset', base:CFG.e2.rulesetCost, growth:CFG.e2.rulesetGrowth },
     daemon:  { res:'rules', key:'daemon',  base:CFG.e2.daemonCost,  growth:CFG.e2.daemonGrowth },
-    dataset: { res:'rules', key:'dataset', base:CFG.e3.datasetCost, growth:CFG.e3.datasetGrowth },
-    model:   { res:'data',  key:'model',   base:CFG.e3.modelCost,   growth:CFG.e3.modelGrowth },
+    dataset: { res:'silicon', key:'dataset', base:CFG.e3.datasetCost, growth:CFG.e3.datasetGrowth },
+    model:   { res:'data',    key:'model',   base:CFG.e3.modelCost,   growth:CFG.e3.modelGrowth },
     compute: { res:'insight',key:'compute',base:CFG.computeCost, growth:CFG.computeGrowth },
     training:{ res:'insight',key:'training',base:CFG.trainCost,  growth:CFG.trainGrowth },
     cluster: { res:'capability',key:'cluster',base:CFG.scaleCost,growth:CFG.scaleGrowth },
@@ -707,7 +733,12 @@
     }
     // ERA 3 — Statistical: Datasets make Data; Models auto-run experiments (push Accuracy, yield Insight, discover Methods)
     if(S.dataset>0) S.data += S.dataset*CFG.e3.datasetYield*e3Stats().dataMult*dt;
-    if(S.model>0) runExperiment(S.model*CFG.e3.expPerModel*dt);
+    if(S.model>0){
+      let modelRun = S.model;
+      const need = S.model*CFG.e3.modelSilicon*dt; // light Silicon upkeep — throttles if Origins isn't supplying
+      if(need>0){ if(S.silicon>=need){ S.silicon-=need; } else { modelRun = S.model*(S.silicon/need); S.silicon=0; } }
+      if(modelRun>0) runExperiment(modelRun*CFG.e3.expPerModel*dt);
+    }
     // ERA 4-5 scaffold
     if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
     if(S.cluster>0){ const c=Math.min(S.capability, S.cluster*0.4*dt); S.capability-=c; S.scale+=c*2; }
@@ -942,15 +973,26 @@
     }
     return '<div class="proof-list">'+html+'</div>';
   }
-  function buildStatistical(){ // ERA 3 — the Model: train accuracy, discover methods
+  function supplyBtn(key, label){
+    return '<button class="sup-btn" data-supbuy="'+key+'" id="sup-'+key+'"><span class="sup-nm">'+label+' <b id="supc-'+key+'"></b></span><span class="sup-cost" id="supx-'+key+'"></span></button>';
+  }
+  function buildStatistical(){ // ERA 3 — the Model: steer Training Focus, train accuracy, discover methods
+    const f=CFG.e3.focus;
+    const focusBtns = ['fit','generalize','explore'].map(k=>'<button class="focus-btn" data-focus="'+k+'" id="foc-'+k+'"><b>'+f[k].label+'</b><span>'+f[k].desc+'</span></button>').join('');
     let body =
-      '<div class="panel sym-hero" style="grid-column:1/-1"><div class="panel-label">The Model · train toward generalization</div>'+
-      '<div class="proof-rate" id="accRate"></div>'+
-      '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
-      '<div class="meter-label"><span>Effective accuracy (accuracy − overfit gap)</span><span id="acc-val"></span></div>'+
-      '<button class="act-btn" id="expBtn" style="margin-top:12px">RUN EXPERIMENT</button></div>'+
-      '<div class="panel"><div class="panel-label">Data</div>'+eraUpgrade('dataset','Dataset','Generates Data over time. Bought with Rules.')+'</div>'+
-      '<div class="panel"><div class="panel-label">Models</div>'+eraUpgrade('model','Model','Runs experiments on their own, spending Data.')+'</div>'+
+      '<div class="panel sym-hero" style="grid-column:1/-1">'+
+        '<div class="objective" id="e3obj"></div>'+
+        '<div class="proof-rate" id="accRate"></div>'+
+        '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
+        '<div class="meter-label"><span>Effective accuracy (accuracy − overfit gap)</span><span id="acc-val"></span></div>'+
+        '<div class="panel-label" style="margin:12px 0 6px">Training Focus</div><div class="focus-row">'+focusBtns+'</div>'+
+        '<button class="act-btn" id="expBtn" style="margin-top:12px">RUN EXPERIMENT</button>'+
+      '</div>'+
+      '<div class="panel">'+eraUpgrade('dataset','Dataset','Generates Data. Built from Silicon.')+'</div>'+
+      '<div class="panel">'+eraUpgrade('model','Model','Auto-runs experiments, spending Data.')+'</div>'+
+      '<div class="panel" style="grid-column:1/-1"><div class="sup-lab">Origins Supply — Datasets &amp; Models run on Silicon; reopen the Foundry to scale</div>'+
+        '<div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium')+'</div>'+
+        '<div class="sup-rate" id="supSi"></div></div>'+
       '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods · discovered by experiment</div>'+buildMethods()+'</div>';
     return eraShell(3, false, body);
   }
@@ -978,6 +1020,8 @@
     const qb=$('quarryBtn'); if(qb) qb.onclick=quarry;
     const fb=$('fabricateBtn'); if(fb) fb.onclick=fabricate;
     const eb=$('expBtn'); if(eb) eb.onclick=()=>{ runExperiment(1); playSound('click'); refresh(); };
+    document.querySelectorAll('[data-focus]').forEach(b=>{ b.onclick=()=>{ S.focus=b.getAttribute('data-focus'); playSound('click'); render(); }; });
+    document.querySelectorAll('[data-supbuy]').forEach(b=>{ b.onclick=()=>{ buy(b.getAttribute('data-supbuy')); }; });
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
     document.querySelectorAll('[data-disco]').forEach(b=> b.onclick=e=>buyDisco(e.currentTarget.dataset.disco));
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
@@ -1075,11 +1119,15 @@
       if(cb.disabled!==(g<1)) cb.disabled=(g<1);
     }
     const ma=$('meter-acc');
-    if(ma){ const eff=effAccuracy();
-      ma.style.width=Math.min(100, eff/CFG.e3.genThreshold*100)+'%';
-      setText('acc-val', (eff*100).toFixed(1)+'%  (raw '+(S.accuracy*100).toFixed(0)+'%, gap '+(S.gap*100).toFixed(0)+'%)  ·  generalize at '+(CFG.e3.genThreshold*100).toFixed(0)+'%');
+    if(ma){ const eff=effAccuracy(), thr=CFG.e3.genThreshold;
+      ma.style.width=Math.min(100, eff/thr*100)+'%';
+      setText('acc-val', (eff*100).toFixed(1)+'%  (raw '+(S.accuracy*100).toFixed(0)+'%, gap '+(S.gap*100).toFixed(0)+'%)');
+      setText('e3obj', '▸ OBJECTIVE — Generalize: '+(eff*100).toFixed(0)+'% / '+(thr*100).toFixed(0)+'% effective accuracy');
       const exps=S.model*CFG.e3.expPerModel;
-      setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s'+(S.data<CFG.e3.expDataCost?' (need Data)':'')); }
+      setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':''));
+      ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
+      for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
+      setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Models draw '+fmt(S.model*CFG.e3.modelSilicon)+'/s'); }
     const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
