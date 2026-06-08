@@ -182,7 +182,9 @@
   .tile-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .tile-flavor { font-size: 9.5px; font-style: italic; color: #8a7a66; line-height: 1.4; margin: 2px 0; }
   .tile-mech { font-size: 9.5px; color: var(--dim); line-height: 1.4; }
-  .tile-eff { font-size: 10px; color: var(--e0); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .tile-eff { font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; margin-top: 4px; line-height: 1.5; }
+  .tile-eff .pos { color: var(--good); }
+  .tile-eff .neg { color: var(--danger); }
   .tile-btn { margin-top: 7px; width: 100%; }
   .tile.disco.owned .tile-btn { opacity: 0.5; }
   /* Research drawer */
@@ -687,15 +689,18 @@
   const BICON = { scribe:'assets/icon-scribe.png', miner:'assets/icon-miner.png', scriptorium:'assets/icon-scriptorium.png', smelter:'assets/icon-crucible.png', foundry:'assets/icon-foundry.png' };
   const DICON = { tally:'assets/icon-marks.png', scribe:'assets/icon-scribe.png', stoneworking:'assets/icon-ore.png', clayTablets:'assets/disco-clay.png', kiln:'assets/icon-crucible.png', alphabet:'assets/disco-alphabet.png', bronzeCasting:'assets/icon-ingot.png', numerals:'assets/disco-numerals.png', glassmaking:'assets/icon-silicon.png', theFoundry:'assets/icon-foundry.png', wheel:'assets/disco-wheel.png' };
   function tileIcon(src){ return src ? '<img class="tile-ic" src="'+src+'">' : '<div class="tile-ic glyph">&#9670;</div>'; }
-  // What one more of this building adds per second (production, and the upkeep it newly draws).
+  // Full per-unit flow of one more of this building across EVERY resource it touches (in & out).
   function buildEffect(key){
     const os=oStats(), e=CFG.e1;
-    if(key==='scribe') return '+'+fmt(os.scribeY)+' marks/s each';
-    if(key==='miner') return '+'+fmt(os.minerY)+' ore/s each';
-    if(key==='scriptorium') return '+'+fmt(os.scrR)+' knowledge/s, −'+fmt(os.scrR*e.scriptoriumUpkeep)+' ore/s each';
-    if(key==='smelter') return '+'+fmt(os.smR)+' metal/s, −'+fmt(os.smR*e.smelterUpkeep)+' knowledge/s each';
-    if(key==='foundry') return '+'+fmt(os.foR)+' silicon/s, −'+fmt(os.foR)+' metal & knowledge/s each';
-    return '';
+    const flows = {
+      scribe:      [['+',os.scribeY,'marks']],
+      miner:       [['+',os.minerY,'ore']],
+      scriptorium: [['+',os.scrR,'knowledge'],['−',os.scrR,'marks'],['−',os.scrR*e.scriptoriumUpkeep,'ore']],
+      smelter:     [['+',os.smR,'metal'],['−',os.smR,'ore'],['−',os.smR*e.smelterUpkeep,'knowledge']],
+      foundry:     [['+',os.foR,'silicon'],['−',os.foR,'metal'],['−',os.foR,'knowledge']],
+    }[key];
+    if(!flows) return '';
+    return flows.map(([s,v,r])=>'<span class="'+(s==='+'?'pos':'neg')+'">'+s+fmt(v)+' '+r+'/s</span>').join(' · ');
   }
   function buildTile(type, key){
     if(type==='build'){
@@ -841,7 +846,7 @@
       const badge=$('researchBadge'), resb=$('researchBtn');
       if(badge){ if(avail>0){ setText('researchBadge', avail+''); badge.classList.add('show'); } else badge.classList.remove('show'); }
       if(resb) resb.classList.toggle('has', avail>0);
-      for(const key of WORKS_ORDER){ if($('eff-'+key)) setText('eff-'+key, buildEffect(key)); }
+      for(const key of WORKS_ORDER){ const el=$('eff-'+key); if(!el) continue; const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } }
       for(const [k] of RATE_DEFS){ if(!$('ramt-'+k)) continue;
         setText('ramt-'+k, fmt(S[k]));
         const rt=RATES[k]||0, ps=$('rps-'+k), cls='rate-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero'));
