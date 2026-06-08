@@ -15,19 +15,19 @@
   /* ERA 1 — Origins: warm, earthen, ancient. Serif. */
   .theme-1, .era-e1 {
     --bg: #160f08; --panel: #211810; --panel-2: #2b2014; --line: #46341d;
-    --text: #f3e9d4; --dim: #c8ad80; --dimmer: #98805a; --accent: #e8b876;
+    --text: #f3e9d4; --dim: #c8ad80; --dimmer: #b59a6c; --accent: #e8b876;
     --era-font: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   }
   /* ERA 2 — Symbolic: cold, digital, terminal. Monospace. */
   .theme-2, .era-e2 {
     --bg: #04070e; --panel: #0a0f18; --panel-2: #0e1421; --line: #233246;
-    --text: #c8dcea; --dim: #8fa9bd; --dimmer: #5f7589; --accent: #ffcd6b;
+    --text: #c8dcea; --dim: #8fa9bd; --dimmer: #7c93a8; --accent: #ffcd6b;
     --era-font: "SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
   }
   /* ERA 3 — Statistical: cool teal, scientific / data-viz. Clean sans. */
   .theme-3, .era-e3 {
     --bg: #051210; --panel: #0a221c; --panel-2: #0d2c24; --line: #1e4d41;
-    --text: #d2efe4; --dim: #84baa9; --dimmer: #4f7d6f; --accent: #7fe6c4;
+    --text: #d2efe4; --dim: #84baa9; --dimmer: #6da08e; --accent: #7fe6c4;
     --era-font: "Inter", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
   }
   body.theme-3 { background: radial-gradient(1000px 620px at 50% -10%, rgba(110,198,168,0.08), transparent 60%), var(--bg); }
@@ -60,7 +60,7 @@
   .buymode button.on { background: rgba(255,205,107,0.1); color: var(--accent); }
   .res { text-align: right; min-width: 80px; opacity: 0; transition: opacity 0.5s; }
   .res.show { opacity: 1; }
-  .res .label { font-size: 8.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
+  .res .label { font-size: 10px; letter-spacing: 1.4px; color: var(--dim); text-transform: uppercase; }
   .res .val { font-size: 16px; font-variant-numeric: tabular-nums; line-height: 1.1; }
   main { flex: 1; overflow-y: auto; padding: 0; min-height: 0; }
   main::-webkit-scrollbar { width: 9px; }
@@ -110,7 +110,7 @@
   .era-e2 .era-tag { color: var(--accent); border-color: var(--accent); }
   .era-e2 .up-name, .era-e2 .pf-name, .era-e2 .rate-amt, .era-e2 .tile-name { color: #cfe0ec; }
   .era-sigil { width: 56px; height: 56px; object-fit: contain; opacity: 0.95; flex: none; filter: drop-shadow(0 0 8px rgba(201,162,107,0.3)); }
-  .era-tag { font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
+  .era-tag { font-size: 10px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 15px; color: var(--text); }
   .era-name small { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0.5px; }
   .era-status { margin-left: auto; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
@@ -133,7 +133,7 @@
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
   .up-name { font-size: 12px; }
   .up-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .up-flavor { font-size: 11px; font-style: italic; color: var(--dim); opacity: 0.85; line-height: 1.5; margin-bottom: 3px; }
+  .up-flavor { font-size: 11px; font-style: italic; color: var(--dim); line-height: 1.5; margin-bottom: 3px; }
   .up-desc { font-size: 11px; color: var(--dim); line-height: 1.55; }
   .up-buy { margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
     padding: 7px; font-family: inherit; font-size: 10.5px; color: var(--text); cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
@@ -143,10 +143,10 @@
   .up-buy:disabled .c { color: var(--danger); }
   .meter { height: 5px; background: var(--panel); border-radius: 3px; overflow: hidden; margin-top: 8px; }
   .meter > i { display: block; height: 100%; background: var(--ec); border-radius: 3px; transition: width 0.2s; }
-  .meter-label { font-size: 9px; color: var(--dim); margin-top: 4px; display: flex; justify-content: space-between; }
+  .meter-label { font-size: 10px; color: var(--dim); margin-top: 4px; display: flex; justify-content: space-between; }
   .compile-wrap { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
   .cstat { min-width: 92px; }
-  .cstat .cs-label { font-size: 8.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
+  .cstat .cs-label { font-size: 10px; letter-spacing: 1.4px; color: var(--dim); text-transform: uppercase; }
   .cstat .cs-val { font-size: 22px; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .compile-act { flex: 1; min-width: 220px; }
   .fab-wrap { display: flex; gap: 18px; align-items: center; }
@@ -171,7 +171,7 @@
   .proof-item.active { border-color: var(--e1); box-shadow: 0 0 14px rgba(201,162,107,0.2); }
   .pf-name { font-size: 12px; color: var(--text); }
   .pf-lv { color: var(--accent); font-size: 10px; }
-  .pf-desc { font-size: 9.5px; color: var(--dim); line-height: 1.45; margin-top: 3px; }
+  .pf-desc { font-size: 11px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
   /* Era 1 — Origins: the refinement pipeline, warm ochre/stone */
   .flow-panel { background:
@@ -209,7 +209,7 @@
   .rate:last-child { border-bottom: none; }
   .rate-ic { width: 46px; height: 46px; object-fit: contain; flex: none; opacity: 0.95; }
   .rate-tx { display: flex; flex-direction: column; line-height: 1.1; }
-  .rate-lab { font-size: 8px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
+  .rate-lab { font-size: 9.5px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
   .rate-amt { font-size: 15px; color: var(--text); font-variant-numeric: tabular-nums; }
   .rate-ps { margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
   .rate-ps.pos { color: var(--good); }
@@ -227,10 +227,10 @@
   .tile-body { width: 100%; min-width: 0; }
   .tile-name { font-size: 13px; color: var(--text); text-align: center; }
   .tile-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .tile-flavor { font-size: 10.5px; font-style: italic; color: var(--dim); opacity: 0.85; line-height: 1.45; margin: 2px 0; }
+  .tile-flavor { font-size: 10.5px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
   .tile-mech { font-size: 10.5px; color: var(--dim); line-height: 1.45; }
   .tile-eff { margin-top: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,0.18); }
-  .eff-cap { font-size: 7.5px; letter-spacing: 1px; color: var(--dimmer); text-transform: uppercase; margin-bottom: 4px; }
+  .eff-cap { font-size: 9.5px; letter-spacing: 1px; color: var(--dimmer); text-transform: uppercase; margin-bottom: 4px; }
   .eff-row { display: flex; justify-content: space-between; font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.55; }
   .eff-row span:first-child { color: var(--dim); text-transform: capitalize; }
   .eff-row.pos span:last-child { color: var(--good); }
@@ -262,7 +262,7 @@
   #toasts { position: fixed; top: 60px; right: 18px; z-index: 60; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
   .toast { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 16px;
     max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out; }
-  .toast .th { font-size: 9px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
+  .toast .th { font-size: 10px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
   .toast .tb { font-size: 12px; line-height: 1.5; color: var(--text); }
   @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
   @keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
