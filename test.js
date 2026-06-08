@@ -146,6 +146,17 @@ function testFabrication(){
   ok(S.maxEra >= 2, 'completing Origins opens the Symbolic era');
 }
 
+function testEra2Playable(){
+  section('Era 2 unlock chain (regression: firstAuto flag collision)');
+  const EM = freshGame(); const S = EM.S;
+  S.flags.firstAuto = true; S.maxEra = 2; // as if Origins just handed off
+  for(let i=0;i<12;i++) EM.writeRule(FAKE_EV); // write past the ruleset cost
+  EM.checkMiles();
+  ok(S.flags.canRuleset, 'writing rules in Era 2 unlocks the Ruleset (the tile actually appears)');
+  S.rules = 1000; EM.buy('ruleset'); EM.buy('ruleset'); EM.checkMiles();
+  ok(S.flags.tree, 'two Rulesets unlocks the Symbolic tech tree');
+}
+
 function testTechTree(){
   section('Symbolic tech tree — prerequisites + effects');
   const EM = freshGame(); const S = EM.S; S.rules = 1e9;
@@ -337,6 +348,7 @@ testOriginsChain();
 testUpkeep();
 testDiscovery();
 testFabrication();
+testEra2Playable();
 testTechTree();
 testCompile();
 testSaveLoad();

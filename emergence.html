@@ -371,7 +371,7 @@
     { id:'era2', cond:()=> S.flags.origindone,
       fire:()=>{ openEra(2); toast('PARADIGM SHIFT','The Logic Machine runs. On your silicon, with your writing, the <b>Symbolic Era</b> begins — intelligence authored by hand.'); } },
     // ERA 2 — Symbolic internals
-    { id:'firstAuto', cond:()=> S.maxEra>=2 && S.rules>=CFG.e2.rulesetCost,
+    { id:'symRuleset', cond:()=> S.maxEra>=2 && S.rules>=CFG.e2.rulesetCost,
       fire:()=>{ S.flags.canRuleset=true; toast('FIRST AUTOMATION','Build a <b>Ruleset</b> — logic that writes rules without you.'); } },
     { id:'treeUnlock', cond:()=> S.ruleset>=2,
       fire:()=>{ S.flags.tree=true; toast('SYMBOLIC TECHNIQUE','A map of technique opens. Spend Rules to unlock <b>Formal Logic</b>, then branch outward.'); } },
