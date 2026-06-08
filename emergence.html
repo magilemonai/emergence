@@ -62,7 +62,7 @@
   .res { text-align: right; min-width: 80px; opacity: 0; transition: opacity 0.5s; }
   .res.show { opacity: 1; }
   .res .label { font-size: 10px; letter-spacing: 1.4px; color: var(--dim); text-transform: uppercase; }
-  .res .val { font-size: 16px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .res .val { font-size: 18px; font-variant-numeric: tabular-nums; line-height: 1.1; }
   main { flex: 1; overflow-y: auto; padding: 0; min-height: 0; }
   main::-webkit-scrollbar { width: 9px; }
   main::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
@@ -114,16 +114,16 @@
   .era-e2 .up-name, .era-e2 .pf-name, .era-e2 .rate-amt, .era-e2 .tile-name { color: #cfe0ec; }
   .era-sigil { width: 56px; height: 56px; object-fit: contain; opacity: 0.95; flex: none; filter: drop-shadow(0 0 8px rgba(201,162,107,0.3)); }
   .era-tag { font-size: 10px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
-  .era-name { font-size: 15px; color: var(--text); }
+  .era-name { font-size: 18px; color: var(--text); }
   .era-name small { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0.5px; }
   .era-status { margin-left: auto; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
   .era-status.legacy { color: var(--dimmer); }
   .era-status.live { color: var(--good); }
   .era-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; transition: max-height 0.6s, opacity 0.5s, margin 0.5s; max-height: 6000px; }
   .panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 13px; }
-  .panel-label { font-size: 10px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
+  .panel-label { font-size: 11.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
   .act-btn { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--ec);
-    background: rgba(255,255,255,0.02); color: var(--ec); font-family: inherit; font-size: 12px;
+    background: rgba(255,255,255,0.02); color: var(--ec); font-family: inherit; font-size: 15px;
     letter-spacing: 1.5px; cursor: pointer; transition: transform 0.05s, box-shadow 0.15s; }
   .act-btn:hover:not(:disabled) { box-shadow: 0 0 18px rgba(255,255,255,0.06); }
   .act-btn:active:not(:disabled) { transform: scale(0.98); }
@@ -134,12 +134,12 @@
   .up-main { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .up:last-child { border-bottom: none; }
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
-  .up-name { font-size: 14px; }
+  .up-name { font-size: 16px; }
   .up-count { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .up-flavor { font-size: 12.5px; font-style: italic; color: var(--dim); line-height: 1.5; margin-bottom: 3px; }
-  .up-desc { font-size: 12.5px; color: var(--dim); line-height: 1.55; }
+  .up-flavor { font-size: 14px; font-style: italic; color: var(--dim); line-height: 1.5; margin-bottom: 3px; }
+  .up-desc { font-size: 14px; color: var(--dim); line-height: 1.55; }
   .up-buy { margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
-    padding: 7px; font-family: inherit; font-size: 10.5px; color: var(--text); cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
+    padding: 9px; font-family: inherit; font-size: 13px; color: var(--text); cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
   .up-buy:hover:not(:disabled) { border-color: var(--ec); }
   .up-buy:disabled { opacity: 0.4; cursor: not-allowed; }
   .up-buy .c { color: var(--ec); }
@@ -172,9 +172,9 @@
   .pf-main { width: 100%; min-width: 0; }
   .proof-item.lemma { border-color: rgba(201,162,107,0.4); }
   .proof-item.active { border-color: var(--e1); box-shadow: 0 0 14px rgba(201,162,107,0.2); }
-  .pf-name { font-size: 15px; color: var(--text); text-align: center; }
+  .pf-name { font-size: 17px; color: var(--text); text-align: center; }
   .pf-lv { color: var(--accent); font-size: 10px; }
-  .pf-desc { font-size: 12.5px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
+  .pf-desc { font-size: 14px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
   /* Era 3 — Statistical: objective banner, Training Focus, Origins supply strip */
   .objective { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 9px 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
@@ -209,8 +209,9 @@
   .farrow { color: var(--dimmer); font-size: 16px; }
   .age-label { color: var(--e0); font-size: 9px; letter-spacing: 1px; margin-left: 6px; }
   /* Origins central core */
-  .core-panel { display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  .core-panel { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap;
     background: radial-gradient(120% 160% at 18% 0%, rgba(201,146,95,0.08), transparent 60%), var(--panel-2); }
+  .rates-panel { grid-column: 1 / -1; }
   .core { position: relative; width: 174px; height: 174px; flex: none; display: flex; align-items: center; justify-content: center; }
   .core-ring { position: absolute; inset: 12px; border: 2px solid rgba(201,146,95,0.5); border-top-color: var(--e0); border-radius: 50%; animation: coreSpin 6s linear infinite; }
   .core-ring2 { inset: 33px; border-width: 1px; border-top-color: transparent; border-left-color: var(--e0); animation: coreSpin 9s linear infinite reverse; }
@@ -220,7 +221,7 @@
   @keyframes corePulse { 0%,100% { opacity: 0.5; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.06); } }
   @keyframes panelIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   .panel.intro { animation: panelIn 0.55s ease-out; }
-  .core-side { flex: 1; min-width: 260px; }
+  .core-side { flex: 0 1 460px; min-width: 260px; }
   .core-verbs { display: flex; gap: 10px; }
   .core-verbs .act-btn { flex: 1; }
   .rates { margin-top: 4px; display: flex; flex-direction: column; }
@@ -244,10 +245,10 @@
   .tile-ic.glyph { width: 92px; height: 92px; align-self: center; display: flex; align-items: center; justify-content: center; font-size: 44px; color: var(--e0);
     border: 1px solid rgba(201,146,95,0.45); border-radius: 9px; }
   .tile-body { width: 100%; min-width: 0; }
-  .tile-name { font-size: 15px; color: var(--text); text-align: center; }
+  .tile-name { font-size: 18px; color: var(--text); text-align: center; }
   .tile-count { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .tile-flavor { font-size: 12px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
-  .tile-mech { font-size: 12px; color: var(--dim); line-height: 1.45; }
+  .tile-flavor { font-size: 14px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
+  .tile-mech { font-size: 14px; color: var(--dim); line-height: 1.45; }
   .tile-eff { margin-top: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,0.18); }
   .eff-cap { font-size: 9.5px; letter-spacing: 1px; color: var(--dimmer); text-transform: uppercase; margin-bottom: 4px; }
   .eff-row { display: flex; justify-content: space-between; font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.55; }
@@ -842,7 +843,7 @@
   function buildSymbolic(){ // ERA 2 — the Inference Engine: a proving bench, distinct from Origins
     let prod = eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.');
     if(S.tech.inference) prod += eraUpgrade('daemon','Inference Daemon','Fires the write action for you. Everything that makes a click stronger makes a Daemon stronger.');
-    let body = '<div class="objective" id="sym-obj" style="grid-column:1/-1"></div>';
+    let body = '';
     // Hero: the active proof + inference rate take the stage
     if(S.flags.tree) body += '<div class="panel sym-hero" style="grid-column:1/-1"><div class="panel-label">The Inference Engine · prove a theorem</div>'+
       '<div class="proof-rate" id="infRate"></div><div class="proof-active" id="proofActive"></div></div>';
@@ -953,7 +954,7 @@
   }
   function buildOrigins(){ // ERA 1
     // Progressive disclosure: sections appear as the player earns them.
-    let body = '<div class="objective" id="o-obj" style="grid-column:1/-1"></div>' + buildCore(); // objective + core
+    let body = buildCore();                                   // the core + Research button (at reveal)
     if(S.flags.canScribe) body += buildRatesPanel();          // 2. Flows (with your first automation)
     if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // 3. Works (Research lives in the drawer)
     if(S.flags.o_foundry){                                    // 5. Fabrication (silicon age)
@@ -981,7 +982,7 @@
     const focusBtns = ['fit','generalize','explore'].map(k=>'<button class="focus-btn" data-focus="'+k+'" id="foc-'+k+'"><b>'+f[k].label+'</b><span>'+f[k].desc+'</span></button>').join('');
     let body =
       '<div class="panel sym-hero" style="grid-column:1/-1">'+
-        '<div class="objective" id="e3obj"></div>'+
+        '<div class="panel-label">The Model · train toward generalization</div>'+
         '<div class="proof-rate" id="accRate"></div>'+
         '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
         '<div class="meter-label"><span>Effective accuracy (accuracy − overfit gap)</span><span id="acc-val"></span></div>'+
@@ -1060,12 +1061,6 @@
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
-      const oo=$('o-obj'); if(oo){ let t;
-        if(!S.flags.o_materials) t='Discover Stoneworking to mine Ore';
-        else if(!S.disco.theFoundry) t='Reach the Foundry to forge Silicon';
-        else if(!S.flags.origindone) t='Fabricate the Logic Machine — Silicon '+fmt(S.silicon)+' / '+CFG.e1.siliconGate;
-        else t='The Logic Machine runs.';
-        setText('o-obj','▸ OBJECTIVE — '+t); }
       const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);
       const badge=$('researchBadge'), resb=$('researchBtn');
       if(badge){ if(avail>0){ setText('researchBadge', avail+''); badge.classList.add('show'); } else badge.classList.remove('show'); }
@@ -1092,11 +1087,6 @@
       const fbtn=$('fabricateBtn'); if(fbtn && fbtn.disabled!==!S.flags.canFabricate) fbtn.disabled=!S.flags.canFabricate;
     }
     // theorem-proving
-    const so=$('sym-obj'); if(so){ const need=(TREEMAP.expert&&TREEMAP.expert.reqAxioms)||6; let t;
-      if(S.flags.symbolicDone) t='The Expert System is proven.';
-      else if(!S.flags.compile) t='Prove theorems toward the Expert System';
-      else t='Prove the Expert System — Axioms '+fmt(S.axioms)+' / '+need;
-      setText('sym-obj','▸ OBJECTIVE — '+t); }
     const ir=$('infRate');
     if(ir){
       setText('infRate', 'Inference  '+fmt(S.inference)+' / '+fmt(infCap())+'   ·   +'+fmt(symInfRate())+'/s'+(S.ruleset===0?' (build Rulesets to reason)':''));
@@ -1133,7 +1123,6 @@
     if(ma){ const eff=effAccuracy(), thr=CFG.e3.genThreshold;
       ma.style.width=Math.min(100, eff/thr*100)+'%';
       setText('acc-val', (eff*100).toFixed(1)+'%  (raw '+(S.accuracy*100).toFixed(0)+'%, gap '+(S.gap*100).toFixed(0)+'%)');
-      setText('e3obj', '▸ OBJECTIVE — Generalize: '+(eff*100).toFixed(0)+'% / '+(thr*100).toFixed(0)+'% effective accuracy');
       const exps=S.model*CFG.e3.expPerModel;
       setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':''));
       ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
