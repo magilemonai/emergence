@@ -267,15 +267,15 @@
   const CFG = {
     tickMs: 100,
     e1: { // ERA 1 — Origins (inscription + materials, converging on silicon)
-      inscribeBase: 1, quarryBase: 1,
-      scribeCost: 12, scribeGrowth: 1.17, scribeYield: 0.42,       // marks/sec
-      minerCost: 16, minerGrowth: 1.17, minerYield: 0.42,          // ore/sec
-      scriptoriumCost: 60, scriptoriumGrowth: 1.19, scriptoriumRate: 0.7,  // marks -> knowledge /sec
-      smelterCost: 80, smelterGrowth: 1.19, smelterRate: 0.7,      // ore -> metal /sec
-      foundryCost: 700, foundryGrowth: 1.2, foundryRate: 0.5,      // metal+knowledge -> silicon /sec
+      inscribeBase: 2, quarryBase: 2,
+      scribeCost: 12, scribeGrowth: 1.16, scribeYield: 0.9,        // marks/sec
+      minerCost: 16, minerGrowth: 1.16, minerYield: 0.9,           // ore/sec
+      scriptoriumCost: 45, scriptoriumGrowth: 1.19, scriptoriumRate: 1.1,  // marks -> knowledge /sec
+      smelterCost: 55, smelterGrowth: 1.19, smelterRate: 1.3,      // ore -> metal /sec (drinks ore faster)
+      foundryCost: 350, foundryGrowth: 1.2, foundryRate: 0.8,      // metal+knowledge -> silicon /sec
       scriptoriumUpkeep: 0.35, // Ore burned per Knowledge made (tablets, styluses) — Knowledge drains Materials
       smelterUpkeep: 0.25,     // Knowledge burned per Metal made (smithing know-how) — Materials drains Knowledge
-      siliconGate: 150,        // silicon needed to fabricate the Logic Machine (after the 5-min Foundry gate)
+      siliconGate: 120,        // silicon needed to fabricate the Logic Machine (after the ~5-min Foundry beat)
     },
     e2: { // ERA 2 — Symbolic (the tech-tree + compile journey, ~5-6 min)
       clickBase: 1,
@@ -347,17 +347,17 @@
   // ---- Era 1 (Origins) discoveries: a web of one-time unlocks; Knowledge (K) and Materials (M) interleave and cross-gate. ----
   const DISCO = [
     { id:'tally',        name:'Tally Marks',    res:'marks',     cost:10,  req:[],                         flavor:'A notch for each thing worth counting.',           mech:'Inscribing by hand is twice as productive.' },
-    { id:'scribe',       name:'The Scribe',     res:'marks',     cost:40,  req:['tally'],                  flavor:'Hands trained to the work, and only the work.',     mech:'Unlocks the Scribe — automates Marks.',               effect(){ S.flags.canScribe=true; } },
-    { id:'stoneworking', name:'Stoneworking',   res:'marks',     cost:80,  req:['tally'],                  target:30,  flavor:'The first deliberate reshaping of the world.',      mech:'Unlocks Quarrying and Miners.',                       effect(){ S.flags.o_materials=true; } },
+    { id:'scribe',       name:'The Scribe',     res:'marks',     cost:25,  req:['tally'],                  flavor:'Hands trained to the work, and only the work.',     mech:'Unlocks the Scribe — automates Marks.',               effect(){ S.flags.canScribe=true; } },
+    { id:'stoneworking', name:'Stoneworking',   res:'marks',     cost:45,  req:['tally'],                  target:30,  flavor:'The first deliberate reshaping of the world.',      mech:'Unlocks Quarrying and Miners.',                       effect(){ S.flags.o_materials=true; } },
     { id:'apprenticeship',name:'Apprenticeship', costs:{marks:277, ore:315}, req:['scribe','stoneworking'], flavor:'A craft taught, not stumbled into.',                mech:'Scribes and Miners work 50% faster.' },
-    { id:'clayTablets',  name:'Clay Tablets',   res:'marks',     cost:150, req:['scribe','stoneworking'],  reqRes:{ore:15},  target:60,  flavor:'Something firmer than memory to hold a thought.',   mech:'Unlocks the Scriptorium — Marks become Knowledge.',   effect(){ S.flags.o_scriptorium=true; } },
-    { id:'kiln',         name:'The Kiln',       res:'ore',       cost:70,  req:['clayTablets'],            reqRes:{knowledge:20}, target:120, flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
+    { id:'clayTablets',  name:'Clay Tablets',   res:'marks',     cost:110, req:['scribe','stoneworking'],  reqRes:{ore:15},  target:60,  flavor:'Something firmer than memory to hold a thought.',   mech:'Unlocks the Scriptorium — Marks become Knowledge.',   effect(){ S.flags.o_scriptorium=true; } },
+    { id:'kiln',         name:'The Kiln',       res:'ore',       cost:110, req:['clayTablets'],            reqRes:{knowledge:30}, target:120, flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
     { id:'alphabet',     name:'The Alphabet',   res:'knowledge', cost:120, req:['clayTablets'],            flavor:'A handful of signs that can spell anything at all.',mech:'Scriptoria work 60% faster.' },
     { id:'bronzeCasting',name:'Bronze Casting', res:'metal',     cost:90,  req:['kiln'],                   flavor:'Pour the metal; let the mold decide its shape.',    mech:'Smelters work 60% faster.' },
     { id:'wheel',        name:'The Wheel',      res:'ore',       cost:130, req:['kiln'],                   flavor:'The load that once broke backs now simply rolls.',  mech:'Miners haul 80% more Ore — but Scribes, pulled to the carts, work 20% slower.' },
-    { id:'numerals',     name:'Numerals',       res:'knowledge', cost:340, req:['alphabet'],               flavor:'Number slips free of the things it counts.',        mech:'Every converter works 30% faster.' },
-    { id:'glassmaking',  name:'Glassmaking',    res:'metal',     cost:260, req:['bronzeCasting'],          flavor:'Sand, melted, taught to hold the light.',           mech:'Foundries run 50% faster.' },
-    { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:520, req:['numerals','glassmaking'], reqRes:{metal:150}, target:300, flavor:'Knowledge and matter, fused on purpose.',          mech:'Unlocks the Foundry — Metal + Knowledge become Silicon. (Silicon Age)', effect(){ S.flags.o_foundry=true; S.age=3; } },
+    { id:'numerals',     name:'Numerals',       res:'knowledge', cost:520, req:['alphabet'],               flavor:'Number slips free of the things it counts.',        mech:'Every converter works 30% faster.' },
+    { id:'glassmaking',  name:'Glassmaking',    res:'metal',     cost:430, req:['bronzeCasting'],          flavor:'Sand, melted, taught to hold the light.',           mech:'Foundries run 50% faster.' },
+    { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:780, req:['numerals','glassmaking'], reqRes:{metal:230}, target:300, flavor:'Knowledge and matter, fused on purpose.',          mech:'Unlocks the Foundry — Metal + Knowledge become Silicon. (Silicon Age)', effect(){ S.flags.o_foundry=true; S.age=3; } },
   ];
   const DISCOMAP = Object.fromEntries(DISCO.map(n=>[n.id,n]));
   const BUILD_UNLOCK = { scribe:()=>S.flags.canScribe, miner:()=>S.flags.o_materials, scriptorium:()=>S.flags.o_scriptorium, smelter:()=>S.flags.o_smelter, foundry:()=>S.flags.o_foundry };
