@@ -65,6 +65,17 @@
   .era.obsolete { filter: grayscale(0.85) brightness(0.6); opacity: 0.5; }
   .era.obsolete .era-body { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; }
   .era-header { display: flex; align-items: center; gap: 12px; }
+  .era.collapsed { cursor: pointer; padding: 11px 18px; opacity: 0.7; transition: opacity 0.2s; }
+  .era.collapsed:hover { opacity: 1; }
+  .era.collapsed .era-status::after { content: " ▸"; color: var(--dim); }
+  .era-toggle { font-size: 9px; letter-spacing: 1px; color: var(--dim); cursor: pointer; margin-left: 12px; white-space: nowrap; }
+  .era-toggle:hover { color: var(--text); }
+  /* Era 2 — Symbolic: amber schematic environment, distinct from Origins' warm stone */
+  .era-e2 { background:
+      linear-gradient(rgba(8,11,18,0.9), rgba(8,11,18,0.94)),
+      url('assets/bg-symbolic.png') center / cover no-repeat, var(--panel); }
+  .era-e2 .panel { background: rgba(18,20,16,0.72); border-color: rgba(201,162,107,0.18); }
+  .era-e2 .panel-label { color: rgba(201,162,107,0.75); }
   .era-sigil { width: 42px; height: 42px; object-fit: contain; opacity: 0.92; flex: none; filter: drop-shadow(0 0 6px rgba(201,162,107,0.25)); }
   .era-tag { font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 15px; color: var(--text); }
@@ -127,6 +138,9 @@
   .compile-act { flex: 1; min-width: 220px; }
   .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   /* Era 2 theorem-proving */
+  .sym-hero { background: linear-gradient(180deg, rgba(201,162,107,0.14), rgba(8,11,18,0.55)) !important; border-color: rgba(201,162,107,0.45) !important; }
+  .sym-hero .proof-rate { font-size: 15px; }
+  .sym-hero .meter { height: 8px; }
   .proof-rate { font-size: 12px; color: var(--e1); font-variant-numeric: tabular-nums; margin-bottom: 8px; }
   .proof-active { margin-bottom: 12px; }
   .pa-top { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--dim); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
@@ -322,7 +336,7 @@
     // Era 3+ scaffold
     insight: 0, data: 0, capability: 0, scale: 0,
     dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
-    tech: {}, obsolete: {}, flags: {}, clicks: 0,
+    tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
   }; }
   const S = freshState();
   const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0 }; // net per-second flow, captured each tick
@@ -575,6 +589,7 @@
     setTimeout(()=>{ $('coldopen').style.display='none'; $('eras').style.display='flex'; $('hdr').classList.add('show'); openEra(1,true); }, 800);
   }
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n;
+    for(let k=1;k<n;k++) S.collapsed[k]=true;  // fold completed eras away so the new one takes the stage
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
     render(); }
   function produce(dt){
@@ -693,10 +708,15 @@
   }
   function eraShell(n, obsolete, body){
     const e=ERAS[n];
-    return '<div class="era '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header">'+
-      (e.sigil?'<img class="era-sigil" src="'+e.sigil+'" alt="">':'')+
-      '<span class="era-tag">'+e.tag+
-      '</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span><span class="era-status" id="status-'+n+'"></span></div><div class="era-body">'+body+'</div></div>';
+    const sig = e.sigil?'<img class="era-sigil" src="'+e.sigil+'" alt="">':'';
+    const done = n < S.maxEra; // a completed era can be folded
+    const head = (withToggle) => '<div class="era-header">'+sig+'<span class="era-tag">'+e.tag+'</span>'+
+      '<span class="era-name">'+e.name+'<small>'+e.sub+'</small></span>'+
+      (done?'<span class="era-status legacy">complete</span>':'<span class="era-status" id="status-'+n+'"></span>')+
+      (withToggle?'<span class="era-toggle" data-toggle="'+n+'">▾ collapse</span>':'')+'</div>';
+    if(S.collapsed[n]) // whole card is the expand target
+      return '<div class="era collapsed era-e'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'">'+head(false)+'</div>';
+    return '<div class="era era-e'+n+' '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'">'+head(done)+'<div class="era-body">'+body+'</div></div>';
   }
   function nodePos(n){ return { x: 50 + n.col*14, y: 34 + n.row*58 }; }
   const TREE_H = 34 + 4*58 + 30; // rows 0..4
@@ -718,13 +738,18 @@
       '<div class="compile-act"><button class="act-btn" id="compileBtn"></button><div class="act-sub" id="compileSub">Resets Rules, Rulesets and Daemons. Technique and Axioms stay.</div></div>'+
     '</div>';
   }
-  function buildSymbolic(){ // ERA 2
+  function buildSymbolic(){ // ERA 2 — the Inference Engine: a proving bench, distinct from Origins
     let prod = eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.');
     if(S.tech.inference) prod += eraUpgrade('daemon','Inference Daemon','Fires the write action for you. Everything that makes a click stronger makes a Daemon stronger.');
-    let body =
-      '<div class="panel"><div class="panel-label">Manual Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub" id="manualSub"></div></div>'+
+    let body = '';
+    // Hero: the active proof + inference rate take the stage
+    if(S.flags.tree) body += '<div class="panel sym-hero" style="grid-column:1/-1"><div class="panel-label">The Inference Engine · prove a theorem</div>'+
+      '<div class="proof-rate" id="infRate"></div><div class="proof-active" id="proofActive"></div></div>';
+    // Economy: authoring + automation, side by side
+    body += '<div class="panel"><div class="panel-label">Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub" id="manualSub"></div></div>'+
       '<div class="panel"><div class="panel-label">Automation</div>'+(S.flags.canRuleset?prod:'<div class="up-desc">Keep writing...</div>')+'</div>';
-    if(S.flags.tree) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Theorems · prove with Inference</div>'+buildProofs()+'</div>';
+    // The theorems to choose from
+    if(S.flags.tree) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Theorems &amp; Lemmas · pick what to prove next</div>'+buildProofList()+'</div>';
     if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
     return eraShell(2, false, body);
   }
@@ -735,12 +760,10 @@
     return '<div class="proof-item'+(isLem?' lemma':'')+'" id="pf-'+id+'"><div class="pf-body"><div class="pf-name">'+name+'</div><div class="pf-desc">'+desc+'</div></div>'+
       '<button class="up-buy pf-btn" data-proof="'+id+'" id="pfb-'+id+'"></button></div>';
   }
-  function buildProofs(){
+  function buildProofList(){
     let items = proofItem('optimization');
     for(const n of TREE){ if(!S.tech[n.id] && n.req.every(r=>S.tech[r])) items += proofItem(n.id); }
-    return '<div class="proof-top"><div class="proof-rate" id="infRate"></div></div>'+
-      '<div class="proof-active" id="proofActive"></div>'+
-      '<div class="proof-list">'+items+'</div>';
+    return '<div class="proof-list">'+items+'</div>';
   }
   // ---- ERA 1 (Origins): a central core + a discovery grid (Knowledge & Materials interleaved) + a quiet flow diagram ----
   // Buildings shown in the grid: their display name + literal mechanic. Flavor comes from FLAVOR[key].
@@ -864,6 +887,7 @@
     document.querySelectorAll('[data-disco]').forEach(b=> b.onclick=e=>buyDisco(e.currentTarget.dataset.disco));
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
     document.querySelectorAll('[data-proof]').forEach(b=> b.onclick=e=>selectProof(e.currentTarget.dataset.proof));
+    document.querySelectorAll('[data-toggle]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const n=+e.currentTarget.dataset.toggle; S.collapsed[n]=!S.collapsed[n]; render(); });
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
     refresh();
   }
