@@ -10,14 +10,26 @@
     --text: #ccd6ea; --dim: #5d6d8a; --dimmer: #3a4660;
     --e0: #c9925f; --e1: #c9a26b; --e2: #6ec6a8; --e3: #6ea8ff; --e4: #b78bff;
     --accent: #ffcd6b; --good: #5ee07f; --danger: #ff6b8b;
+    --era-font: "SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  /* ERA 1 — Origins: warm, earthen, ancient. Serif. */
+  .theme-1, .era-e1 {
+    --bg: #160f08; --panel: #211810; --panel-2: #2b2014; --line: #46341d;
+    --text: #ece0c8; --dim: #a78f66; --dimmer: #6f5c3d; --accent: #e0a86a;
+    --era-font: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  }
+  /* ERA 2 — Symbolic: cold, digital, terminal. Monospace. */
+  .theme-2, .era-e2 {
+    --bg: #04070e; --panel: #0a0f18; --panel-2: #0e1421; --line: #243048;
+    --text: #d8c9a2; --dim: #8b8064; --dimmer: #494436; --accent: #ffcd6b;
+    --era-font: "SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text);
-    font-family: "SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace; overflow: hidden; }
-  body { background:
-      radial-gradient(1100px 600px at 75% -10%, rgba(110,168,255,0.05), transparent 60%),
-      radial-gradient(900px 500px at 5% 110%, rgba(183,139,255,0.05), transparent 60%),
-      var(--bg); }
+    font-family: var(--era-font); overflow: hidden; transition: background 0.9s ease, color 0.7s ease; }
+  body { background: var(--bg); }
+  body.theme-1 { background: radial-gradient(1000px 620px at 80% -10%, rgba(224,168,106,0.07), transparent 60%), radial-gradient(800px 500px at 5% 110%, rgba(160,110,60,0.05), transparent 60%), var(--bg); }
+  body.theme-2 { background: radial-gradient(1100px 700px at 50% -15%, rgba(201,162,107,0.06), transparent 60%), radial-gradient(900px 500px at 90% 110%, rgba(110,140,200,0.05), transparent 60%), var(--bg); }
   #app { display: flex; flex-direction: column; height: 100%; }
   header { display: flex; align-items: center; gap: 16px; padding: 9px 18px;
     border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(18,26,44,0.5), transparent);
@@ -59,8 +71,10 @@
       radial-gradient(100% 120% at 90% 120%, rgba(183,139,255,0.06), transparent 55%), #080b12; }
   .viz-cap { position: absolute; top: 15px; left: 31px; font-size: 8.5px; letter-spacing: 3px; color: var(--dimmer); pointer-events: none; }
   #eras { display: none; padding: 18px; gap: 16px; flex-direction: column; max-width: 1180px; margin: 0 auto; }
-  .era { border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
-    padding: 16px 18px; transition: opacity 0.8s, filter 0.8s, transform 0.5s; position: relative; overflow: hidden; }
+  .era { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); font-family: var(--era-font);
+    padding: 16px 18px; transition: opacity 0.8s, filter 0.8s, transform 0.5s, background 0.6s, border-color 0.6s; position: relative; overflow: hidden; }
+  .panel { transition: background 0.5s, border-color 0.5s; }
+  header { transition: opacity 0.6s, transform 0.6s, background 0.7s; }
   .era::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ec, var(--dim)); opacity: 0.8; }
   .era.obsolete { filter: grayscale(0.85) brightness(0.6); opacity: 0.5; }
   .era.obsolete .era-body { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; }
@@ -594,7 +608,7 @@
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n;
     for(let k=1;k<n;k++) S.collapsed[k]=true;  // fold completed eras away so the new one takes the stage
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
-    render(); }
+    setTheme(n); render(); }
   function produce(dt){
     // ERA 1 — Origins: sources feed stocks; converters draw from upstream and starve if it's empty.
     const os=oStats();
@@ -715,12 +729,12 @@
     const done = n < S.maxEra; // a completed era can be folded
     const nameBlock = sig+'<span class="era-tag">'+e.tag+'</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span>';
     if(S.collapsed[n]) // whole bar is the expand target
-      return '<div class="era collapsed era-e'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'"><div class="era-header">'+nameBlock+
+      return '<div class="era collapsed era-e'+n+'" data-era="'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'"><div class="era-header">'+nameBlock+
         '<span class="era-status legacy">complete</span><span class="era-expand-btn">▸ EXPAND</span></div></div>';
     const right = done
       ? '<span class="era-status legacy">complete</span><button class="era-toggle" data-toggle="'+n+'">▾ COLLAPSE</button>'
       : '<span class="era-status" id="status-'+n+'"></span>';
-    return '<div class="era era-e'+n+' '+(obsolete?'obsolete':'')+'" style="--ec:'+e.color+'"><div class="era-header">'+nameBlock+right+'</div><div class="era-body">'+body+'</div></div>';
+    return '<div class="era era-e'+n+' '+(obsolete?'obsolete':'')+'" data-era="'+n+'" style="--ec:'+e.color+'"><div class="era-header">'+nameBlock+right+'</div><div class="era-body">'+body+'</div></div>';
   }
   function nodePos(n){ return { x: 50 + n.col*14, y: 34 + n.row*58 }; }
   const TREE_H = 34 + 4*58 + 30; // rows 0..4
@@ -894,6 +908,7 @@
     document.querySelectorAll('[data-toggle]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const n=+e.currentTarget.dataset.toggle; S.collapsed[n]=!S.collapsed[n]; render(); });
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
     refresh();
+    watchEraThemes();
   }
   function upLabel(key){ // {can, html} for a buy button under the current buy mode
     const b=BUYS[key], mode=S.buyMode;
@@ -1021,6 +1036,21 @@
   function toggleDev(on){ S.dev = on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); if(S.dev) renderDev(); }
   let uiDrawer=false;
   function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer); $('drawerBg').classList.toggle('show',uiDrawer); }
+  // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).
+  function setTheme(n){ if(typeof document==='undefined'||!document.body) return; const c='theme-'+n; if(document.body.className!==c) document.body.className=c; }
+  let _eraIO=null;
+  function watchEraThemes(){
+    if(typeof IntersectionObserver==='undefined') return;
+    if(_eraIO) _eraIO.disconnect();
+    _eraIO=new IntersectionObserver(()=>{
+      let top=null, topVis=-1;
+      document.querySelectorAll('#eras .era').forEach(el=>{ const r=el.getBoundingClientRect();
+        const vis=Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
+        if(vis>topVis){ topVis=vis; top=el; } });
+      if(top && top.dataset.era) setTheme(+top.dataset.era);
+    }, { threshold:[0,0.25,0.5,0.75,1] });
+    document.querySelectorAll('#eras .era').forEach(el=> _eraIO.observe(el));
+  }
   window.addEventListener('keydown', e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
   if(/[?&]dev=1/.test(location.search)) toggleDev(true);
 
@@ -1125,7 +1155,7 @@
   }
   let offline=null;
   if(lastSave && S.flags.firstAuto){ offline=offlineCatchup((Date.now()-lastSave)/1000); }
-  renderCold(); if(S.flags.firstAuto) render();
+  setTheme(S.maxEra); renderCold(); if(S.flags.firstAuto) render();
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
   $('coBtn').onclick=inscribe;
