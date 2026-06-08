@@ -178,6 +178,12 @@
   .pf-lv { color: var(--accent); font-size: 10px; }
   .pf-desc { font-size: 14px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
+  .proven-wrap { grid-column: 1 / -1; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .proven-lab { font-size: 10.5px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
+  .proven-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .proven-chip { width: 48px; height: 48px; border: 1px solid var(--ec); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,205,107,0.08); cursor: help; }
+  .proven-ic { width: 36px; height: 36px; object-fit: contain; }
+  .proven-ic.glyph { color: var(--ec); font-size: 20px; }
   /* Era 3 — Statistical: objective banner, Training Focus, Origins supply strip */
   #tip { position: fixed; z-index: 95; max-width: 300px; background: var(--panel-2); border: 1px solid var(--ec, var(--accent)); border-radius: 9px; padding: 11px 13px; font-size: 13.5px; color: var(--text); line-height: 1.55; pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity 0.12s, transform 0.12s; box-shadow: 0 8px 28px rgba(0,0,0,0.55); }
   #tip.show { opacity: 1; transform: translateY(0); }
@@ -409,6 +415,7 @@
   }; }
   const S = freshState();
   const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0, rules:0, data:0, insight:0 }; // net per-second flow, captured each tick
+  let viewEra = 1; // the era currently most in view (drives the contextual top bar); follows scroll
   // Progressive UI: each section animates in only the first time it appears (survives re-renders).
   const _seen = new Set();
   function intro(key){ if(_seen.has(key)) return ''; _seen.add(key); return ' intro'; }
@@ -700,7 +707,7 @@
     $('eras').classList.add('rising');
     setTimeout(()=>{ co.style.display='none'; }, 300);
   }
-  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n;
+  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; viewEra=n;
     for(let k=1;k<n;k++) S.collapsed[k]=true;  // fold completed eras away so the new one takes the stage
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
     setTheme(n); render(); }
@@ -768,18 +775,18 @@
   // ---- Rendering: build DOM structure rarely, update live numbers every tick. ----
   // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
   const RES_DEFS=[
-    // Contextual to the current era: its own resources, plus any earlier resource it still spends (e.g. Silicon in Era 3)
-    {k:'marks', show:()=>S.maxEra===1, color:'var(--e0)', label:'Marks'},
-    {k:'ore', show:()=>S.maxEra===1 && S.flags.o_materials, color:'#c08552', label:'Ore'},
-    {k:'knowledge', show:()=>S.maxEra===1 && S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
-    {k:'metal', show:()=>S.maxEra===1 && S.flags.o_smelter, color:'#c08552', label:'Metal'},
-    {k:'silicon', show:()=>S.flags.o_foundry && (S.maxEra===1 || S.maxEra>=3), color:'var(--accent)', label:'Silicon'}, // Era 3 spends it
-    {k:'rules', show:()=>S.maxEra===2,  color:'var(--e1)', label:'Rules'},
-    {k:'axioms', show:()=>S.maxEra===2 && (S.flags.compile||S.totalAxioms>0), color:'var(--accent)', label:'Axioms'},
-    {k:'data', show:()=>S.maxEra>=3,  color:'var(--e2)', label:'Data'},
-    {k:'insight', show:()=>S.maxEra>=3,color:'var(--e2)', label:'Insight'},
-    {k:'capability', show:()=>S.maxEra>=4,color:'var(--e3)', label:'Capability'},
-    {k:'scale', show:()=>S.maxEra>=5, color:'var(--e4)', label:'Scale'},
+    // Contextual to the era you're viewing: its own resources, plus any earlier resource it still spends (e.g. Silicon in Era 3)
+    {k:'marks', show:()=>viewEra===1, color:'var(--e0)', label:'Marks'},
+    {k:'ore', show:()=>viewEra===1 && S.flags.o_materials, color:'#c08552', label:'Ore'},
+    {k:'knowledge', show:()=>viewEra===1 && S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
+    {k:'metal', show:()=>viewEra===1 && S.flags.o_smelter, color:'#c08552', label:'Metal'},
+    {k:'silicon', show:()=>S.flags.o_foundry && (viewEra===1 || viewEra>=3), color:'var(--accent)', label:'Silicon'}, // Era 3 spends it
+    {k:'rules', show:()=>viewEra===2,  color:'var(--e1)', label:'Rules'},
+    {k:'axioms', show:()=>viewEra===2 && (S.flags.compile||S.totalAxioms>0), color:'var(--accent)', label:'Axioms'},
+    {k:'data', show:()=>viewEra>=3,  color:'var(--e2)', label:'Data'},
+    {k:'insight', show:()=>viewEra>=3,color:'var(--e2)', label:'Insight'},
+    {k:'capability', show:()=>viewEra>=4,color:'var(--e3)', label:'Capability'},
+    {k:'scale', show:()=>viewEra>=5, color:'var(--e4)', label:'Scale'},
   ];
   function buildHeader(){
     if(!S.flags.firstAuto) return;
@@ -882,7 +889,14 @@
   function buildProofList(){
     let items = proofItem('optimization') + proofItem('capacity');
     for(const n of TREE){ if(!S.tech[n.id] && n.req.every(r=>S.tech[r])) items += proofItem(n.id); }
-    return '<div class="proof-list">'+items+'</div>';
+    const proven = TREE.filter(n=>S.tech[n.id]);
+    let pv = '';
+    if(proven.length){
+      pv = '<div class="proven-wrap"><div class="proven-lab">Proven theorems · '+proven.length+' / '+TREE.length+'</div><div class="proven-row">'+
+        proven.map(n=>{ const ic=TH_ICON[n.id]?'<img class="proven-ic" src="'+TH_ICON[n.id]+'">':'<span class="proven-ic glyph">&#9670;</span>';
+          return '<div class="proven-chip" data-tip="'+esc('<b>'+n.name+'</b><br>'+n.desc)+'">'+ic+'</div>'; }).join('')+'</div></div>';
+    }
+    return '<div class="proof-list">'+items+'</div>'+pv;
   }
   // ---- ERA 1 (Origins): a central core + a discovery grid (Knowledge & Materials interleaved) + a quiet flow diagram ----
   // Buildings shown in the grid: their display name + literal mechanic. Flavor comes from FLAVOR[key].
@@ -1199,7 +1213,8 @@
       document.querySelectorAll('#eras .era').forEach(el=>{ const r=el.getBoundingClientRect();
         const vis=Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
         if(vis>topVis){ topVis=vis; top=el; } });
-      if(top && top.dataset.era) setTheme(+top.dataset.era);
+      if(top && top.dataset.era){ const ve=+top.dataset.era; setTheme(ve);
+        if(ve!==viewEra){ viewEra=ve; buildHeader(); refresh(); } } // bar follows the era in view
     }, { threshold:[0,0.25,0.5,0.75,1] });
     document.querySelectorAll('#eras .era').forEach(el=> _eraIO.observe(el));
   }
