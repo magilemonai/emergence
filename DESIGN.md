@@ -96,6 +96,10 @@ The **objective line** is a persistent banner per era ("▸ Generalize: 62% / 85
 
 (Lots of UX landed this session too: hover tooltips + per-tile mechanical impact, big-icon cards, one-screen density, contextual top bar with live rates, proven-theorems row, evolving Origins core, transparent wordmark.)
 
+## Future ideas (parking lot — not committed)
+
+- **Resource caps + capacity upgrades (per resource).** Give each resource a storage cap raised by a separate, repeatable mechanism (generalizes the existing **Inference Capacity** lemma to all resources). Adds a clean repeatable sink + a "spend now vs invest in capacity" decision per era. Guardrails: a cap you're hitting must always have an *affordable next bump* visible (else it's a wall, not a goal — violates the core-feel rule); excess at-cap production should create a real choice (convert / waste / overflow), not silent loss. Pairs with the supply chain — storage capacity can be something an earlier era supplies. The header's live `+/s` rates + the cap would read as a fill bar.
+
 *Deferred:* Era 4 (Deep — Compute = Silicon + Data + Insight, compute-allocation, blue) and Era 5 (Foundation — convergence + recursive feedback, violet). The backbone is designed for them; we build them later.
 
 ## Decisions (locked 2026-06-08)
