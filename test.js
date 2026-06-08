@@ -79,9 +79,9 @@ function testOriginsChain(){
   // scribe/miner are sources
   S.scribe = 4; EM.produce(1); ok(S.marks > 0, 'scribes produce marks');
   S.miner = 4; EM.produce(1); ok(S.ore > 0, 'miners produce ore');
-  // scriptorium starves without marks, converts when fed
+  // scriptorium starves without marks, converts when fed (now also needs Ore for upkeep)
   EM = freshGame(); S = EM.S;
-  S.scriptorium = 2; S.marks = 0;
+  S.scriptorium = 2; S.marks = 0; S.ore = 100;
   EM.produce(1); ok(S.knowledge === 0, 'scriptorium idles when starved of marks');
   S.marks = 10; EM.produce(1); ok(S.knowledge > 0 && S.marks < 10, 'scriptorium converts marks → knowledge when fed');
   // foundry needs BOTH metal and knowledge
@@ -90,6 +90,25 @@ function testOriginsChain(){
   EM.produce(1); ok(S.silicon === 0, 'foundry idles without knowledge');
   S.knowledge = 10; EM.produce(1);
   ok(S.silicon > 0 && S.metal < 10 && S.knowledge < 10, 'foundry consumes metal AND knowledge to make silicon');
+}
+
+function testUpkeep(){
+  section('Origins — upkeep drains (additions contain subtractions)');
+  let EM = freshGame(); let S = EM.S;
+  // a scriptorium with plenty of marks but NO ore cannot run (ore upkeep)
+  S.scriptorium = 2; S.marks = 100; S.ore = 0;
+  EM.produce(1); ok(S.knowledge === 0, 'scriptorium cannot make Knowledge without Ore for upkeep');
+  S.ore = 100; const oreBefore = S.ore; EM.produce(1);
+  ok(S.knowledge > 0 && S.ore < oreBefore, 'making Knowledge drains the Ore stockpile (Knowledge taxes Materials)');
+  // a smelter burns Knowledge as it makes Metal
+  EM = freshGame(); S = EM.S;
+  S.smelter = 2; S.ore = 100; S.knowledge = 100; const kBefore = S.knowledge;
+  EM.produce(1); ok(S.metal > 0 && S.knowledge < kBefore, 'making Metal drains the Knowledge stockpile (Materials taxes Knowledge)');
+  // The Wheel is a real tradeoff: more ore, fewer marks
+  EM = freshGame(); S = EM.S;
+  const base = EM.oStats();
+  S.disco.wheel = true; const w = EM.oStats();
+  ok(w.minerY > base.minerY && w.scribeY < base.scribeY, 'The Wheel adds Ore yield AND subtracts Marks yield');
 }
 
 function testDiscovery(){
@@ -278,6 +297,7 @@ console.log('====================');
 testFormatting();
 testCostMath();
 testOriginsChain();
+testUpkeep();
 testDiscovery();
 testTimeGate();
 testFabrication();

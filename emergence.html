@@ -156,7 +156,8 @@
   .core-verbs { display: flex; gap: 10px; }
   .core-verbs .act-btn { flex: 1; }
   .core-rates { margin-top: 10px; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
-  /* Discovery grid */
+  /* Works vs Research sections */
+  .research-panel { background: linear-gradient(180deg, rgba(201,146,95,0.05), transparent 40%), var(--panel-2); }
   .ogrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 6px; }
   .tile { display: flex; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s, opacity 0.4s; }
   .tile.disco.can { border-color: rgba(201,146,95,0.55); box-shadow: 0 0 14px rgba(201,146,95,0.12); }
@@ -232,6 +233,8 @@
       scriptoriumCost: 60, scriptoriumGrowth: 1.19, scriptoriumRate: 0.7,  // marks -> knowledge /sec
       smelterCost: 80, smelterGrowth: 1.19, smelterRate: 0.7,      // ore -> metal /sec
       foundryCost: 700, foundryGrowth: 1.2, foundryRate: 0.5,      // metal+knowledge -> silicon /sec
+      scriptoriumUpkeep: 0.35, // Ore burned per Knowledge made (tablets, styluses) — Knowledge drains Materials
+      smelterUpkeep: 0.25,     // Knowledge burned per Metal made (smithing know-how) — Materials drains Knowledge
       siliconGate: 150,        // silicon needed to fabricate the Logic Machine (after the 5-min Foundry gate)
     },
     e2: { // ERA 2 — Symbolic (the tech-tree + compile journey, ~5-6 min)
@@ -293,21 +296,12 @@
     { id:'kiln',         name:'The Kiln',       res:'ore',       cost:70,  req:['clayTablets'],            reqRes:{knowledge:20}, reqTime:120, flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
     { id:'alphabet',     name:'The Alphabet',   res:'knowledge', cost:120, req:['clayTablets'],            flavor:'A handful of signs that can spell anything at all.',mech:'Scriptoria work 60% faster.' },
     { id:'bronzeCasting',name:'Bronze Casting', res:'metal',     cost:90,  req:['kiln'],                   flavor:'Pour the metal; let the mold decide its shape.',    mech:'Smelters work 60% faster.' },
+    { id:'wheel',        name:'The Wheel',      res:'ore',       cost:130, req:['kiln'],                   flavor:'The load that once broke backs now simply rolls.',  mech:'Miners haul 80% more Ore — but Scribes, pulled to the carts, work 20% slower.' },
     { id:'numerals',     name:'Numerals',       res:'knowledge', cost:340, req:['alphabet'],               flavor:'Number slips free of the things it counts.',        mech:'Every converter works 30% faster.' },
     { id:'glassmaking',  name:'Glassmaking',    res:'metal',     cost:260, req:['bronzeCasting'],          flavor:'Sand, melted, taught to hold the light.',           mech:'Foundries run 50% faster.' },
     { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:520, req:['numerals','glassmaking'], reqRes:{metal:150}, reqTime:300, flavor:'Knowledge and matter, fused on purpose.',          mech:'Unlocks the Foundry — Metal + Knowledge become Silicon. (Silicon Age)', effect(){ S.flags.o_foundry=true; S.age=3; } },
   ];
   const DISCOMAP = Object.fromEntries(DISCO.map(n=>[n.id,n]));
-  // Ordered grid: discoveries and the buildings they unlock, interleaved as they reveal.
-  const OGRID = [
-    ['disco','tally'], ['disco','scribe'], ['build','scribe'],
-    ['disco','stoneworking'], ['build','miner'],
-    ['disco','clayTablets'], ['build','scriptorium'],
-    ['disco','kiln'], ['build','smelter'],
-    ['disco','alphabet'], ['disco','bronzeCasting'],
-    ['disco','numerals'], ['disco','glassmaking'],
-    ['disco','theFoundry'], ['build','foundry'],
-  ];
   const BUILD_UNLOCK = { scribe:()=>S.flags.canScribe, miner:()=>S.flags.o_materials, scriptorium:()=>S.flags.o_scriptorium, smelter:()=>S.flags.o_smelter, foundry:()=>S.flags.o_foundry };
   const MILES = [
     // ERA 1 — Origins: two linear tracks (Knowledge, Materials) cross-gating into Silicon.
@@ -374,12 +368,14 @@
   function oStats(){
     const d=S.disco, e=CFG.e1;
     let inscribe=e.inscribeBase, quarry=e.quarryBase, scrR=e.scriptoriumRate, smR=e.smelterRate, foR=e.foundryRate;
+    let scribeY=e.scribeYield, minerY=e.minerYield;
     if(d.tally) inscribe*=2;
     if(d.alphabet) scrR*=1.6;
     if(d.bronzeCasting) smR*=1.6;
+    if(d.wheel){ minerY*=1.8; quarry*=1.8; scribeY*=0.8; inscribe*=0.8; } // addition + subtraction
     if(d.numerals){ scrR*=1.3; smR*=1.3; foR*=1.3; }
     if(d.glassmaking) foR*=1.5;
-    return { inscribe, quarry, scribeY:e.scribeYield, minerY:e.minerYield, scrR, smR, foR };
+    return { inscribe, quarry, scribeY, minerY, scrR, smR, foR };
   }
   function discoVisible(id){ const n=DISCOMAP[id]; return n.req.every(r=>S.disco[r]); }
   function canBuyDisco(id){
@@ -482,10 +478,21 @@
   function produce(dt){
     // ERA 1 — Origins: sources feed stocks; converters draw from upstream and starve if it's empty.
     const os=oStats();
+    const e1=CFG.e1;
     if(S.scribe>0) S.marks += S.scribe*os.scribeY*dt;
     if(S.miner>0)  S.ore   += S.miner*os.minerY*dt;
-    if(S.scriptorium>0){ const c=Math.min(S.marks, S.scriptorium*os.scrR*dt); S.marks-=c; S.knowledge+=c; }
-    if(S.smelter>0){ const c=Math.min(S.ore, S.smelter*os.smR*dt); S.ore-=c; S.metal+=c; }
+    // Scriptorium: Marks -> Knowledge, but each unit also burns Ore (tablets). Throttled by whichever runs short.
+    if(S.scriptorium>0){
+      let out=Math.min(S.marks, S.scriptorium*os.scrR*dt);
+      const up=out*e1.scriptoriumUpkeep; if(up>S.ore) out *= (up>0 ? S.ore/up : 0);
+      S.marks-=out; S.ore-=out*e1.scriptoriumUpkeep; S.knowledge+=out;
+    }
+    // Smelter: Ore -> Metal, but each unit also burns Knowledge (know-how). Competes with the Foundry for Knowledge.
+    if(S.smelter>0){
+      let out=Math.min(S.ore, S.smelter*os.smR*dt);
+      const up=out*e1.smelterUpkeep; if(up>S.knowledge) out *= (up>0 ? S.knowledge/up : 0);
+      S.ore-=out; S.knowledge-=out*e1.smelterUpkeep; S.metal+=out;
+    }
     if(S.foundry>0){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c; }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
@@ -611,13 +618,13 @@
   const OBUILD = {
     scribe:{ name:'Scribe', mech:'Automates Marks.' },
     miner:{ name:'Miner', mech:'Automates Ore.' },
-    scriptorium:{ name:'Scriptorium', mech:'Marks → Knowledge. Idles without Marks.' },
-    smelter:{ name:'Smelter', mech:'Ore → Metal. Idles without Ore.' },
+    scriptorium:{ name:'Scriptorium', mech:'Marks → Knowledge. Also burns Ore for tablets — throttles if either runs short.' },
+    smelter:{ name:'Smelter', mech:'Ore → Metal. Also burns Knowledge for the craft — competes with the Foundry.' },
     foundry:{ name:'Foundry', mech:'Metal + Knowledge → Silicon.' },
   };
   // Icons we have art for today; the rest fall back to a glyph until the icon set lands.
-  const BICON = { smelter:'assets/icon-crucible.png', foundry:'assets/icon-crucible.png' };
-  const DICON = { stoneworking:'assets/icon-ore.png', kiln:'assets/icon-crucible.png', bronzeCasting:'assets/icon-ingot.png', glassmaking:'assets/icon-silicon.png', theFoundry:'assets/icon-crucible.png', clayTablets:'assets/era1-sigil.png' };
+  const BICON = { scribe:'assets/icon-scribe.png', miner:'assets/icon-miner.png', scriptorium:'assets/icon-scriptorium.png', smelter:'assets/icon-crucible.png', foundry:'assets/icon-foundry.png' };
+  const DICON = { tally:'assets/icon-marks.png', scribe:'assets/icon-scribe.png', stoneworking:'assets/icon-ore.png', clayTablets:'assets/disco-clay.png', kiln:'assets/icon-crucible.png', alphabet:'assets/disco-alphabet.png', bronzeCasting:'assets/icon-ingot.png', numerals:'assets/disco-numerals.png', glassmaking:'assets/icon-silicon.png', theFoundry:'assets/icon-foundry.png', wheel:'assets/disco-wheel.png' };
   function tileIcon(src){ return src ? '<img class="tile-ic" src="'+src+'">' : '<div class="tile-ic glyph">&#9670;</div>'; }
   function buildTile(type, key){
     if(type==='build'){
@@ -632,13 +639,15 @@
       '<div class="tile-flavor">'+n.flavor+'</div><div class="tile-mech">'+n.mech+'</div>'+
       '<button class="up-buy tile-btn" data-disco="'+key+'" id="dsc-'+key+'"></button></div></div>';
   }
-  function buildGrid(){
+  const WORKS_ORDER = ['scribe','miner','scriptorium','smelter','foundry'];
+  function buildWorks(){
     let html='';
-    for(const [type,key] of OGRID){
-      if(type==='build'){ if(!BUILD_UNLOCK[key]()) continue; }
-      else { if(!discoVisible(key)) continue; }
-      html += buildTile(type, key);
-    }
+    for(const key of WORKS_ORDER){ if(BUILD_UNLOCK[key]()) html += buildTile('build', key); }
+    return html ? '<div class="ogrid">'+html+'</div>' : '<div class="up-desc">Make a discovery to unlock something to build.</div>';
+  }
+  function buildResearch(){
+    let html='';
+    for(const n of DISCO){ if(discoVisible(n.id)) html += buildTile('disco', n.id); }
     return '<div class="ogrid">'+html+'</div>';
   }
   function buildCore(){
@@ -658,14 +667,15 @@
   function buildFlow(){
     const A='<div class="farrow">&rarr;</div>', P='<div class="farrow">+</div>';
     return '<div class="flow">'+
-      '<div class="flow-row" id="frow-k">'+fnode('Marks','','fn-marks')+A+fnode('Scriptorium','assets/era1-sigil.png','fn-scriptorium')+A+fnode('Knowledge','','fn-knowledge')+'</div>'+
+      '<div class="flow-row" id="frow-k">'+fnode('Marks','assets/icon-marks.png','fn-marks')+A+fnode('Scriptorium','assets/icon-scriptorium.png','fn-scriptorium')+A+fnode('Knowledge','assets/icon-knowledge.png','fn-knowledge')+'</div>'+
       '<div class="flow-row" id="frow-m">'+fnode('Ore','assets/icon-ore.png','fn-ore')+A+fnode('Smelter','assets/icon-crucible.png','fn-smelter')+A+fnode('Metal','assets/icon-ingot.png','fn-metal')+'</div>'+
-      '<div class="flow-row flow-converge" id="frow-f">'+fnode('Knowledge','','fn-ck')+P+fnode('Metal','assets/icon-ingot.png','fn-cm')+A+fnode('Foundry','assets/icon-crucible.png','fn-foundry2')+A+fnode('Silicon','assets/icon-silicon.png','fn-silicon')+A+fnode('Logic Machine','','fn-logic')+'</div>'+
+      '<div class="flow-row flow-converge" id="frow-f">'+fnode('Knowledge','assets/icon-knowledge.png','fn-ck')+P+fnode('Metal','assets/icon-ingot.png','fn-cm')+A+fnode('Foundry','assets/icon-foundry.png','fn-foundry2')+A+fnode('Silicon','assets/icon-silicon.png','fn-silicon')+A+fnode('Logic Machine','','fn-logic')+'</div>'+
     '</div>';
   }
   function buildOrigins(){ // ERA 1
     let body = buildCore();
-    body += '<div class="panel ogrid-panel" style="grid-column:1/-1"><div class="panel-label">Discoveries &amp; Works <span class="age-label" id="ageLabel"></span></div>'+buildGrid()+'</div>';
+    body += '<div class="panel ogrid-panel" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>';
+    body += '<div class="panel ogrid-panel research-panel" style="grid-column:1/-1"><div class="panel-label">Research · one-time discoveries</div>'+buildResearch()+'</div>';
     body += '<div class="panel flow-panel" style="grid-column:1/-1"><div class="panel-label">The Chain · what feeds what</div>'+buildFlow()+'</div>';
     if(S.flags.o_foundry){
       body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Fabrication</div>'+
