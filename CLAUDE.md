@@ -88,16 +88,19 @@ Systems:
 
 A six-persona board (engineer, product, UX, asset, story, alpha-tester) reviewed the game. Consensus: strong bones + premise + engineering, but **all three built eras go passive in their back half**, and the core promises (a stated goal, a living economy, real "emergence") are diagrammed not felt. **Biggest risk:** no goal → passive lull → closed-box economy → placeholder ending compounds into quitters. Fix the feel loop before architecture/art.
 
-Stack-ranked (cheap feel-fixes first; the L refactor gates Eras 4-5, not this polish):
-1. **Per-era objective with live progress** (5/6 personas) — *DECISION PENDING from Cody:* the banner was removed deliberately; board says re-add quiet + dismissible, on by default. Don't re-add without his call.
-2. **Kill each era's passive back-half**, starting the **late-Origins lull** (~6-10 min): add a cheap repeatable mid-tier sink between "workers maxed" and Foundry/fabricate.
-3. **Watch Zach play one full run** + read the export before tuning further (happens ~tomorrow).
-4. **Era 3 Training Focus must be a real decision** — Fit not strictly dominant; add discovery-progress feedback on the Undiscovered Method card.
-5. **Designed endcard + gate the unbuilt Eras 4-5** so no one hits "real design work begins."
-6. **Offline-catch-up bug (real):** `offlineCatchup`→`runExperiment` rolls `Math.random()` (silent Method unlocks while away) and calls `render()` mid-replay. Gate RNG + render during catch-up; assert determinism.
-7. (L) **Era-3 scatter-plot core viz** (3 personas) — fixes "watching" feel + Era-3 art identity.
-8. (L) **Modularize per-era logic** into `{produce,build,refresh}` descriptors — precondition for Eras 4-5.
-9. (M) One more **reach-back link**; resource registry + MILES-id guardrail; keyboard/touch tooltips + bigger min type; narrative heart per era; a real Emergence finale where something you didn't buy emerges.
+**DONE this session (post-board sprint):**
+- ✅ **Late-Origins lull** → added **Refinement** (repeatable Ore-cost sink, +5%/lvl all production; appears once the Scriptorium economy is going). Board #2.
+- ✅ **Era 3 a real decision** → effective accuracy caps at 80% until **Regularization** is discovered, so Explore is mandatory (Fit+Generalize can't win alone). Plus live discovery-%/s feedback on the Undiscovered Method card. Board #4.
+- ✅ **Frontier endcard** → generalizing reaches a designed "frontier of the alpha" card (wordmark + "Deep & Foundation coming"); removed the era4/era5/emergent scaffold milestones from the live chain (dev can still openEra). No more "real design work begins" placeholder. Board #5.
+- ✅ **Offline-catch-up bug fixed** → discovery RNG + render() gated behind `!MUTE`; offline is deterministic (no silent Method unlocks). Board #6.
+- ✅ **Era-3 scatter-plot core viz** → procedural teal canvas (`drawScatter`): points + a model curve that fits as accuracy rises and wiggles when overfit. Board #7.
+- ✅ **Objective banner** → DECISION (Cody): **keep it removed**, trust exploration. Board #1 overruled deliberately.
+
+**Still open:**
+1. **Watch Zach play a full run tomorrow** + read the export; tune Eras 1-3 toward 7-9 min from real data (verify Refinement fills the lull, Era-3 feels like steering, Era-2 burst-then-grind).
+2. (L) **Modularize per-era logic** into `{produce,build,refresh}` descriptors + a resource registry + MILES-id guardrail — precondition for Eras 4-5 (Engineer).
+3. (M) Deepen Era 2's back-half (axiom grind); one more cross-era reach-back link; a11y (keyboard/touch tooltips, bigger min type, reduced-motion); narrative heart per era + a real Emergence finale where something you didn't buy emerges.
+4. **Build Eras 4-5** (blue/violet) on the supply-chain pattern.
 
 (Board flagged core-bronze/logic-machine as un-keyed — false alarm, verified clean. Personas read code/files, not the rendered game; treat art-render claims as hypotheses.)
 
