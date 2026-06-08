@@ -281,7 +281,8 @@ function testNoNaN(){
   const EM = freshGame(); const S = EM.S;
   S.scribe=6; S.miner=6; S.scriptorium=3; S.smelter=3; S.foundry=2; S.marks=100; S.ore=100; S.knowledge=50; S.metal=50;
   S.ruleset=6; S.daemon=4; S.axioms=10; S.tech={formalLogic:true,fwdChain:true,bwdChain:true,rete:true,heuristics:true};
-  S.dataset=3; S.model=2; S.data=100; S.insight=80; S.compute=4; S.training=3; S.capability=50; S.cluster=2;
+  S.dataset=3; S.model=2; S.data=100; S.insight=80;
+  S.maxEra=5; S.node=5; S.vision=0.6; S.language=0.5; S.reasoning=0.4; S.capability=50; S.recursion=3; S.scale=200; S.emerged=true; S.agentRate=1.5;
   for(let i=0;i<200;i++) EM.produce(0.1);
   ok(finite(S, ['marks','knowledge','ore','metal','silicon','rules','data','insight','capability','scale']), 'all resources stay finite');
 }
