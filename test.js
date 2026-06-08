@@ -351,29 +351,58 @@ function statisticalStep(EM){
   else if(S.gap > 0.18) S.focus = 'generalize';
   else S.focus = 'fit';
 }
+function deepStep(EM){ // ERA 4 — keep the Silicon factory + Data/Insight flowing, grow Compute Nodes (balanced allocation)
+  const { S, BUYS } = EM;
+  if(S.maxEra < 4) return;
+  // Origins reach-back: feed and grow the Silicon factory (Nodes are bought with Silicon)
+  if(S.scriptorium < 45 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium');
+  if(S.smelter < 45 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
+  if(S.foundry < 70 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
+  // keep Statistical infra producing Data + Insight (Nodes draw both)
+  if(S.dataset < 45 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset');
+  if(S.model < 30 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');
+  // grow Compute; allocation stays balanced 1/1/1 so breadth (geometric mean) climbs
+  if(S.node < 90 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
+}
+function foundationStep(EM){ // ERA 5 — acquire capabilities, recurse, drive Scale to emergence
+  const { S, CAPS } = EM;
+  if(S.maxEra < 5) return;
+  for(const c of CAPS) if(!S.caps[c.id] && S.capability >= c.cost) EM.buyCap(c.id);
+  if(S.capability >= EM.improveCost()) EM.selfImprove();
+}
 function testProgression(){
-  section('Progression — autoplay Origins → Symbolic → Statistical');
+  section('Progression — autoplay Origins → Symbolic → Statistical → Deep → Foundation → Emergence');
   const EM = freshGame(); const { S } = EM;
-  const MAX = 300000;
-  let tick = 0, origAt, symAt, statAt;
+  const MAX = 600000;
+  let tick = 0, origAt, symAt, statAt, deepAt, foundAt, emergeAt;
   for(; tick < MAX; tick++){
-    if(S.maxEra === 1) originsStep(EM); else if(S.maxEra === 2) symbolicStep(EM); else statisticalStep(EM);
+    if(S.maxEra === 1) originsStep(EM);
+    else if(S.maxEra === 2) symbolicStep(EM);
+    else if(S.maxEra === 3) statisticalStep(EM);
+    else { deepStep(EM); foundationStep(EM); }
     EM.tick();
     if(origAt === undefined && S.flags.origindone) origAt = S.t;
     if(symAt === undefined && S.flags.symbolicDone) symAt = S.t;
-    if(S.flags.frontier){ statAt = S.t; break; }
+    if(statAt === undefined && S.maxEra >= 4) statAt = S.t;
+    if(deepAt === undefined && S.maxEra >= 5) deepAt = S.t;
+    if(emergeAt === undefined && S.emerged){ emergeAt = S.t; break; }
   }
-  if(statAt !== undefined) console.log('  Era 3 (Statistical) generalized at ' + (statAt/60).toFixed(1) + 'm');
-  else console.log('  Era 3 STALLED: acc='+(S.accuracy*100).toFixed(0)+'% gap='+(S.gap*100).toFixed(0)+'% eff='+(EM.effAccuracy()*100).toFixed(0)+'% data='+Math.round(S.data)+' dataset='+S.dataset+' model='+S.model+' methods='+Object.keys(S.methods).join(',')+' rules='+Math.round(S.rules));
-  ok(S.flags.frontier, 'Era 3 generalizes and reaches the frontier endcard (full built chain completes)');
   const mm = s => s===undefined ? '—' : (s/60).toFixed(1)+'m';
+  if(statAt !== undefined) console.log('  Era 3 (Statistical) generalized → Deep at ' + mm(statAt));
+  else console.log('  Era 3 STALLED: acc='+(S.accuracy*100).toFixed(0)+'% gap='+(S.gap*100).toFixed(0)+'% eff='+(EM.effAccuracy()*100).toFixed(0)+'% data='+Math.round(S.data)+' dataset='+S.dataset+' model='+S.model);
+  if(deepAt !== undefined) console.log('  Era 4 (Deep) reached breadth → Foundation at ' + mm(deepAt) + (statAt?('  (Deep took '+((deepAt-statAt)/60).toFixed(1)+'m)'):''));
+  else console.log('  Era 4 STALLED: breadth='+(EM.deepBreadth()*100).toFixed(0)+'% V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+'% node='+S.node+' silicon='+Math.round(S.silicon)+' data='+Math.round(S.data)+' insight='+Math.round(S.insight));
+  if(emergeAt !== undefined) console.log('  Era 5 (Foundation) → EMERGENCE at ' + mm(emergeAt) + '  (recursion Lv'+S.recursion+', '+Object.keys(S.caps).length+' capabilities)');
+  else console.log('  Era 5 STALLED: scale='+Math.round(S.scale)+'/'+EM.CFG.e5.emergeGate+' recursion='+S.recursion+' capability='+Math.round(S.capability));
   console.log('  Era 1 (Origins) fabricated at ' + mm(origAt));
   console.log('  Era 2 (Symbolic) completed at ' + mm(symAt) + (origAt&&symAt?('  (Era 2 took '+((symAt-origAt)/60).toFixed(1)+'m)'):''));
-  console.log('  origins: scribe='+S.scribe+' miner='+S.miner+' scriptorium='+S.scriptorium+' smelter='+S.smelter+' foundry='+S.foundry);
   ok(S.flags.origindone, 'Era 1 (Origins) completes — fabrication reached, no stall');
   ok(S.maxEra >= 2, 'Symbolic era opens after fabrication');
   ok(S.flags.symbolicDone, 'Era 2 (Symbolic) still completes after the renumber');
-  ok(finite(S, ['marks','silicon','rules','axioms']), 'no NaN at completion');
+  ok(statAt !== undefined, 'Era 3 (Statistical) generalizes and opens Deep');
+  ok(deepAt !== undefined, 'Era 4 (Deep) reaches breadth and opens Foundation');
+  ok(emergeAt !== undefined, 'Era 5 (Foundation) reaches emergence — full arc completes');
+  ok(finite(S, ['marks','silicon','rules','axioms','capability','scale']), 'no NaN at completion');
   if(origAt){ const m = origAt/60;
     if(m < 3) console.log('  ⚠ Origins faster than 5-6m target ('+m.toFixed(1)+'m)');
     else if(m > 9) console.log('  ⚠ Origins slower than 5-6m target ('+m.toFixed(1)+'m)');

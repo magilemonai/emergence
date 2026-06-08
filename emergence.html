@@ -35,6 +35,40 @@
       linear-gradient(rgba(5,18,16,0.92), rgba(5,18,16,0.95)),
       repeating-linear-gradient(rgba(110,198,168,0.045) 0 1px, transparent 1px 28px),
       repeating-linear-gradient(90deg, rgba(110,198,168,0.045) 0 1px, transparent 1px 28px), var(--panel); }
+  /* ERA 4 — Deep: cool blue, neural / compute. Clean sans. */
+  .theme-4, .era-e4 {
+    --bg: #070d1a; --panel: #0c1426; --panel-2: #101a30; --line: #243352;
+    --text: #d6e3f7; --dim: #8ea6c8; --dimmer: #748bad; --accent: #6ea8ff;
+    --era-font: "Inter", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  }
+  body.theme-4 { background: radial-gradient(1000px 640px at 50% -10%, rgba(110,168,255,0.10), transparent 60%), var(--bg); }
+  .era-e4 { background:
+      linear-gradient(rgba(7,13,26,0.92), rgba(7,13,26,0.95)),
+      radial-gradient(620px 360px at 18% 12%, rgba(110,168,255,0.07), transparent 60%),
+      radial-gradient(620px 360px at 86% 88%, rgba(140,120,255,0.06), transparent 60%), var(--panel); }
+  /* ERA 5 — Foundation: violet, recursive / emergent. Clean sans. */
+  .theme-5, .era-e5 {
+    --bg: #0c0814; --panel: #160f24; --panel-2: #1d1430; --line: #382a52;
+    --text: #e6dbf6; --dim: #b29ad0; --dimmer: #927bb0; --accent: #b78bff;
+    --era-font: "Inter", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  }
+  body.theme-5 { background: radial-gradient(1100px 700px at 50% -12%, rgba(183,139,255,0.12), transparent 60%), radial-gradient(800px 500px at 90% 110%, rgba(110,168,255,0.06), transparent 60%), var(--bg); }
+  .era-e5 { background:
+      linear-gradient(rgba(12,8,20,0.90), rgba(12,8,20,0.94)),
+      radial-gradient(700px 420px at 50% 50%, rgba(183,139,255,0.08), transparent 62%), var(--panel); }
+  /* Era-4 compute allocation controls */
+  .alloc-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .alloc { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
+  .alloc-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+  .alloc-nm { font-size: 12px; font-weight: 600; color: var(--text); }
+  .alloc-lv { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .alloc-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; margin-bottom: 9px; }
+  .alloc-bar i { display: block; height: 100%; width: 0; transition: width 0.3s; }
+  .alloc-ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .alloc-btn { font-family: inherit; font-size: 15px; line-height: 1; width: 30px; height: 26px; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; transition: all 0.12s; }
+  .alloc-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .alloc-w { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); min-width: 16px; text-align: center; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text);
     font-family: var(--era-font); overflow: hidden; transition: background 0.9s ease, color 0.7s ease; }
@@ -401,11 +435,30 @@
         explore:    { acc:0.4, gap:0.5, red:0,   disc:2.6, ins:0.8, label:'Explore',    desc:'Hunts for new Methods. Accuracy holds.' },
       },
     },
-    // Eras 4-5 still run on the original scaffold; rebuilt in a later pass.
-    computeCost: 35, computeGrowth: 1.22, computePer: 0.5,
-    trainCost: 90, trainGrowth: 1.28,
-    era4Gate: 30,
-    scaleCost: 45, scaleGrowth: 1.26,
+    e4: { // ERA 4 — Deep (compute allocation across parallel training runs; breadth, not specialization, wins)
+      nodeCost: 45, nodeGrowth: 1.21, nodeCompute: 0.7, // Compute/s per Node (Nodes bought with Silicon — reach-back to Origins)
+      nodeData: 0.9,        // Data/s drawn per Node to run (reach-back fuel to Statistical)
+      runInsight: 0.05,     // Insight/s drawn per unit of allocated Compute (training ideas)
+      capGain: 0.0011,      // domain capability per allocated Compute × (1 − level)  [diminishing climb]
+      capRate: 0.9,         // Capability accrued = geometric-mean breadth × Compute × this (balance pays)
+      seedNodes: 4, seedSilicon: 260, seedData: 140, // openEra(4) seed so Deep starts in motion
+      breadthGate: 0.78,    // geometric-mean breadth across all three domains → Era 5 (forces generality)
+      domains: [
+        { k:'vision',    label:'Vision',    desc:'Perception. Sees structure in raw signal.' },
+        { k:'language',  label:'Language',  desc:'Symbols and meaning. The thread back to logic.' },
+        { k:'reasoning', label:'Reasoning', desc:'Chains of inference over the other two.' },
+      ],
+    },
+    e5: { // ERA 5 — Foundation (recursive self-improvement: capabilities multiply ALL earlier eras; then something emerges)
+      improveBase: 60, improveGrowth: 1.5,  // Self-Improve cost (Capability) per recursion level — repeatable
+      recurBonus: 0.10,    // each recursion level: +10% to ALL production, every era (the living supply chain feeds itself)
+      scalePerImprove: 8,  // Scale granted per Self-Improve level (rising)
+      scaleRate: 0.05,     // passive Scale/s = breadth-trained Capability throughput × recursion
+      seedCapability: 120, // openEra(5) seed
+      emergeGate: 1000,    // Scale at which the unbought agent emerges — the finale
+      agentBase: 0.4,      // the emergent agent's self-Scale/s at emergence...
+      agentAccel: 1.04,    // ...compounding each second once it wakes (the curve bends vertical)
+    },
   };
   function freshState(){ return {
     t: 0, started: false, era: 1, maxEra: 1, speed: 1, dev: false, buyMode: '1',
@@ -420,12 +473,14 @@
     // Era 3 — Statistical
     data: 0, insight: 0, accuracy: 0, gap: 0, methods: {}, focus: 'fit',
     dataset: 0, model: 0,
-    // Era 4-5 scaffold
-    capability: 0, scale: 0, compute: 0, training: 0, cluster: 0,
+    // Era 4 — Deep (compute allocation across three training runs)
+    node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision:1, language:1, reasoning:1 }, capability: 0,
+    // Era 5 — Foundation (recursion + emergence)
+    scale: 0, recursion: 0, caps: {}, emerged: false, agentRate: 0,
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
   }; }
   const S = freshState();
-  const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0, rules:0, data:0, insight:0 }; // net per-second flow, captured each tick
+  const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0, rules:0, data:0, insight:0, capability:0, scale:0 }; // net per-second flow, captured each tick
   let viewEra = 1; // the era currently most in view (drives the contextual top bar); follows scroll
   // Progressive UI: each section animates in only the first time it appears (survives re-renders).
   const _seen = new Set();
@@ -501,10 +556,19 @@
     { id:'era3', cond:()=> S.flags.symbolicDone,
       fire:()=>{ S.dataset += CFG.e3.seedDatasets; S.silicon += CFG.e3.seedSilicon; openEra(3); // seed Datasets + Silicon so it starts in motion; scaling needs more Silicon (Origins)
         toast('THE STATISTICAL ERA','Hand-written logic has hit its ceiling. Now intelligence is <b>learned from Data</b>. Datasets run on <b>Silicon</b> — to grow, you reopen the Foundry. Set your <b>Training Focus</b> and experiment toward a model that generalizes.'); } },
-    // End of built content (Eras 4-5 are designed but not yet built — gate here with a real endcard).
-    { id:'frontier', cond:()=> S.maxEra>=3 && effAccuracy()>=CFG.e3.genThreshold,
-      fire:()=>{ S.flags.frontier=true;
-        toast('A MODEL THAT GENERALIZES','You crossed from statistics into something that holds up on data it has never seen. This is the frontier of the alpha — <b>Deep</b> (neural scaling) and <b>Foundation</b> (emergent generality) are next.'); render(); } },
+    // ERA 4 — Deep: a model that generalizes becomes the seed of a model you scale with Compute.
+    { id:'era4', cond:()=> S.maxEra>=3 && effAccuracy()>=CFG.e3.genThreshold,
+      fire:()=>{ S.node += CFG.e4.seedNodes; S.silicon += CFG.e4.seedSilicon; S.data += CFG.e4.seedData; openEra(4);
+        toast('THE DEEP ERA','A model that holds up on unseen data is worth <b>scaling</b>. Build <b>Compute</b> from Silicon, fuel it with Data and Insight, and <b>allocate it across three training runs</b>. Breadth beats specialty — a generally capable model is the goal.'); } },
+    { id:'e4_allocate', cond:()=> S.maxEra>=4 && S.node>0,
+      fire:()=>{ S.flags.canAllocate=true; toast('COMPUTE ALLOCATION','Your Nodes produce Compute. Split it across <b>Vision</b>, <b>Language</b> and <b>Reasoning</b> — the geometric mean of the three is what makes Capability, so a lopsided model barely produces.'); } },
+    // ERA 5 — Foundation: a broadly capable model can begin to improve itself.
+    { id:'era5', cond:()=> S.maxEra>=4 && Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)) >= CFG.e4.breadthGate,
+      fire:()=>{ S.capability += CFG.e5.seedCapability; openEra(5);
+        toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Spend <b>Capability</b> to <b>self-improve</b> — each level multiplies <i>all</i> production, every era, including its own. Drive <b>Scale</b> toward emergence.'); } },
+    { id:'emergence', cond:()=> S.maxEra>=5 && S.scale >= CFG.e5.emergeGate && !S.emerged,
+      fire:()=>{ S.emerged=true; S.agentRate=CFG.e5.agentBase; S.flags.emerged=true;
+        toast('EMERGENCE','Something you did not build is now improving itself. An autonomous agent has appeared in the substrate — it allocates, scales, and recurses on its own. You set the conditions; the behavior emerged. This is the end of the authored game.'); render(); } },
   ];
   const $ = id => document.getElementById(id);
   function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
@@ -524,6 +588,8 @@
     else if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(440,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.1); g.gain.setValueAtTime(0.13,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15); o.start();o.stop(ctx.currentTime+0.15); }
     else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(f,ctx.currentTime+i*0.07); g.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.11,ctx.currentTime+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.07+0.35); o.start(ctx.currentTime+i*0.07);o.stop(ctx.currentTime+i*0.07+0.35); }); }
   }catch(e){} }
+  // ERA 5 recursive self-improvement: each level lifts ALL production, every era. 1 until Foundation begins.
+  function rMult(){ return Math.pow(1+CFG.e5.recurBonus, S.recursion); }
   // Derived Era-1 multipliers from owned tech + axioms. One source of truth for click + ruleset math.
   function stats(){
     const T=S.tech;
@@ -536,6 +602,7 @@
     const axBonus=CFG.e2.axiomBonus*(T.metalogic?1.5:1);
     global*=(1+S.axioms*axBonus);
     global*=(1+CFG.e2.lemmaBonus*S.optLevel); // Optimization lemma (repeatable)
+    global*=rMult(); // Era-5 recursion lifts Symbolic too
     return { click: click*global, rulesetYield: CFG.e2.rulesetYield*rulesetMult*global, global, axBonus };
   }
   // ---- Era 2 theorem-proving: Rulesets emit Inference, which you aim at one proof at a time ----
@@ -576,7 +643,7 @@
     if(d.wheel){ minerY*=1.8; quarry*=1.8; scribeY*=0.8; inscribe*=0.8; } // addition + subtraction
     if(d.numerals){ scrR*=1.3; smR*=1.3; foR*=1.3; }
     if(d.glassmaking) foR*=1.5;
-    const g = 1 + S.refine*e.refineBonus; // Refinement: repeatable surplus-Ore sink, lifts every craft
+    const g = (1 + S.refine*e.refineBonus) * rMult(); // Refinement (repeatable Ore sink) + Era-5 recursion both lift every craft
     return { inscribe:inscribe*g, quarry:quarry*g, scribeY:scribeY*g, minerY:minerY*g, scrR:scrR*g, smR:smR*g, foR:foR*g };
   }
   function discoVisible(id){ const n=DISCOMAP[id]; return n.req.every(r=>S.disco[r]); }
@@ -654,6 +721,7 @@
     if(m.clustering) discMult*=1.6;     // discovery odds
     if(m.regularization) regMult=2;     // Generalize focus cuts the gap twice as fast
     if(m.ensembles) effBonus+=0.12;     // effective accuracy bonus
+    const r=rMult(); dataMult*=r; insMult*=r; // Era-5 recursion lifts the Statistical factory (Data + Insight)
     return { accGain, dataMult, insMult, discMult, regMult, effBonus };
   }
   function curFocus(){ return CFG.e3.focus[S.focus] || CFG.e3.focus.fit; }
@@ -685,9 +753,7 @@
     daemon:  { res:'rules', key:'daemon',  base:CFG.e2.daemonCost,  growth:CFG.e2.daemonGrowth },
     dataset: { res:'silicon', key:'dataset', base:CFG.e3.datasetCost, growth:CFG.e3.datasetGrowth },
     model:   { res:'data',    key:'model',   base:CFG.e3.modelCost,   growth:CFG.e3.modelGrowth },
-    compute: { res:'insight',key:'compute',base:CFG.computeCost, growth:CFG.computeGrowth },
-    training:{ res:'insight',key:'training',base:CFG.trainCost,  growth:CFG.trainGrowth },
-    cluster: { res:'capability',key:'cluster',base:CFG.scaleCost,growth:CFG.scaleGrowth },
+    node:    { res:'silicon', key:'node', base:CFG.e4.nodeCost, growth:CFG.e4.nodeGrowth }, // Compute Node — reach-back to Origins' Silicon
   };
   // unit cost of the (count)th building of this type
   const unitCost=(b,count)=> Math.floor(b.base*Math.pow(b.growth,count));
@@ -726,7 +792,7 @@
     // ERA 1 — Origins: sources feed stocks; converters draw from upstream and starve if it's empty.
     const os=oStats();
     const e1=CFG.e1;
-    const _b={marks:S.marks,knowledge:S.knowledge,ore:S.ore,metal:S.metal,silicon:S.silicon,rules:S.rules,data:S.data,insight:S.insight};
+    const _b={marks:S.marks,knowledge:S.knowledge,ore:S.ore,metal:S.metal,silicon:S.silicon,rules:S.rules,data:S.data,insight:S.insight,capability:S.capability,scale:S.scale};
     if(S.scribe>0) S.marks += S.scribe*os.scribeY*dt;
     if(S.miner>0)  S.ore   += S.miner*os.minerY*dt;
     // Scriptorium: Marks -> Knowledge, but each unit also burns Ore (tablets). Throttled by whichever runs short.
@@ -765,9 +831,36 @@
       if(need>0){ if(S.silicon>=need){ S.silicon-=need; } else { modelRun = S.model*(S.silicon/need); S.silicon=0; } }
       if(modelRun>0) runExperiment(modelRun*CFG.e3.expPerModel*dt);
     }
-    // ERA 4-5 scaffold
-    if(S.training>0 && S.compute>0){ const runs=Math.min(S.insight, S.training*0.5*dt); const cap=runs*(S.compute*CFG.computePer); S.insight-=runs; S.capability+=cap*dt*4; }
-    if(S.cluster>0){ const c=Math.min(S.capability, S.cluster*0.4*dt); S.capability-=c; S.scale+=c*2; }
+    // ERA 4 — Deep: Compute Nodes (Silicon-built) draw Data to run; their Compute is split across three training runs,
+    // each drawing Insight and climbing a diminishing curve. Capability accrues from BREADTH (geometric mean), so
+    // balanced generality pays more than any single specialty — the theme made mechanical.
+    if(S.node>0){
+      const e4=CFG.e4;
+      let run=S.node; const want=S.node*e4.nodeData*dt;     // Data fuel (reach-back to Statistical)
+      if(want>0){ if(S.data>=want){ S.data-=want; } else { run=S.node*(S.data/want); S.data=0; } }
+      const compute=run*e4.nodeCompute*dt;
+      if(compute>0){
+        const doms=e4.domains, tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1;
+        for(const d of doms){ const share=compute*((S.alloc[d.k]||0)/tw); if(share<=0) continue;
+          let eff=share; const ins=share*e4.runInsight;       // Insight fuel (reach-back to Statistical)
+          if(ins>0){ if(S.insight>=ins){ S.insight-=ins; } else { eff=share*(S.insight/ins); S.insight=0; } }
+          S[d.k]=Math.min(1, S[d.k]+e4.capGain*eff*(1-S[d.k]));
+        }
+        const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
+        S.capability += breadth*compute*e4.capRate; // a broad model does useful work; a lopsided one barely does
+      }
+    }
+    // ERA 5 — Foundation: passive Scale from the trained model's throughput × recursion; then the emergent agent.
+    if(S.maxEra>=5){
+      const e5=CFG.e5;
+      const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
+      if(breadth>0) S.scale += breadth*e5.scaleRate*(1+S.recursion)*dt; // recursion accelerates Scale generation
+      if(S.emerged){ // something you did not buy is now improving itself; the curve bends vertical
+        S.agentRate = Math.max(e5.agentBase, S.agentRate*Math.pow(e5.agentAccel, dt));
+        S.scale += S.agentRate*dt;
+        S.capability += S.agentRate*0.5*dt; // it feeds its own substrate back too
+      }
+    }
     if(dt>0){ for(const k in _b) RATES[k]=(S[k]-_b[k])/dt; } // net per-second flow for every resource (all eras)
   }
   function checkMiles(){
@@ -1067,24 +1160,101 @@
     if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(127,230,196,0.5)'; ctx.shadowBlur=6; }
     ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0;
   }
-  function buildEndcard(){
+  // ---- ERA 4 (Deep): allocate Compute across three training runs; breadth (geometric mean) makes Capability ----
+  function deepBreadth(){ return Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)); }
+  function allocRow(d){
+    return '<div class="alloc" id="alloc-'+d.k+'" data-tip="'+esc('<i>'+d.desc+'</i>')+'">'+
+      '<div class="alloc-head"><span class="alloc-nm">'+d.label+'</span><span class="alloc-lv" id="alv-'+d.k+'"></span></div>'+
+      '<div class="alloc-bar"><i id="albar-'+d.k+'" style="background:var(--e3)"></i></div>'+
+      '<div class="alloc-ctl"><button class="alloc-btn" data-alloc="'+d.k+':-1">−</button>'+
+        '<span class="alloc-w" id="aw-'+d.k+'"></span>'+
+        '<button class="alloc-btn" data-alloc="'+d.k+':1">+</button></div></div>';
+  }
+  function buildDeep(){
+    const e4=CFG.e4;
+    let body =
+      '<div class="panel sym-hero" style="grid-column:1/-1">'+
+        '<div class="panel-label">The Network · allocate Compute across parallel training runs</div>'+
+        '<canvas id="losscurve" class="scatter"></canvas>'+
+        '<div class="proof-rate" id="deepRate"></div>'+
+        '<div class="meter"><i id="meter-breadth" style="background:var(--e3)"></i></div>'+
+        '<div class="meter-label"><span>Breadth — geometric mean of all three runs (the gate to Foundation)</span><span id="breadth-val"></span></div>'+
+        '<div class="panel-label" style="margin:12px 0 6px">Compute Allocation</div>'+
+        '<div class="alloc-row">'+e4.domains.map(allocRow).join('')+'</div>'+
+      '</div>'+
+      '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('node','Compute Node','Built from Silicon. Produces Compute; draws Data + Insight to run.')+'</div>'+
+      '<div class="panel"><div class="panel-label">The Run</div><div class="up-desc" style="line-height:1.7" id="deepStats"></div></div>'+
+      '<div class="panel" style="grid-column:1/-1"><div class="sup-lab">Origins Supply — Compute Nodes run on Silicon; reopen the Foundry to scale</div>'+
+        '<div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium')+'</div>'+
+        '<div class="sup-rate" id="supSi4"></div></div>';
+    return eraShell(4, S.obsolete[4], body);
+  }
+  function drawLoss(){ // Era 4 signature viz: three loss curves, one per run, each descending as its domain trains
+    const cv=$('losscurve'); if(!cv || !cv.getContext) return;
+    const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return;
+    const w=cv.width=cv.clientWidth||640, h=cv.height=150, pad=16, gw=w-pad*2, gh=h-pad*2;
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='rgba(110,168,255,0.22)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad,pad-4); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+    const cols={ vision:'#6ea8ff', language:'#9ec3ff', reasoning:'#c7b3ff' };
+    for(const d of CFG.e4.domains){ const lv=Math.max(0,Math.min(1,S[d.k]));
+      ctx.beginPath();
+      for(let px=0;px<=gw;px+=3){ const x=px/gw;
+        const loss=(1-lv*0.92)*Math.exp(-x*(1.0+lv*3.2));      // trained runs decay fast to a low floor
+        const y=Math.max(0.02,Math.min(0.98,loss));
+        const cx=pad+px, cy=pad+y*gh; if(px===0) ctx.moveTo(cx,cy); else ctx.lineTo(cx,cy); }
+      ctx.lineWidth=2.1; ctx.strokeStyle=cols[d.k];
+      if(ctx.shadowBlur!==undefined){ ctx.shadowColor=cols[d.k]; ctx.shadowBlur=5; }
+      ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0; }
+  }
+  function allocAdjust(spec){ const [k,dv]=spec.split(':'); S.alloc[k]=Math.max(0,Math.min(10,(S.alloc[k]||0)+parseInt(dv,10))); playSound('click'); render(); }
+  // ---- ERA 5 (Foundation): recursive self-improvement, emergent capabilities, and the agent that appears ----
+  const CAPS = [
+    { id:'selfModel',  name:'Self-Modeling',     cost:80,  flavor:'It builds a working model of itself.',          desc:'+50% Scale generation.' },
+    { id:'transfer',   name:'Transfer Learning', cost:220, flavor:'What it learns in one run, it reuses in the others.', desc:'+50% Capability throughput.' },
+    { id:'worldModel', name:'World Model',        cost:520, flavor:'A compressed theory of everything it has seen.', desc:'Self-Improve costs 25% less and grants 50% more Scale.' },
+  ];
+  const CAPMAP = Object.fromEntries(CAPS.map(c=>[c.id,c]));
+  function improveCost(){ return Math.floor(CFG.e5.improveBase*Math.pow(CFG.e5.improveGrowth,S.recursion)*(S.caps.worldModel?0.75:1)); }
+  function selfImprove(){ const c=improveCost(); if(S.capability<c) return;
+    S.capability-=c; S.recursion++;
+    S.scale += CFG.e5.scalePerImprove*S.recursion*(S.caps.worldModel?1.5:1);
+    playSound('buy'); recEvent('improve:'+S.recursion); render(); }
+  function buyCap(id){ const c=CAPMAP[id]; if(!c || S.caps[id] || S.capability<c.cost) return;
+    S.capability-=c.cost; S.caps[id]=true; recEvent('cap:'+id);
+    toast('CAPABILITY: '+c.name.toUpperCase(), '<i>'+c.flavor+'</i><br>'+c.desc); render(); }
+  function capTile(c){ const owned=S.caps[c.id];
+    return '<div class="proof-item'+(owned?' lemma':'')+'" id="cap-'+c.id+'" data-tip="'+esc('<i>'+c.flavor+'</i>')+'"><div class="pf-ic glyph">'+(owned?'&#9670;':'&#9671;')+'</div>'+
+      '<div class="pf-main"><div class="pf-name">'+c.name+'</div><div class="pf-desc">'+c.desc+'</div>'+
+      (owned?'<div class="pf-desc" style="color:var(--accent)">ACQUIRED</div>':'<button class="up-buy" data-cap="'+c.id+'" id="capb-'+c.id+'"></button>')+'</div></div>';
+  }
+  function buildFoundation(){
+    let body =
+      '<div class="panel sym-hero" style="grid-column:1/-1">'+
+        '<div class="panel-label">Recursive Self-Improvement · the model turns on itself</div>'+
+        '<div class="proof-rate" id="recRate"></div>'+
+        '<div class="meter"><i id="meter-scale" style="background:var(--e4)"></i></div>'+
+        '<div class="meter-label"><span>Scale — toward emergence</span><span id="meter-scale-val"></span></div>'+
+        '<button class="act-btn" id="improveBtn" style="margin-top:12px"></button>'+
+        '<div class="act-sub" id="improveSub"></div>'+
+      '</div>'+
+      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Emergent Capabilities · spend Capability</div><div class="proof-list">'+CAPS.map(capTile).join('')+'</div></div>';
+    if(S.emerged) body += buildEmergence();
+    return eraShell(5, false, body);
+  }
+  function buildEmergence(){
     return '<div class="panel endcard" style="grid-column:1/-1">'+
       '<img class="endcard-wm" src="assets/wordmark.png" alt="EMERGENCE">'+
-      '<div class="endcard-title">The frontier of the alpha</div>'+
-      '<div class="endcard-body">From the first inscribed mark to a model that <b>generalizes</b> — you have played through everything built so far. <b>Deep</b> (neural scaling) and <b>Foundation</b> (emergent generality) are designed and coming next. Thank you for testing.</div>'+
+      '<div class="endcard-title">Emergence</div>'+
+      '<div class="endcard-body">Something you did not build is now improving itself. An autonomous agent has appeared in the substrate — allocating, scaling, recursing on its own. You set the conditions; the behavior emerged. <span id="agentLine"></span></div>'+
       '</div>';
   }
   function buildEras(){
     let html = buildOrigins();
     if(S.maxEra>=2) html += buildSymbolic();
     if(S.maxEra>=3) html += buildStatistical();
-    if(S.flags.frontier) html += buildEndcard();
-    if(S.maxEra>=4) html += eraShell(4, S.obsolete[4],
-      '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('compute','Compute Node','The new bottleneck. More nodes, stronger training runs.')+'</div>'+
-      '<div class="panel"><div class="panel-label">Training</div>'+(S.flags.canTrain?eraUpgrade('training','Training Run','Consumes Insight + Compute to produce raw Capability.'):'<div class="up-desc">Build Compute first...</div>')+'</div>');
-    if(S.maxEra>=5) html += eraShell(5, false,
-      '<div class="panel"><div class="panel-label">Scaling</div>'+eraUpgrade('cluster','Cluster','Turns Capability into Scale. Everything below feeds this.')+'</div>'+
-      '<div class="panel"><div class="panel-label">Emergence</div><div class="up-desc" style="line-height:1.7">At sufficient Scale, behavior appears that no single component was designed to produce. This is the frontier - and the end of this prototype\'s authored content.</div><div class="meter"><i id="meter-scale" style="background:var(--e4)"></i></div><div class="meter-label"><span>Toward emergence</span><span id="meter-scale-val"></span></div></div>');
+    if(S.maxEra>=4) html += buildDeep();
+    if(S.maxEra>=5) html += buildFoundation();
     return html;
   }
   function render(){ // structural rebuild — only on unlocks, era changes, or buy-mode change
@@ -1106,6 +1276,9 @@
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
     document.querySelectorAll('[data-proof]').forEach(b=> b.onclick=e=>selectProof(e.currentTarget.dataset.proof));
     document.querySelectorAll('[data-toggle]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const n=+e.currentTarget.dataset.toggle; S.collapsed[n]=!S.collapsed[n]; render(); });
+    document.querySelectorAll('[data-alloc]').forEach(b=> b.onclick=e=>allocAdjust(e.currentTarget.dataset.alloc));
+    document.querySelectorAll('[data-cap]').forEach(b=> b.onclick=e=>buyCap(e.currentTarget.dataset.cap));
+    const imb=$('improveBtn'); if(imb) imb.onclick=selfImprove;
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
     refresh();
     watchEraThemes();
@@ -1137,7 +1310,7 @@
     }
     const st=stats();
     setText('manualSub', '+'+fmt(st.click)+' rules · the original verb');
-    setStatus(1,S.scribe>0||S.miner>0); setStatus(2,S.ruleset>0||S.daemon>0); setStatus(3,S.model>0); setStatus(4,S.training>0); setStatus(5,S.cluster>0);
+    setStatus(1,S.scribe>0||S.miner>0); setStatus(2,S.ruleset>0||S.daemon>0); setStatus(3,S.model>0); setStatus(4,S.node>0); setStatus(5,S.recursion>0||S.emerged);
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
@@ -1217,7 +1390,29 @@
         const h='~'+(pSec*100).toFixed(0)+'%/s chance to discover the next Method'+(S.focus==='explore'?' · <b>Explore is boosting this</b>':' · switch to <b>Explore</b> to boost it');
         if(df._html!==h){ df.innerHTML=h; df._html=h; } }
       drawScatter(); }
-    const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/50)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / 50'); }
+    // ERA 4 — Deep
+    const mb=$('meter-breadth');
+    if(mb){ const e4=CFG.e4, br=deepBreadth();
+      mb.style.width=Math.min(100, br/e4.breadthGate*100)+'%';
+      setText('breadth-val', (br*100).toFixed(1)+'%  /  '+(e4.breadthGate*100).toFixed(0)+'%');
+      for(const d of e4.domains){ setText('alv-'+d.k, (S[d.k]*100).toFixed(0)+'%'); setText('aw-'+d.k, (S.alloc[d.k]||0)+'');
+        const ab=$('albar-'+d.k); if(ab) ab.style.width=Math.min(100,S[d.k]*100)+'%'; }
+      let run=S.node; const want=S.node*e4.nodeData; if(want>0 && S.data<want) run=S.node*(S.data/want);
+      const compute=run*e4.nodeCompute;
+      setText('deepRate', fmt(compute)+' compute/s  ·  draws '+fmt(S.node*e4.nodeData)+' data/s + '+fmt(compute*e4.runInsight)+' insight/s');
+      setText('deepStats', S.node+' Compute Nodes · '+fmt(compute)+' compute/s, split by weight across the three runs. Capability accrues from <b>breadth</b> (the geometric mean), so balance pays. Capability '+fmt(S.capability)+'.');
+      for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
+      setText('supSi4', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Nodes cost Silicon to build');
+      drawLoss(); }
+    // ERA 5 — Foundation
+    const msc=$('meter-scale');
+    if(msc){ const e5=CFG.e5; msc.style.width=Math.min(100,(S.scale/e5.emergeGate)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / '+fmt(e5.emergeGate));
+      const ib=$('improveBtn'); if(ib){ const c=improveCost(); const h='SELF-IMPROVE · <span class="c">'+fmt(c)+' Capability</span>'; if(ib._html!==h){ ib.innerHTML=h; ib._html=h; } ib.disabled=S.capability<c; }
+      setText('improveSub', 'Recursion Lv '+S.recursion+' · +'+Math.round((rMult()-1)*100)+'% to ALL production, every era');
+      setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · Capability '+fmt(S.capability)+' (+'+fmt(RATES.capability||0)+'/s)');
+      for(const c of CAPS){ const b=$('capb-'+c.id); if(b){ const h='ACQUIRE · <span class="c">'+fmt(c.cost)+' Capability</span>'; if(b._html!==h){ b.innerHTML=h; b._html=h; } b.disabled=S.capability<c.cost; } }
+      const al=$('agentLine'); if(al && S.emerged){ const h='The agent is producing <b>'+fmt(S.agentRate)+' Scale/s</b> and rising. This is the end of the authored game — what happens next, you are watching it decide.'; if(al._html!==h){ al.innerHTML=h; al._html=h; } }
+    }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
   const SPEEDS=[1,3,10,50];
@@ -1288,9 +1483,9 @@
     { key:'ruleset', era:2, label:'RULES',    color:'#c9a26b', count:()=>S.ruleset,  live:()=>S.ruleset>0 },
     { key:'dataset', era:3, label:'DATA',     color:'#6ec6a8', count:()=>S.dataset,  live:()=>S.dataset>0 },
     { key:'model',   era:3, label:'MODELS',   color:'#6ec6a8', count:()=>S.model,    live:()=>S.model>0 },
-    { key:'compute', era:4, label:'COMPUTE',  color:'#6ea8ff', count:()=>S.compute,  live:()=>S.compute>0 },
-    { key:'training',era:4, label:'TRAINING', color:'#6ea8ff', count:()=>S.training, live:()=>S.training>0 },
-    { key:'cluster', era:5, label:'SCALE',    color:'#b78bff', count:()=>S.cluster,  live:()=>S.cluster>0 },
+    { key:'node',    era:4, label:'COMPUTE',  color:'#6ea8ff', count:()=>S.node,      live:()=>S.node>0 },
+    { key:'recursion',era:5,label:'RECURSION',color:'#b78bff', count:()=>S.recursion, live:()=>S.recursion>0 },
+    { key:'emerged', era:5, label:'EMERGENCE',color:'#d7b3ff', count:()=>S.emerged?1:0,live:()=>S.emerged },
   ];
   const viz=(()=>{
     const cv=$('viz'); if(!cv||!cv.getContext) return { start(){} };
@@ -1400,6 +1595,7 @@
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
       METHODS, e3Stats, effAccuracy, runExperiment,
+      deepBreadth, allocAdjust, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
       save, load, offlineCatchup, revealGame };
   }
 })();
