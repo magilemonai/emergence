@@ -129,9 +129,9 @@
   .act-btn:active:not(:disabled) { transform: scale(0.98); }
   .act-sub { font-size: 10px; color: var(--dim); text-align: center; margin-top: 8px; line-height: 1.5; }
   .up { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-bottom: 1px solid rgba(28,39,64,0.5); }
-  .up.has-ic { flex-direction: row; gap: 11px; align-items: flex-start; }
-  .up-ic { width: 58px; height: 58px; object-fit: contain; flex: none; }
-  .up-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .up.has-ic { flex-direction: column; gap: 8px; align-items: stretch; }
+  .up-ic { width: 88px; height: 88px; object-fit: contain; flex: none; align-self: center; }
+  .up-main { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .up:last-child { border-bottom: none; }
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
   .up-name { font-size: 12px; }
@@ -166,13 +166,13 @@
   .pa-top b { color: var(--text); }
   .pa-idle { font-size: 10px; color: var(--dim); font-style: italic; }
   .proof-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
-  .proof-item { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s; }
-  .pf-ic { width: 58px; height: 58px; object-fit: contain; flex: none; }
-  .pf-ic.glyph { display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--ec); border: 1px solid var(--line); border-radius: 8px; }
-  .pf-main { flex: 1; min-width: 0; }
+  .proof-item { display: flex; flex-direction: column; align-items: stretch; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 14px 13px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s; }
+  .pf-ic { width: 84px; height: 84px; object-fit: contain; flex: none; align-self: center; }
+  .pf-ic.glyph { width: 84px; height: 84px; align-self: center; display: flex; align-items: center; justify-content: center; font-size: 40px; color: var(--ec); border: 1px solid var(--line); border-radius: 8px; }
+  .pf-main { width: 100%; min-width: 0; }
   .proof-item.lemma { border-color: rgba(201,162,107,0.4); }
   .proof-item.active { border-color: var(--e1); box-shadow: 0 0 14px rgba(201,162,107,0.2); }
-  .pf-name { font-size: 12px; color: var(--text); }
+  .pf-name { font-size: 13px; color: var(--text); text-align: center; }
   .pf-lv { color: var(--accent); font-size: 10px; }
   .pf-desc { font-size: 11px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
@@ -394,7 +394,7 @@
   const ERAS = {
     1: { color: 'var(--e0)', tag: 'Origins', name: 'From Marks to Matter', sub: 'recording the world, then reshaping it', sigil: 'assets/era1-sigil.png' },
     2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'assets/sigil-symbolic.png' },
-    3: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns drawn from examples' },
+    3: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns drawn from examples', sigil: 'assets/sigil-statistical.png' },
     4: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability' },
     5: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical' },
   };
@@ -780,7 +780,8 @@
     capability:'What the system can actually do.',
     scale:'The point where more becomes different.',
   };
-  const UPICON = { ruleset:'assets/icon-ruleset.png', daemon:'assets/icon-daemon.png' };
+  const UPICON = { ruleset:'assets/icon-ruleset.png', daemon:'assets/icon-daemon.png', dataset:'assets/e3-dataset.png', model:'assets/e3-model.png' };
+  const METHOD_ICON = { regression:'assets/e3-regression.png', features:'assets/e3-features.png', regularization:'assets/e3-regularization.png', clustering:'assets/e3-clustering.png', bayesian:'assets/e3-bayesian.png', ensembles:'assets/e3-ensembles.png' };
   function eraUpgrade(key, name, desc){
     const fl = FLAVOR[key] ? '<div class="up-flavor">'+FLAVOR[key]+'</div>' : '';
     const ic = UPICON[key] ? '<img class="up-ic" src="'+UPICON[key]+'">' : '';
@@ -936,7 +937,7 @@
   function buildMethods(){
     let html='', shownUnknown=false;
     for(const m of METHODS){
-      if(S.methods[m.id]) html += '<div class="proof-item lemma"><div class="pf-ic glyph">&#9670;</div><div class="pf-main"><div class="pf-name">'+m.name+'</div><div class="pf-desc"><i>'+m.flavor+'</i><br>'+m.desc+'</div></div></div>';
+      if(S.methods[m.id]) html += '<div class="proof-item lemma">'+(METHOD_ICON[m.id]?'<img class="pf-ic" src="'+METHOD_ICON[m.id]+'">':'<div class="pf-ic glyph">&#9670;</div>')+'<div class="pf-main"><div class="pf-name">'+m.name+'</div><div class="pf-desc"><i>'+m.flavor+'</i><br>'+m.desc+'</div></div></div>';
       else if(!shownUnknown){ shownUnknown=true; html += '<div class="proof-item"><div class="pf-ic glyph">?</div><div class="pf-main"><div class="pf-name">Undiscovered Method</div><div class="pf-desc">Keep running experiments — more Data improves the odds a method surfaces.</div></div></div>'; }
     }
     return '<div class="proof-list">'+html+'</div>';
