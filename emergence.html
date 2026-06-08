@@ -344,6 +344,7 @@
     { id:'tally',        name:'Tally Marks',    res:'marks',     cost:10,  req:[],                         flavor:'A notch for each thing worth counting.',           mech:'Inscribing by hand is twice as productive.' },
     { id:'scribe',       name:'The Scribe',     res:'marks',     cost:40,  req:['tally'],                  flavor:'Hands trained to the work, and only the work.',     mech:'Unlocks the Scribe — automates Marks.',               effect(){ S.flags.canScribe=true; } },
     { id:'stoneworking', name:'Stoneworking',   res:'marks',     cost:80,  req:['tally'],                  target:30,  flavor:'The first deliberate reshaping of the world.',      mech:'Unlocks Quarrying and Miners.',                       effect(){ S.flags.o_materials=true; } },
+    { id:'apprenticeship',name:'Apprenticeship', costs:{marks:277, ore:315}, req:['scribe','stoneworking'], flavor:'A craft taught, not stumbled into.',                mech:'Scribes and Miners work 50% faster.' },
     { id:'clayTablets',  name:'Clay Tablets',   res:'marks',     cost:150, req:['scribe','stoneworking'],  reqRes:{ore:15},  target:60,  flavor:'Something firmer than memory to hold a thought.',   mech:'Unlocks the Scriptorium — Marks become Knowledge.',   effect(){ S.flags.o_scriptorium=true; } },
     { id:'kiln',         name:'The Kiln',       res:'ore',       cost:70,  req:['clayTablets'],            reqRes:{knowledge:20}, target:120, flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
     { id:'alphabet',     name:'The Alphabet',   res:'knowledge', cost:120, req:['clayTablets'],            flavor:'A handful of signs that can spell anything at all.',mech:'Scriptoria work 60% faster.' },
@@ -422,6 +423,7 @@
     let inscribe=e.inscribeBase, quarry=e.quarryBase, scrR=e.scriptoriumRate, smR=e.smelterRate, foR=e.foundryRate;
     let scribeY=e.scribeYield, minerY=e.minerYield;
     if(d.tally) inscribe*=2;
+    if(d.apprenticeship){ scribeY*=1.5; minerY*=1.5; }
     if(d.alphabet) scrR*=1.6;
     if(d.bronzeCasting) smR*=1.6;
     if(d.wheel){ minerY*=1.8; quarry*=1.8; scribeY*=0.8; inscribe*=0.8; } // addition + subtraction
@@ -433,11 +435,13 @@
   function canBuyDisco(id){
     const n=DISCOMAP[id]; if(!n || S.disco[id] || !discoVisible(id)) return false;
     if(n.reqRes){ for(const k in n.reqRes) if(S[k] < n.reqRes[k]) return false; }
+    if(n.costs){ for(const k in n.costs) if(S[k] < n.costs[k]) return false; return true; }
     return S[n.res] >= n.cost;
   }
   function buyDisco(id){
     const n=DISCOMAP[id]; if(!canBuyDisco(id)) return;
-    S[n.res]-=n.cost; S.disco[id]=true; if(n.effect) n.effect(); recEvent('disco:'+id,{target:n.target||null}); playSound('buy'); render();
+    if(n.costs){ for(const k in n.costs) S[k]-=n.costs[k]; } else { S[n.res]-=n.cost; }
+    S.disco[id]=true; if(n.effect) n.effect(); recEvent('disco:'+id,{target:n.target||null}); playSound('buy'); render();
   }
   function inscribe(ev){
     S.clicks++; const g=oStats().inscribe; S.marks+=g; S.started=true; playSound('click'); recClick('inscribe');
@@ -848,7 +852,8 @@
         if(S.disco[n.id]){ setClass(tile,'tile disco owned'); if(btn._html!=='DISCOVERED'){ btn.innerHTML='DISCOVERED'; btn._html='DISCOVERED'; } if(!btn.disabled) btn.disabled=true; }
         else { const can=canBuyDisco(n.id);
           let req=''; if(n.reqRes){ for(const k in n.reqRes){ if(S[k]<n.reqRes[k]) req+=' · needs '+n.reqRes[k]+' '+k; } }
-          const h='DISCOVER · <span class="c">'+fmt(n.cost)+' '+n.res+'</span>'+req;
+          const costTxt = n.costs ? Object.keys(n.costs).map(k=>fmt(n.costs[k])+' '+k).join(' + ') : fmt(n.cost)+' '+n.res;
+          const h='DISCOVER · <span class="c">'+costTxt+'</span>'+req;
           if(btn._html!==h){ btn.innerHTML=h; btn._html=h; }
           if(btn.disabled!==!can) btn.disabled=!can;
           setClass(tile,'tile disco'+(can?' can':''));

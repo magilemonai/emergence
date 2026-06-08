@@ -125,6 +125,13 @@ function testDiscovery(){
   S.ore = 0; ok(!EM.canBuyDisco('clayTablets'), 'Clay Tablets blocked without ore');
   S.ore = 20; ok(EM.canBuyDisco('clayTablets'), 'Clay Tablets buyable once ore is present');
   EM.buyDisco('clayTablets'); ok(S.flags.o_scriptorium, 'Clay Tablets unlocks the scriptorium');
+  // Apprenticeship: a multi-resource cost (marks + ore) that boosts both workers
+  S.marks = 100000; S.ore = 100000;
+  ok(EM.canBuyDisco('apprenticeship'), 'multi-cost discovery is buyable with both resources');
+  const m0 = S.marks, o0 = S.ore; EM.buyDisco('apprenticeship');
+  ok(S.marks < m0 && S.ore < o0, 'Apprenticeship spends BOTH marks and ore');
+  near(EM.oStats().scribeY, EM.CFG.e1.scribeYield * 1.5, 1e-9, 'Apprenticeship: scribes +50%');
+  near(EM.oStats().minerY, EM.CFG.e1.minerYield * 1.5, 1e-9, 'Apprenticeship: miners +50%');
 }
 
 function testFabrication(){
