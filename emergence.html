@@ -178,6 +178,7 @@
   .pf-lv { color: var(--accent); font-size: 10px; }
   .pf-desc { font-size: 14px; color: var(--dim); line-height: 1.5; margin-top: 3px; }
   .pf-btn { margin-top: 8px; width: 100%; }
+  .auto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
   .proven-wrap { grid-column: 1 / -1; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
   .proven-lab { font-size: 10.5px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
   .proven-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -860,12 +861,12 @@
     let prod = eraUpgrade('ruleset','Ruleset','Writes rules automatically. The first thing that works without you.');
     if(S.tech.inference) prod += eraUpgrade('daemon','Inference Daemon','Fires the write action for you. Everything that makes a click stronger makes a Daemon stronger.');
     let body = '';
-    // Hero: the active proof + inference rate take the stage
-    if(S.flags.tree) body += '<div class="panel sym-hero" style="grid-column:1/-1"><div class="panel-label">The Inference Engine · prove a theorem</div>'+
-      '<div class="proof-rate" id="infRate"></div><div class="proof-active" id="proofActive"></div></div>';
-    // Economy: authoring + automation, side by side
-    body += '<div class="panel"><div class="panel-label">Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub" id="manualSub"></div></div>'+
-      '<div class="panel"><div class="panel-label">Automation</div>'+(S.flags.canRuleset?prod:'<div class="up-desc">Keep writing...</div>')+'</div>';
+    // Hero: inference + active proof + the manual verb, all in one
+    body += '<div class="panel sym-hero" style="grid-column:1/-1"><div class="panel-label">The Inference Engine · prove a theorem</div>'+
+      '<div class="proof-rate" id="infRate"></div><div class="proof-active" id="proofActive"></div>'+
+      '<button class="act-btn" id="ruleBtn2" style="margin-top:12px">WRITE A RULE</button><div class="act-sub" id="manualSub" style="text-align:center"></div></div>';
+    // Automation: full width, rulesets + daemons side by side
+    body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Automation</div><div class="auto-grid">'+(S.flags.canRuleset?prod:'<div class="up-desc">Keep writing rules to unlock automation…</div>')+'</div></div>';
     // The theorems to choose from
     if(S.flags.tree) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Theorems &amp; Lemmas · pick what to prove next</div>'+buildProofList()+'</div>';
     if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
