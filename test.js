@@ -157,6 +157,22 @@ function testEra2Playable(){
   ok(S.flags.tree, 'two Rulesets unlocks the Symbolic tech tree');
 }
 
+function testProofProcess(){
+  section('Era 2 theorem-proving (research as a process)');
+  const EM = freshGame(); const S = EM.S;
+  S.maxEra = 2; S.flags.firstAuto = true; S.flags.tree = true; S.ruleset = 10; // Rulesets emit Inference
+  EM.selectProof('formalLogic');
+  ok(S.activeProof === 'formalLogic', 'selecting a theorem makes it the active proof');
+  ok(!S.tech.formalLogic, 'it is not proven instantly');
+  for(let i=0;i<3000 && !S.tech.formalLogic;i++) EM.produce(0.1); // pour Inference over time
+  ok(S.tech.formalLogic, 'accumulated Inference completes the proof and applies the effect');
+  ok(S.activeProof === null, 'active proof clears on completion');
+  const lv = S.optLevel;
+  EM.selectProof('optimization');
+  for(let i=0;i<3000 && S.optLevel===lv;i++) EM.produce(0.1);
+  ok(S.optLevel === lv+1, 'the Optimization lemma levels up when proven (repeatable)');
+}
+
 function testTechTree(){
   section('Symbolic tech tree — prerequisites + effects');
   const EM = freshGame(); const S = EM.S; S.rules = 1e9;
@@ -349,6 +365,7 @@ testUpkeep();
 testDiscovery();
 testFabrication();
 testEra2Playable();
+testProofProcess();
 testTechTree();
 testCompile();
 testSaveLoad();

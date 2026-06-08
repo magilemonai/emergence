@@ -126,6 +126,20 @@
   .cstat .cs-val { font-size: 22px; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .compile-act { flex: 1; min-width: 220px; }
   .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Era 2 theorem-proving */
+  .proof-rate { font-size: 12px; color: var(--e1); font-variant-numeric: tabular-nums; margin-bottom: 8px; }
+  .proof-active { margin-bottom: 12px; }
+  .pa-top { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--dim); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+  .pa-top b { color: var(--text); }
+  .pa-idle { font-size: 10px; color: var(--dim); font-style: italic; }
+  .proof-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .proof-item { border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s; }
+  .proof-item.lemma { border-color: rgba(201,162,107,0.4); }
+  .proof-item.active { border-color: var(--e1); box-shadow: 0 0 14px rgba(201,162,107,0.2); }
+  .pf-name { font-size: 12px; color: var(--text); }
+  .pf-lv { color: var(--accent); font-size: 10px; }
+  .pf-desc { font-size: 9.5px; color: var(--dim); line-height: 1.45; margin-top: 3px; }
+  .pf-btn { margin-top: 8px; width: 100%; }
   /* Era 1 — Origins: the refinement pipeline, warm ochre/stone */
   .flow-panel { background:
       linear-gradient(rgba(201,146,95,0.04) 1px, transparent 1px) 0 0 / 100% 30px,
@@ -277,12 +291,15 @@
       smelterUpkeep: 0.25,     // Knowledge burned per Metal made (smithing know-how) — Materials drains Knowledge
       siliconGate: 120,        // silicon needed to fabricate the Logic Machine (after the ~5-min Foundry beat)
     },
-    e2: { // ERA 2 — Symbolic (the tech-tree + compile journey, ~5-6 min)
+    e2: { // ERA 2 — Symbolic (theorem-proving research + compile journey)
       clickBase: 1,
       rulesetCost: 10, rulesetGrowth: 1.16, rulesetYield: 0.42,
       daemonCost: 320, daemonGrowth: 1.19, daemonRate: 2.0, // auto-writes/sec per daemon
       axiomDivisor: 380,  // axioms from a compile = floor(sqrt(runRules / divisor))
       axiomBonus: 0.05,   // +5% to all rule production per Axiom (×1.5 with Meta-Logic)
+      infPerRuleset: 0.6, // Inference/sec generated per Ruleset (drives proving)
+      infScale: 0.18,     // a Theorem's proof cost (inference) = node.cost × this
+      lemmaBase: 50, lemmaGrowth: 1.9, lemmaBonus: 0.08, // repeatable Optimization lemma
     },
     // Later eras still run on the original scaffold; rebuilt in a later pass.
     datasetCost: 50, datasetGrowth: 1.2, datasetYield: 0.4,
@@ -301,6 +318,7 @@
     // Era 2 — Symbolic
     rules: 0, runRules: 0, axioms: 0, totalAxioms: 0, compiles: 0,
     ruleset: 0, daemon: 0,
+    inference: 0, activeProof: null, proofAcc: {}, optLevel: 0, // theorem-proving research
     // Era 3+ scaffold
     insight: 0, data: 0, capability: 0, scale: 0,
     dataset: 0, model: 0, compute: 0, training: 0, cluster: 0,
@@ -420,7 +438,31 @@
     if(T.heuristics) click*=(1+0.08*S.ruleset);
     const axBonus=CFG.e2.axiomBonus*(T.metalogic?1.5:1);
     global*=(1+S.axioms*axBonus);
+    global*=(1+CFG.e2.lemmaBonus*S.optLevel); // Optimization lemma (repeatable)
     return { click: click*global, rulesetYield: CFG.e2.rulesetYield*rulesetMult*global, global, axBonus };
+  }
+  // ---- Era 2 theorem-proving: Rulesets emit Inference, which you aim at one proof at a time ----
+  function symInfRate(){ return S.ruleset*CFG.e2.infPerRuleset; }
+  function proofCost(id){
+    if(id==='optimization') return Math.floor(CFG.e2.lemmaBase*Math.pow(CFG.e2.lemmaGrowth, S.optLevel));
+    return Math.ceil(TREEMAP[id].cost*CFG.e2.infScale);
+  }
+  function canProve(id){
+    if(id==='optimization') return true;
+    const n=TREEMAP[id]; if(!n || S.tech[id]) return false;
+    if(!n.req.every(r=>S.tech[r])) return false;
+    if(n.reqAxioms && S.axioms < n.reqAxioms) return false;
+    return true;
+  }
+  function selectProof(id){
+    if(!canProve(id) || S.activeProof===id) return;
+    S.activeProof=id; S.proofAcc[id]=(S.proofAcc[id]||0)+S.inference; S.inference=0; // banked Inference jumps in
+    playSound('buy'); render();
+  }
+  function completeProof(id){
+    if(id==='optimization'){ S.optLevel++; }
+    else { S.tech[id]=true; if(id==='expert') S.flags.symbolicDone=true; }
+    S.proofAcc[id]=0; S.activeProof=null; recEvent('proof:'+id); playSound('milestone'); render();
   }
   // --- Era 1 (Origins): derived rates from owned discoveries, manual verbs, discoveries, fabrication ---
   function oStats(){
@@ -563,6 +605,13 @@
       if(S.ruleset>0) g += S.ruleset*st.rulesetYield*dt;
       if(S.daemon>0)  g += S.daemon*CFG.e2.daemonRate*st.click*dt;
       if(g>0){ S.rules+=g; S.runRules+=g; }
+      // Inference: emitted by Rulesets, poured into the active proof (or banked)
+      const inf = symInfRate()*dt;
+      if(inf>0){
+        if(S.activeProof){ S.proofAcc[S.activeProof]=(S.proofAcc[S.activeProof]||0)+inf;
+          if(S.proofAcc[S.activeProof] >= proofCost(S.activeProof)) completeProof(S.activeProof); }
+        else S.inference += inf;
+      }
     }
     if(S.dataset>0) S.data += S.dataset*CFG.datasetYield*dt;
     if(S.model>0){ const conv=Math.min(S.data, S.model*0.6*dt); S.data-=conv; S.insight+=conv*1.5; }
@@ -675,9 +724,23 @@
     let body =
       '<div class="panel"><div class="panel-label">Manual Authoring</div><button class="act-btn" id="ruleBtn2">WRITE A RULE</button><div class="act-sub" id="manualSub"></div></div>'+
       '<div class="panel"><div class="panel-label">Automation</div>'+(S.flags.canRuleset?prod:'<div class="up-desc">Keep writing...</div>')+'</div>';
-    if(S.flags.tree) body += '<div class="panel tree-panel" style="grid-column:1/-1"><div class="panel-label">Symbolic Technique</div><div class="tree" style="height:'+TREE_H+'px" id="tree">'+buildTree()+'</div></div>';
+    if(S.flags.tree) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Theorems · prove with Inference</div>'+buildProofs()+'</div>';
     if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
     return eraShell(2, false, body);
+  }
+  function proofItem(id){
+    const isLem=id==='optimization';
+    const name = isLem ? ('Optimization <span class="pf-lv">Lv '+(S.optLevel+1)+'</span>') : TREEMAP[id].name;
+    const desc = isLem ? ('+'+Math.round(CFG.e2.lemmaBonus*100)+'% to all rule production per level — repeatable.') : TREEMAP[id].desc;
+    return '<div class="proof-item'+(isLem?' lemma':'')+'" id="pf-'+id+'"><div class="pf-body"><div class="pf-name">'+name+'</div><div class="pf-desc">'+desc+'</div></div>'+
+      '<button class="up-buy pf-btn" data-proof="'+id+'" id="pfb-'+id+'"></button></div>';
+  }
+  function buildProofs(){
+    let items = proofItem('optimization');
+    for(const n of TREE){ if(!S.tech[n.id] && n.req.every(r=>S.tech[r])) items += proofItem(n.id); }
+    return '<div class="proof-top"><div class="proof-rate" id="infRate"></div></div>'+
+      '<div class="proof-active" id="proofActive"></div>'+
+      '<div class="proof-list">'+items+'</div>';
   }
   // ---- ERA 1 (Origins): a central core + a discovery grid (Knowledge & Materials interleaved) + a quiet flow diagram ----
   // Buildings shown in the grid: their display name + literal mechanic. Flavor comes from FLAVOR[key].
@@ -800,6 +863,7 @@
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
     document.querySelectorAll('[data-disco]').forEach(b=> b.onclick=e=>buyDisco(e.currentTarget.dataset.disco));
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
+    document.querySelectorAll('[data-proof]').forEach(b=> b.onclick=e=>selectProof(e.currentTarget.dataset.proof));
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
     refresh();
   }
@@ -857,13 +921,29 @@
       const ms=$('meter-silicon'); if(ms){ ms.style.width=Math.min(100,(S.silicon/CFG.e1.siliconGate)*100)+'%'; setText('meter-silicon-val',fmt(S.silicon)+' / '+CFG.e1.siliconGate); }
       const fbtn=$('fabricateBtn'); if(fbtn && fbtn.disabled!==!S.flags.canFabricate) fbtn.disabled=!S.flags.canFabricate;
     }
-    // tech tree
-    for(const n of TREE){ const el=$('tn-'+n.id); if(!el) continue;
-      const owned=S.tech[n.id], prereq=n.req.every(r=>S.tech[r]);
-      let state='locked', cost='LOCKED';
-      if(owned){ state='owned'; cost='OWNED'; }
-      else if(prereq){ const afford=canBuyTech(n.id); state='avail'+(afford?' can':''); cost=fmt(n.cost)+' rules'+(n.reqAxioms&&S.axioms<n.reqAxioms?' · '+n.reqAxioms+' axioms':''); }
-      setClass(el,'tree-node '+state); setText('tnc-'+n.id, cost);
+    // theorem-proving
+    const ir=$('infRate');
+    if(ir){
+      setText('infRate', 'Inference  '+fmt(S.inference)+'   ·   +'+fmt(symInfRate())+'/s'+(S.ruleset===0?' (build Rulesets to reason)':''));
+      const pa=$('proofActive');
+      if(pa){ if(S.activeProof){ const id=S.activeProof, c=proofCost(id), acc=S.proofAcc[id]||0, pct=Math.min(100,acc/c*100);
+          const nm = id==='optimization'?('Optimization Lv '+(S.optLevel+1)):TREEMAP[id].name;
+          const rate=symInfRate(), eta=rate>0?Math.ceil((c-acc)/rate):0;
+          pa.innerHTML='<div class="pa-top"><span>Proving: <b>'+nm+'</b></span><span>'+fmt(acc)+' / '+fmt(c)+(eta?'  ·  ~'+eta+'s':'')+'</span></div><div class="meter"><i style="width:'+pct+'%;background:var(--e1)"></i></div>';
+        } else { pa.innerHTML='<div class="pa-idle">No active proof — pick a theorem below to aim your Inference at it.</div>'; } }
+      // each provable item's button
+      const items=['optimization', ...TREE.filter(n=>!S.tech[n.id]&&n.req.every(r=>S.tech[r])).map(n=>n.id)];
+      for(const id of items){ const btn=$('pfb-'+id); if(!btn) continue;
+        const c=proofCost(id), active=S.activeProof===id;
+        const lockAx = id!=='optimization' && TREEMAP[id].reqAxioms && S.axioms<TREEMAP[id].reqAxioms;
+        let h;
+        if(active) h='PROVING…';
+        else if(lockAx) h='needs '+TREEMAP[id].reqAxioms+' axioms';
+        else h='PROVE · <span class="c">'+fmt(c)+' inf</span>';
+        if(btn._html!==h){ btn.innerHTML=h; btn._html=h; }
+        const dis = active || lockAx; if(btn.disabled!==dis) btn.disabled=dis;
+        setClass($('pf-'+id), 'proof-item'+(id==='optimization'?' lemma':'')+(active?' active':''));
+      }
     }
     // compile
     const cb=$('compileBtn');
@@ -1031,6 +1111,7 @@
     window.EMERGENCE={ S, CFG, BUYS, MILES, ERAS, TREE, TREEMAP, DISCO, DISCOMAP, VIZ_STATIONS, fmt,
       unitCost, totalCost, buyQty, buy, writeRule, inscribe, quarry, fabricate, produce, checkMiles, tick,
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
+      symInfRate, proofCost, canProve, selectProof, completeProof,
       save, load, offlineCatchup, revealGame };
   }
 })();
