@@ -109,6 +109,9 @@ function testUpkeep(){
   const base = EM.oStats();
   S.disco.wheel = true; const w = EM.oStats();
   ok(w.minerY > base.minerY && w.scribeY < base.scribeY, 'The Wheel adds Ore yield AND subtracts Marks yield');
+  // Refinement: repeatable Ore-cost sink that lifts ALL production (the late-Origins near-win)
+  EM = freshGame(); S = EM.S; const r0 = EM.oStats(); S.refine = 5; const r1 = EM.oStats();
+  ok(r1.scribeY > r0.scribeY && r1.scrR > r0.scrR && r1.foR > r0.foR, 'Refinement lifts all Origins production');
 }
 
 function testDiscovery(){
