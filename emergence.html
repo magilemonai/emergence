@@ -92,7 +92,9 @@
       linear-gradient(rgba(8,11,18,0.9), rgba(8,11,18,0.94)),
       url('assets/bg-symbolic.png') center / cover no-repeat, var(--panel); }
   .era-e2 .panel { background: rgba(18,20,16,0.72); border-color: rgba(201,162,107,0.18); }
-  .era-e2 .panel-label { color: rgba(201,162,107,0.75); }
+  .era-e2 .panel-label { color: #8fb1c6; }
+  .era-e2 .era-tag { color: var(--accent); border-color: var(--accent); }
+  .era-e2 .up-name, .era-e2 .pf-name, .era-e2 .rate-amt, .era-e2 .tile-name { color: #cfe0ec; }
   .era-sigil { width: 42px; height: 42px; object-fit: contain; opacity: 0.92; flex: none; filter: drop-shadow(0 0 6px rgba(201,162,107,0.25)); }
   .era-tag { font-size: 9px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 15px; color: var(--text); }
@@ -208,6 +210,14 @@
   .core-side { flex: 1; min-width: 260px; }
   .core-verbs { display: flex; gap: 10px; }
   .core-verbs .act-btn { flex: 1; }
+  .ages { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 14px; }
+  .age-step { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.5px; color: var(--dimmer); white-space: nowrap; }
+  .age-step .age-dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--dimmer); }
+  .age-step.done { color: var(--dim); }
+  .age-step.done .age-dot { background: var(--ec); border-color: var(--ec); }
+  .age-step.now { color: var(--ec); font-weight: 700; }
+  .age-step.now .age-dot { background: var(--ec); border-color: var(--ec); box-shadow: 0 0 8px var(--ec); }
+  .age-link { flex: 1; min-width: 14px; height: 1px; background: var(--line); }
   .rates { margin-top: 4px; display: flex; flex-direction: column; }
   .rate { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(28,39,64,0.45); }
   .rate:last-child { border-bottom: none; }
@@ -868,6 +878,7 @@
         '<div class="core-verbs"><button class="act-btn" id="inscribeBtn">INSCRIBE A MARK</button>'+
           (S.flags.o_materials?'<button class="act-btn" id="quarryBtn">QUARRY ORE</button>':'')+'</div>'+
         '<button class="research-btn" id="researchBtn"><img class="rb-ic" src="assets/era1-sigil.png">RESEARCH<span class="rb-badge" id="researchBadge"></span></button>'+
+        '<div class="ages" id="agesJourney"></div>'+
       '</div></div>';
   }
   function buildRatesPanel(){
@@ -950,6 +961,12 @@
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
+      const aj=$('agesJourney');
+      if(aj){ const ages=[[1,'Stone'],[2,'Bronze'],[3,'Silicon'],[4,'Logic Machine']];
+        const cur = S.flags.origindone?4:S.age;
+        const html = ages.map(([n,lab])=>{ const st=n<cur?'done':(n===cur?'now':'next'); return '<span class="age-step '+st+'"><span class="age-dot"></span>'+lab+'</span>'; }).join('<span class="age-link"></span>');
+        if(aj._html!==html){ aj.innerHTML=html; aj._html=html; }
+      }
       const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);
       const badge=$('researchBadge'), resb=$('researchBtn');
       if(badge){ if(avail>0){ setText('researchBadge', avail+''); badge.classList.add('show'); } else badge.classList.remove('show'); }
