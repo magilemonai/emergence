@@ -147,14 +147,14 @@ function testFabrication(){
 }
 
 function testEra2Playable(){
-  section('Era 2 unlock chain (regression: firstAuto flag collision)');
+  section('Era 2 carryover seed (no cold-grind restart)');
   const EM = freshGame(); const S = EM.S;
-  S.flags.firstAuto = true; S.maxEra = 2; // as if Origins just handed off
-  for(let i=0;i<12;i++) EM.writeRule(FAKE_EV); // write past the ruleset cost
-  EM.checkMiles();
-  ok(S.flags.canRuleset, 'writing rules in Era 2 unlocks the Ruleset (the tile actually appears)');
-  S.rules = 1000; EM.buy('ruleset'); EM.buy('ruleset'); EM.checkMiles();
-  ok(S.flags.tree, 'two Rulesets unlocks the Symbolic tech tree');
+  S.flags.firstAuto = true; S.knowledge = 1500; S.flags.origindone = true;
+  EM.checkMiles(); // era2 fires: seeds rules + rulesets + canRuleset, opens Era 2 (and treeUnlock follows)
+  ok(S.maxEra >= 2, 'fabrication opens the Symbolic era');
+  ok(S.flags.canRuleset, 'Era 2 starts with the Ruleset unlocked (no cold grind)');
+  ok(S.ruleset >= 2 && S.rules > 0, 'the Logic Machine seeds Rulesets + Rules from Knowledge');
+  ok(S.flags.tree, 'seeded Rulesets immediately unlock the tech tree');
 }
 
 function testProofProcess(){
@@ -360,6 +360,7 @@ function reportPacing(){
 function runSymbolic(cps){
   const EM = freshGame(); const { S, TREE, BUYS } = EM;
   S.maxEra = 2; S.flags.firstAuto = true;
+  S.flags.canRuleset = true; S.ruleset += 5; S.rules += 800; // mirror the Logic Machine carryover seed
   const beats = {}; const mark = k => { if(beats[k]===undefined) beats[k] = S.t; };
   const expReq = (TREE.find(n=>n.id==='expert').reqAxioms) || 0;
   let acc = 0;

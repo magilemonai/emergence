@@ -15,13 +15,13 @@
   /* ERA 1 — Origins: warm, earthen, ancient. Serif. */
   .theme-1, .era-e1 {
     --bg: #160f08; --panel: #211810; --panel-2: #2b2014; --line: #46341d;
-    --text: #ece0c8; --dim: #a78f66; --dimmer: #6f5c3d; --accent: #e0a86a;
+    --text: #f3e9d4; --dim: #c8ad80; --dimmer: #98805a; --accent: #e8b876;
     --era-font: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   }
   /* ERA 2 — Symbolic: cold, digital, terminal. Monospace. */
   .theme-2, .era-e2 {
     --bg: #04070e; --panel: #0a0f18; --panel-2: #0e1421; --line: #233246;
-    --text: #aec6d6; --dim: #6f879a; --dimmer: #3f5161; --accent: #ffcd6b;
+    --text: #c8dcea; --dim: #8fa9bd; --dimmer: #5f7589; --accent: #ffcd6b;
     --era-font: "SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -104,7 +104,7 @@
   .era-status.live { color: var(--good); }
   .era-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; transition: max-height 0.6s, opacity 0.5s, margin 0.5s; max-height: 6000px; }
   .panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 13px; }
-  .panel-label { font-size: 9px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
+  .panel-label { font-size: 10px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
   .act-btn { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--ec);
     background: rgba(255,255,255,0.02); color: var(--ec); font-family: inherit; font-size: 12px;
     letter-spacing: 1.5px; cursor: pointer; transition: transform 0.05s, box-shadow 0.15s; }
@@ -119,8 +119,8 @@
   .up-top { display: flex; justify-content: space-between; align-items: baseline; }
   .up-name { font-size: 12px; }
   .up-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .up-flavor { font-size: 10px; font-style: italic; color: #8a7a66; line-height: 1.45; margin-bottom: 3px; }
-  .up-desc { font-size: 10px; color: var(--dim); line-height: 1.5; }
+  .up-flavor { font-size: 11px; font-style: italic; color: var(--dim); opacity: 0.85; line-height: 1.5; margin-bottom: 3px; }
+  .up-desc { font-size: 11px; color: var(--dim); line-height: 1.55; }
   .up-buy { margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
     padding: 7px; font-family: inherit; font-size: 10.5px; color: var(--text); cursor: pointer; letter-spacing: 0.5px; transition: all 0.15s; }
   .up-buy:hover:not(:disabled) { border-color: var(--ec); }
@@ -241,8 +241,8 @@
   .tile-body { flex: 1; min-width: 0; }
   .tile-name { font-size: 12px; color: var(--text); }
   .tile-count { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .tile-flavor { font-size: 9.5px; font-style: italic; color: #8a7a66; line-height: 1.4; margin: 2px 0; }
-  .tile-mech { font-size: 9.5px; color: var(--dim); line-height: 1.4; }
+  .tile-flavor { font-size: 10.5px; font-style: italic; color: var(--dim); opacity: 0.85; line-height: 1.45; margin: 2px 0; }
+  .tile-mech { font-size: 10.5px; color: var(--dim); line-height: 1.45; }
   .tile-eff { margin-top: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,0.18); }
   .eff-cap { font-size: 7.5px; letter-spacing: 1px; color: var(--dimmer); text-transform: uppercase; margin-bottom: 4px; }
   .eff-row { display: flex; justify-content: space-between; font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.55; }
@@ -434,10 +434,12 @@
     { id:'o_fabricate', cond:()=> S.flags.o_foundry && S.silicon>=CFG.e1.siliconGate,
       fire:()=>{ S.flags.canFabricate=true; toast('FABRICATION','Enough Silicon to build the first <b>Logic Machine</b>. The age of matter ends; the age of logic begins.'); } },
     { id:'era2', cond:()=> S.flags.origindone,
-      fire:()=>{ openEra(2); toast('PARADIGM SHIFT','The Logic Machine runs. On your silicon, with your writing, the <b>Symbolic Era</b> begins — intelligence authored by hand.'); } },
+      fire:()=>{ S.flags.canRuleset=true;
+        S.ruleset += Math.max(2, Math.min(8, Math.floor(S.knowledge/300)));  // the Logic Machine boots with momentum
+        S.rules += Math.min(1500, Math.floor(S.knowledge*0.5));               // your Knowledge becomes its first rules
+        openEra(2);
+        toast('PARADIGM SHIFT','The Logic Machine runs. Your <b>Knowledge</b> seeds its first Rules and Rulesets — the Symbolic Era begins already in motion.'); } },
     // ERA 2 — Symbolic internals
-    { id:'symRuleset', cond:()=> S.maxEra>=2 && S.rules>=CFG.e2.rulesetCost,
-      fire:()=>{ S.flags.canRuleset=true; toast('FIRST AUTOMATION','Build a <b>Ruleset</b> — logic that writes rules without you.'); } },
     { id:'treeUnlock', cond:()=> S.ruleset>=2,
       fire:()=>{ S.flags.tree=true; toast('SYMBOLIC TECHNIQUE','A map of technique opens. Spend Rules to unlock <b>Formal Logic</b>, then branch outward.'); } },
     { id:'compileUnlock', cond:()=> S.tech.knowledge,
@@ -815,7 +817,7 @@
   };
   // Icons we have art for today; the rest fall back to a glyph until the icon set lands.
   const BICON = { scribe:'assets/icon-scribe.png', miner:'assets/icon-miner.png', scriptorium:'assets/icon-scriptorium.png', smelter:'assets/icon-crucible.png', foundry:'assets/icon-foundry.png' };
-  const DICON = { tally:'assets/icon-marks.png', scribe:'assets/icon-scribe.png', stoneworking:'assets/icon-ore.png', clayTablets:'assets/disco-clay.png', kiln:'assets/icon-crucible.png', alphabet:'assets/disco-alphabet.png', bronzeCasting:'assets/icon-ingot.png', numerals:'assets/disco-numerals.png', glassmaking:'assets/icon-silicon.png', theFoundry:'assets/icon-foundry.png', wheel:'assets/disco-wheel.png' };
+  const DICON = { tally:'assets/icon-marks.png', scribe:'assets/icon-scribe.png', stoneworking:'assets/icon-ore.png', clayTablets:'assets/disco-clay.png', alphabet:'assets/disco-alphabet.png', bronzeCasting:'assets/icon-ingot.png', numerals:'assets/disco-numerals.png', glassmaking:'assets/icon-silicon.png', theFoundry:'assets/icon-foundry.png', wheel:'assets/disco-wheel.png' };
   function tileIcon(src){ return src ? '<img class="tile-ic" src="'+src+'">' : '<div class="tile-ic glyph">&#9670;</div>'; }
   // Full per-unit flow of one more of this building across EVERY resource it touches (in & out).
   function buildEffect(key){
@@ -964,7 +966,10 @@
       const aj=$('agesJourney');
       if(aj){ const ages=[[1,'Stone'],[2,'Bronze'],[3,'Silicon'],[4,'Logic Machine']];
         const cur = S.flags.origindone?4:S.age;
-        const html = ages.map(([n,lab])=>{ const st=n<cur?'done':(n===cur?'now':'next'); return '<span class="age-step '+st+'"><span class="age-dot"></span>'+lab+'</span>'; }).join('<span class="age-link"></span>');
+        // only reveal ages reached; one mystery marker hints at what's beyond
+        const steps = ages.filter(([n])=>n<=cur).map(([n,lab])=>'<span class="age-step '+(n<cur?'done':'now')+'"><span class="age-dot"></span>'+lab+'</span>');
+        if(cur<4) steps.push('<span class="age-step next"><span class="age-dot"></span>?</span>');
+        const html = steps.join('<span class="age-link"></span>');
         if(aj._html!==html){ aj.innerHTML=html; aj._html=html; }
       }
       const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);
