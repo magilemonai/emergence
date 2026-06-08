@@ -158,6 +158,9 @@
   .cstat .cs-label { font-size: 8.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
   .cstat .cs-val { font-size: 22px; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .compile-act { flex: 1; min-width: 220px; }
+  .fab-wrap { display: flex; gap: 18px; align-items: center; }
+  .fab-ic { width: 96px; height: 96px; object-fit: contain; flex: none; filter: drop-shadow(0 0 10px rgba(255,205,107,0.25)); }
+  .fab-body { flex: 1; }
   .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   /* Era 2 theorem-proving */
   .sym-hero { background: linear-gradient(180deg, rgba(201,162,107,0.14), rgba(8,11,18,0.55)) !important; border-color: rgba(201,162,107,0.45) !important; }
@@ -789,7 +792,8 @@
     return eraShell(2, false, body);
   }
   const TH_ICON = { optimization:'assets/th-optimization.png', formalLogic:'assets/th-formalLogic.png',
-    fwdChain:'assets/th-fwdChain.png', bwdChain:'assets/th-bwdChain.png', rete:'assets/th-rete.png', inference:'assets/th-inference.png' };
+    fwdChain:'assets/th-fwdChain.png', bwdChain:'assets/th-bwdChain.png', rete:'assets/th-rete.png', inference:'assets/th-inference.png',
+    heuristics:'assets/th-heuristics.png', knowledge:'assets/th-knowledge.png', metalogic:'assets/th-metalogic.png', expert:'assets/th-expert.png' };
   function proofItem(id){
     const isLem = id==='optimization' || id==='capacity';
     let name, desc;
@@ -891,9 +895,10 @@
     if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // 3. Works (Research lives in the drawer)
     if(S.flags.o_foundry){                                    // 5. Fabrication (silicon age)
       body += '<div class="panel'+intro('fab')+'" style="grid-column:1/-1"><div class="panel-label">Fabrication</div>'+
+        '<div class="fab-wrap"><img class="fab-ic" src="assets/logic-machine.png"><div class="fab-body">'+
         '<div class="meter"><i id="meter-silicon" style="background:var(--accent)"></i></div>'+
         '<div class="meter-label"><span>Silicon toward the Logic Machine</span><span id="meter-silicon-val"></span></div>'+
-        '<button class="act-btn" id="fabricateBtn" style="margin-top:12px">FABRICATE THE LOGIC MACHINE</button></div>';
+        '<button class="act-btn" id="fabricateBtn" style="margin-top:12px">FABRICATE THE LOGIC MACHINE</button></div></div></div>';
     }
     return eraShell(1, false, body);
   }
