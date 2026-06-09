@@ -180,3 +180,35 @@ Statistical Space Grotesk.
 
 **Also fixes the alpha P1:** the fixed-budget mixer (min 5%, normalized, never all-zero) resolves
 the Deep all-zero self-stall by construction.
+
+## REDIRECTION (2026-06-08, Cody): steer against the drift
+
+The v1 levers all pushed toward balance, so balanced-1/1/1 was optimal → "press nothing to win."
+Root cause: allocating between three SYMMETRIC runs toward a "keep balanced" goal is a non-decision.
+Fix: make the three dimensions **drift apart on their own** so balanced input ≠ balanced output. The
+triangle becomes the instrument to *steer the ship against the wind*.
+
+**1. Inherent drift (the wind).** Each run k has a time-varying headwind `drift[k]` (oscillating,
+out of phase) that erodes its level independent of allocation. Net level change = allocated gain −
+headwind. Neglect a run → it drifts down; the strongest headwind moves between runs, so the
+bottleneck is never static and balanced never matches the pattern. You counter-steer constantly.
+
+**2. Exogenous events (telegraphed, real-AI):**
+- **Distribution shift** — a run's level drops a chunk ("data moved, model went stale"); recover it.
+- **Compute / data shock** — total throughput or a feedstock dips temporarily.
+- **Breakthrough** — a run gets a temporary tailwind (REPLACES the frontier: push one cheaply now).
+
+**3. Reach back to unblock (deep steering layer).** Each run draws a SPECIFIC earlier-era resource:
+- Vision ← **Data** (Statistical) · Reasoning ← **Insight** (Statistical) · Language ← **Knowledge** (Origins).
+When a run fights a headwind AND its feedstock is dry, compute alone can't push it — you reopen that
+era's production (Origins scriptoriums → Knowledge, Statistical datasets → Data). The living supply
+chain becomes load-bearing for steering the triangle.
+
+**Net:** this REPLACES saturation + lag bonus (drift makes the bottleneck organic) and the frontier
+(→ breakthrough event); heat retires or stays a soft cap. Three legible ideas: **steer against drift,
+unblock via reach-back, respond to events.** All active, all real-AI. Win = climb/hold breadth to the
+gate against the wind.
+
+**Build order:** (1) drift core in produce() so balanced stops winning; (2) per-run feedstock +
+reach-back unblock; (3) events (distribution shift / breakthrough); (4) UI — headwind arrows per run,
+blocked/feedstock state, event telegraph banner; (5) retune, sound, screenshot protocol.

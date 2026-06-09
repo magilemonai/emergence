@@ -118,6 +118,9 @@
   .era-e4 .rc-front .run-st { color: var(--bluehot); } .era-e4 .rc-low .run-st { color: var(--hot); }
   .era-e4 .run-fresh { height: 4px; background: rgba(2,6,12,0.7); border-radius: 3px; overflow: hidden; }
   .era-e4 .run-fresh i { display: block; height: 100%; background: var(--rc); }
+  .era-e4 .run-fresh.wind i { background: var(--hot); opacity: 0.65; } /* the headwind bar — how hard this run is drifting */
+  .era-e4 .run-trend { font-size: 13px; margin-left: 4px; }
+  .era-e4 .run-trend.up { color: var(--good); } .era-e4 .run-trend.dn { color: var(--hot); }
   .era-e4 .fabric-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; align-items: stretch; }
   .era-e4 .dial-lab { font-size: 10px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; }
   .era-e4 .tri-mixer { position: relative; width: 100%; padding-bottom: 78%; background: radial-gradient(120% 120% at 50% 40%, rgba(14,40,70,0.4), rgba(2,6,12,0.7)); border: 1px solid rgba(110,168,255,0.18); border-radius: 8px; touch-action: none; cursor: crosshair; transition: border-color 0.15s; }
@@ -881,18 +884,15 @@
       capRate: 0.9,         // Capability accrued = geometric-mean breadth × Compute × this (balance pays)
       seedNodes: 4, seedSilicon: 260, seedData: 140, // openEra(4) seed so Deep starts in motion
       breadthGate: 0.78,    // geometric-mean breadth across all three domains → Era 5 (forces generality)
-      // live-allocation deepening (makes re-allocation a moving target, not a one-time 1/1/1)
+      // "steer against the drift": the three runs drift apart on their own, so balanced is never optimal —
+      // the triangle is the instrument to counter the wind. (Replaces saturation/lag/frontier.)
       allocMin: 0.05,       // every run keeps ≥5% of the budget — never all-zero (alpha P1 fixed by construction)
-      satRate: 0.055,       // saturation gained per (share-weighted second) of feeding a run — diminishing headroom
-      satRecover: 0.04,     // saturation recovered per second a run is under-fed (headroom returns when you rebalance)
-      freshLo: 0.4, freshHi: 1.0, // freshness: balanced/fresh = 1.0× (neutral), concentrated/saturated drops to 0.4× (the penalty)
-      lagBonus: 0.25,       // the breadth-bottleneck (lowest) run gets +25% efficiency — invites attention, never automates
-      heatPerCompute: 0.05, // Heat per unit active Compute (the machine runs hot)
-      heatConc: 0.5,        // extra Heat scaling for concentration above 50% in one lane
-      cooling: 1.0,         // Heat shed per second (forgiving — mostly Stable/Warm)
-      heatWarn: 65, heatThrottle: 85, throttleWarm: 0.85, throttleHot: 0.6,
-      frontierBonus: 0.4,   // +40% gain on the frontier run while its window is open
-      frontierDur: 30, frontierGap: 16, // window seconds / gap between windows
+      driftBase: 0.00026,   // peak headwind per run (erodes level/s); oscillates OUT OF PHASE so the bottleneck moves
+      driftFreq: 0.16,      // headwind oscillation speed (rad/s) — slow, so you have time to react
+      feedstock: { vision:'data', reasoning:'insight', language:'knowledge' }, // each run draws a SPECIFIC earlier-era resource — reopen that era to unblock it
+      feedPerShare: 0.35,   // feedstock units drawn per unit of compute routed to a run (modest — a real pull, but solvable by scaling the era)
+      heatPerCompute: 0.05, heatConc: 0.5, cooling: 1.0, heatWarn: 65, heatThrottle: 88, throttleWarm: 0.92, throttleHot: 0.72, // heat = soft safety cap only
+      eventGap: 26, eventDur: 13, shiftDrop: 0.06, breakthroughMult: 1.9, // exogenous events: distribution shift (drop) / breakthrough (tailwind)
       domains: [
         { k:'vision',    label:'Vision',    desc:'Perception. Sees structure in raw signal.' },
         { k:'language',  label:'Language',  desc:'Symbols and meaning. The thread back to logic.' },
@@ -925,7 +925,7 @@
     dataset: 0, model: 0,
     // Era 4 — Deep (compute allocation across three training runs)
     node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision:1, language:1, reasoning:1 }, capability: 0,
-    sat: { vision:0, language:0, reasoning:0 }, heat: 0, frontier: null, frontierT: 0, // Deep deepening: saturation / heat / frontier window
+    heat: 0, event: null, eventT: 12, // Deep: heat (soft cap) + exogenous event {type:'shift'|'breakthrough', run, mult}
     // Era 5 — Foundation (recursion + emergence)
     scale: 0, recursion: 0, caps: {}, emerged: false, agentRate: 0,
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
@@ -1345,36 +1345,42 @@
       if(need>0){ if(S.silicon>=need){ S.silicon-=need; } else { modelRun = S.model*(S.silicon/need); S.silicon=0; } }
       if(modelRun>0) runExperiment(modelRun*CFG.e3.expPerModel*dt);
     }
-    // ERA 4 — Deep: Compute Nodes (Silicon-built) draw Data to run; their Compute is split across three training runs,
-    // each drawing Insight and climbing a diminishing curve. Capability accrues from BREADTH (geometric mean), so
-    // balanced generality pays more than any single specialty — the theme made mechanical.
+    // ERA 4 — Deep: STEER AGAINST THE DRIFT. The three runs drift apart on their own (a per-run headwind,
+    // oscillating out of phase), so balanced is never optimal — you route Compute via the triangle to
+    // counter the wind. Each run draws a SPECIFIC earlier-era resource; a starved run can't be pushed
+    // until you reopen that era. Exogenous events (distribution shift / breakthrough) keep reshaping the wind.
     if(S.node>0){
-      const e4=CFG.e4, doms=e4.domains;
-      let run=S.node; const want=S.node*e4.nodeData*dt;     // Data fuel (reach-back to Statistical)
-      if(want>0){ if(S.data>=want){ S.data-=want; } else { run=S.node*(S.data/want); S.data=0; } }
-      const computeRate=run*e4.nodeCompute, compute=computeRate*dt;
+      const e4=CFG.e4, doms=e4.domains, t=S.t||0, PH={vision:0, language:2.094, reasoning:4.189};
+      const computeRate=S.node*e4.nodeCompute, compute=computeRate*dt;
       const throttle = S.heat>=e4.heatThrottle ? e4.throttleHot : (S.heat>=e4.heatWarn ? e4.throttleWarm : 1);
-      // the lowest-level run is the breadth bottleneck (earns the lag bonus)
-      let lowK=doms[0].k; for(const d of doms) if(S[d.k] < S[lowK]) lowK=d.k;
-      if(compute>0){
-        const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1; let maxShare=0;
-        for(const d of doms){ const k=d.k, frac=(S.alloc[k]||0)/tw; if(frac>maxShare) maxShare=frac;
-          const share=compute*frac; if(share<=0){ S.sat[k]=Math.max(0,(S.sat[k]||0)-e4.satRecover*dt); continue; }
-          let eff=share; const ins=share*e4.runInsight;       // Insight fuel (reach-back to Statistical)
-          if(ins>0){ if(S.insight>=ins){ S.insight-=ins; } else { eff=share*(S.insight/ins); S.insight=0; } }
-          const fresh = e4.freshHi - (S.sat[k]||0)*(e4.freshHi-e4.freshLo); // saturated runs lose headroom
-          const lag = (k===lowK)?(1+e4.lagBonus):1, front = (S.frontier===k)?(1+e4.frontierBonus):1;
-          S[k]=Math.min(1, S[k] + e4.capGain*eff*(1-S[k])*fresh*lag*front*throttle);
-          S.sat[k]=Math.max(0,Math.min(1,(S.sat[k]||0) + frac*e4.satRate*dt - e4.satRecover*dt*(1-frac))); // feed→saturate, starve→recover
+      const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1; let maxShare=0;
+      for(const d of doms){ const k=d.k, frac=(S.alloc[k]||0)/tw; if(frac>maxShare) maxShare=frac;
+        const share=compute*frac;
+        // feedstock: this run draws its own earlier-era resource; if dry, it can't be pushed (go reopen that era)
+        const res=e4.feedstock[k], need=share*e4.feedPerShare; let feedMult=1;
+        if(need>0){ if(S[res]>=need){ S[res]-=need; } else { feedMult = S[res]/need; S[res]=0; } }
+        const headwind = e4.driftBase*(0.5+0.5*Math.sin(t*e4.driftFreq + PH[k])); // 0..driftBase, peaks at different times per run
+        const evM = (S.event && S.event.run===k) ? S.event.mult : 1; // breakthrough tailwind
+        const gain = e4.capGain*share*(1-S[k])*feedMult*throttle*evM;
+        S[k]=Math.max(0, Math.min(1, S[k] + gain - headwind*dt));
+      }
+      const conc=Math.max(0, maxShare-0.5);
+      S.heat=Math.max(0,Math.min(120, S.heat + computeRate*e4.heatPerCompute*(1+conc*e4.heatConc)*dt - e4.cooling*dt));
+      const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
+      S.capability += breadth*compute*e4.capRate*throttle;
+      // exogenous events (live play only — deterministic, no RNG churn offline)
+      if(S.maxEra>=4 && !MUTE){ S.eventT-=dt;
+        if(S.eventT<=0){
+          if(S.event){ S.event=null; S.eventT=e4.eventGap; }
+          else { // alternate: a distribution shift on the LEADING run (knocks it down → recalibrate), or a breakthrough on a trailing run
+            let hiK=doms[0].k, loK=doms[0].k; for(const d of doms){ if(S[d.k]>S[hiK]) hiK=d.k; if(S[d.k]<S[loK]) loK=d.k; }
+            const shift = (Math.floor(t/(e4.eventGap+e4.eventDur)) % 2)===0;
+            if(shift){ S.event={type:'shift', run:hiK, mult:1}; S[hiK]=Math.max(0, S[hiK]-e4.shiftDrop); }
+            else { S.event={type:'breakthrough', run:loK, mult:e4.breakthroughMult}; }
+            S.eventT=e4.eventDur;
+          }
         }
-        const conc=Math.max(0, maxShare-0.5); // concentrating compute in one lane runs hot
-        S.heat=Math.max(0,Math.min(120, S.heat + computeRate*e4.heatPerCompute*(1+conc*e4.heatConc)*dt - e4.cooling*dt));
-        const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
-        S.capability += breadth*compute*e4.capRate*throttle; // a broad model does useful work; a lopsided one barely does
-      } else { S.heat=Math.max(0,S.heat-e4.cooling*dt); for(const d of doms) S.sat[d.k]=Math.max(0,(S.sat[d.k]||0)-e4.satRecover*dt); }
-      // frontier window: a rotating +bonus opportunity on the bottleneck run (live play only; deterministic pick — no RNG churn offline)
-      if(S.maxEra>=4 && !MUTE){ S.frontierT-=dt;
-        if(S.frontierT<=0){ if(S.frontier){ S.frontier=null; S.frontierT=e4.frontierGap; } else { S.frontier=lowK; S.frontierT=e4.frontierDur; } } }
+      }
     }
     // ERA 5 — Foundation: passive Scale from the trained model's throughput × recursion; then the emergent agent.
     if(S.maxEra>=5){
@@ -2031,16 +2037,19 @@
     if(mb){ const e4=CFG.e4, doms=e4.domains, br=deepBreadth();
       mb.style.width=Math.min(100, br/e4.breadthGate*100)+'%';
       setText('breadth-val', (br*100).toFixed(1)+'% / '+(e4.breadthGate*100).toFixed(0)+'%');
-      let run=S.node; const want=S.node*e4.nodeData; if(want>0 && S.data<want) run=S.node*(S.data/want);
-      const computeRate=run*e4.nodeCompute;
-      const dl=k=>doms.find(d=>d.k===k).label;
-      let lowK=doms[0].k; for(const d of doms) if(S[d.k]<S[lowK]) lowK=d.k;
-      const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1, share={};
-      // mixer: handle + feed lines (brightness ∝ share, drawn from each vertex to the puck) + live vertex %
+      const computeRate=S.node*e4.nodeCompute, dl=k=>doms.find(d=>d.k===k).label, t=S.t||0, PH={vision:0,language:2.094,reasoning:4.189};
+      const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1, share={}, info={};
+      // mixer: handle + feed lines (brightness ∝ share) + live vertex %; per-run drift/feedstock/event status
       const hx=mixerHandleXY(), th=$('triHandle'); if(th){ th.style.left=(hx.x*100)+'%'; th.style.top=(hx.y*100)+'%'; }
       for(const d of doms){ const k=d.k; share[k]=(S.alloc[k]||0)/tw;
         const ln=$('feed-'+k); if(ln && ln.setAttribute){ ln.setAttribute('x2',(hx.x*100).toFixed(1)); ln.setAttribute('y2',(hx.y*100).toFixed(1)); if(ln.style) ln.style.strokeOpacity=(0.1+0.9*share[k]).toFixed(2); }
-        setText('pct-'+k, Math.round(share[k]*100)+'%'); }
+        setText('pct-'+k, Math.round(share[k]*100)+'%');
+        const headwind=e4.driftBase*(0.5+0.5*Math.sin(t*e4.driftFreq+PH[k]));
+        const res=e4.feedstock[k], need=share[k]*computeRate*e4.feedPerShare, blocked=need>0 && S[res] < need*0.6;
+        const evBreak=!!(S.event&&S.event.type==='breakthrough'&&S.event.run===k), evShift=!!(S.event&&S.event.type==='shift'&&S.event.run===k);
+        const gainRate=e4.capGain*share[k]*computeRate*(1-S[k])*(blocked?0.3:1)*(evBreak?e4.breakthroughMult:1);
+        info[k]={ headwind, blocked, evBreak, evShift, res, net:gainRate-headwind };
+      }
       // heat = secondary safety gauge + header LED
       const hstate=S.heat>=e4.heatThrottle?'THROTTLING':(S.heat>=e4.heatWarn?'WARM':'STABLE'), hg=$('heatGauge');
       if(hg){ hg.style.width=Math.min(100,S.heat)+'%'; hg.style.background=S.heat>=e4.heatThrottle?'var(--danger)':(S.heat>=e4.heatWarn?'var(--hot)':'rgba(110,168,255,0.55)'); }
@@ -2048,24 +2057,32 @@
       const led=$('heatLed'); if(led){ led.className='heat-led '+(S.heat>=e4.heatThrottle?'led-hot':(S.heat>=e4.heatWarn?'led-warm':'led-ok')); }
       const cg=$('capGauge'); if(cg){ cg.style.width=Math.min(100,(S.capability/2000)*100)+'%'; } setText('capGauge-v', fmt(S.capability));
       const computeG=$('computeGauge'); if(computeG){ computeG.style.width=Math.min(100,(computeRate/(S.node*e4.nodeCompute||1))*100)+'%'; } setText('computeGauge-v', fmt(computeRate)+'/s');
-      // run status strip — capability / share / status, with color hierarchy
-      const rstat=k=> S.frontier===k?['best target','rc-front'] : (k===lowK?['breadth floor','rc-low'] : ((S.sat[k]||0)>0.5?['saturating','rc-sat']:['steady','']));
-      const rs=$('runStrip'); if(rs){ const h=doms.map(d=>{ const k=d.k, fresh=e4.freshHi-(S.sat[k]||0)*(e4.freshHi-e4.freshLo), st=rstat(k);
-        const badge = S.frontier===k?'<b class="rb-front">FRONTIER +'+Math.round(e4.frontierBonus*100)+'%</b>':(k===lowK?'<b class="rb-low">BOTTLENECK</b>':'');
+      // run status strip — capability / share / wind, with color hierarchy
+      const rstat=k=>{ const i=info[k];
+        if(i.evBreak) return ['breakthrough — push now','rc-front','BREAKTHROUGH'];
+        if(i.evShift) return ['distribution shift','rc-low','SHIFTED'];
+        if(i.blocked) return ['blocked · low '+i.res,'rc-low','BLOCKED'];
+        if(i.net<0) return ['drifting down · steer here','rc-low',''];
+        return ['holding','','']; };
+      const rs=$('runStrip'); if(rs){ const h=doms.map(d=>{ const k=d.k, st=rstat(k), i=info[k];
+        const windPct=Math.min(100, i.headwind/e4.driftBase*100), trend=i.net>=0?'▲':'▼';
+        const badge = st[2]?'<b class="'+(st[2]==='BREAKTHROUGH'?'rb-front':'rb-low')+'">'+st[2]+'</b>':'';
         return '<div class="run-cell '+st[1]+'" style="--rc:'+LOSS_COLS[k]+'"><div class="run-top"><span class="run-nm">'+d.label+'</span>'+badge+'</div>'+
-          '<div class="run-lv">'+(S[k]*100).toFixed(0)+'<small>% cap</small></div>'+
+          '<div class="run-lv">'+(S[k]*100).toFixed(0)+'<small>% cap</small> <span class="run-trend '+(i.net>=0?'up':'dn')+'">'+trend+'</span></div>'+
           '<div class="run-meta"><span>share '+Math.round(share[k]*100)+'%</span><span class="run-st">'+st[0]+'</span></div>'+
-          '<div class="run-fresh"><i style="width:'+Math.max(0,Math.min(100,(fresh-e4.freshLo)/(e4.freshHi-e4.freshLo)*100))+'%"></i></div></div>'; }).join('');
+          '<div class="run-fresh wind"><i style="width:'+windPct.toFixed(0)+'%"></i></div></div>'; }).join('');
         if(rs._html!==h){ rs.innerHTML=h; rs._html=h; } }
-      // the live orchestration sentence — who to feed, right now
-      const satRuns=doms.filter(d=>(S.sat[d.k]||0)>0.5).map(d=>dl(d.k));
-      let orch='<b class="o-low">'+dl(lowK)+'</b> is the breadth floor';
-      if(S.frontier && S.frontier!==lowK) orch+=' · <b class="o-front">'+dl(S.frontier)+'</b> has the frontier ('+Math.ceil(S.frontierT)+'s)';
-      else if(S.frontier) orch+=' &amp; the frontier ('+Math.ceil(S.frontierT)+'s)';
-      if(satRuns.length) orch+=' · '+satRuns.join(' &amp; ')+(satRuns.length>1?' are':' is')+' saturating';
-      const ol=$('orchLine'); if(ol && ol._html!==orch){ ol.innerHTML=orch; ol._html=orch; }
-      setText('deepRate', fmt(computeRate)+' compute/s  ·  draws '+fmt(S.node*e4.nodeData)+' data/s + '+fmt(computeRate*e4.runInsight)+' insight/s  ·  '+S.node+' nodes');
-      setText('deepStats', 'Three moves: feed the <b>bottleneck</b> (lowest run, +'+Math.round(e4.lagBonus*100)+'%), chase the rotating <b>frontier</b> (+'+Math.round(e4.frontierBonus*100)+'%), and don\'t overcook one lane (<b>saturation</b> drains efficiency). Heat is a soft safety cap. Capability '+fmt(S.capability)+'.');
+      // the live orchestration sentence — what to do, right now
+      const breakR=doms.find(d=>info[d.k].evBreak), blockedR=doms.filter(d=>info[d.k].blocked),
+            driftR=doms.filter(d=>info[d.k].net<0 && !info[d.k].blocked && !info[d.k].evBreak).map(d=>dl(d.k));
+      const parts=[];
+      if(breakR) parts.push('<b class="o-front">'+dl(breakR.k)+'</b> breakthrough — push it now');
+      blockedR.forEach(d=> parts.push('<b class="o-low">'+dl(d.k)+'</b> blocked — reopen '+info[d.k].res));
+      if(driftR.length) parts.push(driftR.join(' &amp; ')+(driftR.length>1?' are':' is')+' drifting — steer there');
+      if(!parts.length) parts.push('holding course — watch the wind shift');
+      const ol=$('orchLine'); const orch=parts.join(' · '); if(ol && ol._html!==orch){ ol.innerHTML=orch; ol._html=orch; }
+      setText('deepRate', fmt(computeRate)+' compute/s  ·  '+S.node+' nodes  ·  feeds: V←Data L←Knowledge R←Insight');
+      setText('deepStats', 'The three runs <b>drift apart</b> on their own — steer Compute to counter the wind. Each draws a feedstock; a <b>blocked</b> run can\'t be pushed until you <b>reopen that era</b>. <b>Events</b> (distribution shift / breakthrough) keep reshaping the wind. Capability '+fmt(S.capability)+'.');
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('intk-si', fmt(totalCost(BUYS.node,1))+'/rack');
       setText('intk-da', '−'+fmt(S.node*e4.nodeData)+'/s');

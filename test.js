@@ -18,7 +18,7 @@ const html = fs.readFileSync(path.join(__dirname, 'emergence.html'), 'utf8');
 const SCRIPT = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 // ---- Minimal headless shims ----
-const CTX = { setTransform(){}, clearRect(){}, beginPath(){}, moveTo(){}, lineTo(){}, stroke(){}, closePath(){}, setLineDash(){},
+const CTX = { setTransform(){}, clearRect(){}, beginPath(){}, moveTo(){}, lineTo(){}, stroke(){}, closePath(){}, setLineDash(){}, fillRect(){},
   arc(){}, fill(){}, fillText(){}, createRadialGradient(){ return { addColorStop(){} }; } };
 function makeEl(){
   return { style:{}, dataset:{}, className:'', innerHTML:'', textContent:'', width:0, height:0, onclick:null, disabled:false,
@@ -372,18 +372,22 @@ function statisticalStep(EM){
   else if(S.gap > 0.18) S.focus = 'generalize';
   else S.focus = 'fit';
 }
-function deepStep(EM){ // ERA 4 — keep the Silicon factory + Data/Insight flowing, grow Compute Nodes (balanced allocation)
+function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three feedstocks (Knowledge/Data/Insight) flowing
   const { S, BUYS } = EM;
   if(S.maxEra < 4) return;
-  // Origins reach-back: feed and grow the Silicon factory (Nodes are bought with Silicon)
-  if(S.scriptorium < 45 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium');
-  if(S.smelter < 45 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
+  // Reach-back: each run draws a specific feedstock — Vision←Data, Reasoning←Insight, Language←Knowledge.
+  // Keep the whole stack producing them, scaling whichever is running low (the 'go back to unblock' loop).
+  if(S.scriptorium < 70 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium'); // → Knowledge (Language)
+  if(S.smelter < 50 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
   if(S.foundry < 70 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
-  // keep Statistical infra producing Data + Insight (Nodes draw both)
-  if(S.dataset < 45 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset');
-  if(S.model < 30 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');
-  // grow Compute; allocation stays balanced 1/1/1 so breadth (geometric mean) climbs
+  if(S.scribe < 50 && S.marks >= EM.totalCost(BUYS.scribe,1)) EM.buy('scribe');
+  if(S.miner < 50 && S.ore >= EM.totalCost(BUYS.miner,1)) EM.buy('miner');
+  if(S.dataset < 60 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset'); // → Data (Vision)
+  if(S.model < 40 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');             // → Insight (Reasoning)
+  // grow Compute
   if(S.node < 90 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
+  // STEER: route compute toward the run with the lowest level (countering its headwind) — not static 1/1/1
+  S.alloc = { vision: 0.12+(1-S.vision)*1.4, language: 0.12+(1-S.language)*1.4, reasoning: 0.12+(1-S.reasoning)*1.4 };
 }
 function foundationStep(EM){ // ERA 5 — acquire capabilities, recurse, drive Scale to emergence
   const { S, CAPS } = EM;

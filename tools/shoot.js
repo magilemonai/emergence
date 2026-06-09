@@ -73,8 +73,8 @@ const SETUP = {
     tip.style.left='150px'; tip.style.top='560px';`,
   deep: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true; E.checkMiles();
     S.maxEra=3;S.accuracy=0.99;S.gap=0.05;S.methods={regression:true,regularization:true,ensembles:true}; E.checkMiles();
-    S.silicon=9000;S.data=9000;S.insight=4000;S.node=24;S.vision=0.55;S.language=0.42;S.reasoning=0.6;S.capability=1200;S.foundry=20;
-    S.alloc={vision:0.45,language:0.2,reasoning:0.35};S.heat=58;S.sat={vision:0.34,language:0.06,reasoning:0.42};S.frontier='language';S.frontierT=22;
+    S.silicon=9000;S.data=9000;S.insight=4000;S.knowledge=900;S.node=24;S.vision=0.62;S.language=0.38;S.reasoning=0.55;S.capability=1200;S.foundry=20;S.scriptorium=30;
+    S.alloc={vision:0.5,language:0.22,reasoning:0.28};S.heat=42;S.event={type:'breakthrough',run:'language',mult:1.9};S.eventT=9;
     E.checkMiles(); for(let i=0;i<3;i++) E.tick();`,
   deeptip: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true; E.checkMiles();
     S.maxEra=3;S.accuracy=0.99;S.methods={regression:true,regularization:true,ensembles:true}; E.checkMiles();
