@@ -165,6 +165,17 @@
   .era-e4 .intake::after { content: ''; position: absolute; left: -40%; top: 0; bottom: 0; width: 40%;
     background: linear-gradient(90deg, transparent, rgba(110,168,255,0.14), transparent); animation: intakeFlow 2.4s linear infinite; }
   @keyframes intakeFlow { to { left: 110%; } }
+  /* event banner — the wind shifting (telegraph + announce) */
+  .era-e4 .event-banner { display: none; }
+  .era-e4 .event-banner.show { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em;
+    padding: 9px 13px; border-radius: 5px; margin: 0 0 10px; border: 1px solid; }
+  .era-e4 .event-banner b { font-weight: 600; }
+  .era-e4 .event-banner.ev-shift { color: var(--hot); border-color: rgba(255,177,92,0.5); background: rgba(255,177,92,0.08); animation: evPulse 1.6s ease-in-out infinite; }
+  .era-e4 .event-banner.ev-break { color: var(--bluehot); border-color: rgba(110,168,255,0.55); background: rgba(110,168,255,0.1); animation: evPulse 1.6s ease-in-out infinite; }
+  .era-e4 .event-banner.ev-warn { color: var(--dim); border-color: rgba(110,168,255,0.16); background: rgba(2,6,12,0.4); }
+  @keyframes evPulse { 0%,100% { opacity: 0.88; } 50% { opacity: 1; } }
+  .era-e4 .sup-group { margin-bottom: 8px; }
+  .era-e4 .sup-glab { font-size: 9px; letter-spacing: 0.14em; color: var(--dimmer); text-transform: uppercase; display: block; margin-bottom: 5px; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text);
     font-family: var(--era-font); overflow: hidden; transition: background 0.9s ease, color 0.7s ease; }
@@ -1778,7 +1789,8 @@
     let body =
       // THE FABRIC — the 3-lane loss chamber + the compute mixer (the world object)
       '<div class="panel fabric-hero" style="grid-column:1/-1">'+
-        '<div class="inst-head"><span class="inst-title">THE&nbsp;FABRIC</span><span class="inst-sub">three runs &middot; one compute budget &middot; breadth wins</span><span class="heat-led" id="heatLed"></span></div>'+
+        '<div class="inst-head"><span class="inst-title">THE&nbsp;FABRIC</span><span class="inst-sub">three runs drift &middot; steer compute against the wind</span><span class="heat-led" id="heatLed"></span></div>'+
+        '<div class="event-banner" id="eventBanner"></div>'+
         '<canvas id="losscurve" class="scatter"></canvas>'+
         '<div class="run-strip" id="runStrip"></div>'+
         '<div class="proof-rate inst-readout" id="deepRate"></div>'+
@@ -1793,13 +1805,15 @@
       '</div>'+
       '<div class="panel feed-module"><div class="panel-label">Compute Supply &middot; rack provisioning</div>'+eraUpgrade('node','Compute Node','Built from Silicon. Produces Compute; draws Data + Insight to run.')+'</div>'+
       '<div class="panel"><div class="panel-label">Run Status</div><div class="up-desc" id="deepStats" style="line-height:1.7"></div></div>'+
-      '<div class="panel supply-bus" style="grid-column:1/-1"><div class="sup-lab">Supply bus — the whole stack feeds the fabric: Silicon (Origins) for racks, Data + Insight (Statistical) for fuel</div>'+
+      '<div class="panel supply-bus" style="grid-column:1/-1"><div class="sup-lab">Supply bus — a blocked run needs you to reopen its feedstock\'s era, in place</div>'+
         '<div class="intake-manifold">'+
           '<span class="intake in-si">SILICON &rarr; racks <b id="intk-si"></b></span>'+
-          '<span class="intake in-da">DATA &rarr; run fuel <b id="intk-da"></b></span>'+
-          '<span class="intake in-in">INSIGHT &rarr; run fuel <b id="intk-in"></b></span>'+
+          '<span class="intake in-da">DATA &rarr; Vision <b id="intk-da"></b></span>'+
+          '<span class="intake in-in">INSIGHT &rarr; Reasoning <b id="intk-in"></b></span>'+
+          '<span class="intake in-kn">KNOWLEDGE &rarr; Language <b id="intk-kn"></b></span>'+
         '</div>'+
-        '<div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium')+'</div>'+
+        '<div class="sup-group"><span class="sup-glab">Origins</span><div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium &middot; Knowledge')+'</div></div>'+
+        '<div class="sup-group"><span class="sup-glab">Statistical</span><div class="sup-row">'+supplyBtn('dataset','Dataset &middot; Data')+supplyBtn('model','Model &middot; Insight')+'</div></div>'+
         '<div class="sup-rate" id="supSi4"></div></div>';
     return eraShell(4, S.obsolete[4], body);
   }
@@ -2083,11 +2097,18 @@
       const ol=$('orchLine'); const orch=parts.join(' · '); if(ol && ol._html!==orch){ ol.innerHTML=orch; ol._html=orch; }
       setText('deepRate', fmt(computeRate)+' compute/s  ·  '+S.node+' nodes  ·  feeds: V←Data L←Knowledge R←Insight');
       setText('deepStats', 'The three runs <b>drift apart</b> on their own — steer Compute to counter the wind. Each draws a feedstock; a <b>blocked</b> run can\'t be pushed until you <b>reopen that era</b>. <b>Events</b> (distribution shift / breakthrough) keep reshaping the wind. Capability '+fmt(S.capability)+'.');
-      for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
+      for(const key of ['foundry','smelter','scriptorium','dataset','model']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('intk-si', fmt(totalCost(BUYS.node,1))+'/rack');
-      setText('intk-da', '−'+fmt(S.node*e4.nodeData)+'/s');
-      setText('intk-in', '−'+fmt(computeRate*e4.runInsight)+'/s');
-      setText('supSi4', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Nodes cost Silicon to build');
+      setText('intk-da', '−'+fmt(share.vision*computeRate*e4.feedPerShare)+'/s');
+      setText('intk-in', '−'+fmt(share.reasoning*computeRate*e4.feedPerShare)+'/s');
+      setText('intk-kn', '−'+fmt(share.language*computeRate*e4.feedPerShare)+'/s');
+      setText('supSi4', 'Silicon '+fmt(S.silicon)+'  ·  Data '+fmt(S.data)+'  ·  Insight '+fmt(S.insight)+'  ·  Knowledge '+fmt(S.knowledge));
+      // event banner — telegraph + announce (the wind shifting)
+      const eb=$('eventBanner'); if(eb){ let eh='', ec='';
+        if(S.event && S.event.type==='shift'){ ec='ev-shift'; eh='&#9888; DISTRIBUTION SHIFT &middot; <b>'+dl(S.event.run)+'</b> went stale and dropped — re-feed it to recover'; }
+        else if(S.event && S.event.type==='breakthrough'){ ec='ev-break'; eh='&#10022; BREAKTHROUGH &middot; <b>'+dl(S.event.run)+'</b> has clean gradient — push it now ('+Math.ceil(S.eventT)+'s)'; }
+        else if(S.eventT < 5){ ec='ev-warn'; eh='anomalous signal building…'; }
+        const cls='event-banner'+(ec?' '+ec+' show':''); if(eb.className!==cls) eb.className=cls; if(eb._html!==eh){ eb.innerHTML=eh; eb._html=eh; } }
       drawLoss(); }
     // ERA 5 — Foundation
     const msc=$('meter-scale');
