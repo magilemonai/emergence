@@ -23,9 +23,21 @@ const SETUP = {
     S.refine=3; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
   research: `const E=window.EMERGENCE,S=E.S; E.revealGame();
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40;
-    for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }
+    let bought=0; for(let r=0;r<5 && bought<4;r++){ for(const n of E.DISCO){ if(bought<4 && E.canBuyDisco(n.id)){ E.buyDisco(n.id); bought++; } } }
+    S.marks=260;S.ore=210;S.knowledge=120;S.metal=40;   // moderate pile: some next-tier affordable (available), some not (locked)
     E.checkMiles(); for(let i=0;i<3;i++) E.tick();
     const rb=document.getElementById('researchBtn'); if(rb) rb.click();`,
+  tooltip: `const E=window.EMERGENCE,S=E.S; E.revealGame();
+    S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40;
+    for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }
+    S.marks=4000;S.ore=3000;S.metal=800;
+    for(let i=0;i<10;i++){S.marks=4000;S.ore=3000;S.metal=800;['scribe','miner','scriptorium','smelter','foundry'].forEach(k=>E.buy(k));}
+    S.refine=3; E.checkMiles(); for(let i=0;i<5;i++) E.tick();
+    const el=document.getElementById('btile-scriptorium')||document.querySelector('.tile.build')||document.querySelector('[data-tip]');
+    const tip=document.getElementById('tip'); const r=el.getBoundingClientRect();
+    tip.innerHTML=el.getAttribute('data-tip'); tip.classList.add('show');
+    tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
+    tip.style.left=(r.right+14+window.scrollX)+'px'; tip.style.top=(r.top+window.scrollY)+'px';`,
   symbolic: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.marks=999;S.flags.origindone=true; E.checkMiles();
     S.rules=20000;S.ruleset=22;S.daemon=8; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
   statistical: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();

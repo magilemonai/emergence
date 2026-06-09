@@ -4,3 +4,5 @@ node_modules/
 images/*.heic
 
 fonts/*.woff2
+
+screenshots/
