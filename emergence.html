@@ -82,23 +82,60 @@
   .era-e5 { background:
       linear-gradient(rgba(12,8,20,0.90), rgba(12,8,20,0.94)),
       radial-gradient(700px 420px at 50% 50%, rgba(183,139,255,0.08), transparent 62%), var(--panel); }
-  /* Era-4 compute allocation controls */
-  .alloc-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .alloc { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
-  .alloc-head { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
-  .alloc-ic { width: 26px; height: 26px; object-fit: contain; flex: none; filter: drop-shadow(0 0 5px rgba(110,168,255,0.4)); }
-  .alloc-nm { font-size: 12px; font-weight: 600; color: var(--text); }
-  .alloc-lv { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--accent); margin-left: auto; }
   .agent-hero { width: min(150px, 40%); height: auto; display: block; margin: 0 auto 6px;
     filter: drop-shadow(0 0 22px rgba(183,139,255,0.55)); animation: agentPulse 3.4s ease-in-out infinite; }
   @keyframes agentPulse { 0%,100% { opacity: 0.82; transform: scale(0.99); } 50% { opacity: 1; transform: scale(1.02); } }
-  .alloc-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; margin-bottom: 9px; }
-  .alloc-bar i { display: block; height: 100%; width: 0; transition: width 0.3s; }
-  .alloc-ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .alloc-btn { font-family: inherit; font-size: 15px; line-height: 1; width: 30px; height: 26px; border-radius: 6px;
-    border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; transition: all 0.12s; }
-  .alloc-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .alloc-w { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); min-width: 16px; text-align: center; }
+  /* ===== ERA 4 — Deep: the industrial compute fabric ===== */
+  .era-e4 .fabric-hero { position: relative; background: linear-gradient(180deg, rgba(10,22,38,0.7), rgba(4,9,16,0.86));
+    border: 1px solid rgba(110,168,255,0.3); border-radius: 12px; box-shadow: inset 0 0 60px rgba(40,90,160,0.07), 0 0 30px rgba(110,168,255,0.05), 0 18px 44px rgba(0,0,0,0.5); }
+  .era-e4 .inst-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; padding-bottom: 9px; border-bottom: 1px solid rgba(110,168,255,0.16); }
+  .era-e4 .inst-title { font-family: var(--era-display); font-size: 25px; font-weight: 600; letter-spacing: 0.07em; color: var(--bluehot); text-shadow: 0 0 12px rgba(110,168,255,0.5); }
+  .era-e4 .inst-sub { font-size: 13px; color: var(--dim); }
+  .era-e4 .heat-led { margin-left: auto; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .era-e4 .heat-led.led-ok { background: var(--accent); box-shadow: 0 0 9px var(--accent); }
+  .era-e4 .heat-led.led-warm { background: var(--hot); box-shadow: 0 0 10px var(--hot); animation: termBlink 1.4s steps(1) infinite; }
+  .era-e4 .heat-led.led-hot { background: var(--danger); box-shadow: 0 0 12px var(--danger); animation: termBlink 0.6s steps(1) infinite; }
+  .era-e4 .scatter { height: 240px; border: 1px solid rgba(110,168,255,0.2); border-radius: 8px; background: radial-gradient(120% 120% at 50% 30%, rgba(14,40,70,0.45), rgba(2,6,12,0.85)); box-shadow: inset 0 0 40px rgba(0,0,0,0.6); margin: 0 0 10px; }
+  .era-e4 .inst-readout { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+  .era-e4 .meter { height: 7px; background: rgba(2,6,12,0.7); border: 1px solid rgba(110,168,255,0.2); border-radius: 0; }
+  .era-e4 .meter > i { box-shadow: 0 0 8px rgba(110,168,255,0.5); }
+  .era-e4 .meter-label { font-family: var(--mono); }
+  .era-e4 .run-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 8px 0 4px; }
+  .era-e4 .run-cell { border: 1px solid rgba(110,168,255,0.18); border-top: 2px solid var(--rc); border-radius: 6px; padding: 8px 11px; background: rgba(8,18,32,0.5); }
+  .era-e4 .run-top { display: flex; align-items: center; gap: 8px; }
+  .era-e4 .run-nm { font-family: var(--era-display); font-size: 14px; font-weight: 600; letter-spacing: 0.04em; color: var(--text); }
+  .era-e4 .run-top b { margin-left: auto; font-size: 9px; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+  .era-e4 .rb-front { color: #04070d; background: var(--bluehot); box-shadow: 0 0 10px rgba(110,168,255,0.5); }
+  .era-e4 .rb-low { color: var(--hot); border: 1px solid var(--hot); }
+  .era-e4 .run-lv { font-family: var(--mono); font-size: 20px; color: var(--bluehot); margin: 3px 0; }
+  .era-e4 .run-fresh { height: 4px; background: rgba(2,6,12,0.7); border-radius: 3px; overflow: hidden; }
+  .era-e4 .run-fresh i { display: block; height: 100%; background: var(--rc); }
+  .era-e4 .run-frsub { font-family: var(--mono); font-size: 9.5px; color: var(--dimmer); margin-top: 3px; }
+  .era-e4 .fabric-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; align-items: stretch; }
+  .era-e4 .dial-lab { font-size: 10px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; }
+  .era-e4 .tri-mixer { position: relative; width: 100%; padding-bottom: 76%; background: radial-gradient(120% 120% at 50% 40%, rgba(14,40,70,0.4), rgba(2,6,12,0.7)); border: 1px solid rgba(110,168,255,0.18); border-radius: 8px; touch-action: none; cursor: crosshair; }
+  .era-e4 .tri-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .era-e4 .tri-svg polygon { fill: rgba(110,168,255,0.05); stroke: rgba(110,168,255,0.42); stroke-width: 0.8; }
+  .era-e4 .tri-svg line { stroke: rgba(110,168,255,0.12); stroke-width: 0.5; }
+  .era-e4 .tri-corner { position: absolute; font-family: var(--era-display); font-size: 11px; letter-spacing: 0.07em; color: var(--dim); }
+  .era-e4 .tc-v { top: 1%; left: 50%; transform: translateX(-50%); }
+  .era-e4 .tc-l { bottom: 1%; left: 3%; } .era-e4 .tc-r { bottom: 1%; right: 3%; }
+  .era-e4 .tri-handle { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--bluehot); border: 2px solid #fff; box-shadow: 0 0 14px rgba(110,168,255,0.85); transform: translate(-50%,-50%); transition: left 0.1s, top 0.1s; pointer-events: none; }
+  .era-e4 .tri-flow { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); pointer-events: none; }
+  .era-e4 .tf-v { top: 9%; left: calc(50% - 3px); } .era-e4 .tf-l { bottom: 7%; left: 7%; } .era-e4 .tf-r { bottom: 7%; right: 7%; }
+  .era-e4 .fabric-gauges { display: flex; flex-direction: column; justify-content: center; gap: 15px; }
+  .era-e4 .gauge-row { display: grid; grid-template-columns: 90px 1fr auto; align-items: center; gap: 10px; }
+  .era-e4 .gauge-lab { font-size: 10px; letter-spacing: 0.12em; color: var(--dim); }
+  .era-e4 .gauge-bar { height: 8px; background: rgba(2,6,12,0.7); border: 1px solid rgba(110,168,255,0.2); overflow: hidden; }
+  .era-e4 .gauge-bar i { display: block; height: 100%; width: 0; background: var(--accent); box-shadow: 0 0 8px rgba(110,168,255,0.4); transition: width 0.2s, background 0.2s; }
+  .era-e4 .gauge-num { font-family: var(--mono); font-size: 12px; color: var(--text); min-width: 78px; text-align: right; }
+  .era-e4 .feed-module { position: relative; overflow: hidden; }
+  .era-e4 .feed-module::before { content: ''; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; background: linear-gradient(var(--accent),transparent); box-shadow: 0 0 9px rgba(110,168,255,0.4); opacity: 0.55; }
+  .era-e4 .supply-bus { background: rgba(2,6,12,0.6); border-color: rgba(110,168,255,0.12); }
+  .era-e4 .sup-row { gap: 0; border: 1px solid rgba(110,168,255,0.14); border-radius: 8px; overflow: hidden; background: rgba(2,6,12,0.5); }
+  .era-e4 .sup-btn { border: none; border-right: 1px solid rgba(110,168,255,0.1); border-radius: 0; background: transparent; opacity: 0.82; }
+  .era-e4 .sup-btn:last-child { border-right: none; }
+  .era-e4 .up-buy .c, .era-e4 .sup-nm b { color: var(--accent); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text);
     font-family: var(--era-font); overflow: hidden; transition: background 0.9s ease, color 0.7s ease; }
@@ -1270,20 +1307,32 @@
     // each drawing Insight and climbing a diminishing curve. Capability accrues from BREADTH (geometric mean), so
     // balanced generality pays more than any single specialty — the theme made mechanical.
     if(S.node>0){
-      const e4=CFG.e4;
+      const e4=CFG.e4, doms=e4.domains;
       let run=S.node; const want=S.node*e4.nodeData*dt;     // Data fuel (reach-back to Statistical)
       if(want>0){ if(S.data>=want){ S.data-=want; } else { run=S.node*(S.data/want); S.data=0; } }
-      const compute=run*e4.nodeCompute*dt;
+      const computeRate=run*e4.nodeCompute, compute=computeRate*dt;
+      const throttle = S.heat>=e4.heatThrottle ? e4.throttleHot : (S.heat>=e4.heatWarn ? e4.throttleWarm : 1);
+      // the lowest-level run is the breadth bottleneck (earns the lag bonus)
+      let lowK=doms[0].k; for(const d of doms) if(S[d.k] < S[lowK]) lowK=d.k;
       if(compute>0){
-        const doms=e4.domains, tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1;
-        for(const d of doms){ const share=compute*((S.alloc[d.k]||0)/tw); if(share<=0) continue;
+        const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1; let maxShare=0;
+        for(const d of doms){ const k=d.k, frac=(S.alloc[k]||0)/tw; if(frac>maxShare) maxShare=frac;
+          const share=compute*frac; if(share<=0){ S.sat[k]=Math.max(0,(S.sat[k]||0)-e4.satRecover*dt); continue; }
           let eff=share; const ins=share*e4.runInsight;       // Insight fuel (reach-back to Statistical)
           if(ins>0){ if(S.insight>=ins){ S.insight-=ins; } else { eff=share*(S.insight/ins); S.insight=0; } }
-          S[d.k]=Math.min(1, S[d.k]+e4.capGain*eff*(1-S[d.k]));
+          const fresh = e4.freshHi - (S.sat[k]||0)*(e4.freshHi-e4.freshLo); // saturated runs lose headroom
+          const lag = (k===lowK)?(1+e4.lagBonus):1, front = (S.frontier===k)?(1+e4.frontierBonus):1;
+          S[k]=Math.min(1, S[k] + e4.capGain*eff*(1-S[k])*fresh*lag*front*throttle);
+          S.sat[k]=Math.max(0,Math.min(1,(S.sat[k]||0) + frac*e4.satRate*dt - e4.satRecover*dt*(1-frac))); // feed→saturate, starve→recover
         }
+        const conc=Math.max(0, maxShare-0.5); // concentrating compute in one lane runs hot
+        S.heat=Math.max(0,Math.min(120, S.heat + computeRate*e4.heatPerCompute*(1+conc*e4.heatConc)*dt - e4.cooling*dt));
         const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
-        S.capability += breadth*compute*e4.capRate; // a broad model does useful work; a lopsided one barely does
-      }
+        S.capability += breadth*compute*e4.capRate*throttle; // a broad model does useful work; a lopsided one barely does
+      } else { S.heat=Math.max(0,S.heat-e4.cooling*dt); for(const d of doms) S.sat[d.k]=Math.max(0,(S.sat[d.k]||0)-e4.satRecover*dt); }
+      // frontier window: a rotating +bonus opportunity on the bottleneck run (live play only; deterministic pick — no RNG churn offline)
+      if(S.maxEra>=4 && !MUTE){ S.frontierT-=dt;
+        if(S.frontierT<=0){ if(S.frontier){ S.frontier=null; S.frontierT=e4.frontierGap; } else { S.frontier=lowK; S.frontierT=e4.frontierDur; } } }
     }
     // ERA 5 — Foundation: passive Scale from the trained model's throughput × recursion; then the emergent agent.
     if(S.maxEra>=5){
@@ -1648,53 +1697,71 @@
   }
   // ---- ERA 4 (Deep): allocate Compute across three training runs; breadth (geometric mean) makes Capability ----
   function deepBreadth(){ return Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)); }
-  function allocRow(d){
-    const ic = RUN_ICON[d.k] ? '<img class="alloc-ic" src="'+RUN_ICON[d.k]+'">' : '';
-    return '<div class="alloc" id="alloc-'+d.k+'" data-tip="'+esc('<i>'+d.desc+'</i>')+'">'+
-      '<div class="alloc-head">'+ic+'<span class="alloc-nm">'+d.label+'</span><span class="alloc-lv" id="alv-'+d.k+'"></span></div>'+
-      '<div class="alloc-bar"><i id="albar-'+d.k+'" style="background:var(--e3)"></i></div>'+
-      '<div class="alloc-ctl"><button class="alloc-btn" data-alloc="'+d.k+':-1">−</button>'+
-        '<span class="alloc-w" id="aw-'+d.k+'"></span>'+
-        '<button class="alloc-btn" data-alloc="'+d.k+':1">+</button></div></div>';
+  // The triangular compute mixer — a ternary allocation pad (never all-zero; min share enforced)
+  const TRI={ V:{x:0.5,y:0.07}, L:{x:0.07,y:0.92}, R:{x:0.93,y:0.92} };
+  function setAllocFromXY(fx,fy){
+    const A=TRI.V,B=TRI.L,C=TRI.R, det=(B.y-C.y)*(A.x-C.x)+(C.x-B.x)*(A.y-C.y);
+    let wv=((B.y-C.y)*(fx-C.x)+(C.x-B.x)*(fy-C.y))/det;
+    let wl=((C.y-A.y)*(fx-C.x)+(A.x-C.x)*(fy-C.y))/det;
+    let wr=1-wv-wl; const MIN=CFG.e4.allocMin;
+    wv=Math.max(MIN,Math.max(0,wv)); wl=Math.max(MIN,Math.max(0,wl)); wr=Math.max(MIN,Math.max(0,wr));
+    const s=wv+wl+wr; S.alloc={vision:wv/s, language:wl/s, reasoning:wr/s};
   }
+  function mixerHandleXY(){ const a=S.alloc, s=((a.vision||0)+(a.language||0)+(a.reasoning||0))||1;
+    const v=(a.vision||0)/s, l=(a.language||0)/s, r=(a.reasoning||0)/s;
+    return { x:v*TRI.V.x+l*TRI.L.x+r*TRI.R.x, y:v*TRI.V.y+l*TRI.L.y+r*TRI.R.y }; }
+  function buildMixer(){
+    return '<div class="tri-mixer" id="triMixer">'+
+      '<svg class="tri-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,7 7,92 93,92"/>'+
+        '<line x1="50" y1="7" x2="50" y2="92"/><line x1="7" y1="92" x2="71.5" y2="49.5"/><line x1="93" y1="92" x2="28.5" y2="49.5"/></svg>'+
+      '<span class="tri-corner tc-v">VISION</span><span class="tri-corner tc-l">LANGUAGE</span><span class="tri-corner tc-r">REASONING</span>'+
+      '<div class="tri-flow tf-v" id="flow-vision"></div><div class="tri-flow tf-l" id="flow-language"></div><div class="tri-flow tf-r" id="flow-reasoning"></div>'+
+      '<div class="tri-handle" id="triHandle"></div></div>';
+  }
+  function gaugeRow(lab,id,unit){ return '<div class="gauge-row"><span class="gauge-lab">'+lab+'</span><div class="gauge-bar"><i id="'+id+'"></i></div><span class="gauge-num" id="'+id+'-v"></span></div>'; }
   function buildDeep(){
-    const e4=CFG.e4;
     let body =
-      '<div class="panel sym-hero" style="grid-column:1/-1">'+
-        '<div class="panel-label">The Network · allocate Compute across parallel training runs</div>'+
+      // THE FABRIC — the 3-lane loss chamber + the compute mixer (the world object)
+      '<div class="panel fabric-hero" style="grid-column:1/-1">'+
+        '<div class="inst-head"><span class="inst-title">THE&nbsp;FABRIC</span><span class="inst-sub">three runs &middot; one compute budget &middot; breadth wins</span><span class="heat-led" id="heatLed"></span></div>'+
         '<canvas id="losscurve" class="scatter"></canvas>'+
-        '<div class="proof-rate" id="deepRate"></div>'+
-        '<div class="meter"><i id="meter-breadth" style="background:var(--e3)"></i></div>'+
-        '<div class="meter-label"><span>Breadth — geometric mean of all three runs (the gate to Foundation)</span><span id="breadth-val"></span></div>'+
-        '<div class="panel-label" style="margin:12px 0 6px">Compute Allocation</div>'+
-        '<div class="alloc-row">'+e4.domains.map(allocRow).join('')+'</div>'+
+        '<div class="run-strip" id="runStrip"></div>'+
+        '<div class="proof-rate inst-readout" id="deepRate"></div>'+
+        '<div class="meter"><i id="meter-breadth" style="background:var(--accent)"></i></div>'+
+        '<div class="meter-label"><span>breadth &rarr; Foundation (geometric mean of the three runs)</span><span id="breadth-val"></span></div>'+
+        '<div class="fabric-controls">'+
+          '<div class="mixer-wrap"><div class="dial-lab">COMPUTE ALLOCATION &middot; route the budget</div>'+buildMixer()+'</div>'+
+          '<div class="fabric-gauges">'+gaugeRow('HEAT','heatGauge')+gaugeRow('CAPABILITY','capGauge')+gaugeRow('COMPUTE','computeGauge')+'</div>'+
+        '</div>'+
       '</div>'+
-      '<div class="panel"><div class="panel-label">Compute Supply</div>'+eraUpgrade('node','Compute Node','Built from Silicon. Produces Compute; draws Data + Insight to run.')+'</div>'+
-      '<div class="panel"><div class="panel-label">The Run</div><div class="up-desc" style="line-height:1.7" id="deepStats"></div></div>'+
-      '<div class="panel" style="grid-column:1/-1"><div class="sup-lab">Origins Supply — Compute Nodes run on Silicon; reopen the Foundry to scale</div>'+
+      '<div class="panel feed-module"><div class="panel-label">Compute Supply &middot; rack provisioning</div>'+eraUpgrade('node','Compute Node','Built from Silicon. Produces Compute; draws Data + Insight to run.')+'</div>'+
+      '<div class="panel"><div class="panel-label">Run Status</div><div class="up-desc" id="deepStats" style="line-height:1.7"></div></div>'+
+      '<div class="panel supply-bus" style="grid-column:1/-1"><div class="sup-lab">Supply bus — the fabric draws Silicon (Origins) for racks; reopen the Foundry to scale</div>'+
         '<div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium')+'</div>'+
         '<div class="sup-rate" id="supSi4"></div></div>';
     return eraShell(4, S.obsolete[4], body);
   }
-  function drawLoss(){ // Era 4 signature viz: three loss curves, one per run, each descending as its domain trains
+  const LOSS_COLS={ vision:'#6ea8ff', language:'#7fd3ff', reasoning:'#b9c8ff' };
+  function drawLoss(){ // Era 4 signature viz: three loss curves descending in parallel; the frontier run flares, heat hazes the glass
     const cv=$('losscurve'); if(!cv || !cv.getContext) return;
     const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return;
-    const w=cv.width=cv.clientWidth||640, h=cv.height=150, pad=16, gw=w-pad*2, gh=h-pad*2;
+    const w=cv.width=cv.clientWidth||640, h=cv.height=cv.clientHeight||260, pad=20, gw=w-pad*2, gh=h-pad*2;
     ctx.clearRect(0,0,w,h);
-    ctx.strokeStyle='rgba(110,168,255,0.22)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(pad,pad-4); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
-    const cols={ vision:'#6ea8ff', language:'#9ec3ff', reasoning:'#c7b3ff' };
-    for(const d of CFG.e4.domains){ const lv=Math.max(0,Math.min(1,S[d.k]));
+    ctx.strokeStyle='rgba(110,168,255,0.07)'; ctx.lineWidth=1;
+    for(let i=1;i<8;i++){ const gx=pad+gw*i/8; ctx.beginPath(); ctx.moveTo(gx,pad); ctx.lineTo(gx,h-pad); ctx.stroke(); }
+    for(let i=1;i<5;i++){ const gy=pad+gh*i/5; ctx.beginPath(); ctx.moveTo(pad,gy); ctx.lineTo(w-pad,gy); ctx.stroke(); }
+    ctx.strokeStyle='rgba(110,168,255,0.28)'; ctx.beginPath(); ctx.moveTo(pad,pad-6); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+    const doms=CFG.e4.domains; let lowK=doms[0].k; for(const d of doms) if(S[d.k]<S[lowK]) lowK=d.k;
+    for(const d of doms){ const k=d.k, lv=Math.max(0,Math.min(1,S[k])), isFront=S.frontier===k;
       ctx.beginPath();
       for(let px=0;px<=gw;px+=3){ const x=px/gw;
-        const loss=(1-lv*0.92)*Math.exp(-x*(1.0+lv*3.2));      // trained runs decay fast to a low floor
-        const y=Math.max(0.02,Math.min(0.98,loss));
-        const cx=pad+px, cy=pad+y*gh; if(px===0) ctx.moveTo(cx,cy); else ctx.lineTo(cx,cy); }
-      ctx.lineWidth=2.1; ctx.strokeStyle=cols[d.k];
-      if(ctx.shadowBlur!==undefined){ ctx.shadowColor=cols[d.k]; ctx.shadowBlur=5; }
+        const loss=(1-lv*0.94)*Math.exp(-x*(1.0+lv*3.4));      // trained runs decay fast to a low floor
+        const y=Math.max(0.02,Math.min(0.98,loss)), cx=pad+px, cy=pad+y*gh; px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
+      ctx.lineWidth=isFront?3.2:2.1; ctx.strokeStyle=LOSS_COLS[k];
+      if(ctx.shadowBlur!==undefined){ ctx.shadowColor=LOSS_COLS[k]; ctx.shadowBlur=isFront?11:5; }
       ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0; }
+    if(S.heat>=CFG.e4.heatWarn){ ctx.fillStyle='rgba(255,177,92,'+Math.min(0.14,(S.heat-CFG.e4.heatWarn)/280)+')'; ctx.fillRect(0,0,w,h); } // heat haze on the glass
   }
-  function allocAdjust(spec){ const [k,dv]=spec.split(':'); S.alloc[k]=Math.max(0,Math.min(10,(S.alloc[k]||0)+parseInt(dv,10))); playSound('click'); render(); }
   // ---- ERA 5 (Foundation): recursive self-improvement, emergent capabilities, and the agent that appears ----
   const CAPS = [
     { id:'selfModel',  name:'Self-Modeling',     cost:80,  flavor:'It builds a working model of itself.',          desc:'+50% Scale generation.' },
@@ -1783,7 +1850,12 @@
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
     document.querySelectorAll('[data-proof]').forEach(b=> b.onclick=e=>selectProof(e.currentTarget.dataset.proof));
     document.querySelectorAll('[data-toggle]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const n=+e.currentTarget.dataset.toggle; S.collapsed[n]=!S.collapsed[n]; render(); });
-    document.querySelectorAll('[data-alloc]').forEach(b=> b.onclick=e=>allocAdjust(e.currentTarget.dataset.alloc));
+    const tm=$('triMixer'); if(tm){ let drag=false;
+      const upd=e=>{ const r=tm.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left, cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+        setAllocFromXY(Math.max(0,Math.min(1,cx/r.width)), Math.max(0,Math.min(1,cy/r.height))); playSound('click'); refresh(); };
+      tm.onpointerdown=e=>{ drag=true; if(tm.setPointerCapture) try{tm.setPointerCapture(e.pointerId);}catch(_){} upd(e); };
+      tm.onpointermove=e=>{ if(drag) upd(e); };
+      tm.onpointerup=tm.onpointercancel=()=>{ drag=false; }; }
     document.querySelectorAll('[data-cap]').forEach(b=> b.onclick=e=>buyCap(e.currentTarget.dataset.cap));
     const imb=$('improveBtn'); if(imb) imb.onclick=selfImprove;
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
@@ -1898,17 +1970,35 @@
         const h='~'+(pSec*100).toFixed(0)+'%/s chance to discover the next Method'+(S.focus==='explore'?' · <b>Explore is boosting this</b>':' · switch to <b>Explore</b> to boost it');
         if(df._html!==h){ df.innerHTML=h; df._html=h; } }
       drawScatter(); }
-    // ERA 4 — Deep
+    // ERA 4 — Deep (the compute fabric)
     const mb=$('meter-breadth');
-    if(mb){ const e4=CFG.e4, br=deepBreadth();
+    if(mb){ const e4=CFG.e4, doms=e4.domains, br=deepBreadth();
       mb.style.width=Math.min(100, br/e4.breadthGate*100)+'%';
-      setText('breadth-val', (br*100).toFixed(1)+'%  /  '+(e4.breadthGate*100).toFixed(0)+'%');
-      for(const d of e4.domains){ setText('alv-'+d.k, (S[d.k]*100).toFixed(0)+'%'); setText('aw-'+d.k, (S.alloc[d.k]||0)+'');
-        const ab=$('albar-'+d.k); if(ab) ab.style.width=Math.min(100,S[d.k]*100)+'%'; }
+      setText('breadth-val', (br*100).toFixed(1)+'% / '+(e4.breadthGate*100).toFixed(0)+'%');
       let run=S.node; const want=S.node*e4.nodeData; if(want>0 && S.data<want) run=S.node*(S.data/want);
-      const compute=run*e4.nodeCompute;
-      setText('deepRate', fmt(compute)+' compute/s  ·  draws '+fmt(S.node*e4.nodeData)+' data/s + '+fmt(compute*e4.runInsight)+' insight/s');
-      setText('deepStats', S.node+' Compute Nodes · '+fmt(compute)+' compute/s, split by weight across the three runs. Capability accrues from <b>breadth</b> (the geometric mean), so balance pays. Capability '+fmt(S.capability)+'.');
+      const computeRate=run*e4.nodeCompute;
+      // mixer handle position from current allocation
+      const hx=mixerHandleXY(), th=$('triHandle'); if(th){ th.style.left=(hx.x*100)+'%'; th.style.top=(hx.y*100)+'%'; }
+      let lowK=doms[0].k; for(const d of doms) if(S[d.k]<S[lowK]) lowK=d.k;
+      const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1;
+      for(const d of doms){ const fl=$('flow-'+d.k); if(fl) fl.style.opacity=(0.18+0.82*((S.alloc[d.k]||0)/tw)).toFixed(2); }
+      // heat gauge (color by state)
+      const heatPct=Math.min(100,S.heat), hg=$('heatGauge'), hstate=S.heat>=e4.heatThrottle?'THROTTLING':(S.heat>=e4.heatWarn?'WARM':'STABLE');
+      if(hg){ hg.style.width=heatPct+'%'; hg.style.background=S.heat>=e4.heatThrottle?'var(--danger)':(S.heat>=e4.heatWarn?'var(--hot)':'var(--accent)'); }
+      setText('heatGauge-v', Math.round(S.heat)+' · '+hstate);
+      const led=$('heatLed'); if(led){ led.className='heat-led '+(S.heat>=e4.heatThrottle?'led-hot':(S.heat>=e4.heatWarn?'led-warm':'led-ok')); }
+      const cg=$('capGauge'); if(cg){ cg.style.width=Math.min(100,(S.capability/2000)*100)+'%'; } setText('capGauge-v', fmt(S.capability));
+      const computeG=$('computeGauge'); if(computeG){ computeG.style.width=Math.min(100,(computeRate/(S.node*e4.nodeCompute||1))*100)+'%'; } setText('computeGauge-v', fmt(computeRate)+'/s');
+      // run status strip
+      const rs=$('runStrip'); if(rs){ const h=doms.map(d=>{ const k=d.k, fresh=e4.freshHi-(S.sat[k]||0)*(e4.freshHi-e4.freshLo);
+        const badge = S.frontier===k?'<b class="rb-front">FRONTIER</b>':(k===lowK?'<b class="rb-low">BOTTLENECK</b>':'');
+        return '<div class="run-cell" style="--rc:'+LOSS_COLS[k]+'"><div class="run-top"><span class="run-nm">'+d.label+'</span>'+badge+'</div>'+
+          '<div class="run-lv">'+(S[k]*100).toFixed(0)+'%</div>'+
+          '<div class="run-fresh"><i style="width:'+Math.max(0,Math.min(100,(fresh-e4.freshLo)/(e4.freshHi-e4.freshLo)*100))+'%"></i></div>'+
+          '<div class="run-frsub">'+(S.frontier===k?'+'+Math.round(e4.frontierBonus*100)+'% · '+Math.ceil(S.frontierT)+'s':'freshness')+'</div></div>'; }).join('');
+        if(rs._html!==h){ rs.innerHTML=h; rs._html=h; } }
+      setText('deepRate', fmt(computeRate)+' compute/s  ·  draws '+fmt(S.node*e4.nodeData)+' data/s + '+fmt(computeRate*e4.runInsight)+' insight/s  ·  '+S.node+' nodes');
+      setText('deepStats', 'Heat '+hstate.toLowerCase()+'. The lowest run is the breadth bottleneck (+'+Math.round(e4.lagBonus*100)+'%); overfed runs saturate and lose headroom; a frontier window rotates a +'+Math.round(e4.frontierBonus*100)+'% bonus. Capability '+fmt(S.capability)+'.');
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('supSi4', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Nodes cost Silicon to build');
       drawLoss(); }
@@ -2132,7 +2222,7 @@
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
       METHODS, e3Stats, effAccuracy, runExperiment,
-      deepBreadth, allocAdjust, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
+      deepBreadth, setAllocFromXY, mixerHandleXY, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
       save, load, offlineCatchup, revealGame };
   }
 })();
