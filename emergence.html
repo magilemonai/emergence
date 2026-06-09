@@ -275,7 +275,16 @@
   /* ===== ERA 2 — Symbolic: a glowing CRT terminal. Phosphor on glass, scanlines, flicker. ===== */
   .era-e2 { position: relative; background:
       radial-gradient(150% 120% at 50% 0%, rgba(60,150,90,0.06), transparent 60%),
-      linear-gradient(rgba(5,12,7,0.94), rgba(4,9,5,0.97)), var(--panel); overflow: hidden; }
+      linear-gradient(rgba(5,12,7,0.93), rgba(4,9,5,0.96)),
+      url(assets/schematic.png), var(--panel);
+    background-size: auto, auto, 440px 440px, auto;
+    background-repeat: no-repeat, no-repeat, repeat, no-repeat; overflow: hidden; }
+  /* the Inference Engine is THE screen: framed in a physical CRT bezel, glass over the glow */
+  .era-e2 .sym-hero { position: relative; border: 20px solid transparent;
+    border-image: url(assets/crt-bezel.png) 150 / 20px / 0 stretch; border-radius: 0;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.55); }
+  .era-e2 .sym-hero::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: url(assets/crt-glass.png) center / 100% 100% no-repeat; mix-blend-mode: screen; opacity: 0.45; }
   /* scanlines + curved-glass vignette painted over everything (the CRT surface) */
   .era-e2::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none;
     background:
