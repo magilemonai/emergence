@@ -21,6 +21,11 @@ const SETUP = {
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;
     for(let i=0;i<10;i++){S.marks=4000;S.ore=3000;S.metal=800;['scribe','miner','scriptorium','smelter','foundry'].forEach(k=>E.buy(k));}
     S.refine=3; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+  research: `const E=window.EMERGENCE,S=E.S; E.revealGame();
+    S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40;
+    for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }
+    E.checkMiles(); for(let i=0;i<3;i++) E.tick();
+    const rb=document.getElementById('researchBtn'); if(rb) rb.click();`,
   symbolic: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.marks=999;S.flags.origindone=true; E.checkMiles();
     S.rules=20000;S.ruleset=22;S.daemon=8; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
   statistical: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
