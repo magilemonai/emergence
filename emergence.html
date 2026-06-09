@@ -958,15 +958,15 @@
   };
   // ---- Era 1 tech tree (the Symbolic blueprint). row = tier (top→down), col = horizontal slot. ----
   const TREE = [
-    { id:'formalLogic', name:'Formal Logic',      cost:50,    req:[],                          row:0, col:0,    desc:'+50% to all rule production. The base of every technique above.' },
-    { id:'fwdChain',    name:'Forward Chaining',  cost:160,   req:['formalLogic'],             row:1, col:-1.1, desc:'Rulesets are 80% more productive.' },
-    { id:'bwdChain',    name:'Backward Chaining', cost:160,   req:['formalLogic'],             row:1, col:1.1,  desc:'Writing a rule by hand is 3× stronger.' },
-    { id:'rete',        name:'Rete Network',      cost:750,   req:['fwdChain'],                row:2, col:-1.8, desc:'Each Ruleset boosts every other Ruleset (+3% each).' },
-    { id:'inference',   name:'Inference Engine',  cost:1200,  req:['fwdChain','bwdChain'],     row:2, col:0,    desc:'Unlocks Inference Daemons — automation that writes rules as if you were clicking.' },
-    { id:'heuristics',  name:'Heuristic Search',  cost:750,   req:['bwdChain'],                row:2, col:1.8,  desc:'Manual + Daemon writing scales with Rulesets owned (+8% each).' },
-    { id:'knowledge',   name:'Knowledge Base',    cost:3400,  req:['rete','inference'],        row:3, col:-1.0, desc:'Unlocks Compile — distil a whole run into permanent Axioms.' },
-    { id:'metalogic',   name:'Meta-Logic',        cost:11000, req:['knowledge'],               row:3, col:1.0,  desc:'Every Axiom becomes 50% more powerful.' },
-    { id:'expert',      name:'Expert System',     cost:60000, req:['metalogic','heuristics'], reqAxioms:6, row:4, col:0, desc:'Complete the Symbolic Era. A system that reasons on its own — and the ceiling hand-written logic can never break.' },
+    { id:'formalLogic', name:'Formal Logic',      cost:650,   req:[],                          row:0, col:0,    desc:'+50% to all rule production. The base of every technique above.' },
+    { id:'fwdChain',    name:'Forward Chaining',  cost:1400,  req:['formalLogic'],             row:1, col:-1.1, desc:'Rulesets are 80% more productive.' },
+    { id:'bwdChain',    name:'Backward Chaining', cost:1400,  req:['formalLogic'],             row:1, col:1.1,  desc:'Writing a rule by hand is 3× stronger.' },
+    { id:'rete',        name:'Rete Network',      cost:3200,  req:['fwdChain'],                row:2, col:-1.8, desc:'Each Ruleset boosts every other Ruleset (+3% each).' },
+    { id:'inference',   name:'Inference Engine',  cost:4600,  req:['fwdChain','bwdChain'],     row:2, col:0,    desc:'Unlocks Inference Daemons — automation that writes rules as if you were clicking.' },
+    { id:'heuristics',  name:'Heuristic Search',  cost:3200,  req:['bwdChain'],                row:2, col:1.8,  desc:'Manual + Daemon writing scales with Rulesets owned (+8% each).' },
+    { id:'knowledge',   name:'Knowledge Base',    cost:8500,  req:['rete','inference'],        row:3, col:-1.0, desc:'Unlocks Compile — distil a whole run into permanent Axioms.' },
+    { id:'metalogic',   name:'Meta-Logic',        cost:16000, req:['knowledge'],               row:3, col:1.0,  desc:'Every Axiom becomes 50% more powerful.' },
+    { id:'expert',      name:'Expert System',     cost:30000, req:['metalogic','heuristics'], reqAxioms:5, row:4, col:0, desc:'Complete the Symbolic Era. A system that reasons on its own — and the ceiling hand-written logic can never break.' },
   ];
   const TREEMAP = Object.fromEntries(TREE.map(n=>[n.id,n]));
   // ---- Era 1 (Origins) discoveries: a web of one-time unlocks; Knowledge (K) and Materials (M) interleave and cross-gate. ----
