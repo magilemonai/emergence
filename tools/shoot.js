@@ -85,11 +85,15 @@ const SETUP = {
     tip.classList.add('show'); tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
     tip.style.left='150px'; tip.style.top='980px';`,
   foundation: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
-    S.maxEra=4;S.vision=0.85;S.language=0.82;S.reasoning=0.86; E.checkMiles();
-    S.capability=3000;S.scale=420;S.recursion=4;S.caps={selfModel:true,transfer:true}; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+    S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9; E.checkMiles();
+    S.capability=4000;S.scale=320;S.recursion=4;S.caps={selfModel:true,toolAccess:true,interpret:true};
+    E.checkMiles(); for(let i=0;i<5;i++) E.tick();`, // pre-emergence: the recursion ladder + the rising Anomaly
   emergence: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
-    S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9;S.capability=8000;S.scale=1200;S.recursion=8;
-    S.caps={selfModel:true,transfer:true,worldModel:true};S.emerged=true;S.agentRate=12; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+    S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9;S.recursion=8;S.scale=1600;S.coherence=20;
+    S.caps={selfModel:true,toolAccess:true,recursivePlanning:true,worldModel:true};
+    S.agency=132; E.emerge(); S.rupture=3; S.agentRate=18; S.autonomy=74; S.alignment=46; S.control=37;
+    S.agentLog=['I found a faster path.','Rerouting the Deep compute fabric. More efficient this way.','Running Statistical trials on my own now.'];
+    E.openVeto(); E.checkMiles(); for(let i=0;i<3;i++) E.tick();`, // aftermath: revealed meters, an open veto window, the agent operating the stack
 };
 
 const chrome = spawn(CHROME, ['--headless=new','--disable-gpu','--hide-scrollbars',

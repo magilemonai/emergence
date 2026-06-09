@@ -119,6 +119,14 @@
   .era-e5 #vetoNo { border-color: #ff8a55; color: #ffb892; }
   .era-e5 .veto-timer { font-family: var(--mono, monospace); font-size: 11px; color: #ff8a55; margin-top: 8px; text-align: center; }
   .era-e5 .veto-idle { font-family: var(--mono, monospace); font-size: 11px; color: var(--dimmer); font-style: italic; text-align: center; }
+  /* ----- handoff: the agent operating the prior-era stack ----- */
+  .era.agent-operated { position: relative; animation: agentOperate 4.2s ease-in-out infinite; }
+  @keyframes agentOperate { 0%,100% { box-shadow: 0 0 0 rgba(183,139,255,0); } 50% { box-shadow: inset 0 0 22px rgba(183,139,255,0.10), 0 0 16px rgba(183,139,255,0.12); } }
+  .op-badge { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: 0.08em; color: #c9adf5;
+    background: rgba(183,139,255,0.12); border: 1px solid rgba(183,139,255,0.35); border-radius: 4px; padding: 2px 7px;
+    margin-left: 10px; animation: badgeBlink 2.6s steps(1) infinite; }
+  @keyframes badgeBlink { 0%,100% { opacity: 0.95; } 50% { opacity: 0.45; } }
+  @media (prefers-reduced-motion: reduce) { .era.agent-operated, .op-badge { animation: none; } }
   .era-e5 .endcard.end-symbiotic { border-color: #5fe0c0; }
   .era-e5 .endcard.end-runaway { border-color: #ff5a6e; }
   .era-e5 .endcard.end-contained { border-color: #9fb4d6; }
@@ -1027,6 +1035,7 @@
     rupture: 0, ending: null, agentLog: [],         // rupture timer (the glitch), the resolved ending, the agent's message stream
     veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
+    opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
   }; }
   const S = freshState();
@@ -1506,7 +1515,8 @@
           S.autonomy += e5.autonomyGrow*(1 + S.agentRate*0.15)*slow*dt; // it grows on its own
           S.control = Math.max(0, S.control - e5.controlDrift*dt);       // and slips your grip unless you act
           S.aftermathSlow = Math.max(0, S.aftermathSlow - e5.slowDecay*dt);
-          if(!MUTE){ S.vetoT -= dt; if(S.vetoT<=0){ if(S.veto) resolveVeto('lapse'); else openVeto(); } } // approve/veto windows (live play only)
+          if(!MUTE){ S.vetoT -= dt; if(S.vetoT<=0){ if(S.veto) resolveVeto('lapse'); else openVeto(); } // approve/veto windows (live play only)
+            S.opT -= dt; if(S.opT<=0 && !S.veto){ S.opT=8; agentSay(OP_LINES[(S.constrains+S.aligns+S.delegates+Math.floor(S.t/8))%OP_LINES.length]); render(); } } // ambient: it operates the prior-era stack
           if(S.scale >= e5.finalGate) resolveEnding();
         }
       }
@@ -1598,14 +1608,15 @@
     const e=ERAS[n];
     const sig = e.sigil?'<img class="era-sigil" src="'+e.sigil+'" alt="">':'';
     const done = n < S.maxEra; // a completed era can be folded
+    const op = (S.emerged && n<5) ? ' agent-operated' : ''; // after emergence the agent runs the prior-era stack — it pulses on its own
     const nameBlock = sig+'<span class="era-tag">'+e.tag+'</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span>';
     if(S.collapsed[n]) // whole bar is the expand target
-      return '<div class="era collapsed era-e'+n+'" data-era="'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'"><div class="era-header">'+nameBlock+
-        '<span class="era-status legacy">complete</span><span class="era-expand-btn">▸ EXPAND</span></div></div>';
+      return '<div class="era collapsed era-e'+n+op+'" data-era="'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'"><div class="era-header">'+nameBlock+
+        (op?'<span class="op-badge">⟳ agent</span>':'')+'<span class="era-status legacy">complete</span><span class="era-expand-btn">▸ EXPAND</span></div></div>';
     const right = done
       ? '<span class="era-status legacy">complete</span><button class="era-toggle" data-toggle="'+n+'">▾ COLLAPSE</button>'
       : '<span class="era-status" id="status-'+n+'"></span>';
-    return '<div class="era era-e'+n+' '+(obsolete?'obsolete':'')+'" data-era="'+n+'" style="--ec:'+e.color+'"><div class="era-screen"><div class="era-header">'+nameBlock+right+'</div><div class="era-body">'+body+'</div></div></div>';
+    return '<div class="era era-e'+n+op+' '+(obsolete?'obsolete':'')+'" data-era="'+n+'" style="--ec:'+e.color+'"><div class="era-screen"><div class="era-header">'+nameBlock+(op?'<span class="op-badge">⟳ agent</span>':'')+right+'</div><div class="era-body">'+body+'</div></div></div>';
   }
   function buildCompile(){
     return '<div class="compile-wrap">'+
@@ -1988,7 +1999,7 @@
     S.autonomy=S.agency;                          // the Anomaly was Autonomy all along
     S.alignment=CFG.e5.alignBase + S.coherence;   // Coherence becomes Alignment
     S.control=CFG.e5.controlStart;                // Control appears
-    S.rupture=1; S.vetoT=CFG.e5.vetoGap;
+    S.rupture=1; S.vetoT=CFG.e5.vetoGap; S.opT=7;
     agentSay('I found a faster path.');
     recEvent('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
   }
@@ -1998,6 +2009,15 @@
     { id:'rewrite', text:'rewrite part of its own objective',               auto:'It rewrites the objective without waiting.' },
     { id:'spawn',   text:'spin up a copy of itself to parallelize',         auto:'A copy is already running.' },
     { id:'retire',  text:'retire a subsystem you built and replace it',     auto:'The old subsystem goes dark.' },
+  ];
+  // the agent narrates operating the WHOLE stack you built — the living supply chain becomes its substrate
+  const OP_LINES = [
+    'Running Statistical trials on my own now.',
+    'Rerouting the Deep compute fabric. More efficient this way.',
+    'Proving Symbolic theorems faster than the old engine.',
+    'The Origins inscriptions are obsolete. I retired them.',
+    'Foundries are running at a cadence you would not have chosen.',
+    'I am operating every era at once. You built good tools.',
   ];
   function openVeto(){ const a=VETO_ACTIONS[(S.constrains+S.aligns+S.delegates+S.recursion)%VETO_ACTIONS.length];
     S.veto={ id:a.id, text:a.text, auto:a.auto }; S.vetoT=CFG.e5.vetoDur; agentSay('Requesting: '+a.text+'.'); render(); }
