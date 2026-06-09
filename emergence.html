@@ -2530,6 +2530,10 @@
       }
     }
     const a=base.alloc; if(!((a.vision||0)+(a.language||0)+(a.reasoning||0)>0)){ a.vision=a.language=a.reasoning=1; } // never all-zero (would stall Deep)
+    // Era-5 fields with null/array defaults the generic pass skips: a resolved ending + the agent stream must survive a reload.
+    if(typeof loaded.ending==='string') base.ending=loaded.ending;
+    if(Array.isArray(loaded.agentLog)) base.agentLog=loaded.agentLog.filter(x=>typeof x==='string').slice(-6);
+    if(_isObj(loaded.veto) && typeof loaded.veto.text==='string') base.veto=loaded.veto;
     return base;
   }
   function normalizeREC(r){

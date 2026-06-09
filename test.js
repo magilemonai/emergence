@@ -257,6 +257,15 @@ function testSaveLoad(){
   ok(S.axioms === 7 && S.tech.formalLogic, 'axioms + tech restored');
   ok(S.maxEra === 2 && S.buyMode === 'max', 'era + buy mode restored');
 
+  // Era 5 aftermath state survives a reload (ending, meters, agent stream)
+  S.maxEra = 5; EM.emerge(); S.alignment = 77; S.control = 41; S.autonomy = 63; EM.resolveEnding(); S.agentLog = ['one','two'];
+  EM.save();
+  S.ending = null; S.alignment = 0; S.control = 0; S.autonomy = 0; S.emerged = false; S.agentLog = [];
+  EM.load();
+  ok(S.emerged && S.ending === 'symbiotic', 'Era 5 emergence + ending restored');
+  ok(S.alignment === 77 && S.control === 41 && S.autonomy === 63, 'aftermath meters restored');
+  ok(S.agentLog.length === 2, 'agent message stream restored');
+
   // corruption resilience: a stale/malformed alpha save must normalize, not crash or inject NaN/bad objects
   global.localStorage.setItem('emergence-save', JSON.stringify({ S: {
     flags: 'broken', alloc: null, methods: null, tech: 42, caps: 'x', proofAcc: { vision: 'oops' },
@@ -389,17 +398,23 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
   // STEER: route compute toward the run with the lowest level (countering its headwind) — not static 1/1/1
   S.alloc = { vision: 0.12+(1-S.vision)*1.4, language: 0.12+(1-S.language)*1.4, reasoning: 0.12+(1-S.reasoning)*1.4 };
 }
-function foundationStep(EM){ // ERA 5 — acquire capabilities, recurse, drive Scale to emergence
-  const { S, CAPS } = EM;
+function foundationStep(EM){ // ERA 5 — climb the recursion ladder to emergence, then manage the aftermath to an ending
+  const { S, CAPS } = EM; const e5 = EM.CFG.e5;
   if(S.maxEra < 5) return;
-  for(const c of CAPS) if(!S.caps[c.id] && S.capability >= c.cost) EM.buyCap(c.id);
-  if(S.capability >= EM.improveCost()) EM.selfImprove();
+  if(!S.emerged){ // pre-emergence: buy capabilities + pace the recursion ladder
+    for(const c of CAPS) if(!S.caps[c.id] && S.capability >= c.cost) EM.buyCap(c.id);
+    if(S.capability >= EM.improveCost()) EM.selfImprove();
+    return;
+  }
+  // aftermath: steer toward Alignment (a Symbiotic run), respond to the agent, then let Scale climb to the ending gate
+  if(S.aligns < 8 && S.scale >= e5.alignCost){ EM.alignAct(); return; }
+  if(S.veto) EM.resolveVeto('approve');
 }
 function testProgression(){
   section('Progression — autoplay Origins → Symbolic → Statistical → Deep → Foundation → Emergence');
   const EM = freshGame(); const { S } = EM;
   const MAX = 600000;
-  let tick = 0, origAt, symAt, statAt, deepAt, foundAt, emergeAt;
+  let tick = 0, origAt, symAt, statAt, deepAt, foundAt, emergeAt, endAt;
   for(; tick < MAX; tick++){
     if(S.maxEra === 1) originsStep(EM);
     else if(S.maxEra === 2) symbolicStep(EM);
@@ -410,7 +425,8 @@ function testProgression(){
     if(symAt === undefined && S.flags.symbolicDone) symAt = S.t;
     if(statAt === undefined && S.maxEra >= 4) statAt = S.t;
     if(deepAt === undefined && S.maxEra >= 5) deepAt = S.t;
-    if(emergeAt === undefined && S.emerged){ emergeAt = S.t; break; }
+    if(emergeAt === undefined && S.emerged) emergeAt = S.t;
+    if(S.ending){ endAt = S.t; break; } // play THROUGH the aftermath to a resolved ending
   }
   const mm = s => s===undefined ? '—' : (s/60).toFixed(1)+'m';
   if(statAt !== undefined) console.log('  Era 3 (Statistical) generalized → Deep at ' + mm(statAt));
@@ -419,6 +435,7 @@ function testProgression(){
   else console.log('  Era 4 STALLED: breadth='+(EM.deepBreadth()*100).toFixed(0)+'% V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+'% node='+S.node+' silicon='+Math.round(S.silicon)+' data='+Math.round(S.data)+' insight='+Math.round(S.insight));
   if(emergeAt !== undefined) console.log('  Era 5 (Foundation) → EMERGENCE at ' + mm(emergeAt) + '  (recursion Lv'+S.recursion+', '+Object.keys(S.caps).length+' capabilities)');
   else console.log('  Era 5 STALLED: agency='+(S.agency||0).toFixed(0)+'/'+EM.CFG.e5.controlBase+' scale='+Math.round(S.scale)+' recursion='+S.recursion+' capability='+Math.round(S.capability));
+  if(endAt !== undefined) console.log('  Era 5 aftermath resolved → '+(S.ending||'?').toUpperCase()+' ending at ' + mm(endAt) + (emergeAt?('  (aftermath took '+((endAt-emergeAt)/60).toFixed(1)+'m)'):''));
   console.log('  Era 1 (Origins) fabricated at ' + mm(origAt));
   console.log('  Era 2 (Symbolic) completed at ' + mm(symAt) + (origAt&&symAt?('  (Era 2 took '+((symAt-origAt)/60).toFixed(1)+'m)'):''));
   ok(S.flags.origindone, 'Era 1 (Origins) completes — fabrication reached, no stall');
@@ -427,7 +444,8 @@ function testProgression(){
   ok(statAt !== undefined, 'Era 3 (Statistical) generalizes and opens Deep');
   ok(deepAt !== undefined, 'Era 4 (Deep) reaches breadth and opens Foundation');
   ok(emergeAt !== undefined, 'Era 5 (Foundation) reaches emergence — full arc completes');
-  ok(finite(S, ['marks','silicon','rules','axioms','capability','scale']), 'no NaN at completion');
+  ok(endAt !== undefined && !!S.ending, 'Era 5 aftermath resolves to an ending');
+  ok(finite(S, ['marks','silicon','rules','axioms','capability','scale','autonomy','alignment','control']), 'no NaN at completion');
   if(origAt){ const m = origAt/60;
     if(m < 3) console.log('  ⚠ Origins faster than 5-6m target ('+m.toFixed(1)+'m)');
     else if(m > 9) console.log('  ⚠ Origins slower than 5-6m target ('+m.toFixed(1)+'m)');
@@ -511,6 +529,52 @@ function reportPacingEra2(){
   }
 }
 
+function testFoundation(){
+  section('Era 5 — emergence threshold, recursion pacing, aftermath loop');
+  // recursion cost is a STEEP climb (the burst fix): cost grows sharply per level
+  let EM = freshGame(); let S = EM.S; S.maxEra=5; S.recursion=0;
+  const c0 = EM.improveCost(); S.recursion=4; const c4 = EM.improveCost();
+  ok(c4 > c0*6, 'Self-Improve cost climbs steeply with recursion (burst fixed): Lv4 > 6x Lv0');
+
+  // emergence is hidden + threshold-driven (Agency >= Control), not a Scale gate or a button
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.scale=10; S.recursion=2;
+  EM.produce(0.1); EM.checkMiles();
+  ok(!S.emerged, 'does not emerge while Agency is below Control');
+  S.scale=50000; S.recursion=9; for(const c of EM.CAPS) S.caps[c.id]=true; // push Agency over the threshold
+  EM.produce(0.1); EM.checkMiles();
+  ok(S.emerged, 'emerges once Agency crosses the hidden Control threshold');
+  ok(S.control>0 && S.autonomy>0, 'emergence reveals Control + carries the Anomaly into Autonomy');
+
+  // Interpretability damps the Agency reading (buys time) without stopping emergence
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.scale=400; S.recursion=4; for(const c of EM.CAPS){ if(c.id!=='interpret') S.caps[c.id]=true; }
+  EM.produce(0.1); const aNoInt = S.agency;
+  S.caps.interpret=true; EM.produce(0.1); const aInt = S.agency;
+  ok(aInt < aNoInt, 'Interpretability lowers the Agency reading (slows the climb)');
+
+  // aftermath moves move the right meters
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000;
+  const ctl0=S.control; EM.constrainAct();
+  ok(S.control>ctl0 && S.aftermathSlow>0, 'Constrain raises Control and drags production');
+  const al0=S.alignment; EM.alignAct();
+  ok(S.alignment>al0, 'Interpret/Align raises Alignment');
+  const ar0=S.agentRate, ct1=S.control; EM.delegateAct();
+  ok(S.agentRate>ar0 && S.control<ct1, 'Delegate accelerates the agent and drops Control');
+
+  // approve/veto window
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000;
+  EM.openVeto(); ok(!!S.veto, 'a veto window opens with a proposed action');
+  const c1=S.control; EM.resolveVeto('veto'); ok(S.control>c1 && !S.veto, 'Veto blocks the action and raises Control');
+  EM.openVeto(); const au=S.autonomy; EM.resolveVeto('approve'); ok(S.autonomy>au, 'Approve lets it act, raising Autonomy');
+
+  // endings resolve from the final mix (flavor, never a fail-state)
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.alignment=90; S.control=50; EM.resolveEnding();
+  ok(S.ending==='symbiotic', 'high Alignment → Symbiotic ending');
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.alignment=20; S.control=10; EM.resolveEnding();
+  ok(S.ending==='runaway', 'low Control + low Alignment → Runaway ending');
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.control=90; S.alignment=10; EM.resolveEnding();
+  ok(S.ending==='contained', 'high Control → Contained ending');
+}
+
 // ---- run all ----
 console.log('EMERGENCE test suite');
 console.log('====================');
@@ -530,6 +594,7 @@ testSaveLoad();
 testOffline();
 testNoNaN();
 testNoIdleRebuild();
+testFoundation();
 testProgression();
 reportPacing();
 reportPacingEra2();
