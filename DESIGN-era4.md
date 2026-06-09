@@ -104,10 +104,79 @@ adds jitter. Add: utilization bars, power draw, a "capability emerging" readout.
   generated. Loss-curve viz is canvas. So art need is moderate: maybe heat/power accent textures,
   a run-status glyph set, conduit/flow details. Confirm against the build as it proceeds.
 
-## Open questions to resolve before building
+## Thematic anchor: Deep is the PRESENT TENSE
 
-1. **Which depth levers** (scarcity / diminishing-refill / heat / synergy / frontier) — how many,
-   to keep it deep but not fiddly.
-2. **Form factor** — confirm the compute-fabric-control-surface direction vs mission-control vs
-   loss-landscape.
-3. **Mission control vs machine hall** as the dominant material read (cool ops room vs hot industry).
+Era 4 is the dominant *now* — the player is standing inside today's industrial AI buildout:
+datacenters, GPUs, transformers, scaling laws, data/insight pipelines, inference demand, power +
+heat constraints, massive capex. (Origins=ancient craft, Symbolic=1950s-80s GOFAI, Statistical=
+classical ML 80s-2010s, **Deep=present**, Foundation=the arriving/contested threshold: agents,
+recursion, world models, emergent autonomy.) This is *the* reason to make Era 4 heavy, hot,
+physical, industrial — it should feel like the real machine being built around us right now. Then
+the **Era 4 → 5 handoff should feel eerie**: the giant material machine suddenly gives way to
+something less obviously mechanical. Design the transition for that drop.
+
+## CONVERGED DESIGN (post-ChatGPT brainstorm + Cody alpha, 2026-06-08)
+
+**World: a hot industrial compute fabric / machine hall** (NOT mission control — "supervise" is
+the wrong verb; "orchestrate power at terrifying scale" is right). Heaviest, loudest, most physical
+era; the machine that eats Silicon + Data + Insight + cooling and turns scale into capability.
+
+**Hero object:** a **three-lane loss chamber** — Vision / Language / Reasoning as parallel loss
+curves descending, each with capability value, efficiency tint, saturation/heat haze, a bottleneck
+marker (lowest run), and a frontier shimmer when active.
+
+**Signature control:** a **triangular ternary compute mixer** under the chamber — a draggable node
+in a triangle (corners = the 3 runs), total always 100%, min 5% per run, never all-zero (this also
+fixes the alpha P1 stall). Compute flow-lines run from the mixer into each lane. (Fallback if the
+drag/ternary math is too fiddly: three linked power faders locked to 100% + a BALANCE snap.)
+
+**Mechanical package (keep it to these four; sequence the build, tune each as it lands):**
+1. **Geometric-mean breadth** = the long-term victory shape (keep — elegant, thematically right).
+2. **Saturation / freshness** = THE live dial. Feeding a run drives diminishing returns within its
+   current headroom; rebalancing away lets headroom recover → optimal play *orbits* balance instead
+   of sitting at 1/1/1. `freshness ≈ 1.25 − saturation*0.8`. (Frame as headroom/diminishing-returns,
+   not "resting heals it.")
+3. **Heat / throttle** = physical cost ("additions contain subtractions"). Total + concentrated
+   compute makes Heat; high Heat throttles all runs; cooling decays it. **Keep forgiving** — mostly
+   Stable/Warm, rarely Throttling; a soft concentration cap (discourage 100/0/0), not a babysat
+   fail-state. `concentrationPenalty = max(0, largestShare−0.5)*0.08`.
+4. **Frontier windows** = rotating near-win OPPORTUNITY (never penalty). One run at a time gets a
+   ~25-40s +40% window (prefer a lagging/non-saturated run); catch it or feed the bottleneck — both
+   fine. Missing one is neutral.
+
+**Per-tick (compact):**
+`gain_i = computeRate * share_i * freshness_i * (isLowest?1.25:1) * (frontier?1.4:1) * heatThrottle`
+`saturation_i += share_i*satRate − recovery*(1−share_i)`; `heat += activeHeat+concHeat − cooling`;
+`breadth = cbrt(V*L*R)`; gate to Era 5 unchanged.
+
+**Synergies/curricula = milestones only, not a constant system** (avoid "need a strategy guide"):
+e.g. Language 10 → Reasoning +10%; Vision 10 → freshness recovers faster; Reasoning 10 → frontiers
+last longer. Per-run frontier/capability plates.
+
+**Cross-era reach-back is a VISIBLE spine** (the living-supply-chain payoff): the hall consumes
+Silicon (Origins → Compute Nodes), Data + Insight (Statistical → run fuel) through feed rails /
+conduits, not a card. The whole game's output pours into this one machine.
+
+**Material/palette:** deep blue-black, electric blue #6ea8ff, pale blue live loss, **amber/orange =
+heat ONLY** (not general accent), red = throttle, cool white active. Brushed metal, rack mesh, fan
+grilles, conduits, LED strips, glass status panels, heat haze. Sound: low rack hum, relay clicks,
+fan ramp on Scale Up, voltage whine, thermal alarms (vs Statistical's clean sine pings).
+**Casing built in CSS** (the CRT-bezel lesson — no stretched photographic frame). Assets are
+overlays/details only: rack-mesh, fan-grille, conduit junctions, heat-haze, glass reflection,
+node/rack icon, optional tri-mixer plate, warning-LED strip. (Existing: era4 sigil, compute-node
+icon, the 3 run glyphs — already generated.)
+
+**Type:** industrial control labels — display **Rajdhani / Barlow (Semi)Condensed / Saira**
+(Orbitron sparingly), numeric readouts **IBM Plex Mono**. Must differ from Symbolic VT323 and
+Statistical Space Grotesk.
+
+**Build sequence (Cody refinement — don't ship 4 raw systems at once):**
+1. Foundation: palette + industrial font + the 3-lane loss chamber hero (extend drawLoss) + the
+   compute mixer (spine), with **breadth-bottleneck** surfacing. Tune the reallocation loop.
+2. Layer **saturation/freshness** (the live dial); tune the orbit-around-balance feel.
+3. Layer **heat/throttle** (forgiving); tune.
+4. Layer **frontier windows** (opportunity); tune.
+5. Sound, art overlays, supply-conduit visualization, milestones, pacing pass → screenshot protocol.
+
+**Also fixes the alpha P1:** the fixed-budget mixer (min 5%, normalized, never all-zero) resolves
+the Deep all-zero self-stall by construction.
