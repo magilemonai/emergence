@@ -537,20 +537,21 @@ function testFoundation(){
   const c0 = EM.improveCost(); S.recursion=4; const c4 = EM.improveCost();
   ok(c4 > c0*6, 'Self-Improve cost climbs steeply with recursion (burst fixed): Lv4 > 6x Lv0');
 
-  // emergence is hidden + threshold-driven (Agency >= Control), not a Scale gate or a button
-  EM = freshGame(); S = EM.S; S.maxEra=5; S.scale=10; S.recursion=2;
+  // emergence is hidden + Scale-gated (can't be bought instantly with caps/recursion), not a button
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.scale=10; S.recursion=2; for(const c of EM.CAPS) S.caps[c.id]=true;
   EM.produce(0.1); EM.checkMiles();
-  ok(!S.emerged, 'does not emerge while Agency is below Control');
-  S.scale=50000; S.recursion=9; for(const c of EM.CAPS) S.caps[c.id]=true; // push Agency over the threshold
+  ok(!S.emerged, 'does not emerge from caps+recursion alone while Scale is low (burst fixed)');
+  S.scale = EM.CFG.e5.emergeScale + 10; // Scale crosses the hidden gate
   EM.produce(0.1); EM.checkMiles();
-  ok(S.emerged, 'emerges once Agency crosses the hidden Control threshold');
+  ok(S.emerged, 'emerges once Scale crosses the hidden gate');
   ok(S.control>0 && S.autonomy>0, 'emergence reveals Control + carries the Anomaly into Autonomy');
 
-  // Interpretability damps the Agency reading (buys time) without stopping emergence
-  EM = freshGame(); S = EM.S; S.maxEra=5; S.scale=400; S.recursion=4; for(const c of EM.CAPS){ if(c.id!=='interpret') S.caps[c.id]=true; }
-  EM.produce(0.1); const aNoInt = S.agency;
-  S.caps.interpret=true; EM.produce(0.1); const aInt = S.agency;
-  ok(aInt < aNoInt, 'Interpretability lowers the Agency reading (slows the climb)');
+  // Interpretability slows the Scale climb (buys time) — emergence still inevitable
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.vision=0.8; S.language=0.8; S.reasoning=0.8; S.recursion=2;
+  for(let i=0;i<20;i++) EM.produce(0.1); const sNoInt = S.scale;
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.vision=0.8; S.language=0.8; S.reasoning=0.8; S.recursion=2; S.caps.interpret=true;
+  for(let i=0;i<20;i++) EM.produce(0.1); const sInt = S.scale;
+  ok(sInt < sNoInt, 'Interpretability slows the Scale climb (buys time)');
 
   // aftermath moves move the right meters
   EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000;

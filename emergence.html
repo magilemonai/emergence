@@ -996,18 +996,16 @@
       ],
     },
     e5: { // ERA 5 — Foundation (recursive self-improvement courts agency; the system crosses a hidden threshold and emerges)
-      // --- pre-emergence: a PACED recursion ladder (steep, to fix the old 1-7-in-a-second burst) + agentic upgrades ---
-      improveBase: 90, improveGrowth: 1.9, // Self-Improve cost (Capability) per level — STEEP so the ladder is a climb, not a burst
+      // --- pre-emergence: a PACED climb. Emergence is gated on SCALE (accrues over time), so a big incoming Capability
+      //     stockpile from Deep can't buy its way to emergence — the agentic upgrades just make the climb faster. ---
+      improveBase: 90, improveGrowth: 1.9, // Self-Improve cost (Capability) per level — steep ladder
       recurBonus: 0.10,    // each recursion level: +10% to ALL production, every era (the living supply chain feeds itself)
-      scalePerImprove: 8,  // Scale granted per Self-Improve level (rising)
-      scaleRate: 0.05,     // passive Scale/s = breadth-trained Capability throughput × recursion
+      scalePerImprove: 3,  // small instant Scale nudge per Self-Improve (the climb is mostly the passive rate, not the buy)
+      scaleRate: 1.0,      // passive Scale/s base; ×breadth ×(1+recursion) ×Self-Model — recursion accelerates the climb
       seedCapability: 120, // openEra(5) seed
-      // --- the HIDDEN threshold: emergence is mandatory; this only sets WHEN (player only ever sees "Anomaly") ---
-      controlBase: 95,         // Agency must exceed this for the system to emerge
-      agencyFromScale: 14,     // Agency per log10(1+Scale) — Scale always climbs, so emergence always comes
-      agencyPerCap: 11,        // each agentic capability owned raises Agency (the agentic upgrades court it)
-      agencyPerRecursion: 5,   // each recursion level raises Agency (improving itself courts agency)
-      interpretDamp: 0.22,     // Interpretability slows Agency growth (buys time, never stops it)
+      // --- the HIDDEN emergence gate: Agency (shown only as "Anomaly: rising") = Scale toward this; emergence is inevitable, only its timing is yours ---
+      emergeScale: 1550,       // Scale at which the system emerges (HIDDEN — no countdown, no button)
+      interpretDamp: 0.22,     // Interpretability slows the scaling it can't stop (buys time → a higher-Coherence ending)
       coherGrow: 1.4,          // Coherence/s once Interpretability is owned (a head start on Alignment)
       // --- aftermath: Control vs Alignment; Autonomy keeps rising on its own ---
       controlStart: 64,        // Control at the moment of emergence
@@ -1137,8 +1135,8 @@
     { id:'era5', cond:()=> S.maxEra>=4 && Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)) >= CFG.e4.breadthGate,
       fire:()=>{ S.capability += CFG.e5.seedCapability; openEra(5);
         toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Spend <b>Capability</b> on upgrades that each look individually worth it, and <b>self-improve</b> to multiply <i>all</i> production. Keep an eye on the <b>Anomaly</b>.'); } },
-    // Emergence is HIDDEN and inevitable: Agency (shown only as "Anomaly: rising") crosses the Control threshold. No countdown, no button.
-    { id:'emergence', cond:()=> S.maxEra>=5 && !S.emerged && S.agency >= CFG.e5.controlBase,
+    // Emergence is HIDDEN and inevitable: Scale (shown only as "Anomaly: rising") crosses the gate. No countdown, no button.
+    { id:'emergence', cond:()=> S.maxEra>=5 && !S.emerged && S.scale >= CFG.e5.emergeScale,
       fire:()=>{ emerge(); render(); } },
   ];
   const $ = id => document.getElementById(id);
@@ -1540,12 +1538,13 @@
       const e5=CFG.e5;
       const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
       const slow = 1 - Math.min(0.85, S.aftermathSlow); // the Constrain production-drag
-      if(breadth>0) S.scale += breadth*e5.scaleRate*(1+S.recursion)*(S.caps.selfModel?1.5:1)*slow*dt;
+      const interpSlow = (S.caps.interpret && !S.emerged) ? (1-e5.interpretDamp) : 1; // Interpretability buys time: it slows the scaling it can't stop
+      if(breadth>0) S.scale += breadth*e5.scaleRate*(1+S.recursion)*(S.caps.selfModel?1.5:1)*interpSlow*slow*dt;
       if(!S.emerged){
         if(S.caps.interpret) S.coherence = Math.min(40, S.coherence + e5.coherGrow*dt); // a head start on Alignment
-        // Agency (the player sees it as "Anomaly"). Scale always climbs, so Agency always rises toward Control — emergence is inevitable, only its timing is yours.
-        const damp = 1/(1 + (S.caps.interpret?e5.interpretDamp:0));
-        S.agency = (e5.agencyFromScale*Math.log10(1+S.scale) + e5.agencyPerCap*agenticCapCount() + e5.agencyPerRecursion*S.recursion) * damp;
+        // Agency (the player sees it only as "Anomaly: rising"). Driven by SCALE — which accrues over time — so emergence is a
+        // paced climb you can't shortcut by dumping Capability; caps + recursion just make the climb arrive sooner.
+        S.agency = Math.min(120, 100 * S.scale / e5.emergeScale);
       } else { // the curve bends vertical: something you did not buy is now improving itself
         S.agentRate = Math.max(e5.agentBase, S.agentRate*Math.pow(e5.agentAccel, dt));
         S.scale += S.agentRate*slow*dt;
@@ -2395,7 +2394,7 @@
       if(S.rupture===1) runRupture(); // the emergence glitch fires once, the tick after the threshold is crossed
       if(!S.emerged){
         // --- pre-emergence: the recursion ladder, capabilities, and the two tension meters ---
-        const r = Math.max(0, Math.min(1.2, S.agency/e5.controlBase)); // hidden ratio; surfaced only as qualitative "Anomaly"
+        const r = Math.max(0, Math.min(1.2, S.agency/100)); // hidden ratio (Agency = Scale toward the gate); surfaced only as qualitative "Anomaly"
         const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100, Math.log10(1+S.scale)/Math.log10(1+e5.finalGate)*100)+'%'; setText('meter-scale-val', fmt(S.scale)); }
         const ib=$('improveBtn'); if(ib){ const c=improveCost();
           const label = r>=0.8 ? 'I CAN IMPROVE THIS' : 'SELF-IMPROVE';   // foreshadow: the label drifts into first person as the Anomaly climbs
