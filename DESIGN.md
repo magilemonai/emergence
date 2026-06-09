@@ -4,6 +4,17 @@
 > whole game is one connected economy instead of a relay of closed boxes.
 > Nothing here is built yet. Approve / edit, then I implement era by era.
 
+> **STATUS UPDATE (2026-06-09):** the living supply chain is BUILT across all five eras, and the
+> world-passes are done through Era 4. **Eras 1-4 are world-pass LOCKED** (each its own world +
+> operating verb: author / operate / steer / route compute). Era 4's reach-back is now *load-bearing*
+> — each training run draws a specific earlier-era resource (Vision←Data, Reasoning←Insight,
+> Language←Knowledge) and a starved run blocks until you reopen that era (`steer against the drift`,
+> see `DESIGN-era4.md`). **Era 5 — Foundation is the next build:** the FINALE, *Unexpected Emergence
+> + Aftermath* (`DESIGN-era5.md`) — and it's where the supply-chain capstone pays off (the emergent
+> agent ends up operating the whole prior-era stack). Pacing is mid-tune: Symbolic theorems reshaped
+> (were too cheap); Foundation's recursion ladder still bursts (fix in the Era-5 build); a clean
+> no-dev run is needed to trust Origins/Statistical timings.
+
 ## Why (the problems this fixes)
 
 From playtest telemetry + Cody's read:

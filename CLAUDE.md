@@ -1,7 +1,7 @@
 # EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-06-08.
+> keep it current as the game evolves. Last updated 2026-06-09.
 
 ## What this is
 
@@ -25,10 +25,10 @@ eras (scroll-driven theme switch). Completed eras collapse to a slim bar.
 | 1 | Origins | Two cross-gated tracks (Knowledge + Materials) + rate-based converters with upkeep, converging on Silicon → fabricate the Logic Machine | **carved stone & ink workbench** — Cinzel + EB Garamond (embedded), stone-edge frames, clay/basalt benches, recessed core sigil, chisel sound | **Built · world-pass LOCKED** (ChatGPT-signed-off 2026-06-08) |
 | 2 | Symbolic | Theorem-proving as a terminal: a daemon registry (PID/PROCESS/OUTPUT/SPAWN) writes Rules → Inference, aimed at proof targets in a directory; output log; Compile→Axioms strip | **CRT logic terminal** — VT323 + IBM Plex Mono, 3-tier green phosphor, **CSS-built monitor** (molded-plastic shell + rounded `.era-screen` glass, scanlines/vignette/reflection inside), boot-glyph console, `> ` command actions, mechanical-key sound | **Built · world-pass LOCKED** (ChatGPT-signed-off 2026-06-08) |
 | 3 | Statistical | The **living plot instrument** — observe + steer a learning process: Training Focus (Fit/Generalize/Explore) as a segmented dial steers bias-variance; RUN TRIAL pushes Accuracy up a curve; Methods found by experiment appear as **pins**; generalize at 88% → Era 4. Reaches back to Origins (Silicon) | **luminous teal/cyan instrument** — Space Grotesk + mono, dark glass plot chamber as the world object, alive scatter (true-function ghost + confidence band + glowing data + overfit shimmer), sine data-ping sound | **Built; world-pass feature-complete** (awaiting ChatGPT critique) |
-| 4 | Deep | **The compute fabric** — orchestrate at scale: split a finite compute budget across three runs via a **triangular ternary mixer** (min 5%, never all-zero); live levers = saturation/freshness (orbit balance), breadth-bottleneck lag bonus, forgiving heat/throttle, rotating frontier windows. Capability from geometric-mean breadth; gate → Era 5. Eats Silicon + Data + Insight (visible supply bus) | **hot industrial machine hall** — Rajdhani + mono, deep blue (amber=heat only), 3-lane loss chamber hero, gauges + heat LED, industrial sound | **Built; world-pass feature-complete** (awaiting ChatGPT critique) |
+| 4 | Deep | **Steer against the drift** — the compute fabric: three training runs (Vision/Language/Reasoning) **drift apart on their own** (per-run headwind, out of phase), so balanced is never optimal — route a finite compute budget via a **triangular ternary mixer** to counter the wind. Each run draws a specific earlier-era feedstock (Vision←Data, Reasoning←Insight, Language←Knowledge); a **blocked** run sends you to reopen that era (in-place supply bus). **Events** (drift / breakthrough, telegraphed) reshape the wind. Capability from geometric-mean breadth; gate → Era 5 | **hot industrial machine hall** — Rajdhani + mono, deep blue (amber=heat/drift only), event-reactive 3-lane loss chamber hero, triangular mixer (live %, feed lines, balanced marker), gauges + heat LED, industrial sound | **Built · world-pass LOCKED** (ChatGPT-signed-off 2026-06-09; live-run cadence tuning is the only open thread) |
 | 5 | Foundation | **Recursive self-improvement**: Self-Improve spends Capability for recursion levels that multiply **all** production every era (the supply chain feeds itself); Emergent Capabilities; at the Scale gate an **unbought agent emerges** and compounds on its own | violet | **Built + art wired**; emergence finale + curve viz, sigil + capability icons + agent hero |
 
-**Living supply chain (committed direction, see `DESIGN.md`):** later eras require infrastructure from earlier ones, so old eras stay alive (backbone resources: **Silicon** from Origins, **Data** from Statistical). Reach-back is now built across **all five eras**: Era 3 → Origins (Datasets/Models on Silicon), Era 4 → Origins + Statistical (Compute Nodes on Silicon, drawing Data + Insight), Era 5 → **everything** (recursion multiplies all earlier production via `rMult()`). The full arc plays first-mark → emergence. Era-fading/obsolescence is **paused** (`S.obsolete` scaffold kept, unused).
+**Living supply chain (committed direction, see `DESIGN.md`):** later eras require infrastructure from earlier ones, so old eras stay alive (backbone resources: **Silicon** from Origins, **Data** from Statistical). Reach-back is now built across **all five eras**: Era 3 → Origins (Datasets/Models on Silicon), Era 4 → Origins + Statistical (Compute Nodes on Silicon; each training run draws a **specific** feedstock — Vision←Data, Reasoning←Insight, Language←Knowledge — and a starved run **blocks** until you reopen that era), Era 5 → **everything** (recursion multiplies all earlier production via `rMult()`). The full arc plays first-mark → emergence. Era-fading/obsolescence is **paused** (`S.obsolete` scaffold kept, unused).
 
 ## Architecture (single IIFE in the `<script>` tag)
 
@@ -102,11 +102,29 @@ A six-persona board (engineer, product, UX, asset, story, alpha-tester) reviewed
 - ✅ Themes (blue/violet), test autoplayer extended through Deep+Foundation to emergence (85 green).
 - ✅ **Era 4-5 art generated + wired** (10 ChatGPT icons keyed to alpha): Era 4 sigil/node/run glyphs, Era 5 sigil/3 capabilities/agent-hero. No outstanding art.
 
-**Still open:**
-1. **Watch Zach play the full arc** (first mark → emergence) + read the export; tune all five eras toward 7-9 min. First autoplay read: Origins 1.9m, Symbolic 5.9m, Statistical ~4.4m, Deep 5.7m, Foundation ~8.4m. Origins/Statistical run fast.
-2. **Sanity-check the rendered look in a real browser** — Eras 4-5 were built/wired headless; verify themes, the allocation grid, the three canvases (loss/scatter/emergence), and the agent-hero pulse actually render.
-3. (M) Era 4 balance: balanced 1/1/1 allocation may dominate — make specialization-then-rebalance a real pull. (L) Modularize per-era logic into descriptors + resource registry + MILES-id guardrail (5 eras of copy-paste now).
-4. (M) Deepen Era 2's back-half; narrative heart per era; a11y (keyboard/touch tooltips, bigger min type, reduced-motion).
+## Post-Deep-lock state (2026-06-09)
+
+**Era 4 (Deep) is world-pass LOCKED** (ChatGPT-signed-off). It was redesigned from the
+"press nothing to win" balance mechanic into **steer against the drift** (runs drift apart →
+the triangle counters the wind; per-run feedstock reach-back blocks → reopen that era;
+telegraphed drift/breakthrough events; event-reactive chamber). Plus a lock-prep polish
+pass (clean situational Run Status, DRIFT rename, warning-before-blocked, trimmed toasts).
+Only open Deep thread: **live-run cadence tuning** (event frequency, block rhythm, drag feel)
+— needs Cody's hands on the mixer, not more design.
+
+**Next focus: build the Era 5 — Foundation FINALE** per `DESIGN-era5.md` (converged design:
+*Unexpected Emergence + Aftermath* — optimize, the system wakes before you're ready, manage
+the aftermath; Anomaly→Autonomy reveal; Control-vs-Alignment; 3 endings; it's an EVOLUTION of
+the existing recursion/emergence, and fixes the Self-Improve burst).
+
+**Also still open:**
+1. **Pacing fixes from the real run (dev-assisted, so relative shapes only):** ✅ Symbolic
+   theorems reshaped (were too cheap → instant burst). Still: **Foundation recursion ladder
+   too cheap** (levels 1-7 bought in <1s — lands in the Era-5 build), Symbolic expert-grind
+   tail (already shorter), and a clean **no-dev run** needed to trust Origins/Statistical timings.
+2. **Watch Zach play the full arc** (first mark → emergence) + read the export; tune toward 7-9 min/era.
+3. (L) Modularize per-era logic into descriptors + resource registry + MILES-id guardrail (5 eras of copy-paste).
+4. (M) Deepen Era 2's back-half; narrative heart per era; a11y (keyboard/touch tooltips, bigger min type, reduced-motion). (L) Era-4 supply bus is dense — simplify if playtesters feel overwhelmed.
 
 (Board flagged core-bronze/logic-machine as un-keyed — false alarm, verified clean. Personas read code/files, not the rendered game; treat art-render claims as hypotheses.)
 

@@ -1,5 +1,14 @@
 # Era 4 — Deep: world-pass ideation
 
+> **STATUS: WORLD-PASS LOCKED (ChatGPT-signed-off 2026-06-09).** Shipped as **steer against the
+> drift** (see the REDIRECTION section below): the three runs drift apart on their own, the
+> triangular mixer counters the wind, per-run feedstock reach-back blocks send you to reopen an
+> earlier era, and telegraphed drift/breakthrough events reshape the wind — with an event-reactive
+> loss chamber. A lock-prep polish pass followed (clean situational Run Status, DRIFT rename,
+> warning-before-blocked, directive blocked instructions, trimmed toasts). The ONLY open thread is
+> live-run cadence tuning (event frequency, block rhythm, drag feel) — a feel question, not design.
+> The notes below are the original ideation + the redirection that produced the shipped design.
+
 > Working notes (2026-06-08). Era 4 is currently "built + art wired" but on the OLD card/panel
 > UI, before the world-loop. It also tested as the mechanically weakest era. The world-pass is
 > the chance to (a) give it a distinct operating metaphor and (b) deepen the core decision.
