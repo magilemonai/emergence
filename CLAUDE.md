@@ -145,10 +145,17 @@ ending, not a pre-emergence escape); **3 moves + veto** (no extra aftermath laye
   ~2.7m pre + ~2.9m aftermath; needs a real run to trust against 7-9 min.
 - **Music** ✅ WIRED — **per-era ambient beds** (Cody's Suno tracks in `assets/music-*.mp3`), crossfading on the scroll-driven theme switch: Origins=**Bone Loam**, Symbolic=**Phosphor Logic**, Statistical=**Glass Algorithm**, Deep=**Cobalt Furnace**, Foundation=**Graviton Lullaby** → **Unmoored Presence** at the emergence rupture (the bed destabilizes with the glitch). `MUSIC` controller + `musicForEra()`/`syncMusic()` near `playSound`; `syncMusic()` is called from the IntersectionObserver (era change) and `emerge()`. Starts on first user gesture (autoplay policy); header **♪ toggle** persists to localStorage; `MUSIC.vol`=0.38 is the single level knob.
 
-**Also still open (earlier eras):**
-1. **Pacing fixes from the real run (dev-assisted, so relative shapes only):** ✅ Symbolic
-   theorems reshaped; ✅ **Foundation recursion burst fixed** (steep cost curve). Still: Symbolic
-   expert-grind tail (already shorter), and a clean **no-dev run** needed to trust Origins/Statistical timings.
+**Pacing — from the first real no-dev run (speed:1, full arc to a Symbiotic ending):**
+Per-era times were Origins **5.5m ✅**, Symbolic **6.0m ✅**, Statistical **2.6m ❌**, Deep **10.1m ⚠️
+(slightly long)**, Foundation pre-emergence **56s ❌**, aftermath 2.45m. Fixed since:
+- ✅ **Foundation pre-emergence Scale-gated** — emergence now triggers on `S.scale >= CFG.e5.emergeScale`
+  (a time-accrued climb), not on caps+recursion (which the Deep Capability stockpile bought instantly).
+  Caps/recursion accelerate the climb; Interpretability slows it (→ higher-Coherence ending). Autoplay: 56s → ~4.3m pre + ~2.3m aftermath.
+- ✅ **Statistical slowed** — `accGain` 0.004→0.0026 with gap math scaled to match (Fit still nets forward).
+  Era 3 ~2.6m → ~4m. Pushing to the full 7-9m balloons the autoplayer's Data/Insight and deadlocks its Deep
+  play (Language←Knowledge starves) — an autoplayer fragility, not a game bug; finish the 7-9m tune by hand.
+- Still open: **Deep ~10m is a touch long**; **heat is a dead mechanic** (see below); a clean **no-dev run**
+  to confirm the new Statistical/Foundation timings; the **Era-4 heat** question (fold into the steer-against-drift loop, or cut).
 2. **Watch Zach play the full arc** (first mark → emergence) + read the export; tune toward 7-9 min/era.
 3. (L) Modularize per-era logic into descriptors + resource registry + MILES-id guardrail (5 eras of copy-paste).
 4. (M) Deepen Era 2's back-half; narrative heart per era; a11y (keyboard/touch tooltips, bigger min type, reduced-motion). (L) Era-4 supply bus is dense — simplify if playtesters feel overwhelmed.
