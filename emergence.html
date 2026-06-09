@@ -295,8 +295,8 @@
   /* glass reflection (top-left) + curved vignette + low flicker, inside the screen */
   .era-e2 .era-screen::after { content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
     background:
-      radial-gradient(ellipse at 16% 6%, rgba(205,255,225,0.085), transparent 30%),
-      radial-gradient(130% 130% at 50% 50%, transparent 52%, rgba(0,0,0,0.28) 100%);
+      radial-gradient(ellipse at 18% 7%, rgba(205,255,225,0.085), transparent 30%),
+      radial-gradient(ellipse at 50% 50%, transparent 50%, rgba(0,0,0,0.30) 100%);
     animation: crtFlicker 5s ease-in-out infinite; }
   @keyframes crtFlicker { 0%,100%{opacity:0.99} 47%{opacity:1} 49%{opacity:0.985} 51%{opacity:1} 72%{opacity:0.99} }
   /* subordinate panels = dim system panes (square, low glow) */
@@ -382,8 +382,8 @@
   /* stronger CRT glass over the whole content */
   .era-e2 .era-body { filter: contrast(1.05) brightness(0.98) saturate(1.04); }
   /* segmented, terminal-native proof progress bar */
-  .era-e2 .proof-active .meter { height: 12px; background: rgba(0,0,0,0.55); border: 1px solid rgba(141,255,183,0.28); border-radius: 0; margin-top: 8px; }
-  .era-e2 .proof-active .meter > i { background: var(--accent) !important; box-shadow: 0 0 8px rgba(255,205,107,0.45);
+  .era-e2 .proof-active .meter { height: 9px; background: repeating-linear-gradient(90deg, rgba(79,169,123,0.14) 0 8px, transparent 8px 11px), rgba(0,0,0,0.5); border: 1px solid rgba(141,255,183,0.24); border-radius: 0; margin-top: 8px; }
+  .era-e2 .proof-active .meter > i { background: var(--accent) !important; opacity: 0.85; box-shadow: 0 0 7px rgba(255,205,107,0.4);
     -webkit-mask: repeating-linear-gradient(90deg,#000 0 8px, transparent 8px 11px); mask: repeating-linear-gradient(90deg,#000 0 8px, transparent 8px 11px); }
   /* tighter theorem rows + brighter active state */
   .era-e2 .proof-item { padding: 8px 12px; }
