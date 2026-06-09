@@ -22,6 +22,11 @@
     --text: #f1e7d2; --dim: #c3a878; --dimmer: #a98f63; --accent: #e0a93f;
     --era-font: "EB Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
     --era-display: "Cinzel", "Trajan Pro", "Iowan Old Style", Georgia, serif;
+    /* procedural carved-stone grain — fractal noise, blended into every Origins surface */
+    --stone-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.55'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    /* material roles (value-separated, per critique) */
+    --stone-panel: #1b130c; --stone-raised: #2a1d12; --stone-edge: #6f512e;
+    --bronze-line: #b07d3f; --bronze-lit: #d6a85f; --ink-cream: #efe0c2; --muted-cream: #a99572;
   }
   /* ERA 2 — Symbolic: cold, digital, terminal. Monospace. */
   .theme-2, .era-e2 {
@@ -88,48 +93,83 @@
       /* faint chiselled grain */
       repeating-linear-gradient(94deg, rgba(0,0,0,0.05) 0 2px, transparent 2px 5px),
       var(--bg); }
-  /* ===== ERA 1 — Origins: carved stone & ink. A tactile workbench, not a dashboard. ===== */
+  /* ===== ERA 1 — Origins: carved stone & ink, laid on a dark workbench (v2: real grain, ink not glow). ===== */
   .era-e1 { background:
-      linear-gradient(rgba(22,16,10,0.55), rgba(18,12,7,0.72)),
-      radial-gradient(120% 80% at 50% -20%, rgba(224,168,106,0.05), transparent 60%),
-      repeating-linear-gradient(91deg, rgba(0,0,0,0.045) 0 3px, transparent 3px 7px),
-      var(--panel); }
-  /* panels read as chiselled stone tablets: engraved inset, hard bevel, no soft rounding */
-  .era-e1 .panel { background:
-      linear-gradient(180deg, rgba(60,44,26,0.55), rgba(34,24,14,0.85));
-    border: 1px solid #6a4f2c; border-radius: 4px;
-    box-shadow: inset 0 1px 0 rgba(232,196,140,0.10), inset 0 0 22px rgba(0,0,0,0.45), 0 2px 0 rgba(0,0,0,0.35); }
-  .era-e1 .panel-label { color: #d9b066; letter-spacing: 3px; font-weight: 600;
-    text-shadow: 0 1px 0 rgba(0,0,0,0.6); border-bottom: 1px solid rgba(106,79,44,0.5); padding-bottom: 7px; }
-  .era-e1 .era-name, .era-e1 .core-age { letter-spacing: 2px; text-shadow: 0 1px 0 rgba(0,0,0,0.55); }
-  .era-e1 .era-tag { border-radius: 2px; font-weight: 600; }
-  /* buttons are pressed stone: raised bevel, deep press on :active, carved caps */
-  .era-e1 .act-btn { background: linear-gradient(180deg, #4a3620, #34250f); border: 1px solid #7a5a31;
-    border-radius: 3px; color: #f0d49a; letter-spacing: 2.5px; font-weight: 600;
-    box-shadow: inset 0 1px 0 rgba(245,210,150,0.18), 0 3px 0 #1c130a, 0 4px 6px rgba(0,0,0,0.4); }
-  .era-e1 .act-btn:hover:not(:disabled) { box-shadow: inset 0 1px 0 rgba(245,210,150,0.25), 0 3px 0 #1c130a, 0 0 20px rgba(224,169,63,0.18); }
-  .era-e1 .act-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-  .era-e1 .up-buy { background: linear-gradient(180deg, #3a2a18, #2a1d0f); border: 1px solid #6a4f2c; border-radius: 3px;
-    box-shadow: inset 0 1px 0 rgba(245,210,150,0.10), 0 2px 0 #18100a; }
-  .era-e1 .up-buy:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 1px 4px rgba(0,0,0,0.5); }
-  .era-e1 .tile { background: linear-gradient(180deg, rgba(58,42,24,0.5), rgba(30,21,12,0.82));
-    border: 1px solid #5e462a; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(232,196,140,0.08), inset 0 0 16px rgba(0,0,0,0.4); }
-  .era-e1 .tile.can { border-color: var(--accent); box-shadow: inset 0 1px 0 rgba(232,196,140,0.12), 0 0 16px rgba(224,169,63,0.18); }
-  .era-e1 .up-name, .era-e1 .tile-name { color: #f0e2c6; }
-  .era-e1 .up-flavor, .era-e1 .up-desc { font-size: 15px; }
-  /* the central core sits like an anvil on the bench */
-  .era-e1 .core-panel { background:
-      radial-gradient(120% 120% at 50% 0%, rgba(224,169,63,0.07), transparent 60%),
-      linear-gradient(180deg, rgba(60,44,26,0.55), rgba(30,21,12,0.88)); border-color: #6a4f2c; }
-  /* the workbench: two sides of the craft, split by a chiselled seam */
+      var(--stone-noise),
+      linear-gradient(rgba(20,14,9,0.62), rgba(12,8,5,0.82)),
+      radial-gradient(130% 80% at 50% -25%, rgba(176,125,63,0.05), transparent 60%),
+      #0a0705;
+    background-size: 220px 220px, auto, auto, auto; background-blend-mode: overlay, normal, normal, normal; }
+  /* panels are chiselled stone tablets: grain in the surface, deep engraved inset, heavy contact shadow, almost no radius */
+  .era-e1 .panel { position: relative;
+    background-image: var(--stone-noise), linear-gradient(168deg, #241910 0%, #160f0a 60%, #0e0907 100%);
+    background-size: 220px 220px, auto; background-blend-mode: overlay, normal;
+    border: 1px solid #3c2c1a; border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,224,168,0.07), inset 0 -16px 30px rgba(0,0,0,0.42), 0 16px 38px rgba(0,0,0,0.42); }
+  .era-e1 .panel-label { color: var(--bronze-line); letter-spacing: 0.16em; font-weight: 600; font-size: 12px;
+    text-shadow: 0 1px 0 rgba(255,220,150,0.10), 0 -1px 0 rgba(0,0,0,0.65);
+    border-bottom: 1px solid rgba(111,81,46,0.4); box-shadow: 0 1px 0 rgba(255,220,150,0.05); padding-bottom: 8px; }
+  .era-e1 .era-name { letter-spacing: 0.08em; color: var(--ink-cream); text-shadow: 0 1px 0 rgba(255,220,150,0.10), 0 -1px 0 rgba(0,0,0,0.6); }
+  .era-e1 .core-age { letter-spacing: 0.14em; color: var(--bronze-lit); text-shadow: 0 1px 0 rgba(0,0,0,0.6); }
+  .era-e1 .era-tag { border-radius: 2px; font-weight: 600; border-color: rgba(176,125,63,0.5); }
+  /* heavy pressed-stone primary actions — mass, engraved ink text, NO neon glow */
+  .era-e1 .act-btn { background-image: var(--stone-noise), linear-gradient(180deg, #3a2918 0%, #21160d 100%);
+    background-size: 200px 200px, auto; background-blend-mode: overlay, normal;
+    border: 1px solid rgba(214,168,95,0.45); border-radius: 3px; color: var(--ink-cream); letter-spacing: 0.16em; font-weight: 600;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.75);
+    box-shadow: inset 0 2px 0 rgba(255,228,171,0.12), inset 0 -5px 0 rgba(0,0,0,0.30), 0 8px 16px rgba(0,0,0,0.45); }
+  .era-e1 .act-btn:hover:not(:disabled) { border-color: rgba(214,168,95,0.7); box-shadow: inset 0 2px 0 rgba(255,228,171,0.16), inset 0 -5px 0 rgba(0,0,0,0.30), 0 8px 18px rgba(0,0,0,0.5); }
+  .era-e1 .act-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 3px 8px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.35); }
+  .era-e1 .up-buy { background: linear-gradient(180deg, #2c2013, #1a120b); border: 1px solid rgba(111,81,46,0.6); border-radius: 2px;
+    color: var(--muted-cream); text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+    box-shadow: inset 0 1px 0 rgba(255,220,150,0.07), inset 0 -3px 5px rgba(0,0,0,0.4); }
+  .era-e1 .up-buy:hover:not(:disabled) { border-color: rgba(214,168,95,0.55); color: var(--ink-cream); }
+  .era-e1 .up-buy:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 6px rgba(0,0,0,0.55); }
+  .era-e1 .up-buy .c { color: var(--bronze-lit); }
+  /* building tiles: flatter slabs (less boxing), grain surface, warm edge only when affordable */
+  .era-e1 .tile { position: relative;
+    background-image: var(--stone-noise), linear-gradient(180deg, #221710 0%, #140d08 100%);
+    background-size: 200px 200px, auto; background-blend-mode: overlay, normal;
+    border: 1px solid #34261650; border-top: 1px solid rgba(176,125,63,0.22); border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,224,180,0.05), inset 0 -8px 16px rgba(0,0,0,0.30); }
+  .era-e1 .tile.can { border-color: rgba(214,168,95,0.5); box-shadow: inset 0 1px 0 rgba(255,224,180,0.10), inset 0 -8px 16px rgba(0,0,0,0.30); }
+  .era-e1 .tile-name, .era-e1 .up-name { color: var(--ink-cream); }
+  .era-e1 .up-flavor, .era-e1 .up-desc { font-size: 15px; color: var(--muted-cream); }
+  /* icons sit on carved medallions, bigger and more confident */
+  .era-e1 .tile-ic { width: 84px; height: 84px; padding: 12px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, rgba(176,125,63,0.12), transparent 64%);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.35), 0 1px 0 rgba(255,220,160,0.06); filter: drop-shadow(0 1px 0 rgba(255,220,150,0.10)); }
+  /* the inline "each · per second" readout: a recessed groove, not another box */
+  .era-e1 .tile-eff, .era-e1 .up .tile-eff { background: rgba(0,0,0,0.22); border: none; border-left: 2px solid rgba(176,125,63,0.32);
+    border-radius: 0 3px 3px 0; padding: 6px 9px; }
+  .era-e1 .eff-cap { color: var(--muted-cream); letter-spacing: 0.04em; }
+  /* the core: a ritual stone medallion on the bench, the focal object of the screen */
+  .era-e1 .core-panel { background-image: var(--stone-noise),
+      radial-gradient(130% 120% at 50% 0%, rgba(176,125,63,0.08), transparent 58%),
+      linear-gradient(168deg, #2a1d12, #100b07);
+    background-size: 220px 220px, auto, auto; background-blend-mode: overlay, normal, normal; border-color: #3c2c1a; }
+  .era-e1 .core { filter: drop-shadow(0 14px 22px rgba(0,0,0,0.55)); }
+  .era-e1 .core-art { width: 150px; height: 150px; }
+  .era-e1 .core-ring { border-color: rgba(176,125,63,0.28); }
+  /* the workbench: two sides of the craft, split by a chiselled seam — each side its own sub-material */
   .benches { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0; }
-  .bench { padding: 4px 20px; }
-  .bench:first-child { padding-left: 4px; }
-  .bench + .bench { border-left: 1px solid #5a4327; box-shadow: inset 1px 0 0 rgba(232,196,140,0.06); }
-  .bench-lab { font-family: var(--era-display, inherit); color: #d9b066; letter-spacing: 2px; font-size: 12px;
-    text-transform: uppercase; margin: 2px 0 10px; text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
-  .bench-lab span { color: var(--dimmer); letter-spacing: 1px; font-family: var(--era-font); }
-  .bench .ogrid { grid-template-columns: 1fr; }
+  .bench { padding: 6px 22px; border-radius: 3px; }
+  .bench + .bench { border-left: 1px solid #4a3826; box-shadow: inset 1px 0 0 rgba(255,220,150,0.05); }
+  /* The Record — lighter, dustier clay/parchment */
+  .era-e1 .bench-record { background-image: var(--stone-noise), linear-gradient(180deg, rgba(58,44,28,0.30), rgba(26,19,12,0.18));
+    background-size: 200px 200px, auto; background-blend-mode: overlay, normal; }
+  /* The Forge — darker basalt with a warm ember glow rising from the bottom */
+  .era-e1 .bench-forge { background-image: var(--stone-noise),
+      radial-gradient(80% 50% at 50% 108%, rgba(190,88,32,0.14), transparent 55%),
+      linear-gradient(180deg, rgba(24,16,9,0.30), rgba(9,6,4,0.30));
+    background-size: 200px 200px, auto, auto; background-blend-mode: overlay, normal, normal; }
+  .bench-lab { font-family: var(--era-display, inherit); color: var(--bronze-lit); letter-spacing: 0.14em; font-size: 13px;
+    text-transform: uppercase; margin: 4px 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,0.55); }
+  .bench-lab span { color: var(--muted-cream); letter-spacing: 0.04em; font-family: var(--era-font); font-size: 12px; }
+  .bench .ogrid { grid-template-columns: 1fr; gap: 8px; }
+  /* mute the flows panel so it stops competing with the core for attention */
+  .era-e1 .rates-panel { opacity: 0.92; }
+  .era-e1 .rate-ps.pos { color: #7fcf86; }
   body.theme-2 { background: radial-gradient(1100px 700px at 50% -15%, rgba(201,162,107,0.06), transparent 60%), radial-gradient(900px 500px at 90% 110%, rgba(110,140,200,0.05), transparent 60%), var(--bg); }
   #app { display: flex; flex-direction: column; height: 100%; }
   header { display: flex; align-items: center; gap: 16px; padding: 9px 18px;
@@ -1130,12 +1170,12 @@
   }
   const WORKS_ORDER = ['scribe','miner','scriptorium','smelter','foundry'];
   // The bench has two sides: the Record (Marks→Knowledge) and the Forge (Ore→Metal→Silicon) — the two tracks, made spatial.
-  const WORKS_BENCH = [ ['The Record','Marks &amp; Knowledge',['scribe','scriptorium']], ['The Forge','Ore, Metal &amp; Silicon',['miner','smelter','foundry']] ];
+  const WORKS_BENCH = [ ['record','The Record','Marks &amp; Knowledge',['scribe','scriptorium']], ['forge','The Forge','Ore, Metal &amp; Silicon',['miner','smelter','foundry']] ];
   function buildWorks(){
     let out='';
-    for(const [name,sub,keys] of WORKS_BENCH){
+    for(const [id,name,sub,keys] of WORKS_BENCH){
       let tiles=''; for(const key of keys){ if(BUILD_UNLOCK[key]()) tiles += buildTile('build', key); }
-      if(tiles) out += '<div class="bench"><div class="bench-lab">'+name+' <span>· '+sub+'</span></div><div class="ogrid">'+tiles+'</div></div>';
+      if(tiles) out += '<div class="bench bench-'+id+'"><div class="bench-lab">'+name+' <span>· '+sub+'</span></div><div class="ogrid">'+tiles+'</div></div>';
     }
     return out ? '<div class="benches">'+out+'</div>' : '<div class="up-desc">Make a discovery to unlock something to build.</div>';
   }
