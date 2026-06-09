@@ -18,7 +18,7 @@ const html = fs.readFileSync(path.join(__dirname, 'emergence.html'), 'utf8');
 const SCRIPT = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 // ---- Minimal headless shims ----
-const CTX = { setTransform(){}, clearRect(){}, beginPath(){}, moveTo(){}, lineTo(){}, stroke(){},
+const CTX = { setTransform(){}, clearRect(){}, beginPath(){}, moveTo(){}, lineTo(){}, stroke(){}, closePath(){}, setLineDash(){},
   arc(){}, fill(){}, fillText(){}, createRadialGradient(){ return { addColorStop(){} }; } };
 function makeEl(){
   return { style:{}, dataset:{}, className:'', innerHTML:'', textContent:'', width:0, height:0, onclick:null, disabled:false,

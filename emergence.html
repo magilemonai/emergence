@@ -493,6 +493,10 @@
     text-shadow: 0 0 5px var(--phosphor); box-shadow: 0 0 18px rgba(125,255,160,0.14), inset 0 0 18px rgba(40,120,60,0.07); }
   body.theme-2 #tip i { color: var(--accent); font-style: normal; }
   body.theme-2 #tip::before { content: '> '; color: var(--good); text-shadow: 0 0 6px var(--phosphor); }
+  /* Statistical: tooltips are glass instrument labels */
+  body.theme-3 #tip { background: linear-gradient(180deg, rgba(8,28,34,0.97), rgba(4,13,17,0.98)); border: 1px solid rgba(95,224,192,0.5);
+    border-radius: 8px; color: var(--text); box-shadow: 0 0 18px rgba(95,224,192,0.14), inset 0 0 18px rgba(40,140,120,0.06); }
+  body.theme-3 #tip i { color: var(--accent); }
   .objective { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 9px 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
   .focus-row { display: flex; gap: 8px; }
   .focus-btn { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); cursor: pointer; text-align: left; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
@@ -536,6 +540,18 @@
   .era-e3 .up-name, .era-e3 .tile-name, .era-e3 .pf-name { color: var(--text); }
   .era-e3 .up-buy { border-radius: 7px; }
   .era-e3 .up-buy .c, .era-e3 .sup-nm b { color: var(--accent); }
+  /* methods are instrument attachments / pins, not cards */
+  .era-e3 .method-pins { display: flex; flex-wrap: wrap; gap: 10px; }
+  .era-e3 .method-pin { display: flex; align-items: center; gap: 11px; padding: 9px 14px 9px 11px; border: 1px solid rgba(95,224,192,0.28);
+    border-radius: 22px; background: rgba(8,28,34,0.55); flex: 1 1 240px; min-width: 230px; }
+  .era-e3 .method-pin img { width: 30px; height: 30px; object-fit: contain; flex: none; }
+  .era-e3 .method-pin .mp-glyph { width: 30px; flex: none; text-align: center; color: var(--dim); font-size: 18px; }
+  .era-e3 .method-pin .mp-txt { display: flex; flex-direction: column; min-width: 0; }
+  .era-e3 .method-pin .mp-txt b { font-size: 13px; color: var(--good); font-weight: 600; }
+  .era-e3 .method-pin .mp-txt span { font-size: 11px; color: var(--dim); line-height: 1.35; }
+  .era-e3 .method-pin.found { border-left: 3px solid var(--accent); box-shadow: 0 0 12px rgba(95,224,192,0.1); }
+  .era-e3 .method-pin.scanning { border-style: dashed; animation: scanPulse 2.2s ease-in-out infinite; }
+  @keyframes scanPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 0.95; } }
   .sup-lab { font-size: 10px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
   .sup-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .sup-btn { flex: 1; min-width: 150px; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; color: var(--text); transition: border-color 0.15s; }
@@ -949,6 +965,16 @@
         o.frequency.setValueAtTime(620,t); o.frequency.setValueAtTime(880,t+0.05);
         g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.13); o.start(t); o.stop(t+0.13);
       }
+      return;
+    }
+    // ERA 3 — Statistical: clean sine data-pings (a sample registers / instrument confirm)
+    if(viewEra===3 && (type==='click'||type==='buy')){
+      const t=ctx.currentTime;
+      if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sine';
+        o.frequency.setValueAtTime(880,t); o.frequency.exponentialRampToValueAtTime(1320,t+0.06);
+        g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); o.start(t); o.stop(t+0.1);
+      } else { [0,0.06].forEach((dt,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sine';
+        o.frequency.setValueAtTime(i?990:660,t+dt); g.gain.setValueAtTime(0.06,t+dt); g.gain.exponentialRampToValueAtTime(0.001,t+dt+0.1); o.start(t+dt); o.stop(t+dt+0.1); }); }
       return;
     }
     if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='triangle'; o.frequency.setValueAtTime(330,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(520,ctx.currentTime+0.05); g.gain.setValueAtTime(0.1,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09); o.start();o.stop(ctx.currentTime+0.09); }
@@ -1503,12 +1529,13 @@
     return eraShell(1, false, body);
   }
   function buildMethods(){
-    let html='', shownUnknown=false;
+    let pins='', shownUnknown=false;
     for(const m of METHODS){
-      if(S.methods[m.id]) html += '<div class="proof-item lemma">'+(METHOD_ICON[m.id]?'<img class="pf-ic" src="'+METHOD_ICON[m.id]+'">':'<div class="pf-ic glyph">&#9670;</div>')+'<div class="pf-main"><div class="pf-name">'+m.name+'</div><div class="pf-desc"><i>'+m.flavor+'</i><br>'+m.desc+'</div></div></div>';
-      else if(!shownUnknown){ shownUnknown=true; html += '<div class="proof-item"><div class="pf-ic glyph">?</div><div class="pf-main"><div class="pf-name">Undiscovered Method</div><div class="pf-desc" id="disc-feed">Run experiments to discover Methods — odds rise with Data and the <b>Explore</b> focus.</div></div></div>'; }
+      if(S.methods[m.id]) pins += '<div class="method-pin found" data-tip="'+esc('<i>'+m.flavor+'</i><br>'+m.desc)+'">'+
+        (METHOD_ICON[m.id]?'<img src="'+METHOD_ICON[m.id]+'">':'<span class="mp-glyph">&#9670;</span>')+'<div class="mp-txt"><b>'+m.name+'</b><span>'+m.desc+'</span></div></div>';
+      else if(!shownUnknown){ shownUnknown=true; pins += '<div class="method-pin scanning"><span class="mp-glyph">?</span><div class="mp-txt"><b>scanning for methods…</b><span id="disc-feed">odds rise with Data and the Explore focus.</span></div></div>'; }
     }
-    return '<div class="proof-list">'+html+'</div>';
+    return '<div class="method-pins">'+pins+'</div>';
   }
   function supplyBtn(key, label){
     return '<button class="sup-btn" data-supbuy="'+key+'" id="sup-'+key+'"><span class="sup-nm">'+label+' <b id="supc-'+key+'"></b></span><span class="sup-cost" id="supx-'+key+'"></span></button>';
@@ -1537,25 +1564,42 @@
       '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods · found by experiment</div>'+buildMethods()+'</div>';
     return eraShell(3, false, body);
   }
-  function drawScatter(){ // Era 3 signature viz: data points + a model curve that fits as accuracy rises and wiggles when overfit
+  function drawScatter(){ // Era 3 signature viz: a living fit — points, the true-function ghost, a confidence band, and the model curve learning the shape (wobbling when overfit)
     const cv=$('scatter'); if(!cv || !cv.getContext) return;
     const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return; // headless stub safety
-    const w=cv.width=cv.clientWidth||640, h=cv.height=cv.clientHeight||300, pad=20, gw=w-pad*2, gh=h-pad*2;
-    const acc=S.accuracy, gap=S.gap;
+    const w=cv.width=cv.clientWidth||640, h=cv.height=cv.clientHeight||300, pad=22, gw=w-pad*2, gh=h-pad*2;
+    const acc=S.accuracy, gap=S.gap, t=S.t||0;
+    const X=x=>pad+x*gw, Y=y=>h-pad-Math.max(0.02,Math.min(0.98,y))*gh;
     ctx.clearRect(0,0,w,h);
-    ctx.strokeStyle='rgba(127,230,196,0.22)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(pad,pad-4); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
-    const f=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5); // the true underlying function
-    const N=26; ctx.fillStyle='rgba(127,230,196,0.75)';
-    for(let i=0;i<N;i++){ const x=(i+0.5)/N, hsh=Math.abs(Math.sin(i*12.9898)*43758.5453)%1, ny=(hsh-0.5)*0.32;
-      const y=Math.max(0.04,Math.min(0.96,f(x)+ny)); ctx.beginPath(); ctx.arc(pad+x*gw, h-pad-y*gh, 2.3,0,6.3); ctx.fill(); }
+    // faint internal grid (data-viz floor)
+    ctx.strokeStyle='rgba(95,224,192,0.07)'; ctx.lineWidth=1;
+    for(let i=1;i<8;i++){ const gx=pad+gw*i/8; ctx.beginPath(); ctx.moveTo(gx,pad); ctx.lineTo(gx,h-pad); ctx.stroke(); }
+    for(let i=1;i<5;i++){ const gy=pad+gh*i/5; ctx.beginPath(); ctx.moveTo(pad,gy); ctx.lineTo(w-pad,gy); ctx.stroke(); }
+    // axes
+    ctx.strokeStyle='rgba(95,224,192,0.28)'; ctx.beginPath(); ctx.moveTo(pad,pad-6); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+    const f=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5); // the true underlying function the model is trying to find
+    // true-function ghost (the hidden truth) — dashed, dim
+    if(ctx.setLineDash){ ctx.setLineDash([5,5]); }
+    ctx.beginPath(); for(let px=0;px<=gw;px+=3){ const x=px/gw; const cx=pad+px, cy=Y(f(x)); px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
+    ctx.strokeStyle='rgba(95,224,192,0.22)'; ctx.lineWidth=1.4; ctx.stroke();
+    if(ctx.setLineDash){ ctx.setLineDash([]); }
+    // confidence band around the model — wide when uncertain, tight as accuracy rises
+    const band=(1-acc)*0.16+0.012, fit=x=> 0.5+(f(x)-0.5)*acc + Math.sin(x*42 + t*2)*gap*0.16*acc;
     ctx.beginPath();
-    for(let px=0;px<=gw;px+=2){ const x=px/gw;
-      let y=0.5+(f(x)-0.5)*acc + Math.sin(x*42)*gap*0.16*acc; // flat→true by accuracy; overfit wiggle by gap
-      y=Math.max(0.03,Math.min(0.97,y));
-      const cx=pad+px, cy=h-pad-y*gh; if(px===0) ctx.moveTo(cx,cy); else ctx.lineTo(cx,cy); }
-    ctx.lineWidth=2.2; ctx.strokeStyle='#c8f5e6';
-    if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(127,230,196,0.5)'; ctx.shadowBlur=6; }
+    for(let px=0;px<=gw;px+=3){ const x=px/gw; const cx=pad+px; (px===0?ctx.moveTo:ctx.lineTo).call(ctx,cx,Y(fit(x)+band)); }
+    for(let px=gw;px>=0;px-=3){ const x=px/gw; const cx=pad+px; ctx.lineTo(cx,Y(fit(x)-band)); }
+    ctx.closePath(); ctx.fillStyle='rgba(95,224,192,0.09)'; ctx.fill();
+    // data points (glowing cyan)
+    const N=30; ctx.fillStyle='rgba(110,231,255,0.85)';
+    if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(110,231,255,0.6)'; ctx.shadowBlur=4; }
+    for(let i=0;i<N;i++){ const x=(i+0.5)/N, hsh=Math.abs(Math.sin(i*12.9898)*43758.5453)%1, ny=(hsh-0.5)*0.32;
+      ctx.beginPath(); ctx.arc(X(x), Y(f(x)+ny), 2.4,0,6.3); ctx.fill(); }
+    if(ctx.shadowBlur!==undefined){ ctx.shadowBlur=0; }
+    // the model curve — bright; tints amber + wobbles as the overfit gap grows
+    ctx.beginPath(); for(let px=0;px<=gw;px+=2){ const x=px/gw; const cx=pad+px, cy=Y(fit(x)); px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
+    const hot=Math.min(1,gap/0.35); ctx.lineWidth=2.4;
+    ctx.strokeStyle= hot>0.5 ? 'rgba(255,184,107,0.95)' : '#d7fff6';
+    if(ctx.shadowBlur!==undefined){ ctx.shadowColor= hot>0.5?'rgba(255,184,107,0.6)':'rgba(155,255,234,0.55)'; ctx.shadowBlur=7; }
     ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0;
   }
   // ---- ERA 4 (Deep): allocate Compute across three training runs; breadth (geometric mean) makes Capability ----

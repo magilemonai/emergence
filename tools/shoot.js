@@ -57,6 +57,13 @@ const SETUP = {
   statistical: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
     S.silicon=5000;S.data=8000;S.insight=2000;S.dataset=18;S.model=12;S.foundry=14;S.accuracy=0.74;S.gap=0.12;
     S.methods={regression:true,features:true,regularization:true}; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+  statistictip: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
+    S.silicon=5000;S.data=8000;S.insight=2000;S.dataset=18;S.model=12;S.foundry=14;S.accuracy=0.74;S.gap=0.12;
+    S.methods={regression:true,features:true,regularization:true}; E.checkMiles(); for(let i=0;i<5;i++) E.tick();
+    const el=document.querySelector('.era-e3 .focus-seg')||document.querySelector('.era-e3 [data-tip]');
+    const tip=document.getElementById('tip'); tip.innerHTML=el.getAttribute('data-tip');
+    tip.classList.add('show'); tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
+    tip.style.left='150px'; tip.style.top='560px';`,
   deep: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true; E.checkMiles();
     S.maxEra=3;S.accuracy=0.99;S.gap=0.05;S.methods={regression:true,regularization:true,ensembles:true}; E.checkMiles();
     S.silicon=9000;S.data=9000;S.insight=4000;S.node=24;S.vision=0.55;S.language=0.42;S.reasoning=0.6;S.capability=1200;S.foundry=20;
