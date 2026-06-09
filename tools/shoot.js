@@ -39,6 +39,13 @@ const SETUP = {
     tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
     tip.style.left=(r.right+14+window.scrollX)+'px'; tip.style.top=(r.top+window.scrollY)+'px';
     return JSON.stringify([Math.round(r.right), Math.round(r.top+window.scrollY)]);`,
+  revisit: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
+    S.maxEra=3;S.age=3;S.scribe=25;S.miner=25;S.scriptorium=18;S.smelter=17;S.foundry=13;S.refine=3;
+    S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=300;
+    for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }
+    E.checkMiles(); for(let i=0;i<6;i++) E.tick();
+    const exp=document.querySelector('[data-toggle="1"]'); if(exp) exp.click();
+    for(let i=0;i<6;i++) E.tick();`,
   symbolic: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.knowledge=900;S.flags.origindone=true; E.checkMiles();
     S.rules=9000;S.runRules=14000;S.ruleset=18;S.daemon=6;S.axioms=8;S.totalAxioms=8;
     S.tech={formalLogic:true,fwdChain:true,inference:true,knowledge:true,bwdChain:true};

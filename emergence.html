@@ -1948,7 +1948,7 @@
     setText('manualSub', '+'+fmt(st.click)+' rules · the original verb');
     setStatus(1,S.scribe>0||S.miner>0); setStatus(2,S.ruleset>0||S.daemon>0); setStatus(3,S.model>0); setStatus(4,S.node>0); setStatus(5,S.recursion>0||S.emerged);
     // Era 1 — Origins live values
-    if(S.maxEra===1){
+    if($('coreArt')){ // Origins live values update whenever its panel is on screen — current OR a revisited/expanded completed era (not gated on maxEra)
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
       const ca=$('coreArt'); if(ca && ca.setAttribute){ const src=['','assets/core-stone-sym.png','assets/core-bronze-sym.png','assets/core-silicon-sym.png'][S.age]||'assets/core-stone-sym.png'; if(ca._src!==src){ ca.setAttribute('src',src); ca._src=src; } }
       const er=$('eff-refine'); if(er) setText('eff-refine', S.refine>0 ? ('now +'+Math.round(S.refine*CFG.e1.refineBonus*100)+'% to all production') : 'each level: +'+Math.round(CFG.e1.refineBonus*100)+'% to all production');
