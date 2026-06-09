@@ -788,10 +788,10 @@
     font-size: 9px; font-weight: 700; display: none; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
   .rb-badge.show { display: inline-flex; }
   #toasts { position: fixed; top: 60px; right: 18px; z-index: 60; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-  .toast { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 16px;
-    max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out; }
-  .toast .th { font-size: 10px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
-  .toast .tb { font-size: 12px; line-height: 1.5; color: var(--text); }
+  .toast { background: var(--panel); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 12px;
+    max-width: 248px; box-shadow: 0 6px 22px rgba(0,0,0,0.5); animation: toastIn 0.4s ease-out; opacity: 0.96; }
+  .toast .th { font-size: 9px; letter-spacing: 1.6px; color: var(--accent); text-transform: uppercase; margin-bottom: 3px; }
+  .toast .tb { font-size: 11.5px; line-height: 1.45; color: var(--text); }
   @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
   @keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
   #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
@@ -1048,8 +1048,9 @@
     if(MUTE) return;
     const el=document.createElement('div'); el.className='toast';
     el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>';
-    $('toasts').appendChild(el); playSound('milestone');
-    setTimeout(()=>{ el.style.animation='toastOut 0.4s forwards'; setTimeout(()=>el.remove(),400); }, 5200);
+    const box=$('toasts'); box.appendChild(el); playSound('milestone');
+    while(box.children && box.children.length>3 && box.firstChild) box.removeChild(box.firstChild); // cap the stack — never bury the era
+    setTimeout(()=>{ el.style.animation='toastOut 0.4s forwards'; setTimeout(()=>el.remove(),400); }, 4200);
   }
   function floatNum(text,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=text; el.style.color=color; el.style.left=(x+(Math.random()*24-12))+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
   let actx=null; const ac=()=>actx||(actx=new(window.AudioContext||window.webkitAudioContext)());
@@ -1827,15 +1828,28 @@
     for(let i=1;i<8;i++){ const gx=pad+gw*i/8; ctx.beginPath(); ctx.moveTo(gx,pad); ctx.lineTo(gx,h-pad); ctx.stroke(); }
     for(let i=1;i<5;i++){ const gy=pad+gh*i/5; ctx.beginPath(); ctx.moveTo(pad,gy); ctx.lineTo(w-pad,gy); ctx.stroke(); }
     ctx.strokeStyle='rgba(110,168,255,0.28)'; ctx.beginPath(); ctx.moveTo(pad,pad-6); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
-    const doms=CFG.e4.domains; let lowK=doms[0].k; for(const d of doms) if(S[d.k]<S[lowK]) lowK=d.k;
-    for(const d of doms){ const k=d.k, lv=Math.max(0,Math.min(1,S[k])), isFront=S.frontier===k;
+    const doms=CFG.e4.domains, e4=CFG.e4, t=S.t||0, ev=S.event;
+    for(const d of doms){ const k=d.k, lv=Math.max(0,Math.min(1,S[k]));
+      const isBreak=!!(ev&&ev.type==='breakthrough'&&ev.run===k), isShift=!!(ev&&ev.type==='shift'&&ev.run===k);
+      const need=(S.alloc[k]||0)/((S.alloc.vision||0)+(S.alloc.language||0)+(S.alloc.reasoning||0)||1)*(S.node*e4.nodeCompute)*e4.feedPerShare;
+      const blocked=need>0 && S[e4.feedstock[k]] < need*0.6;
+      // breakthrough flattens steeper (cleaner gradient); drift lifts the floor (going stale)
+      const steep=1.0+lv*3.4+(isBreak?1.2:0), floor=(1-lv*0.94)+(isShift?0.10:0);
       ctx.beginPath();
       for(let px=0;px<=gw;px+=3){ const x=px/gw;
-        const loss=(1-lv*0.94)*Math.exp(-x*(1.0+lv*3.4));      // trained runs decay fast to a low floor
+        const loss=floor*Math.exp(-x*steep);
         const y=Math.max(0.02,Math.min(0.98,loss)), cx=pad+px, cy=pad+y*gh; px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
-      ctx.lineWidth=isFront?3.2:2.1; ctx.strokeStyle=LOSS_COLS[k];
-      if(ctx.shadowBlur!==undefined){ ctx.shadowColor=LOSS_COLS[k]; ctx.shadowBlur=isFront?11:5; }
-      ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0; }
+      const col = isShift?'#ffb15c' : LOSS_COLS[k];
+      ctx.lineWidth=isBreak?3.4:2.1;
+      if(ctx.setLineDash) ctx.setLineDash(blocked?[5,5]:[]);
+      ctx.strokeStyle=col; ctx.globalAlpha=blocked?0.4:1;
+      if(ctx.shadowBlur!==undefined){ ctx.shadowColor=col; ctx.shadowBlur=isBreak?14:(isShift?9:5); }
+      ctx.stroke(); ctx.globalAlpha=1; if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0; if(ctx.setLineDash) ctx.setLineDash([]);
+      // breakthrough: a bright pulse travelling along the curve
+      if(isBreak && ctx.arc){ const px=((t*0.45)%1)*gw, x=px/gw, ly=Math.max(0.02,Math.min(0.98,floor*Math.exp(-x*steep)));
+        ctx.beginPath(); ctx.fillStyle='#dfeaff'; if(ctx.shadowBlur!==undefined){ ctx.shadowColor='#bcd6ff'; ctx.shadowBlur=12; }
+        ctx.arc(pad+px, pad+ly*gh, 3.4, 0, 7); ctx.fill(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0; }
+    }
     if(S.heat>=CFG.e4.heatWarn){ ctx.fillStyle='rgba(255,177,92,'+Math.min(0.14,(S.heat-CFG.e4.heatWarn)/280)+')'; ctx.fillRect(0,0,w,h); } // heat haze on the glass
   }
   // ---- ERA 5 (Foundation): recursive self-improvement, emergent capabilities, and the agent that appears ----
@@ -2059,11 +2073,12 @@
         const ln=$('feed-'+k); if(ln && ln.setAttribute){ ln.setAttribute('x2',(hx.x*100).toFixed(1)); ln.setAttribute('y2',(hx.y*100).toFixed(1)); if(ln.style) ln.style.strokeOpacity=(0.1+0.9*share[k]).toFixed(2); }
         setText('pct-'+k, Math.round(share[k]*100)+'%');
         const headwind=e4.driftBase*(0.5+0.5*Math.sin(t*e4.driftFreq+PH[k]));
-        const res=e4.feedstock[k], need=share[k]*computeRate*e4.feedPerShare, blocked=need>0 && S[res] < need*0.6;
+        const res=e4.feedstock[k], need=share[k]*computeRate*e4.feedPerShare, blocked=need>0 && S[res] < need*0.6, thinning=need>0 && !blocked && S[res] < need*3;
         const evBreak=!!(S.event&&S.event.type==='breakthrough'&&S.event.run===k), evShift=!!(S.event&&S.event.type==='shift'&&S.event.run===k);
         const gainRate=e4.capGain*share[k]*computeRate*(1-S[k])*(blocked?0.3:1)*(evBreak?e4.breakthroughMult:1);
-        info[k]={ headwind, blocked, evBreak, evShift, res, net:gainRate-headwind };
+        info[k]={ headwind, blocked, thinning, evBreak, evShift, res, net:gainRate-headwind };
       }
+      const FEEDERA={ data:'Statistical', insight:'Statistical', knowledge:'Origins' };
       // heat = secondary safety gauge + header LED
       const hstate=S.heat>=e4.heatThrottle?'THROTTLING':(S.heat>=e4.heatWarn?'WARM':'STABLE'), hg=$('heatGauge');
       if(hg){ hg.style.width=Math.min(100,S.heat)+'%'; hg.style.background=S.heat>=e4.heatThrottle?'var(--danger)':(S.heat>=e4.heatWarn?'var(--hot)':'rgba(110,168,255,0.55)'); }
@@ -2074,8 +2089,9 @@
       // run status strip — capability / share / wind, with color hierarchy
       const rstat=k=>{ const i=info[k];
         if(i.evBreak) return ['breakthrough — push now','rc-front','BREAKTHROUGH'];
-        if(i.evShift) return ['distribution shift','rc-low','SHIFTED'];
+        if(i.evShift) return ['drift — re-feed it','rc-low','DRIFT'];
         if(i.blocked) return ['blocked · low '+i.res,'rc-low','BLOCKED'];
+        if(i.thinning) return [i.res+' thinning','rc-sat','LOW'];
         if(i.net<0) return ['drifting down · steer here','rc-low',''];
         return ['holding','','']; };
       const rs=$('runStrip'); if(rs){ const h=doms.map(d=>{ const k=d.k, st=rstat(k), i=info[k];
@@ -2091,12 +2107,18 @@
             driftR=doms.filter(d=>info[d.k].net<0 && !info[d.k].blocked && !info[d.k].evBreak).map(d=>dl(d.k));
       const parts=[];
       if(breakR) parts.push('<b class="o-front">'+dl(breakR.k)+'</b> breakthrough — push it now');
-      blockedR.forEach(d=> parts.push('<b class="o-low">'+dl(d.k)+'</b> blocked — reopen '+info[d.k].res));
+      blockedR.forEach(d=> parts.push('<b class="o-low">'+dl(d.k)+'</b> blocked — restore '+info[d.k].res+' from '+FEEDERA[info[d.k].res]));
       if(driftR.length) parts.push(driftR.join(' &amp; ')+(driftR.length>1?' are':' is')+' drifting — steer there');
       if(!parts.length) parts.push('holding course — watch the wind shift');
       const ol=$('orchLine'); const orch=parts.join(' · '); if(ol && ol._html!==orch){ ol.innerHTML=orch; ol._html=orch; }
       setText('deepRate', fmt(computeRate)+' compute/s  ·  '+S.node+' nodes  ·  feeds: V←Data L←Knowledge R←Insight');
-      setText('deepStats', 'The three runs <b>drift apart</b> on their own — steer Compute to counter the wind. Each draws a feedstock; a <b>blocked</b> run can\'t be pushed until you <b>reopen that era</b>. <b>Events</b> (distribution shift / breakthrough) keep reshaping the wind. Capability '+fmt(S.capability)+'.');
+      // Run Status — situational PLAIN text (no markup; setText uses textContent)
+      let ds;
+      if(breakR) ds = dl(breakR.k)+' breakthrough active — route more compute there before the window closes.';
+      else if(blockedR.length) ds = blockedR.map(d=>dl(d.k)+' is blocked: restore '+info[d.k].res+' from '+FEEDERA[info[d.k].res]).join('. ')+'.';
+      else if(driftR.length) ds = driftR.join(' & ')+(driftR.length>1?' are':' is')+' drifting — steer compute there to hold breadth. Heat '+hstate.toLowerCase()+'.';
+      else ds = 'All three runs holding. They drift apart on their own — keep routing compute against the wind. Heat '+hstate.toLowerCase()+'. Capability '+fmt(S.capability)+'.';
+      setText('deepStats', ds);
       for(const key of ['foundry','smelter','scriptorium','dataset','model']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('intk-si', fmt(totalCost(BUYS.node,1))+'/rack');
       setText('intk-da', '−'+fmt(share.vision*computeRate*e4.feedPerShare)+'/s');
@@ -2105,7 +2127,7 @@
       setText('supSi4', 'Silicon '+fmt(S.silicon)+'  ·  Data '+fmt(S.data)+'  ·  Insight '+fmt(S.insight)+'  ·  Knowledge '+fmt(S.knowledge));
       // event banner — telegraph + announce (the wind shifting)
       const eb=$('eventBanner'); if(eb){ let eh='', ec='';
-        if(S.event && S.event.type==='shift'){ ec='ev-shift'; eh='&#9888; DISTRIBUTION SHIFT &middot; <b>'+dl(S.event.run)+'</b> went stale and dropped — re-feed it to recover'; }
+        if(S.event && S.event.type==='shift'){ ec='ev-shift'; eh='&#9888; DRIFT &middot; <b>'+dl(S.event.run)+'</b> is going stale — route compute there to recover'; }
         else if(S.event && S.event.type==='breakthrough'){ ec='ev-break'; eh='&#10022; BREAKTHROUGH &middot; <b>'+dl(S.event.run)+'</b> has clean gradient — push it now ('+Math.ceil(S.eventT)+'s)'; }
         else if(S.eventT < 5){ ec='ev-warn'; eh='anomalous signal building…'; }
         const cls='event-banner'+(ec?' '+ec+' show':''); if(eb.className!==cls) eb.className=cls; if(eb._html!==eh){ eb.innerHTML=eh; eb._html=eh; } }
