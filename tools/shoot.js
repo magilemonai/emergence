@@ -37,9 +37,21 @@ const SETUP = {
     const tip=document.getElementById('tip'); const r=el.getBoundingClientRect();
     tip.innerHTML=el.getAttribute('data-tip'); tip.classList.add('show');
     tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
-    tip.style.left=(r.right+14+window.scrollX)+'px'; tip.style.top=(r.top+window.scrollY)+'px';`,
-  symbolic: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.marks=999;S.flags.origindone=true; E.checkMiles();
-    S.rules=20000;S.ruleset=22;S.daemon=8; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+    tip.style.left=(r.right+14+window.scrollX)+'px'; tip.style.top=(r.top+window.scrollY)+'px';
+    return JSON.stringify([Math.round(r.right), Math.round(r.top+window.scrollY)]);`,
+  symbolic: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.knowledge=900;S.flags.origindone=true; E.checkMiles();
+    S.rules=9000;S.runRules=14000;S.ruleset=18;S.daemon=6;S.axioms=8;S.totalAxioms=8;
+    S.tech={formalLogic:true,fwdChain:true,inference:true,knowledge:true,bwdChain:true};
+    S.optLevel=3;S.infCapLevel=2;S.flags.tree=true;S.flags.compile=true;
+    E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+  symbolictip: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.knowledge=900;S.flags.origindone=true; E.checkMiles();
+    S.rules=9000;S.runRules=14000;S.ruleset=18;S.daemon=6;S.flags.tree=true;S.flags.compile=true;
+    S.tech={formalLogic:true,fwdChain:true,inference:true};
+    E.checkMiles(); for(let i=0;i<5;i++) E.tick();
+    const els=document.querySelectorAll('.era-e2 [data-tip]'); const el=els[0]||document.querySelector('[data-tip]');
+    const tip=document.getElementById('tip'); tip.innerHTML=el.getAttribute('data-tip');
+    tip.classList.add('show'); tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
+    tip.style.left='150px'; tip.style.top='430px';`,
   statistical: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
     S.silicon=5000;S.data=8000;S.insight=2000;S.dataset=18;S.model=12;S.foundry=14;S.accuracy=0.74;S.gap=0.12;
     S.methods={regression:true,features:true,regularization:true}; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
