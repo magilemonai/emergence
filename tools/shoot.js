@@ -43,7 +43,9 @@ const SETUP = {
     S.rules=9000;S.runRules=14000;S.ruleset=18;S.daemon=6;S.axioms=8;S.totalAxioms=8;
     S.tech={formalLogic:true,fwdChain:true,inference:true,knowledge:true,bwdChain:true};
     S.optLevel=3;S.infCapLevel=2;S.flags.tree=true;S.flags.compile=true;
-    E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+    E.checkMiles();
+    E.writeRule(); E.writeRule(); E.selectProof('rete'); E.writeRule();
+    for(let i=0;i<5;i++) E.tick();`,
   symbolictip: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.knowledge=900;S.flags.origindone=true; E.checkMiles();
     S.rules=9000;S.runRules=14000;S.ruleset=18;S.daemon=6;S.flags.tree=true;S.flags.compile=true;
     S.tech={formalLogic:true,fwdChain:true,inference:true};

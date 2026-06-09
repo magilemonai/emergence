@@ -33,11 +33,11 @@
   }
   /* ERA 2 — Symbolic: cold, digital, terminal. Monospace. */
   .theme-2, .era-e2 {
-    --bg: #050a06; --panel: #081109; --panel-2: #0a160c; --line: #1d3a25;
-    --text: #9be6a8; --dim: #5f9e6d; --dimmer: #467a52; --accent: #ffcd6b; --good: #7dffb0;
+    --bg: #020c09; --panel: #061009; --panel-2: #08160d; --line: #1c3a26;
+    --text: #86d69b; --dim: #4fa97b; --dimmer: #357a58; --accent: #ffcd6b; --good: #b8ffd1; --bright: #e0ffe9;
     --era-font: "IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;
     --era-display: "VT323","IBM Plex Mono",Menlo,monospace;
-    --phosphor: rgba(125,255,160,0.38); /* the glow color reused across text + borders */
+    --phosphor: rgba(141,255,183,0.32); /* the glow color reused across text + borders */
   }
   /* ERA 3 — Statistical: cool teal, scientific / data-viz. Clean sans. */
   .theme-3, .era-e3 {
@@ -271,44 +271,47 @@
   .era-toggle { margin-left: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--ec); color: var(--ec);
     font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 7px 14px; border-radius: 9px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .era-toggle:hover { background: var(--ec); color: #0a0d14; }
-  /* Era 2 — Symbolic: amber schematic environment, distinct from Origins' warm stone */
-  /* ===== ERA 2 — Symbolic: a glowing CRT terminal. Phosphor on glass, scanlines, flicker. ===== */
-  .era-e2 { position: relative; background:
-      radial-gradient(150% 120% at 50% 0%, rgba(60,150,90,0.06), transparent 60%),
-      linear-gradient(rgba(5,12,7,0.93), rgba(4,9,5,0.96)),
+  /* ===== ERA 2 — Symbolic: you are looking INTO a cathode-ray logic machine ===== */
+  /* the whole era lives inside one CRT monitor: bezel housing, glass, raster, vignette */
+  .era-e2 { position: relative;
+    background:
+      radial-gradient(150% 120% at 50% 0%, rgba(40,150,90,0.05), transparent 60%),
+      linear-gradient(rgba(2,12,7,0.95), rgba(1,8,5,0.97)),
       url(assets/schematic.png), var(--panel);
     background-size: auto, auto, 440px 440px, auto;
-    background-repeat: no-repeat, no-repeat, repeat, no-repeat; overflow: hidden; }
-  /* the Inference Engine is THE screen: framed in a physical CRT bezel, glass over the glow */
-  .era-e2 .sym-hero { position: relative; border: 20px solid transparent;
-    border-image: url(assets/crt-bezel.png) 150 / 20px / 0 stretch; border-radius: 0;
-    box-shadow: 0 18px 44px rgba(0,0,0,0.55); }
-  .era-e2 .sym-hero::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-    background: url(assets/crt-glass.png) center / 100% 100% no-repeat; mix-blend-mode: screen; opacity: 0.45; }
-  /* scanlines + curved-glass vignette painted over everything (the CRT surface) */
+    background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+    border: 26px solid transparent; border-image: url(assets/crt-bezel.png) 150 / 26px / 0 stretch; border-radius: 0;
+    overflow: hidden; box-shadow: inset 0 0 100px rgba(0,0,0,0.7); }
+  /* raster scanlines (white, screen-blended, ~0.06 over 2px) */
   .era-e2::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none;
-    background:
-      repeating-linear-gradient(rgba(0,0,0,0.16) 0 1px, transparent 1px 3px),
-      radial-gradient(125% 130% at 50% 50%, transparent 60%, rgba(0,0,0,0.5) 100%); }
-  /* gentle phosphor flicker + top bloom */
+    background: linear-gradient(rgba(255,255,255,0.06) 0 1px, transparent 1px 2px); background-size: 100% 2px;
+    mix-blend-mode: screen; }
+  /* glass reflection (top-left) + curved vignette + extremely low-amplitude flicker */
   .era-e2::after { content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
-    background: linear-gradient(rgba(125,255,160,0.035), transparent 38%); animation: crtFlicker 6s ease-in-out infinite; }
-  @keyframes crtFlicker { 0%,100%{opacity:0.9} 48%{opacity:1} 50%{opacity:0.78} 52%{opacity:1} 70%{opacity:0.86} }
-  .era-e2 .panel { background: linear-gradient(180deg, rgba(10,26,14,0.55), rgba(6,15,8,0.78));
-    border: 1px solid rgba(125,255,160,0.22); border-radius: 2px;
-    box-shadow: inset 0 0 28px rgba(40,120,60,0.06), 0 0 0 1px rgba(0,0,0,0.4), 0 8px 22px rgba(0,0,0,0.45); }
-  .era-e2 .panel-label { color: var(--good); letter-spacing: 0.08em; border-bottom: 1px solid rgba(125,255,160,0.16);
-    padding-bottom: 8px; text-shadow: 0 0 7px var(--phosphor); }
-  .era-e2 .era-name { color: var(--good); text-shadow: 0 0 8px var(--phosphor); letter-spacing: 0.02em; }
+    background:
+      radial-gradient(circle at 15% 7%, rgba(205,255,225,0.08), transparent 27%),
+      radial-gradient(130% 132% at 50% 50%, transparent 56%, rgba(0,0,0,0.17) 100%);
+    animation: crtFlicker 5s ease-in-out infinite; }
+  @keyframes crtFlicker { 0%,100%{opacity:0.99} 47%{opacity:1} 49%{opacity:0.985} 51%{opacity:1} 72%{opacity:0.99} }
+  /* subordinate panels = dim system panes (square, low glow) */
+  .era-e2 .panel { background: linear-gradient(180deg, rgba(6,18,10,0.5), rgba(3,11,6,0.72));
+    border: 1px solid rgba(79,169,123,0.26); border-radius: 0;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.015), inset 0 0 24px rgba(20,90,45,0.05); }
+  /* the Inference Engine console = the one bright, dominant screen */
+  .era-e2 .sym-hero { background: linear-gradient(180deg, rgba(10,30,16,0.7), rgba(4,14,8,0.85));
+    border-color: rgba(141,255,183,0.4); box-shadow: inset 0 0 40px rgba(40,150,80,0.1), 0 0 26px rgba(125,255,160,0.06); }
+  .era-e2 .panel-label { font-family: var(--era-font); color: var(--dim); letter-spacing: 0.12em; font-size: 11px;
+    border-bottom: 1px solid rgba(79,169,123,0.18); padding-bottom: 8px; text-shadow: none; }
+  .era-e2 .era-name { color: var(--good); text-shadow: 0 0 9px var(--phosphor); letter-spacing: 0.02em; }
   .era-e2 .era-tag { color: var(--accent); border-color: var(--accent); text-shadow: 0 0 6px rgba(255,205,107,0.4); }
-  .era-e2 .up-name, .era-e2 .pf-name, .era-e2 .tile-name { color: var(--text); text-shadow: 0 0 6px var(--phosphor); }
+  .era-e2 .up-name, .era-e2 .pf-name, .era-e2 .tile-name { font-family: var(--era-font); color: var(--text); text-shadow: none; }
   .era-e2 .rate-amt { color: var(--text); }
-  /* primary actions = glowing terminal keys */
-  .era-e2 .act-btn { background: linear-gradient(180deg, rgba(12,30,16,0.85), rgba(7,18,10,0.9));
-    border: 1px solid rgba(125,255,160,0.45); border-radius: 2px; color: var(--good); letter-spacing: 0.05em;
+  /* actions = command rows, not buttons */
+  .era-e2 .act-btn { background: linear-gradient(180deg, rgba(10,28,15,0.8), rgba(5,15,8,0.88));
+    border: 1px solid rgba(141,255,183,0.4); border-radius: 0; color: var(--good); letter-spacing: 0.04em;
     text-shadow: 0 0 7px var(--phosphor); box-shadow: inset 0 0 14px rgba(40,140,70,0.1); }
-  .era-e2 .act-btn:hover:not(:disabled) { box-shadow: inset 0 0 16px rgba(40,140,70,0.16), 0 0 16px rgba(125,255,160,0.22); border-color: var(--good); }
-  .era-e2 .up-buy { background: rgba(8,20,11,0.8); border: 1px solid rgba(125,255,160,0.28); border-radius: 2px; color: var(--text); }
+  .era-e2 .act-btn:hover:not(:disabled) { box-shadow: inset 0 0 16px rgba(40,140,70,0.16), 0 0 16px rgba(125,255,160,0.22); border-color: var(--bright); }
+  .era-e2 .up-buy { background: rgba(6,16,9,0.85); border: 1px solid rgba(79,169,123,0.3); border-radius: 0; color: var(--text); }
   .era-e2 .up-buy:hover:not(:disabled) { border-color: var(--good); box-shadow: 0 0 12px rgba(125,255,160,0.18); }
   .era-e2 .up-buy .c { color: var(--accent); }
   /* the Inference Engine as a terminal console */
@@ -325,6 +328,35 @@
   .era-e2 .caret { display: inline-block; width: 9px; height: 1.05em; margin-left: 7px; vertical-align: -2px;
     background: var(--good); box-shadow: 0 0 8px var(--phosphor); animation: termBlink 1.1s steps(1) infinite; }
   @keyframes termBlink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+  /* the output log: the machine talking back */
+  .era-e2 .term-log { font-family: var(--era-font); font-size: 12.5px; line-height: 1.7; margin: 9px 0 11px; min-height: 54px;
+    border-top: 1px dashed rgba(79,169,123,0.22); padding-top: 8px; }
+  .era-e2 .log-line { color: var(--dimmer); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .era-e2 .log-line::before { content: '· '; color: var(--dim); }
+  .era-e2 .log-line.log-now { color: var(--good); text-shadow: 0 0 6px var(--phosphor); }
+  .era-e2 .log-line b { color: var(--accent); font-weight: 400; }
+  .era-e2 .proof-rate { color: var(--text); }
+  .era-e2 .proof-active { color: var(--dim); }
+  /* THEOREMS as a directory, not cards: rows with a target cursor */
+  .era-e2 .proof-list { display: flex; flex-direction: column; gap: 0; border: 1px solid rgba(79,169,123,0.22); }
+  .era-e2 .proof-item { flex-direction: row; align-items: center; gap: 12px; text-align: left; border: none;
+    border-bottom: 1px solid rgba(79,169,123,0.1); border-radius: 0; background: transparent; padding: 9px 12px; box-shadow: none; }
+  .era-e2 .proof-item:last-child { border-bottom: none; }
+  .era-e2 .proof-item:hover { background: rgba(79,169,123,0.07); }
+  .era-e2 .proof-item::before { content: '·'; color: var(--dim); font-family: var(--era-font); width: 12px; flex: none; }
+  .era-e2 .proof-item.active { background: rgba(255,205,107,0.06); box-shadow: inset 2px 0 0 var(--accent); }
+  .era-e2 .proof-item.active::before { content: '▸'; color: var(--accent); text-shadow: 0 0 6px rgba(255,205,107,0.5); }
+  .era-e2 .pf-ic { width: 30px; height: 30px; flex: none; }
+  .era-e2 .pf-name { text-align: left; font-size: 14px; }
+  .era-e2 .pf-desc { text-align: left; margin-top: 1px; }
+  .era-e2 .pf-main { flex: 1; display: flex; flex-direction: column; }
+  .era-e2 .pf-btn { width: auto; align-self: flex-start; margin-top: 6px; }
+  /* COMPILE as a system-operation strip, not a button box */
+  .era-e2 .compile-wrap { border: 1px solid rgba(255,205,107,0.3); background: linear-gradient(90deg, rgba(40,28,8,0.4), transparent); padding: 12px 14px; }
+  .era-e2 .compile-act .act-btn { border-color: var(--accent); color: var(--accent); text-shadow: 0 0 7px rgba(255,205,107,0.4); }
+  /* AUTOMATION as a process table */
+  .era-e2 .auto-grid { border: 1px solid rgba(79,169,123,0.18); gap: 0; grid-template-columns: 1fr 1fr; }
+  .era-e2 .auto-grid .up { padding: 12px 14px; border-bottom: 1px solid rgba(79,169,123,0.1); border-right: 1px solid rgba(79,169,123,0.1); }
   .era-sigil { width: 56px; height: 56px; object-fit: contain; opacity: 0.95; flex: none; filter: drop-shadow(0 0 8px rgba(201,162,107,0.3)); }
   .era-tag { font-size: 10px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 18px; color: var(--text); }
@@ -790,6 +822,13 @@
   function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
   const cost=(base,growth,count)=> Math.floor(base*Math.pow(growth,count));
   let MUTE=false;
+  // ERA 2 terminal output log (ephemeral; the machine talks back). `key` collapses repeats (rapid rule-writes = one line).
+  let symLog = [], symLogKey = null;
+  function logSym(msg, key){ if(MUTE) return;
+    if(key && key===symLogKey && symLog.length){ symLog[symLog.length-1]=msg; }
+    else { symLog.push(msg); if(symLog.length>6) symLog.shift(); symLogKey = key||null; }
+    const el=$('termLog'); if(el) el.innerHTML = symLog.map((m,i)=>'<div class="log-line'+(i===symLog.length-1?' log-now':'')+'">'+m+'</div>').join(''); }
+  function symName(id){ if(id==='optimization') return 'Optimization'; if(id==='capacity') return 'Inference Capacity'; return (typeof TREEMAP!=='undefined' && TREEMAP[id] && TREEMAP[id].name) || id; }
   function toast(head, body){
     if(MUTE) return;
     const el=document.createElement('div'); el.className='toast';
@@ -871,12 +910,12 @@
   function selectProof(id){
     if(!canProve(id) || S.activeProof===id) return;
     S.activeProof=id; S.proofAcc[id]=(S.proofAcc[id]||0)+S.inference; S.inference=0; // banked Inference jumps in
-    playSound('buy'); render();
+    logSym('proof target acquired › <b>'+symName(id)+'</b>'); playSound('buy'); render();
   }
   function completeProof(id){
-    if(id==='optimization'){ S.optLevel++; }
-    else if(id==='capacity'){ S.infCapLevel++; }
-    else { S.tech[id]=true; if(id==='expert') S.flags.symbolicDone=true; }
+    if(id==='optimization'){ S.optLevel++; logSym('Q.E.D. › Optimization Lv '+S.optLevel); }
+    else if(id==='capacity'){ S.infCapLevel++; logSym('Q.E.D. › Inference Capacity Lv '+S.infCapLevel); }
+    else { S.tech[id]=true; if(id==='expert') S.flags.symbolicDone=true; logSym('Q.E.D. › <b>'+symName(id)+'</b> proven'); }
     S.proofAcc[id]=0; S.activeProof=null; recEvent('proof:'+id); playSound('milestone'); render();
   }
   // --- Era 1 (Origins): derived rates from owned discoveries, manual verbs, discoveries, fabrication ---
@@ -925,6 +964,7 @@
     S.clicks++;
     const gain = stats().click;
     S.rules += gain; S.runRules += gain; S.started=true;
+    if(S.flags.firstAuto) logSym('rule authored · +'+fmt(gain)+' rules', 'write');
     playSound('click');
     if(ev && ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(gain),'var(--e1)', r.left+r.width/2, r.top-6); }
     if(S.clicks===1 && $('coHint')) $('coHint').textContent='Keep going. Build enough, and you can make something that writes rules for you.';
@@ -939,7 +979,7 @@
   }
   function buyTech(id){
     const n=TREEMAP[id]; if(!canBuyTech(id)) return;
-    S.rules-=n.cost; S.tech[id]=true; playSound('buy');
+    S.rules-=n.cost; S.tech[id]=true; logSym('theorem proven › <b>'+symName(id)+'</b>'); playSound('buy');
     if(id==='expert') S.flags.symbolicDone=true;
     render();
   }
@@ -949,7 +989,7 @@
     const g=axiomGain(); if(g<1) return;
     S.axioms+=g; S.totalAxioms+=g; S.compiles++;
     S.rules=0; S.runRules=0; S.ruleset=0; S.daemon=0;
-    playSound('milestone'); render();
+    logSym('compile complete › +'+g+' axioms · run reset'); playSound('milestone'); render();
   }
   // ---- Era 3 (Statistical): experiments push Accuracy up a curve; Methods are discovered by chance ----
   const METHODS = [
@@ -1221,8 +1261,9 @@
       '<div class="term-head"><img class="boot-glyph" src="assets/boot-glyph.png" alt="">'+
         '<span class="term-title">INFERENCE&nbsp;ENGINE</span><span class="term-path">~/prove a theorem</span><span class="term-dot"></span></div>'+
       '<div class="proof-rate term-out" id="infRate"></div><div class="proof-active" id="proofActive"></div>'+
+      '<div class="term-log" id="termLog"></div>'+
       '<button class="act-btn term-cmd" id="ruleBtn2"><span class="term-prompt">&gt;</span>write rule<span class="caret"></span></button>'+
-      '<div class="act-sub" id="manualSub" style="text-align:center"></div></div>';
+      '<div class="act-sub" id="manualSub" style="text-align:left"></div></div>';
     // Automation: full width, rulesets + daemons side by side
     body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Automation</div><div class="auto-grid">'+(S.flags.canRuleset?prod:'<div class="up-desc">Keep writing rules to unlock automation…</div>')+'</div></div>';
     // The theorems to choose from
