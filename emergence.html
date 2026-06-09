@@ -927,6 +927,7 @@
 (() => {
   const CFG = {
     tickMs: 100,
+    musFade: 2500, // ms — symmetric crossfade between era music beds (and Graviton→Unmoored at emergence)
     e1: { // ERA 1 — Origins (inscription + materials, converging on silicon)
       inscribeBase: 1, quarryBase: 1,
       scribeCost: 12, scribeGrowth: 1.16, scribeYield: 0.9,        // marks/sec
@@ -1240,8 +1241,8 @@
       if(k>=1){ clearInterval(MUSIC.fades[elId]); MUSIC.fades[elId]=null; if(to===0){ try{ el.pause(); }catch(_){} } } }, 60);
   }
   function musicTo(track){ if(!track || MUSIC.cur===track) return; const old=MUSIC.cur; MUSIC.cur=track;
-    if(old) fadeAudio(old, 0, 2200);
-    if(MUSIC.on && MUSIC.started) fadeAudio(track, MUSIC.vol, 2600);
+    if(old) fadeAudio(old, 0, CFG.musFade);                          // leaving an era always fades the old bed out…
+    if(MUSIC.on && MUSIC.started) fadeAudio(track, MUSIC.vol, CFG.musFade); // …while the new era's bed fades in (a true crossfade)
   }
   function startMusic(){ if(MUSIC.started || !MUSIC.on) return; // first call follows a user gesture (autoplay policy)
     const track = musicForEra(viewEra); const el=musicEl(track); if(!el) return;
@@ -1453,7 +1454,7 @@
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; viewEra=n;
     for(let k=1;k<n;k++) S.collapsed[k]=true;  // fold completed eras away so the new one takes the stage
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
-    setTheme(n); render(); }
+    setTheme(n); render(); syncMusic(); } // openEra moves viewEra itself, so the observer's change-guard won't fire — sync the bed here
   function produce(dt){
     // ERA 1 — Origins: sources feed stocks; converters draw from upstream and starve if it's empty.
     const os=oStats();
@@ -2663,6 +2664,7 @@
       METHODS, e3Stats, effAccuracy, runExperiment,
       deepBreadth, setAllocFromXY, mixerHandleXY, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
       agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding,
+      MUSIC, musicForEra, startMusic, syncMusic, openEra, setViewEra:(n)=>{ viewEra=n; },
       save, load, offlineCatchup, revealGame };
   }
 })();

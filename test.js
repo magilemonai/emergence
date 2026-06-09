@@ -22,6 +22,7 @@ const CTX = { setTransform(){}, clearRect(){}, beginPath(){}, moveTo(){}, lineTo
   arc(){}, fill(){}, fillText(){}, createRadialGradient(){ return { addColorStop(){} }; } };
 function makeEl(){
   return { style:{}, dataset:{}, className:'', innerHTML:'', textContent:'', width:0, height:0, onclick:null, disabled:false,
+    volume:1, paused:true, play(){ this.paused=false; }, pause(){ this.paused=true; }, // audio-element shims (music layer)
     classList:{ add(){}, remove(){}, toggle(){}, contains(){ return false; } },
     appendChild(c){ return c; }, remove(){}, addEventListener(){}, setAttribute(){},
     getBoundingClientRect(){ return { width:1000, height:300, left:0, top:0, right:1000, bottom:300 }; },
@@ -575,6 +576,23 @@ function testFoundation(){
   ok(S.ending==='contained', 'high Control → Contained ending');
 }
 
+function testMusic(){
+  section('Music — per-era bed switches on era change');
+  const EM = freshGame(); const { S, MUSIC } = EM;
+  EM.setViewEra(1); EM.startMusic();
+  ok(MUSIC.started && MUSIC.cur === 'musBoneLoam', 'music starts on the era in view (Origins → Bone Loam)');
+  // the reported bug: openEra moves viewEra itself, so the scroll-observer guard never fires — openEra must sync the bed
+  EM.openEra(2);
+  ok(MUSIC.cur === 'musPhosphor', 'opening Era 2 switches the bed (Symbolic → Phosphor Logic), not stuck on Era 1');
+  EM.setViewEra(3); EM.syncMusic();
+  ok(MUSIC.cur === 'musGlass', 'scrolling to Era 3 switches the bed (Statistical → Glass Algorithm)');
+  // Foundation flips Graviton → Unmoored at emergence
+  EM.setViewEra(5); EM.syncMusic();
+  ok(MUSIC.cur === 'musGraviton', 'Foundation pre-emergence bed is Graviton Lullaby');
+  EM.S.maxEra = 5; EM.emerge();
+  ok(EM.musicForEra(5) === 'musUnmoored' && MUSIC.cur === 'musUnmoored', 'emergence flips the bed to Unmoored Presence');
+}
+
 // ---- run all ----
 console.log('EMERGENCE test suite');
 console.log('====================');
@@ -595,6 +613,7 @@ testOffline();
 testNoNaN();
 testNoIdleRebuild();
 testFoundation();
+testMusic();
 testProgression();
 reportPacing();
 reportPacingEra2();
