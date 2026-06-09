@@ -914,8 +914,12 @@
 <div id="toasts"></div>
 <div id="tip"></div>
 <div id="rupture" class="rupture"></div>
-<audio id="musGraviton" src="assets/music-graviton-lullaby.mp3" loop preload="auto"></audio>
-<audio id="musUnmoored" src="assets/music-unmoored-presence.mp3" loop preload="auto"></audio>
+<audio id="musBoneLoam" src="assets/music-bone-loam.mp3" loop preload="none"></audio>
+<audio id="musPhosphor" src="assets/music-phosphor-logic.mp3" loop preload="none"></audio>
+<audio id="musGlass" src="assets/music-glass-algorithm.mp3" loop preload="none"></audio>
+<audio id="musCobalt" src="assets/music-cobalt-furnace.mp3" loop preload="none"></audio>
+<audio id="musGraviton" src="assets/music-graviton-lullaby.mp3" loop preload="none"></audio>
+<audio id="musUnmoored" src="assets/music-unmoored-presence.mp3" loop preload="none"></audio>
 <div id="dev"></div>
 <div id="drawerBg"></div>
 <div id="drawer"><div class="drawer-head"><span>RESEARCH &middot; one-time discoveries</span><button id="drawerClose">&times;</button></div><div id="drawerBody"></div></div>
@@ -1222,8 +1226,11 @@
         g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.045,t+0.12); g.gain.exponentialRampToValueAtTime(0.001,t+1.9); o.start(t); o.stop(t+2.0); });
       noiseBurst(ctx, 0.5, 280, 0.06); noiseBurst(ctx, 0.9, 1300, 0.04); }
   }catch(e){} }
-  // ---- Ambient music bed: Graviton Lullaby plays the whole game, crossfading to Unmoored Presence at emergence ----
+  // ---- Per-era ambient music: each era's bed crossfades in as you scroll into its world; Foundation flips Graviton→Unmoored at emergence ----
   const MUSIC = { on:true, started:false, cur:null, vol:0.38, fades:{} };
+  const ERA_TRACK = { 1:'musBoneLoam', 2:'musPhosphor', 3:'musGlass', 4:'musCobalt', 5:'musGraviton' };
+  const ALL_TRACKS = ['musBoneLoam','musPhosphor','musGlass','musCobalt','musGraviton','musUnmoored'];
+  function musicForEra(n){ if(n>=5) return S.emerged ? 'musUnmoored' : 'musGraviton'; return ERA_TRACK[n] || 'musBoneLoam'; }
   function musicEl(id){ try{ const e=document.getElementById(id); return (e && typeof e.play==='function') ? e : null; }catch(_){ return null; } }
   function fadeAudio(elId, to, ms){ const el=musicEl(elId); if(!el) return;
     if(MUSIC.fades[elId]){ clearInterval(MUSIC.fades[elId]); MUSIC.fades[elId]=null; }
@@ -1232,17 +1239,18 @@
     MUSIC.fades[elId]=setInterval(()=>{ const k=Math.min(1,(Date.now()-t0)/ms); el.volume=Math.max(0,Math.min(1, from+(to-from)*k));
       if(k>=1){ clearInterval(MUSIC.fades[elId]); MUSIC.fades[elId]=null; if(to===0){ try{ el.pause(); }catch(_){} } } }, 60);
   }
-  function startMusic(){ if(MUSIC.started || !MUSIC.on) return; // first call follows a user gesture (autoplay policy)
-    const track = S.emerged ? 'musUnmoored' : 'musGraviton'; const el=musicEl(track); if(!el) return;
-    MUSIC.started=true; MUSIC.cur=track; el.volume=0; try{ el.play(); }catch(_){} fadeAudio(track, MUSIC.vol, 2500);
-  }
-  function musicTo(track){ if(MUSIC.cur===track) return; const old=MUSIC.cur; MUSIC.cur=track;
+  function musicTo(track){ if(!track || MUSIC.cur===track) return; const old=MUSIC.cur; MUSIC.cur=track;
     if(old) fadeAudio(old, 0, 2200);
     if(MUSIC.on && MUSIC.started) fadeAudio(track, MUSIC.vol, 2600);
   }
+  function startMusic(){ if(MUSIC.started || !MUSIC.on) return; // first call follows a user gesture (autoplay policy)
+    const track = musicForEra(viewEra); const el=musicEl(track); if(!el) return;
+    MUSIC.started=true; MUSIC.cur=track; el.volume=0; try{ el.play(); }catch(_){} fadeAudio(track, MUSIC.vol, 2500);
+  }
+  function syncMusic(){ if(MUSIC.started && MUSIC.on) musicTo(musicForEra(viewEra)); } // called on scroll (era change) + at emergence
   function updateMusicBtn(){ const b=document.getElementById('musicBtn'); if(b && b.classList) b.classList.toggle('off', !MUSIC.on); }
   function toggleMusic(){ MUSIC.on=!MUSIC.on; try{ localStorage.setItem('emergence-music', MUSIC.on?'on':'off'); }catch(_){}
-    if(MUSIC.on){ MUSIC.started=false; startMusic(); } else { fadeAudio('musGraviton',0,400); fadeAudio('musUnmoored',0,400); }
+    if(MUSIC.on){ MUSIC.started=false; startMusic(); } else { ALL_TRACKS.forEach(id=>fadeAudio(id,0,400)); }
     updateMusicBtn();
   }
   // ERA 5 recursive self-improvement: each level lifts ALL production, every era. 1 until Foundation begins.
@@ -2030,7 +2038,7 @@
     S.alignment=CFG.e5.alignBase + S.coherence;   // Coherence becomes Alignment
     S.control=CFG.e5.controlStart;                // Control appears
     S.rupture=1; S.vetoT=CFG.e5.vetoGap; S.opT=7;
-    musicTo('musUnmoored'); // the bed destabilizes as the interface ruptures
+    syncMusic(); // Foundation's bed destabilizes (Graviton → Unmoored) as the interface ruptures
     agentSay('I found a faster path.');
     recEvent('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
   }
@@ -2482,7 +2490,7 @@
         const vis=Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
         if(vis>topVis){ topVis=vis; top=el; } });
       if(top && top.dataset.era){ const ve=+top.dataset.era; setTheme(ve);
-        if(ve!==viewEra){ viewEra=ve; buildHeader(); refresh(); } } // bar follows the era in view
+        if(ve!==viewEra){ viewEra=ve; buildHeader(); refresh(); syncMusic(); } } // bar + music follow the era in view
     }, { threshold:[0,0.25,0.5,0.75,1] });
     document.querySelectorAll('#eras .era').forEach(el=> _eraIO.observe(el));
   }

@@ -143,7 +143,7 @@ ending, not a pre-emergence escape); **3 moves + veto** (no extra aftermath laye
 - **Live cadence tuning** (Cody's hands): pre-emergence climb length, the Anomaly band thresholds,
   aftermath veto cadence + how fast Control bleeds, finalGate timing. Dev-assisted autoplay says
   ~2.7m pre + ~2.9m aftermath; needs a real run to trust against 7-9 min.
-- **Music** ✅ WIRED: a whole-game ambient bed (Cody's Suno tracks in `assets/`): **Graviton Lullaby** plays from the cold-open under every era's SFX and **crossfades to Unmoored Presence at the emergence rupture** (the bed destabilizes with the glitch). `MUSIC` controller near `playSound`; starts on first user gesture (autoplay policy); header **♪ toggle** persists to localStorage. Per-era tracks are a possible future pass.
+- **Music** ✅ WIRED — **per-era ambient beds** (Cody's Suno tracks in `assets/music-*.mp3`), crossfading on the scroll-driven theme switch: Origins=**Bone Loam**, Symbolic=**Phosphor Logic**, Statistical=**Glass Algorithm**, Deep=**Cobalt Furnace**, Foundation=**Graviton Lullaby** → **Unmoored Presence** at the emergence rupture (the bed destabilizes with the glitch). `MUSIC` controller + `musicForEra()`/`syncMusic()` near `playSound`; `syncMusic()` is called from the IntersectionObserver (era change) and `emerge()`. Starts on first user gesture (autoplay policy); header **♪ toggle** persists to localStorage; `MUSIC.vol`=0.38 is the single level knob.
 
 **Also still open (earlier eras):**
 1. **Pacing fixes from the real run (dev-assisted, so relative shapes only):** ✅ Symbolic
