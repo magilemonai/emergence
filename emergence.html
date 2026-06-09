@@ -957,10 +957,10 @@
       modelCost: 90, modelGrowth: 1.2, expPerModel: 0.3,         // experiments/sec per Model (bought with Data)
       modelSilicon: 0.05,    // light upkeep: Silicon/sec drawn per Model (keeps Origins' Foundry relevant)
       expDataCost: 4,        // Data spent per experiment
-      accGain: 0.004,        // accuracy gained per experiment × (1 - accuracy)  [slow diminishing climb, ~7-9 min]
+      accGain: 0.0026,       // accuracy gained per experiment × (1 - accuracy) — slowed so reaching the 0.88 gate is a managed climb (gap math scaled to match; throughput/Insight unchanged)
       insightPerExp: 2,      // Insight per experiment × effective accuracy
-      gapGrow: 0.0035,       // overfit gap growth per experiment (Fit) — below Fit's accuracy gain, so Fit still nets forward
-      gapReduce: 0.007,      // gap reduction per experiment (Generalize); ×2 with Regularization — so Regularization really matters
+      gapGrow: 0.0023,       // overfit gap growth per experiment (Fit) — kept below Fit's accuracy gain so Fit still nets forward (scaled with accGain)
+      gapReduce: 0.0046,     // gap reduction per experiment (Generalize); ×2 with Regularization — so Regularization really matters
       gapMax: 0.6,
       discoverBase: 0.012, dataDiscover: 0.00002, // method-discovery odds per experiment (rise with Data; Explore focus)
       genThreshold: 0.88,    // effective accuracy that generalizes → Era 4 (high enough that you need the Methods)

@@ -387,10 +387,11 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
   if(S.maxEra < 4) return;
   // Reach-back: each run draws a specific feedstock — Vision←Data, Reasoning←Insight, Language←Knowledge.
   // Keep the whole stack producing them, scaling whichever is running low (the 'go back to unblock' loop).
-  if(S.scriptorium < 70 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium'); // → Knowledge (Language)
+  // Knowledge feeds BOTH the Language run AND Silicon production (Foundries/Smelters burn it), so keep its supply well ahead
+  if(S.scriptorium < 140 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium'); // → Knowledge (Language)
   if(S.smelter < 50 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
   if(S.foundry < 70 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
-  if(S.scribe < 50 && S.marks >= EM.totalCost(BUYS.scribe,1)) EM.buy('scribe');
+  if(S.scribe < 120 && S.marks >= EM.totalCost(BUYS.scribe,1)) EM.buy('scribe');
   if(S.miner < 50 && S.ore >= EM.totalCost(BUYS.miner,1)) EM.buy('miner');
   if(S.dataset < 60 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset'); // → Data (Vision)
   if(S.model < 40 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');             // → Insight (Reasoning)
@@ -433,7 +434,7 @@ function testProgression(){
   if(statAt !== undefined) console.log('  Era 3 (Statistical) generalized → Deep at ' + mm(statAt));
   else console.log('  Era 3 STALLED: acc='+(S.accuracy*100).toFixed(0)+'% gap='+(S.gap*100).toFixed(0)+'% eff='+(EM.effAccuracy()*100).toFixed(0)+'% data='+Math.round(S.data)+' dataset='+S.dataset+' model='+S.model);
   if(deepAt !== undefined) console.log('  Era 4 (Deep) reached breadth → Foundation at ' + mm(deepAt) + (statAt?('  (Deep took '+((deepAt-statAt)/60).toFixed(1)+'m)'):''));
-  else console.log('  Era 4 STALLED: breadth='+(EM.deepBreadth()*100).toFixed(0)+'% V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+'% node='+S.node+' silicon='+Math.round(S.silicon)+' data='+Math.round(S.data)+' insight='+Math.round(S.insight));
+  else console.log('  Era 4 STALLED: breadth='+(EM.deepBreadth()*100).toFixed(0)+'% V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+'% node='+S.node+' silicon='+Math.round(S.silicon)+' knowledge='+Math.round(S.knowledge)+' scriptorium='+S.scriptorium+' data='+Math.round(S.data)+' insight='+Math.round(S.insight));
   if(emergeAt !== undefined) console.log('  Era 5 (Foundation) → EMERGENCE at ' + mm(emergeAt) + '  (recursion Lv'+S.recursion+', '+Object.keys(S.caps).length+' capabilities)');
   else console.log('  Era 5 STALLED: agency='+(S.agency||0).toFixed(0)+'/'+EM.CFG.e5.controlBase+' scale='+Math.round(S.scale)+' recursion='+S.recursion+' capability='+Math.round(S.capability));
   if(endAt !== undefined) console.log('  Era 5 aftermath resolved → '+(S.ending||'?').toUpperCase()+' ending at ' + mm(endAt) + (emergeAt?('  (aftermath took '+((endAt-emergeAt)/60).toFixed(1)+'m)'):''));
