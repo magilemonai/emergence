@@ -2,3 +2,5 @@
 node_modules/
 .refshots/
 images/*.heic
+
+fonts/*.woff2
