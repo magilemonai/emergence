@@ -158,8 +158,13 @@
     filter: drop-shadow(0 16px 26px rgba(0,0,0,0.6)) brightness(1.1); }
   .era-e1 .core::before { content: ''; position: absolute; inset: -34px; z-index: -1; border-radius: 50%;
     background: radial-gradient(circle, rgba(176,125,63,0.16), transparent 62%); } /* dust halo: the disk sits on a stage */
+  /* recessed center plate: a darker, smoother field so the evolving sigil reads against the busy stone */
+  .era-e1 .core::after { content: ''; position: absolute; inset: 46px; z-index: 0; border-radius: 50%;
+    background: radial-gradient(circle, rgba(8,5,3,0.62) 0 46%, rgba(8,5,3,0.30) 62%, transparent 76%);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.6); }
   .era-e1 .core-ring { display: none; } /* the carved disk has its own rings */
-  .era-e1 .core-art { width: 100px; height: 100px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.7)); }
+  .era-e1 .core-art { width: 132px; height: 132px; z-index: 1;
+    filter: drop-shadow(0 0 9px rgba(224,169,63,0.4)) brightness(1.22) contrast(1.12) saturate(1.15); }
   /* the workbench: two sides of the craft, split by a chiselled seam — each side its own sub-material */
   .benches { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0; }
   .bench { padding: 6px 22px; border-radius: 3px; }
@@ -176,6 +181,12 @@
     text-transform: uppercase; margin: 4px 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,0.55); }
   .bench-lab span { color: var(--muted-cream); letter-spacing: 0.04em; font-family: var(--era-font); font-size: 12px; }
   .bench .ogrid { grid-template-columns: 1fr; gap: 8px; }
+  /* a carved flavor line caps each bench so a shorter column reads as complete, not missing a slot */
+  .bench-flavor { font-family: var(--era-font); font-style: italic; font-size: 13px; color: var(--muted-cream);
+    line-height: 1.45; margin-top: 12px; padding: 11px 13px 2px; border-top: 1px solid rgba(176,125,63,0.18); text-align: center; }
+  /* clarify that the core label is the current PHASE within Origins, not a separate world */
+  .era-e1 .core-age::before { content: 'CURRENT PHASE'; display: block; font-family: var(--era-font); font-style: italic;
+    font-size: 9px; letter-spacing: 0.08em; color: var(--muted-cream); text-transform: none; margin-bottom: 1px; }
   /* mute the flows panel so it stops competing with the core for attention */
   .era-e1 .rates-panel { opacity: 0.92; }
   .era-e1 .rate-ps.pos { color: #7fcf86; }
@@ -1210,12 +1221,14 @@
   }
   const WORKS_ORDER = ['scribe','miner','scriptorium','smelter','foundry'];
   // The bench has two sides: the Record (Marks→Knowledge) and the Forge (Ore→Metal→Silicon) — the two tracks, made spatial.
-  const WORKS_BENCH = [ ['record','The Record','Marks &amp; Knowledge',['scribe','scriptorium']], ['forge','The Forge','Ore, Metal &amp; Silicon',['miner','smelter','foundry']] ];
+  const WORKS_BENCH = [
+    ['record','The Record','Marks &amp; Knowledge',['scribe','scriptorium'],'The first records — scratches that outlived the hands that made them.'],
+    ['forge','The Forge','Ore, Metal &amp; Silicon',['miner','smelter','foundry'],'Heat, and the patience to shape what it softens.'] ];
   function buildWorks(){
     let out='';
-    for(const [id,name,sub,keys] of WORKS_BENCH){
+    for(const [id,name,sub,keys,flavor] of WORKS_BENCH){
       let tiles=''; for(const key of keys){ if(BUILD_UNLOCK[key]()) tiles += buildTile('build', key); }
-      if(tiles) out += '<div class="bench bench-'+id+'"><div class="bench-lab">'+name+' <span>· '+sub+'</span></div><div class="ogrid">'+tiles+'</div></div>';
+      if(tiles) out += '<div class="bench bench-'+id+'"><div class="bench-lab">'+name+' <span>· '+sub+'</span></div><div class="ogrid">'+tiles+'</div><div class="bench-flavor">'+flavor+'</div></div>';
     }
     return out ? '<div class="benches">'+out+'</div>' : '<div class="up-desc">Make a discovery to unlock something to build.</div>';
   }
@@ -1245,7 +1258,7 @@
   }
   function buildCore(){
     return '<div class="panel core-panel'+(S.flags.canScribe?'':' solo')+intro('core')+'">'+
-      '<div class="core-wrap"><div class="core"><div class="core-ring"></div><div class="core-ring core-ring2"></div><img class="core-art" id="coreArt" src="assets/core-'+(['','stone','bronze','silicon'][S.age]||'stone')+'.png" alt=""></div><div class="core-age" id="coreAge">STONE AGE</div></div>'+
+      '<div class="core-wrap"><div class="core"><div class="core-ring"></div><div class="core-ring core-ring2"></div><img class="core-art" id="coreArt" src="assets/core-'+(['','stone','bronze','silicon'][S.age]||'stone')+'-sym.png" alt=""></div><div class="core-age" id="coreAge">STONE AGE</div></div>'+
       '<div class="core-side">'+
         '<div class="core-verbs"><button class="act-btn" id="inscribeBtn">INSCRIBE A MARK</button>'+
           (S.flags.o_materials?'<button class="act-btn" id="quarryBtn">QUARRY ORE</button>':'')+'</div>'+
@@ -1501,7 +1514,7 @@
     // Era 1 — Origins live values
     if(S.maxEra===1){
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
-      const ca=$('coreArt'); if(ca && ca.setAttribute){ const src=['','assets/core-stone.png','assets/core-bronze.png','assets/core-silicon.png'][S.age]||'assets/core-stone.png'; if(ca._src!==src){ ca.setAttribute('src',src); ca._src=src; } }
+      const ca=$('coreArt'); if(ca && ca.setAttribute){ const src=['','assets/core-stone-sym.png','assets/core-bronze-sym.png','assets/core-silicon-sym.png'][S.age]||'assets/core-stone-sym.png'; if(ca._src!==src){ ca.setAttribute('src',src); ca._src=src; } }
       const er=$('eff-refine'); if(er) setText('eff-refine', S.refine>0 ? ('now +'+Math.round(S.refine*CFG.e1.refineBonus*100)+'% to all production') : 'each level: +'+Math.round(CFG.e1.refineBonus*100)+'% to all production');
       const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);
       const badge=$('researchBadge'), resb=$('researchBtn');
