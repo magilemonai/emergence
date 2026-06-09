@@ -2031,12 +2031,40 @@
       if(REC.snaps.length>5000) REC.snaps=REC.snaps.slice(-5000); // cap telemetry growth
       localStorage.setItem(SAVE_KEY, JSON.stringify({S:out, REC, lastSave:Date.now(), v:1})); }catch(e){}
   }
+  const _isObj=o=> !!o && typeof o==='object' && !Array.isArray(o);
+  const _numOr=(v,d)=> (typeof v==='number' && isFinite(v)) ? v : d;
+  // Versioned normalization: coerce a loaded save against the freshState schema so a stale/corrupt
+  // alpha save can never inject malformed nested objects (flags/disco/tech/methods/caps/alloc/proofAcc)
+  // or NaN scalars into S. Unknown/missing fields fall back to fresh defaults.
+  function normalizeState(loaded){
+    const base=freshState();
+    if(!_isObj(loaded)) return base;
+    for(const k in base){
+      const def=base[k], v=loaded[k];
+      if(typeof def==='number') base[k]=_numOr(v,def);
+      else if(typeof def==='boolean') base[k]=(typeof v==='boolean')?v:def;
+      else if(typeof def==='string') base[k]=(typeof v==='string')?v:def;
+      else if(_isObj(def)){
+        if(!_isObj(v)) continue;                                    // malformed map → keep default
+        if(k==='alloc'||k==='proofAcc'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
+        else base[k]={...def, ...v};                                // boolean-ish maps: flags/disco/tech/methods/caps/collapsed/obsolete
+      }
+    }
+    const a=base.alloc; if(!((a.vision||0)+(a.language||0)+(a.reasoning||0)>0)){ a.vision=a.language=a.reasoning=1; } // never all-zero (would stall Deep)
+    return base;
+  }
+  function normalizeREC(r){
+    const base={ v:2, events:[], snaps:[], clicks:{}, lastSnap:-1 };
+    if(!_isObj(r)) return base;
+    return { v:_numOr(r.v,2), events:Array.isArray(r.events)?r.events:[], snaps:Array.isArray(r.snaps)?r.snaps:[],
+      clicks:_isObj(r.clicks)?r.clicks:{}, lastSnap:_numOr(r.lastSnap,-1) };
+  }
   function load(){
     try{ const raw=localStorage.getItem(SAVE_KEY); if(!raw) return null;
-      const d=JSON.parse(raw); if(!d||!d.S) return null;
-      Object.assign(S, d.S);            // saved fields override defaults; dev/speed stay at literal defaults
-      if(d.REC) Object.assign(REC, d.REC); // resume telemetry so a run survives reloads (full start->finish)
-      return d.lastSave||null;
+      const d=JSON.parse(raw); if(!_isObj(d)||!_isObj(d.S)) return null;
+      Object.assign(S, normalizeState(d.S));   // schema-validated; no malformed nested objects or NaN reach S
+      Object.assign(REC, normalizeREC(d.REC)); // resume telemetry, shape-checked
+      return _numOr(d.lastSave, null);
     }catch(e){ return null; }
   }
   function offlineCatchup(elapsedSec){

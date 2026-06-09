@@ -256,6 +256,22 @@ function testSaveLoad(){
   near(S.rules, 1234.5, 1e-6, 'rules restored');
   ok(S.axioms === 7 && S.tech.formalLogic, 'axioms + tech restored');
   ok(S.maxEra === 2 && S.buyMode === 'max', 'era + buy mode restored');
+
+  // corruption resilience: a stale/malformed alpha save must normalize, not crash or inject NaN/bad objects
+  global.localStorage.setItem('emergence-save', JSON.stringify({ S: {
+    flags: 'broken', alloc: null, methods: null, tech: 42, caps: 'x', proofAcc: { vision: 'oops' },
+    marks: 'NaNstring', accuracy: null, maxEra: 3, vision: 0, language: 0, reasoning: 0
+  }, REC: { snaps: 'notarray', events: null }, lastSave: 'bad', v: 1 }));
+  EM.load();
+  ok(S.flags && typeof S.flags === 'object', 'corrupt flags → object default');
+  ok(S.methods && typeof S.methods === 'object', 'corrupt methods → object default');
+  ok(S.tech && typeof S.tech === 'object', 'corrupt tech → object default');
+  ok(S.alloc && typeof S.alloc.vision === 'number' && (S.alloc.vision + S.alloc.language + S.alloc.reasoning) > 0,
+     'corrupt/all-zero alloc → valid non-zero allocation');
+  ok(isFinite(S.marks) && isFinite(S.accuracy), 'corrupt scalars → finite');
+  for (let i = 0; i < 50; i++) EM.produce(0.1);
+  ok(finite(S, ['marks', 'silicon', 'data', 'capability', 'vision', 'language', 'reasoning']),
+     'production stays finite after loading a corrupt save');
 }
 
 function testOffline(){
@@ -323,21 +339,25 @@ function originsStep(EM){
   if(S.flags.canFabricate) EM.fabricate();
 }
 function symbolicStep(EM){
+  // Uses the REAL player path: Rulesets emit Inference, you aim it at one proof target via selectProof(),
+  // and completeProof() fires as Inference accrues through tick(). (NOT buyTech() — that bypassed the
+  // live mechanic and made the chain look faster/safer than the player's experience.)
   const { S, TREE, BUYS } = EM;
   if(S.flags.symbolicDone) return;
   const clicks = (S.ruleset + S.daemon < 1) ? 8 : 1;
   for(let i=0;i<clicks;i++) EM.writeRule(FAKE_EV);
-  const next = TREE.find(n => n.id!=='expert' && !S.tech[n.id] && n.req.every(r=>S.tech[r]) && (!n.reqAxioms || S.axioms>=n.reqAxioms));
-  const goalCost = next ? next.cost : Infinity;
-  if(S.ruleset < 30){ const c = EM.totalCost(BUYS.ruleset,1); if(S.rules - c > Math.min(goalCost*0.5, 250)) EM.buy('ruleset'); }
-  if(S.tech.inference && S.daemon < 20){ const c = EM.totalCost(BUYS.daemon,1); if(S.rules - c > goalCost*0.6) EM.buy('daemon'); }
-  if(next && S.rules >= next.cost) EM.buyTech(next.id);
-  if(EM.canBuyTech('expert')) EM.buyTech('expert');
-  if(S.flags.compile && !S.flags.symbolicDone){
-    const stuck = !TREE.some(n => n.id!=='expert' && EM.canBuyTech(n.id));
-    const needForExpert = S.tech.metalogic && S.tech.heuristics && S.axioms < 12;
-    if((stuck || needForExpert) && EM.axiomGain() >= Math.max(2, Math.ceil(S.axioms*0.5))) EM.compile();
+  // grow generators: Rulesets (emit Inference) + Daemons (write Rules)
+  if(S.ruleset < 30){ const c = EM.totalCost(BUYS.ruleset,1); if(S.rules >= c) EM.buy('ruleset'); }
+  if(S.tech.inference && S.daemon < 20){ const c = EM.totalCost(BUYS.daemon,1); if(S.rules >= c*2) EM.buy('daemon'); }
+  // aim Inference at a proof target; bank into the Optimization lemma while farming axioms for the Expert capstone
+  if(S.flags.tree && !S.activeProof){
+    const t = TREE.find(n => n.id!=='expert' && !S.tech[n.id] && EM.canProve(n.id));
+    if(t) EM.selectProof(t.id);
+    else if(EM.canProve('expert')) EM.selectProof('expert');
+    else EM.selectProof('optimization');
   }
+  const expReq = (TREE.find(n=>n.id==='expert').reqAxioms) || 0;
+  if(S.flags.compile && S.axioms < expReq && EM.axiomGain() >= Math.max(2, Math.ceil(S.axioms*0.5))) EM.compile();
 }
 function statisticalStep(EM){
   const { S, BUYS } = EM;
