@@ -67,7 +67,16 @@ const SETUP = {
   deep: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true; E.checkMiles();
     S.maxEra=3;S.accuracy=0.99;S.gap=0.05;S.methods={regression:true,regularization:true,ensembles:true}; E.checkMiles();
     S.silicon=9000;S.data=9000;S.insight=4000;S.node=24;S.vision=0.55;S.language=0.42;S.reasoning=0.6;S.capability=1200;S.foundry=20;
-    E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+    S.alloc={vision:0.45,language:0.2,reasoning:0.35};S.heat=58;S.sat={vision:0.34,language:0.06,reasoning:0.42};S.frontier='language';S.frontierT=22;
+    E.checkMiles(); for(let i=0;i<3;i++) E.tick();`,
+  deeptip: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true; E.checkMiles();
+    S.maxEra=3;S.accuracy=0.99;S.methods={regression:true,regularization:true,ensembles:true}; E.checkMiles();
+    S.silicon=9000;S.data=9000;S.insight=4000;S.node=24;S.vision=0.55;S.language=0.42;S.reasoning=0.6;S.capability=1200;S.foundry=20;
+    E.checkMiles(); for(let i=0;i<3;i++) E.tick();
+    const el=document.querySelector('.era-e4 [data-tip]');
+    const tip=document.getElementById('tip'); tip.innerHTML=el.getAttribute('data-tip');
+    tip.classList.add('show'); tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
+    tip.style.left='150px'; tip.style.top='980px';`,
   foundation: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
     S.maxEra=4;S.vision=0.85;S.language=0.82;S.reasoning=0.86; E.checkMiles();
     S.capability=3000;S.scale=420;S.recursion=4;S.caps={selfModel:true,transfer:true}; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
