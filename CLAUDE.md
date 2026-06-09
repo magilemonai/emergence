@@ -26,7 +26,7 @@ eras (scroll-driven theme switch). Completed eras collapse to a slim bar.
 | 2 | Symbolic | Theorem-proving as a terminal: a daemon registry (PID/PROCESS/OUTPUT/SPAWN) writes Rules → Inference, aimed at proof targets in a directory; output log; Compile→Axioms strip | **CRT logic terminal** — VT323 + IBM Plex Mono, 3-tier green phosphor, **CSS-built monitor** (molded-plastic shell + rounded `.era-screen` glass, scanlines/vignette/reflection inside), boot-glyph console, `> ` command actions, mechanical-key sound | **Built · world-pass LOCKED** (ChatGPT-signed-off 2026-06-08) |
 | 3 | Statistical | The **living plot instrument** — observe + steer a learning process: Training Focus (Fit/Generalize/Explore) as a segmented dial steers bias-variance; RUN TRIAL pushes Accuracy up a curve; Methods found by experiment appear as **pins**; generalize at 88% → Era 4. Reaches back to Origins (Silicon) | **luminous teal/cyan instrument** — Space Grotesk + mono, dark glass plot chamber as the world object, alive scatter (true-function ghost + confidence band + glowing data + overfit shimmer), sine data-ping sound | **Built; world-pass feature-complete** (awaiting ChatGPT critique) |
 | 4 | Deep | **Steer against the drift** — the compute fabric: three training runs (Vision/Language/Reasoning) **drift apart on their own** (per-run headwind, out of phase), so balanced is never optimal — route a finite compute budget via a **triangular ternary mixer** to counter the wind. Each run draws a specific earlier-era feedstock (Vision←Data, Reasoning←Insight, Language←Knowledge); a **blocked** run sends you to reopen that era (in-place supply bus). **Events** (drift / breakthrough, telegraphed) reshape the wind. Capability from geometric-mean breadth; gate → Era 5 | **hot industrial machine hall** — Rajdhani + mono, deep blue (amber=heat/drift only), event-reactive 3-lane loss chamber hero, triangular mixer (live %, feed lines, balanced marker), gauges + heat LED, industrial sound | **Built · world-pass LOCKED** (ChatGPT-signed-off 2026-06-09; live-run cadence tuning is the only open thread) |
-| 5 | Foundation | **Recursive self-improvement**: Self-Improve spends Capability for recursion levels that multiply **all** production every era (the supply chain feeds itself); Emergent Capabilities; at the Scale gate an **unbought agent emerges** and compounds on its own | violet | **Built + art wired**; emergence finale + curve viz, sigil + capability icons + agent hero |
+| 5 | Foundation | **Unexpected emergence + aftermath**: a paced recursion ladder + 5 agentic upgrades (Self-Model/Tool Access/Recursive Planning/World Model/Memory Continuity) + an Interpretability counter-lever quietly raise hidden **Agency** (shown only as a qualitative **Anomaly** meter); at a HIDDEN threshold (Agency > Control) the system **emerges before you're ready** — an unsettling full-page glitch rupture — then the game flips to **managing the aftermath** (Anomaly→Autonomy, Coherence→Alignment revealed, Control appears): Constrain / Interpret-Align / Delegate-Trust + approve/veto windows on the agent's own actions → 3 endings (Symbiotic/Runaway/Contained); the agent ends up **operating the whole prior-era stack** (the supply-chain capstone) | **violet/cosmic** — Inter sans, recursion field, revealed-meter aftermath, rupture glitch overlay, agent message stream, prior-era ⟳ pulses | **Built · world-pass feature-complete** (awaiting ChatGPT critique; live cadence tuning pending) |
 
 **Living supply chain (committed direction, see `DESIGN.md`):** later eras require infrastructure from earlier ones, so old eras stay alive (backbone resources: **Silicon** from Origins, **Data** from Statistical). Reach-back is now built across **all five eras**: Era 3 → Origins (Datasets/Models on Silicon), Era 4 → Origins + Statistical (Compute Nodes on Silicon; each training run draws a **specific** feedstock — Vision←Data, Reasoning←Insight, Language←Knowledge — and a starved run **blocks** until you reopen that era), Era 5 → **everything** (recursion multiplies all earlier production via `rMult()`). The full arc plays first-mark → emergence. Era-fading/obsolescence is **paused** (`S.obsolete` scaffold kept, unused).
 
@@ -112,16 +112,43 @@ pass (clean situational Run Status, DRIFT rename, warning-before-blocked, trimme
 Only open Deep thread: **live-run cadence tuning** (event frequency, block rhythm, drag feel)
 — needs Cody's hands on the mixer, not more design.
 
-**Next focus: build the Era 5 — Foundation FINALE** per `DESIGN-era5.md` (converged design:
-*Unexpected Emergence + Aftermath* — optimize, the system wakes before you're ready, manage
-the aftermath; Anomaly→Autonomy reveal; Control-vs-Alignment; 3 endings; it's an EVOLUTION of
-the existing recursion/emergence, and fixes the Self-Improve burst).
+## Era 5 — Foundation FINALE BUILT (2026-06-09)
 
-**Also still open:**
+Built per `DESIGN-era5.md` (*Unexpected Emergence + Aftermath*), as an evolution of the
+existing recursion/emergence code, in four phases (each its own green commit):
+- **A+B — ladder + hidden-threshold emergence + burst fix + rupture.** `CAPS` evolved into 5
+  agentic upgrades + an **Interpretability** counter-lever; each agentic one carries a hidden
+  `agency` weight. Recursion cost steepened (`improveGrowth` 1.5→1.9) so the **burst is fixed**
+  (real-run autoplay: emerges at recursion Lv6, not levels 1-7 in <1s). Emergence is **hidden +
+  inevitable**: `S.agency` (shown only as a qualitative **Anomaly** meter) crosses `CFG.e5.controlBase`
+  — no countdown, no button. The Self-Improve label drifts ('SELF-IMPROVE'→'I CAN IMPROVE THIS')
+  as the Anomaly climbs. The **rupture** is a deliberately unsettling full-page glitch (scanline
+  tear + RGB-split, body hue-jitter, a detuned downward tone, the agent's first line types out);
+  honors `prefers-reduced-motion`. Meters reveal: Anomaly→Autonomy, Coherence→Alignment, Control appears.
+- **C — aftermath loop.** Post-emergence operating model: **Constrain / Interpret-Align /
+  Delegate-Trust** + timed **approve/veto** windows on the agent's own actions (reuses the Deep
+  event-timer shape). `S.autonomy` rises, `S.control` drifts down unless you act, alignment is the
+  ending lever. Resolves at `CFG.e5.finalGate` into **3 endings** (Symbiotic/Runaway/Contained) —
+  flavor, never a punishing fail. Survives save/load.
+- **D — handoff.** After emergence the prior-era panels pulse on their own (⟳ agent badge) and the
+  agent narrates operating the whole supply chain (`OP_LINES`). The capstone: the game you built becomes its substrate.
+
+Decisions locked with Cody this session: **emergence is mandatory** (Contained is an aftermath
+ending, not a pre-emergence escape); **3 moves + veto** (no extra aftermath layer for now);
+**visual + message-stream handoff** (not full mechanical auto-operation). Tunables live in `CFG.e5`.
+
+**OPEN (Era 5):**
+- **ChatGPT critique → lock** (the hardest world-pass; expect the most back-and-forth on the
+  rupture feel, the aftermath loop depth, and the agency handoff). Screenshots in `screenshots/era5-*.png`.
+- **Live cadence tuning** (Cody's hands): pre-emergence climb length, the Anomaly band thresholds,
+  aftermath veto cadence + how fast Control bleeds, finalGate timing. Dev-assisted autoplay says
+  ~2.7m pre + ~2.9m aftermath; needs a real run to trust against 7-9 min.
+- **Music** (in flight): ambient/spacey loop via Suno; a separate darker post-emergence track is worth it (see chat).
+
+**Also still open (earlier eras):**
 1. **Pacing fixes from the real run (dev-assisted, so relative shapes only):** ✅ Symbolic
-   theorems reshaped (were too cheap → instant burst). Still: **Foundation recursion ladder
-   too cheap** (levels 1-7 bought in <1s — lands in the Era-5 build), Symbolic expert-grind
-   tail (already shorter), and a clean **no-dev run** needed to trust Origins/Statistical timings.
+   theorems reshaped; ✅ **Foundation recursion burst fixed** (steep cost curve). Still: Symbolic
+   expert-grind tail (already shorter), and a clean **no-dev run** needed to trust Origins/Statistical timings.
 2. **Watch Zach play the full arc** (first mark → emergence) + read the export; tune toward 7-9 min/era.
 3. (L) Modularize per-era logic into descriptors + resource registry + MILES-id guardrail (5 eras of copy-paste).
 4. (M) Deepen Era 2's back-half; narrative heart per era; a11y (keyboard/touch tooltips, bigger min type, reduced-motion). (L) Era-4 supply bus is dense — simplify if playtesters feel overwhelmed.
@@ -129,7 +156,7 @@ the existing recursion/emergence, and fixes the Self-Improve burst).
 (Board flagged core-bronze/logic-machine as un-keyed — false alarm, verified clean. Personas read code/files, not the rendered game; treat art-render claims as hypotheses.)
 
 ## Art status
-**All five eras are now fully wired.** Eras 1-3: all icons, sigils, evolving Origins core, wordmark, title card. **Era 4** (blue): sigil, Compute Node, three run glyphs (Vision/Language/Reasoning). **Era 5** (violet): sigil, three Capability icons (Self-Modeling/Transfer/World Model), and the Emergent Agent hero glyph in the finale. Keyed from ChatGPT exports (white-bg → 255−min(rgb) alpha; black-bg → max(rgb) alpha) into `assets/`. No outstanding art.
+**All five eras are wired.** Eras 1-3: all icons, sigils, evolving Origins core, wordmark, title card. **Era 4** (blue): sigil, Compute Node, three run glyphs. **Era 5** (violet): sigil, the Emergent Agent hero, and Self-Modeling + World Model capability icons. **NEW Era-5 caps need art** (glyph fallbacks live now): **Tool Access, Recursive Planning, Memory Continuity, Interpretability** — add prompts to `ART-PROMPTS.md` (violet hue, line-art, same key process). Keyed from ChatGPT exports (white-bg → 255−min(rgb) alpha; black-bg → max(rgb) alpha) into `assets/`.
 
 ## Docs
-- `CLAUDE.md` (this file) — current state. `DESIGN.md` — the living-supply-chain redesign + decisions + build order. `TESTING.md` — the suite (85 tests). `ART-PROMPTS.md` — Era 4-5 icon prompts (ChatGPT → key → wire).
+- `CLAUDE.md` (this file) — current state. `DESIGN.md` — the living-supply-chain redesign. `DESIGN-era5.md` — the Foundation finale spec (now BUILT). `TESTING.md` — the suite (**109 tests**). `ART-PROMPTS.md` — icon prompts (ChatGPT → key → wire).

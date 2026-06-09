@@ -1,5 +1,12 @@
 # Era 5 — Foundation: world-pass design (converged, 2026-06-09)
 
+> **STATUS: BUILT (2026-06-09).** All four phases shipped (ladder + hidden-threshold emergence +
+> unsettling rupture + burst fix → aftermath Control↔Alignment + approve/veto → 3 endings →
+> handoff pulses). Open-question answers: (1) ~5 agentic upgrades + Interpretability, steep
+> recursion cost; (2) 3 moves + veto, no extra layer; (3) **emergence is mandatory** (Contained is
+> an aftermath ending, not a pre-emergence escape); (4) Era 4 locked first. Now: ChatGPT critique +
+> live cadence tuning. See CLAUDE.md "Era 5 — Foundation FINALE BUILT".
+
 > The FINALE. Theme: violet/cosmic, the de-materialization endpoint. Agency arc capstone:
 > author → operate → observe/steer → orchestrate → **witness emergence**.
 > Present-tense framing: the *arriving, contested* AI frontier — recursive self-improvement,
