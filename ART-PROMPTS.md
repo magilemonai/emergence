@@ -71,6 +71,33 @@ Drop in `images/`, I key (if needed) → `assets/` and wire with `::before`/`::a
 
 ---
 
+---
+
+## Era 2 — Symbolic: the CRT terminal (amber/green phosphor)
+
+The world is a glowing cathode-ray terminal. Scanlines, phosphor glow, curved glass,
+flicker — all done in CSS. These PNGs add the *physical screen* on top. House hue:
+**amber phosphor (#ffcd6b)** with optional **green-phosphor (#7dffb0)** accents.
+Transparent PNG unless noted, ~1024px, no text.
+
+1. `crt-bezel` — a **dark monitor housing / bezel frame** (transparent screen interior):
+   moulded plastic or brushed-metal CRT shell, gently rounded screen corners, a few
+   vents, a tiny power LED, light wear/dust. This is the Tier-1 frame (the stone-edge
+   equivalent) — it makes the era a physical screen you're looking *into*. **Highest impact.**
+2. `crt-glass` — a faint **curved-glass overlay**: soft top-left reflection, a couple of
+   smudges/scratches, and a vignette darkening the corners. Mostly transparent, sits over
+   panels for the glass-under-light feel. Subtle.
+3. `schematic-bg` — a seamless **logic-diagram / punch-card / circuit-schematic** texture in
+   faint amber line-work on near-black: gates, nodes, wiring, register grids. Panel
+   background (the Era-3 graph-paper equivalent, but for symbolic logic).
+4. `boot-glyph` — a small **terminal boot sigil / cursor-crest**: a phosphor emblem (could
+   riff on the existing symbolic sigil) shown at the prompt. Amber glow, transparent.
+
+(Existing Era-2 icons — ruleset/daemon/axioms/inference/theorems/sigil — already read as
+amber line-art and fit the phosphor world; no need to regenerate unless one bugs you.)
+
+---
+
 ### Wiring checklist (Claude, once PNGs land in `images/` → keyed to `assets/`)
 - `UPICON.node = 'assets/icon-node.png'` (Compute Node tile).
 - `ERAS[4].sigil = 'assets/era4-sigil.png'`; `ERAS[5].sigil = 'assets/era5-sigil.png'`.
