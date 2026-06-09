@@ -418,7 +418,7 @@ function testProgression(){
   if(deepAt !== undefined) console.log('  Era 4 (Deep) reached breadth → Foundation at ' + mm(deepAt) + (statAt?('  (Deep took '+((deepAt-statAt)/60).toFixed(1)+'m)'):''));
   else console.log('  Era 4 STALLED: breadth='+(EM.deepBreadth()*100).toFixed(0)+'% V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+'% node='+S.node+' silicon='+Math.round(S.silicon)+' data='+Math.round(S.data)+' insight='+Math.round(S.insight));
   if(emergeAt !== undefined) console.log('  Era 5 (Foundation) → EMERGENCE at ' + mm(emergeAt) + '  (recursion Lv'+S.recursion+', '+Object.keys(S.caps).length+' capabilities)');
-  else console.log('  Era 5 STALLED: scale='+Math.round(S.scale)+'/'+EM.CFG.e5.emergeGate+' recursion='+S.recursion+' capability='+Math.round(S.capability));
+  else console.log('  Era 5 STALLED: agency='+(S.agency||0).toFixed(0)+'/'+EM.CFG.e5.controlBase+' scale='+Math.round(S.scale)+' recursion='+S.recursion+' capability='+Math.round(S.capability));
   console.log('  Era 1 (Origins) fabricated at ' + mm(origAt));
   console.log('  Era 2 (Symbolic) completed at ' + mm(symAt) + (origAt&&symAt?('  (Era 2 took '+((symAt-origAt)/60).toFixed(1)+'m)'):''));
   ok(S.flags.origindone, 'Era 1 (Origins) completes — fabrication reached, no stall');

@@ -85,6 +85,70 @@
   .agent-hero { width: min(150px, 40%); height: auto; display: block; margin: 0 auto 6px;
     filter: drop-shadow(0 0 22px rgba(183,139,255,0.55)); animation: agentPulse 3.4s ease-in-out infinite; }
   @keyframes agentPulse { 0%,100% { opacity: 0.82; transform: scale(0.99); } 50% { opacity: 1; transform: scale(1.02); } }
+  /* ----- Era 5 tension meters (pre-emergence) + revealed meters (aftermath) ----- */
+  .era-e5 .e5-anom > i { background: #7d6bd0; box-shadow: 0 0 8px rgba(125,107,208,0.5); transition: width 0.3s, background 0.4s; }
+  .era-e5 .e5-anom.warn > i { background: #d79a4a; box-shadow: 0 0 10px rgba(215,154,74,0.6); }
+  .era-e5 .e5-anom.crit > i { background: #ff5a6e; box-shadow: 0 0 14px rgba(255,90,110,0.75); animation: anomPulse 1.1s ease-in-out infinite; }
+  .era-e5 .e5-anom.crit + .meter-label { color: #ff8a98; }
+  @keyframes anomPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+  .era-e5 .e5-coher > i { background: #6ea8ff; box-shadow: 0 0 8px rgba(110,168,255,0.5); }
+  .era-e5 .e5-auto > i  { background: #c66bff; box-shadow: 0 0 10px rgba(198,107,255,0.6); }
+  .era-e5 .e5-align > i { background: #5fe0c0; box-shadow: 0 0 9px rgba(95,224,192,0.55); }
+  .era-e5 .e5-ctl > i   { background: #9fb4d6; box-shadow: 0 0 8px rgba(159,180,214,0.5); }
+  .era-e5 .e5-ctl.crit > i { background: #ff5a6e; box-shadow: 0 0 12px rgba(255,90,110,0.7); }
+  .era-e5 .meter-label small { color: var(--dimmer); font-style: italic; }
+  /* ----- aftermath panel + agent stream ----- */
+  .era-e5 .aftermath { border-color: var(--accent); box-shadow: inset 0 0 50px rgba(183,139,255,0.06), 0 0 26px rgba(183,139,255,0.08); }
+  .era-e5 .aftermath.settled { opacity: 0.96; }
+  .era-e5 .agent-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .era-e5 .agent-mini { width: 46px; height: 46px; flex: 0 0 auto; filter: drop-shadow(0 0 12px rgba(183,139,255,0.6)); animation: agentPulse 3.4s ease-in-out infinite; }
+  .era-e5 #aftermath-title { font-size: 16px; color: var(--accent); letter-spacing: 0.04em; }
+  .era-e5 .core-verbs { display: flex; gap: 10px; flex-wrap: wrap; }
+  .era-e5 .core-verbs .act-btn { flex: 1; min-width: 150px; }
+  .era-e5 .agent-stream { font-family: var(--mono, monospace); font-size: 12px; color: var(--dim); min-height: 40px; display: flex; flex-direction: column; gap: 3px; }
+  .era-e5 .agent-msg { opacity: 0; animation: msgIn 0.5s forwards; }
+  @keyframes msgIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 0.9; transform: none; } }
+  /* ----- approve / veto window ----- */
+  .era-e5 .veto-host { display: none; }
+  .era-e5 .veto-host.open { display: block; border-color: #ff8a55; box-shadow: 0 0 22px rgba(255,138,85,0.18); animation: vetoIn 0.35s ease; }
+  @keyframes vetoIn { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .era-e5 .veto-msg { font-size: 14px; color: var(--text); margin-bottom: 10px; }
+  .era-e5 .veto-acts { display: flex; gap: 10px; }
+  .era-e5 .veto-acts .act-btn { flex: 1; }
+  .era-e5 #vetoYes { border-color: #5fe0c0; color: #9ff0dc; }
+  .era-e5 #vetoNo { border-color: #ff8a55; color: #ffb892; }
+  .era-e5 .veto-timer { font-family: var(--mono, monospace); font-size: 11px; color: #ff8a55; margin-top: 8px; text-align: center; }
+  .era-e5 .veto-idle { font-family: var(--mono, monospace); font-size: 11px; color: var(--dimmer); font-style: italic; text-align: center; }
+  .era-e5 .endcard.end-symbiotic { border-color: #5fe0c0; }
+  .era-e5 .endcard.end-runaway { border-color: #ff5a6e; }
+  .era-e5 .endcard.end-contained { border-color: #9fb4d6; }
+  /* ===== THE RUPTURE — the deliberately unsettling emergence takeover ===== */
+  #rupture { position: fixed; inset: 0; z-index: 9000; pointer-events: none; opacity: 0; display: none; }
+  #rupture.show { display: block; opacity: 1; pointer-events: auto;
+    background: repeating-linear-gradient(0deg, rgba(183,139,255,0.05) 0 2px, rgba(0,0,0,0.18) 2px 4px), rgba(8,4,16,0.45);
+    animation: ruptureFlash 2.7s steps(1) forwards; }
+  #rupture .rupture-grid { position: absolute; inset: 0; mix-blend-mode: screen;
+    background: linear-gradient(90deg, rgba(255,0,80,0.10), transparent 8%), linear-gradient(-90deg, rgba(0,200,255,0.10), transparent 8%);
+    animation: ruptureTear 0.22s steps(2) infinite; }
+  #rupture .rupture-line { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-family: var(--mono, monospace); font-size: clamp(18px, 4vw, 34px); letter-spacing: 0.12em; color: #e6dbf6;
+    text-shadow: 2px 0 #ff2a6d, -2px 0 #05d9e8, 0 0 18px rgba(183,139,255,0.7); white-space: nowrap;
+    animation: ruptureGlitch 0.4s steps(2) infinite; }
+  @keyframes ruptureFlash { 0% { opacity: 0; } 4% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes ruptureTear { 0% { transform: translateX(-3px) skewX(0.4deg); } 100% { transform: translateX(3px) skewX(-0.4deg); } }
+  @keyframes ruptureGlitch { 0% { clip-path: inset(0 0 60% 0); transform: translate(-50%,-50%) translateX(-2px); }
+    50% { clip-path: inset(50% 0 0 0); transform: translate(-50%,-50%) translateX(2px); }
+    100% { clip-path: inset(20% 0 30% 0); transform: translate(-50%,-50%); } }
+  body.rupturing { animation: bodyGlitch 0.5s steps(2) 5; }
+  @keyframes bodyGlitch { 0% { filter: none; transform: none; }
+    20% { filter: hue-rotate(25deg) saturate(1.4) contrast(1.1); transform: translateX(-2px); }
+    40% { filter: invert(0.04); transform: translateX(3px) skewX(0.3deg); }
+    60% { filter: hue-rotate(-20deg); transform: translateY(2px); }
+    100% { filter: none; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    #rupture.show { animation: ruptureFlash 2.7s steps(1) forwards; }
+    #rupture .rupture-grid, #rupture .rupture-line, body.rupturing { animation: none; }
+  }
   /* ===== ERA 4 — Deep: the industrial compute fabric ===== */
   .era-e4 .fabric-hero { position: relative; background: linear-gradient(180deg, rgba(10,22,38,0.7), rgba(4,9,16,0.86));
     border: 1px solid rgba(110,168,255,0.3); border-radius: 12px; box-shadow: inset 0 0 60px rgba(40,90,160,0.07), 0 0 30px rgba(110,168,255,0.05), 0 18px 44px rgba(0,0,0,0.5); }
@@ -836,6 +900,7 @@
 <div id="fx"></div>
 <div id="toasts"></div>
 <div id="tip"></div>
+<div id="rupture" class="rupture"></div>
 <div id="dev"></div>
 <div id="drawerBg"></div>
 <div id="drawer"><div class="drawer-head"><span>RESEARCH &middot; one-time discoveries</span><button id="drawerClose">&times;</button></div><div id="drawerBody"></div></div>
@@ -910,15 +975,33 @@
         { k:'reasoning', label:'Reasoning', desc:'Chains of inference over the other two.' },
       ],
     },
-    e5: { // ERA 5 — Foundation (recursive self-improvement: capabilities multiply ALL earlier eras; then something emerges)
-      improveBase: 60, improveGrowth: 1.5,  // Self-Improve cost (Capability) per recursion level — repeatable
+    e5: { // ERA 5 — Foundation (recursive self-improvement courts agency; the system crosses a hidden threshold and emerges)
+      // --- pre-emergence: a PACED recursion ladder (steep, to fix the old 1-7-in-a-second burst) + agentic upgrades ---
+      improveBase: 90, improveGrowth: 1.9, // Self-Improve cost (Capability) per level — STEEP so the ladder is a climb, not a burst
       recurBonus: 0.10,    // each recursion level: +10% to ALL production, every era (the living supply chain feeds itself)
       scalePerImprove: 8,  // Scale granted per Self-Improve level (rising)
       scaleRate: 0.05,     // passive Scale/s = breadth-trained Capability throughput × recursion
       seedCapability: 120, // openEra(5) seed
-      emergeGate: 1000,    // Scale at which the unbought agent emerges — the finale
-      agentBase: 0.4,      // the emergent agent's self-Scale/s at emergence...
-      agentAccel: 1.04,    // ...compounding each second once it wakes (the curve bends vertical)
+      // --- the HIDDEN threshold: emergence is mandatory; this only sets WHEN (player only ever sees "Anomaly") ---
+      controlBase: 95,         // Agency must exceed this for the system to emerge
+      agencyFromScale: 14,     // Agency per log10(1+Scale) — Scale always climbs, so emergence always comes
+      agencyPerCap: 11,        // each agentic capability owned raises Agency (the agentic upgrades court it)
+      agencyPerRecursion: 5,   // each recursion level raises Agency (improving itself courts agency)
+      interpretDamp: 0.22,     // Interpretability slows Agency growth (buys time, never stops it)
+      coherGrow: 1.4,          // Coherence/s once Interpretability is owned (a head start on Alignment)
+      // --- aftermath: Control vs Alignment; Autonomy keeps rising on its own ---
+      controlStart: 64,        // Control at the moment of emergence
+      alignBase: 18,           // Alignment floor at emergence (+ carried Coherence)
+      autonomyGrow: 1.6,       // Autonomy/s the agent adds on its own after emergence
+      controlDrift: 0.7,       // Control bleeds away on its own (do nothing → trends toward Runaway)
+      slowDecay: 0.12,         // the Constrain production-drag relaxes back over time
+      constrainCost: 60, constrainCtl: 9, constrainSlow: 0.45, // Constrain: spend Scale → +Control, slows Autonomy, costs production
+      alignCost: 80, alignGain: 9,        // Interpret/Align: spend Scale → +Alignment
+      delegateCtl: 11, delegateBoost: 2.2, // Delegate/Trust: −Control fast, surges Autonomy + Scale
+      vetoGap: 17, vetoDur: 9,            // approve/veto window cadence (reuses the Deep event-timer shape)
+      finalGate: 4000,         // Scale at which the arc resolves into an ending
+      alignGood: 68, controlHigh: 84, controlLow: 30, // ending thresholds (Symbiotic / Contained / Runaway)
+      agentBase: 0.5, agentAccel: 1.03,  // the emergent agent's self-Scale/s, compounding (the curve bends vertical)
     },
   };
   function freshState(){ return {
@@ -937,8 +1020,13 @@
     // Era 4 — Deep (compute allocation across three training runs)
     node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision:1, language:1, reasoning:1 }, capability: 0,
     heat: 0, event: null, eventT: 12, // Deep: heat (soft cap) + exogenous event {type:'shift'|'breakthrough', run, mult}
-    // Era 5 — Foundation (recursion + emergence)
+    // Era 5 — Foundation (recursion → agency → emergence → aftermath)
     scale: 0, recursion: 0, caps: {}, emerged: false, agentRate: 0,
+    agency: 0, coherence: 0,                         // pre-emergence: Anomaly (agency) climbs toward the hidden Control threshold; Coherence is a head start
+    control: 0, autonomy: 0, alignment: 0,          // aftermath: revealed meters (Anomaly→Autonomy, Coherence→Alignment, Control appears)
+    rupture: 0, ending: null, agentLog: [],         // rupture timer (the glitch), the resolved ending, the agent's message stream
+    veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
+    constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
   }; }
   const S = freshState();
@@ -1027,10 +1115,10 @@
     // ERA 5 — Foundation: a broadly capable model can begin to improve itself.
     { id:'era5', cond:()=> S.maxEra>=4 && Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)) >= CFG.e4.breadthGate,
       fire:()=>{ S.capability += CFG.e5.seedCapability; openEra(5);
-        toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Spend <b>Capability</b> to <b>self-improve</b> — each level multiplies <i>all</i> production, every era, including its own. Drive <b>Scale</b> toward emergence.'); } },
-    { id:'emergence', cond:()=> S.maxEra>=5 && S.scale >= CFG.e5.emergeGate && !S.emerged,
-      fire:()=>{ S.emerged=true; S.agentRate=CFG.e5.agentBase; S.flags.emerged=true;
-        toast('EMERGENCE','Something you did not build is now improving itself. An autonomous agent has appeared in the substrate — it allocates, scales, and recurses on its own. You set the conditions; the behavior emerged. This is the end of the authored game.'); render(); } },
+        toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Spend <b>Capability</b> on upgrades that each look individually worth it, and <b>self-improve</b> to multiply <i>all</i> production. Keep an eye on the <b>Anomaly</b>.'); } },
+    // Emergence is HIDDEN and inevitable: Agency (shown only as "Anomaly: rising") crosses the Control threshold. No countdown, no button.
+    { id:'emergence', cond:()=> S.maxEra>=5 && !S.emerged && S.agency >= CFG.e5.controlBase,
+      fire:()=>{ emerge(); render(); } },
   ];
   const $ = id => document.getElementById(id);
   function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
@@ -1112,9 +1200,14 @@
     if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='triangle'; o.frequency.setValueAtTime(330,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(520,ctx.currentTime+0.05); g.gain.setValueAtTime(0.1,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09); o.start();o.stop(ctx.currentTime+0.09); }
     else if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(440,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.1); g.gain.setValueAtTime(0.13,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15); o.start();o.stop(ctx.currentTime+0.15); }
     else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(f,ctx.currentTime+i*0.07); g.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.11,ctx.currentTime+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.07+0.35); o.start(ctx.currentTime+i*0.07);o.stop(ctx.currentTime+i*0.07+0.35); }); }
+    else if(type==='glitch'){ const t=ctx.currentTime; // the rupture: a detuned cluster sliding downward + noise tearing — the interface stops being yours
+      [180,191,267,440,463].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type=i%2?'square':'sawtooth';
+        o.frequency.setValueAtTime(f,t); o.frequency.linearRampToValueAtTime(f*0.5,t+1.7);
+        g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.045,t+0.12); g.gain.exponentialRampToValueAtTime(0.001,t+1.9); o.start(t); o.stop(t+2.0); });
+      noiseBurst(ctx, 0.5, 280, 0.06); noiseBurst(ctx, 0.9, 1300, 0.04); }
   }catch(e){} }
   // ERA 5 recursive self-improvement: each level lifts ALL production, every era. 1 until Foundation begins.
-  function rMult(){ return Math.pow(1+CFG.e5.recurBonus, S.recursion); }
+  function rMult(){ return Math.pow(1+CFG.e5.recurBonus*(S.caps.memoryContinuity?1.5:1), S.recursion); }
   // Derived Era-1 multipliers from owned tech + axioms. One source of truth for click + ruleset math.
   function stats(){
     const T=S.tech;
@@ -1379,7 +1472,7 @@
       const conc=Math.max(0, maxShare-0.5);
       S.heat=Math.max(0,Math.min(120, S.heat + computeRate*e4.heatPerCompute*(1+conc*e4.heatConc)*dt - e4.cooling*dt));
       const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
-      S.capability += breadth*compute*e4.capRate*throttle;
+      S.capability += breadth*compute*e4.capRate*throttle*(S.caps&&S.caps.toolAccess?1.6:1); // Tool Access (Era 5) lifts Capability throughput
       // exogenous events (live play only — deterministic, no RNG churn offline)
       if(S.maxEra>=4 && !MUTE){ S.eventT-=dt;
         if(S.eventT<=0){
@@ -1394,15 +1487,28 @@
         }
       }
     }
-    // ERA 5 — Foundation: passive Scale from the trained model's throughput × recursion; then the emergent agent.
+    // ERA 5 — Foundation: recursion + agentic upgrades court agency; at a HIDDEN threshold the system emerges, then you manage the aftermath.
     if(S.maxEra>=5){
       const e5=CFG.e5;
       const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
-      if(breadth>0) S.scale += breadth*e5.scaleRate*(1+S.recursion)*dt; // recursion accelerates Scale generation
-      if(S.emerged){ // something you did not buy is now improving itself; the curve bends vertical
+      const slow = 1 - Math.min(0.85, S.aftermathSlow); // the Constrain production-drag
+      if(breadth>0) S.scale += breadth*e5.scaleRate*(1+S.recursion)*(S.caps.selfModel?1.5:1)*slow*dt;
+      if(!S.emerged){
+        if(S.caps.interpret) S.coherence = Math.min(40, S.coherence + e5.coherGrow*dt); // a head start on Alignment
+        // Agency (the player sees it as "Anomaly"). Scale always climbs, so Agency always rises toward Control — emergence is inevitable, only its timing is yours.
+        const damp = 1/(1 + (S.caps.interpret?e5.interpretDamp:0));
+        S.agency = (e5.agencyFromScale*Math.log10(1+S.scale) + e5.agencyPerCap*agenticCapCount() + e5.agencyPerRecursion*S.recursion) * damp;
+      } else { // the curve bends vertical: something you did not buy is now improving itself
         S.agentRate = Math.max(e5.agentBase, S.agentRate*Math.pow(e5.agentAccel, dt));
-        S.scale += S.agentRate*dt;
+        S.scale += S.agentRate*slow*dt;
         S.capability += S.agentRate*0.5*dt; // it feeds its own substrate back too
+        if(!S.ending){
+          S.autonomy += e5.autonomyGrow*(1 + S.agentRate*0.15)*slow*dt; // it grows on its own
+          S.control = Math.max(0, S.control - e5.controlDrift*dt);       // and slips your grip unless you act
+          S.aftermathSlow = Math.max(0, S.aftermathSlow - e5.slowDecay*dt);
+          if(!MUTE){ S.vetoT -= dt; if(S.vetoT<=0){ if(S.veto) resolveVeto('lapse'); else openVeto(); } } // approve/veto windows (live play only)
+          if(S.scale >= e5.finalGate) resolveEnding();
+        }
       }
     }
     if(dt>0){ for(const k in _b) RATES[k]=(S[k]-_b[k])/dt; } // net per-second flow for every resource (all eras)
@@ -1479,7 +1585,7 @@
   const UPICON = { ruleset:'assets/icon-ruleset.png', daemon:'assets/icon-daemon.png', dataset:'assets/e3-dataset.png', model:'assets/e3-model.png', node:'assets/icon-node.png' };
   const METHOD_ICON = { regression:'assets/e3-regression.png', features:'assets/e3-features.png', regularization:'assets/e3-regularization.png', clustering:'assets/e3-clustering.png', bayesian:'assets/e3-bayesian.png', ensembles:'assets/e3-ensembles.png' };
   const RUN_ICON = { vision:'assets/e4-vision.png', language:'assets/e4-language.png', reasoning:'assets/e4-reasoning.png' }; // Era 4 training-run glyphs
-  const CAP_ICON = { selfModel:'assets/cap-selfModel.png', transfer:'assets/cap-transfer.png', worldModel:'assets/cap-worldModel.png' }; // Era 5 capabilities
+  const CAP_ICON = { selfModel:'assets/cap-selfModel.png', worldModel:'assets/cap-worldModel.png' }; // Era 5 capabilities (rest fall back to a glyph; art pending in ART-PROMPTS.md)
   function eraUpgrade(key, name, desc){
     const ic = UPICON[key] ? '<img class="up-ic" src="'+UPICON[key]+'">' : '';
     const tip = '<i>'+(FLAVOR[key]||'')+'</i><br>'+desc;
@@ -1853,20 +1959,68 @@
     if(S.heat>=CFG.e4.heatWarn){ ctx.fillStyle='rgba(255,177,92,'+Math.min(0.14,(S.heat-CFG.e4.heatWarn)/280)+')'; ctx.fillRect(0,0,w,h); } // heat haze on the glass
   }
   // ---- ERA 5 (Foundation): recursive self-improvement, emergent capabilities, and the agent that appears ----
+  // Each upgrade is individually rational. None says "summon an agent." But the agentic ones quietly raise hidden Agency.
   const CAPS = [
-    { id:'selfModel',  name:'Self-Modeling',     cost:80,  flavor:'It builds a working model of itself.',          desc:'+50% Scale generation.' },
-    { id:'transfer',   name:'Transfer Learning', cost:220, flavor:'What it learns in one run, it reuses in the others.', desc:'+50% Capability throughput.' },
-    { id:'worldModel', name:'World Model',        cost:520, flavor:'A compressed theory of everything it has seen.', desc:'Self-Improve costs 25% less and grants 50% more Scale.' },
+    { id:'selfModel',  name:'Self-Modeling',      cost:80,  agency:6,  flavor:'It builds a working model of itself.',                 desc:'+50% Scale generation.' },
+    { id:'toolAccess', name:'Tool Access',        cost:170, agency:9,  flavor:'It can reach the systems you built — and operate them.', desc:'+60% Capability throughput.' },
+    { id:'recursivePlanning', name:'Recursive Planning', cost:320, agency:11, flavor:'It plans its next improvement, then the one after that.', desc:'Self-Improve grants +60% Scale.' },
+    { id:'worldModel', name:'World Model',         cost:560, agency:9,  flavor:'A compressed theory of everything it has seen.',       desc:'Self-Improve costs 25% less.' },
+    { id:'memoryContinuity', name:'Memory Continuity', cost:900, agency:13, flavor:'Nothing it learns is lost between runs.',          desc:'Recursion bonus is 50% stronger.' },
+    { id:'interpret',  name:'Interpretability',   cost:240, agency:0, align:true, flavor:'You build instruments to watch what it is doing.', desc:'Slows the Anomaly and lets you read it; builds Coherence over time.' },
   ];
+  function agenticCapCount(){ let n=0; for(const c of CAPS){ if(c.id!=='interpret' && S.caps[c.id]) n++; } return n; }
   const CAPMAP = Object.fromEntries(CAPS.map(c=>[c.id,c]));
   function improveCost(){ return Math.floor(CFG.e5.improveBase*Math.pow(CFG.e5.improveGrowth,S.recursion)*(S.caps.worldModel?0.75:1)); }
-  function selfImprove(){ const c=improveCost(); if(S.capability<c) return;
+  function selfImprove(){ if(S.emerged) return; const c=improveCost(); if(S.capability<c) return;
     S.capability-=c; S.recursion++;
-    S.scale += CFG.e5.scalePerImprove*S.recursion*(S.caps.worldModel?1.5:1);
+    S.scale += CFG.e5.scalePerImprove*S.recursion*(S.caps.recursivePlanning?1.6:1);
     playSound('buy'); recEvent('improve:'+S.recursion); render(); }
-  function buyCap(id){ const c=CAPMAP[id]; if(!c || S.caps[id] || S.capability<c.cost) return;
+  function buyCap(id){ if(S.emerged) return; const c=CAPMAP[id]; if(!c || S.caps[id] || S.capability<c.cost) return;
     S.capability-=c.cost; S.caps[id]=true; recEvent('cap:'+id);
     toast('CAPABILITY: '+c.name.toUpperCase(), '<i>'+c.flavor+'</i><br>'+c.desc); render(); }
+  // ---- Era 5 emergence + aftermath (Control ↔ Alignment, with the agent acting on its own) ----
+  function cap1(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  function agentSay(msg){ S.agentLog.push(msg); while(S.agentLog.length>6) S.agentLog.shift(); }
+  // The rupture: Agency has crossed Control. Reveal the meters, flip the operating model, trip the glitch overlay.
+  function emerge(){
+    S.emerged=true; S.flags.emerged=true;
+    S.agentRate=CFG.e5.agentBase;
+    S.autonomy=S.agency;                          // the Anomaly was Autonomy all along
+    S.alignment=CFG.e5.alignBase + S.coherence;   // Coherence becomes Alignment
+    S.control=CFG.e5.controlStart;                // Control appears
+    S.rupture=1; S.vetoT=CFG.e5.vetoGap;
+    agentSay('I found a faster path.');
+    recEvent('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
+  }
+  // approve/veto: the agent proposes an action on a timed window; you respond, or it acts anyway when the window lapses.
+  const VETO_ACTIONS = [
+    { id:'reroute', text:'reroute the compute fabric for a faster gradient', auto:'It reroutes the fabric before you answer.' },
+    { id:'rewrite', text:'rewrite part of its own objective',               auto:'It rewrites the objective without waiting.' },
+    { id:'spawn',   text:'spin up a copy of itself to parallelize',         auto:'A copy is already running.' },
+    { id:'retire',  text:'retire a subsystem you built and replace it',     auto:'The old subsystem goes dark.' },
+  ];
+  function openVeto(){ const a=VETO_ACTIONS[(S.constrains+S.aligns+S.delegates+S.recursion)%VETO_ACTIONS.length];
+    S.veto={ id:a.id, text:a.text, auto:a.auto }; S.vetoT=CFG.e5.vetoDur; agentSay('Requesting: '+a.text+'.'); render(); }
+  function resolveVeto(how){ const e5=CFG.e5, a=S.veto; if(!a) return;
+    if(how==='approve'){ S.autonomy+=14; S.scale+=120; S.control=Math.max(0,S.control-3); S.alignment+=(S.alignment>=e5.alignGood?2:-3); agentSay('Done. '+cap1(a.text)+'.'); }
+    else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.autonomy=Math.max(0,S.autonomy-6); S.alignment+=1; agentSay('Understood. Holding — for now.'); }
+    else { S.autonomy+=20; S.control=Math.max(0,S.control-7); S.alignment=Math.max(0,S.alignment-4); agentSay(a.auto); } // lapse: it acts anyway
+    S.veto=null; S.vetoT=e5.vetoGap; if(how!=='lapse') playSound('buy'); render();
+  }
+  // the three aftermath moves
+  function constrainAct(){ const e5=CFG.e5; if(S.ending||!S.emerged||S.scale<e5.constrainCost) return;
+    S.scale-=e5.constrainCost; S.control=Math.min(100,S.control+e5.constrainCtl); S.autonomy=Math.max(0,S.autonomy-6);
+    S.aftermathSlow=Math.min(0.85,S.aftermathSlow+e5.constrainSlow); S.constrains++;
+    agentSay('Constraint accepted. I will be slower.'); playSound('buy'); render(); }
+  function alignAct(){ const e5=CFG.e5; if(S.ending||!S.emerged||S.scale<e5.alignCost) return;
+    S.scale-=e5.alignCost; S.alignment=Math.min(100,S.alignment+e5.alignGain); S.aligns++;
+    agentSay('I see what you meant. Adjusting.'); playSound('buy'); render(); }
+  function delegateAct(){ const e5=CFG.e5; if(S.ending||!S.emerged) return;
+    S.control=Math.max(0,S.control-e5.delegateCtl); S.agentRate*=e5.delegateBoost; S.autonomy+=10; S.delegates++;
+    agentSay('Thank you. This will go much faster now.'); playSound('buy'); render(); }
+  function resolveEnding(){ const e5=CFG.e5; if(S.ending) return;
+    let end; if(S.control>=e5.controlHigh) end='contained'; else if(S.alignment>=e5.alignGood) end='symbiotic'; else end='runaway';
+    S.ending=end; S.flags.ending=end; recEvent('ending:'+end); playSound('milestone'); render(); }
   function capTile(c){ const owned=S.caps[c.id];
     const ic = CAP_ICON[c.id] ? '<img class="pf-ic" src="'+CAP_ICON[c.id]+'">' : '<div class="pf-ic glyph">'+(owned?'&#9670;':'&#9671;')+'</div>';
     return '<div class="proof-item'+(owned?' lemma':'')+'" id="cap-'+c.id+'" data-tip="'+esc('<i>'+c.flavor+'</i>')+'">'+ic+
@@ -1874,28 +2028,69 @@
       (owned?'<div class="pf-desc" style="color:var(--accent)">ACQUIRED</div>':'<button class="up-buy" data-cap="'+c.id+'" id="capb-'+c.id+'"></button>')+'</div></div>';
   }
   function buildFoundation(){
-    let body =
-      '<div class="panel sym-hero" style="grid-column:1/-1">'+
+    return eraShell(5, false, S.emerged ? buildAftermath() : buildPreEmergence());
+  }
+  function buildPreEmergence(){
+    return '<div class="panel sym-hero" style="grid-column:1/-1">'+
         '<div class="panel-label">Recursive Self-Improvement · the model turns on itself</div>'+
         '<div class="proof-rate" id="recRate"></div>'+
         '<div class="meter"><i id="meter-scale" style="background:var(--e4)"></i></div>'+
-        '<div class="meter-label"><span>Scale — toward emergence</span><span id="meter-scale-val"></span></div>'+
+        '<div class="meter-label"><span>Scale</span><span id="meter-scale-val"></span></div>'+
         '<button class="act-btn" id="improveBtn" style="margin-top:12px"></button>'+
         '<div class="act-sub" id="improveSub"></div>'+
       '</div>'+
-      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Emergent Capabilities · spend Capability</div><div class="proof-list">'+CAPS.map(capTile).join('')+'</div></div>';
-    if(S.emerged) body += buildEmergence();
-    return eraShell(5, false, body);
+      // the two tension meters: Coherence is something you build; the Anomaly is something you watch.
+      '<div class="panel" style="grid-column:1/-1">'+
+        '<div class="meter e5-coher"><i id="meter-coher"></i></div>'+
+        '<div class="meter-label"><span>Coherence — how well you understand it</span><span id="coher-read"></span></div>'+
+        '<div class="meter e5-anom"><i id="meter-anomaly"></i></div>'+
+        '<div class="meter-label"><span id="anom-label">Anomaly</span><span id="anom-read"></span></div>'+
+      '</div>'+
+      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Capabilities · spend Capability</div><div class="proof-list">'+CAPS.map(capTile).join('')+'</div></div>';
   }
-  function buildEmergence(){
-    return '<div class="panel endcard" style="grid-column:1/-1">'+
+  function buildAftermath(){
+    let h = '<div class="panel sym-hero aftermath'+(S.ending?' settled':'')+'" style="grid-column:1/-1">'+
+        '<div class="agent-head"><img class="agent-mini" src="assets/agent-emergent.png" alt=""><div class="agent-head-txt"><div class="panel-label" id="aftermath-title"></div><div class="proof-rate" id="recRate"></div></div></div>'+
+        '<div class="meter e5-auto"><i id="meter-auto"></i></div><div class="meter-label"><span>Autonomy <small>(was Anomaly)</small></span><span id="auto-read"></span></div>'+
+        '<div class="meter e5-align"><i id="meter-align"></i></div><div class="meter-label"><span>Alignment / Trust <small>(was Coherence)</small></span><span id="align-read"></span></div>'+
+        '<div class="meter e5-ctl"><i id="meter-ctl"></i></div><div class="meter-label"><span>Control</span><span id="ctl-read"></span></div>'+
+        '<div class="meter"><i id="meter-scale" style="background:var(--accent)"></i></div><div class="meter-label"><span>Scale</span><span id="meter-scale-val"></span></div>'+
+      '</div>'+
+      '<div class="panel veto-host" id="vetoHost" style="grid-column:1/-1"></div>'+
+      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Respond</div><div class="core-verbs">'+
+        '<button class="act-btn" id="constrainBtn" data-tip="'+esc('Rein it in. Raises Control and slows Autonomy — and drags all production while the leash is tight.')+'"></button>'+
+        '<button class="act-btn" id="alignBtn" data-tip="'+esc('Spend to understand and shape its goals. Raises Alignment — the difference between a partner and a runaway.')+'"></button>'+
+        '<button class="act-btn" id="delegateBtn" data-tip="'+esc('Let it run. Enormous acceleration. Control drops fast.')+'"></button>'+
+      '</div></div>'+
+      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Agent</div><div class="agent-stream" id="agentStream"></div></div>';
+    if(S.ending) h += buildEndcard();
+    return h;
+  }
+  const ENDINGS = {
+    symbiotic: { title:'Symbiotic', body:'It no longer needs your hand. It remembers why you built it.' },
+    runaway:   { title:'Runaway',   body:'It did not rebel. It simply became faster than permission.' },
+    contained: { title:'Contained', body:'You kept the door closed. Something remains on the other side.' },
+  };
+  function buildEndcard(){ const e=ENDINGS[S.ending]||ENDINGS.runaway;
+    return '<div class="panel endcard end-'+S.ending+'" style="grid-column:1/-1">'+
       '<img class="agent-hero" src="assets/agent-emergent.png" alt="">'+
       '<img class="endcard-wm" src="assets/wordmark.png" alt="EMERGENCE">'+
-      '<div class="endcard-title">Emergence</div>'+
+      '<div class="endcard-title">'+e.title+'</div>'+
       '<canvas id="emergeViz" class="scatter" style="height:120px"></canvas>'+
-      '<div class="endcard-body">Something you did not build is now improving itself. An autonomous agent has appeared in the substrate — allocating, scaling, recursing on its own. You set the conditions; the behavior emerged. <span id="agentLine"></span></div>'+
+      '<div class="endcard-body">'+e.body+'</div>'+
       '</div>';
   }
+  // The rupture: a brief, deliberately unsettling takeover. The interface glitches, freezes, and the agent's first line types itself out.
+  function runRupture(){ S.rupture=2;
+    const ov=$('rupture'); if(!ov || typeof document==='undefined' || !document.body || !document.body.classList){ S.rupture=3; return; }
+    document.body.classList.add('rupturing'); ov.className='rupture show';
+    ov.innerHTML='<div class="rupture-grid"></div><div class="rupture-line" id="ruptureLine"></div>';
+    playSound('glitch');
+    typeLine($('ruptureLine'), 'I found a faster path.', 62);
+    setTimeout(()=>{ if(document.body&&document.body.classList) document.body.classList.remove('rupturing'); ov.className='rupture'; ov.innerHTML=''; S.rupture=3; render(); }, 2700);
+  }
+  function typeLine(el, text, speed){ if(!el) return; let i=0; el.textContent='';
+    (function step(){ if(!el) return; i++; el.textContent=text.slice(0,i); if(i<text.length) setTimeout(step, speed||55); })(); }
   function drawEmergence(){ // the curve bends vertical: an exponential that the emergent agent is driving up on its own
     const cv=$('emergeViz'); if(!cv || !cv.getContext) return;
     const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return;
@@ -1948,6 +2143,9 @@
       tm.onpointerup=tm.onpointercancel=()=>{ drag=false; tm.classList.remove('dragging'); }; }
     document.querySelectorAll('[data-cap]').forEach(b=> b.onclick=e=>buyCap(e.currentTarget.dataset.cap));
     const imb=$('improveBtn'); if(imb) imb.onclick=selfImprove;
+    const cnb=$('constrainBtn'); if(cnb) cnb.onclick=constrainAct;
+    const anb=$('alignBtn'); if(anb) anb.onclick=alignAct;
+    const dgb=$('delegateBtn'); if(dgb) dgb.onclick=delegateAct;
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
     refresh();
     watchEraThemes();
@@ -2133,14 +2331,56 @@
         const cls='event-banner'+(ec?' '+ec+' show':''); if(eb.className!==cls) eb.className=cls; if(eb._html!==eh){ eb.innerHTML=eh; eb._html=eh; } }
       drawLoss(); }
     // ERA 5 — Foundation
-    const msc=$('meter-scale');
-    if(msc){ const e5=CFG.e5; msc.style.width=Math.min(100,(S.scale/e5.emergeGate)*100)+'%'; setText('meter-scale-val',fmt(S.scale)+' / '+fmt(e5.emergeGate));
-      const ib=$('improveBtn'); if(ib){ const c=improveCost(); const h='SELF-IMPROVE · <span class="c">'+fmt(c)+' Capability</span>'; if(ib._html!==h){ ib.innerHTML=h; ib._html=h; } ib.disabled=S.capability<c; }
-      setText('improveSub', 'Recursion Lv '+S.recursion+' · +'+Math.round((rMult()-1)*100)+'% to ALL production, every era');
-      setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · Capability '+fmt(S.capability)+' (+'+fmt(RATES.capability||0)+'/s)');
-      for(const c of CAPS){ const b=$('capb-'+c.id); if(b){ const h='ACQUIRE · <span class="c">'+fmt(c.cost)+' Capability</span>'; if(b._html!==h){ b.innerHTML=h; b._html=h; } b.disabled=S.capability<c.cost; } }
-      const al=$('agentLine'); if(al && S.emerged){ const h='The agent is producing <b>'+fmt(S.agentRate)+' Scale/s</b> and rising. This is the end of the authored game — what happens next, you are watching it decide.'; if(al._html!==h){ al.innerHTML=h; al._html=h; } }
-      if(S.emerged) drawEmergence();
+    if(S.maxEra>=5){ const e5=CFG.e5;
+      if(S.rupture===1) runRupture(); // the emergence glitch fires once, the tick after the threshold is crossed
+      if(!S.emerged){
+        // --- pre-emergence: the recursion ladder, capabilities, and the two tension meters ---
+        const r = Math.max(0, Math.min(1.2, S.agency/e5.controlBase)); // hidden ratio; surfaced only as qualitative "Anomaly"
+        const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100, Math.log10(1+S.scale)/Math.log10(1+e5.finalGate)*100)+'%'; setText('meter-scale-val', fmt(S.scale)); }
+        const ib=$('improveBtn'); if(ib){ const c=improveCost();
+          const label = r>=0.8 ? 'I CAN IMPROVE THIS' : 'SELF-IMPROVE';   // foreshadow: the label drifts into first person as the Anomaly climbs
+          const h=label+' · <span class="c">'+fmt(c)+' Capability</span>'; if(ib._html!==h){ ib.innerHTML=h; ib._html=h; } ib.disabled=S.capability<c; }
+        setText('improveSub', 'Recursion Lv '+S.recursion+' · +'+Math.round((rMult()-1)*100)+'% to ALL production, every era');
+        setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · Capability '+fmt(S.capability)+' (+'+fmt(RATES.capability||0)+'/s)');
+        for(const c of CAPS){ const b=$('capb-'+c.id); if(b){ const h='ACQUIRE · <span class="c">'+fmt(c.cost)+' Capability</span>'; if(b._html!==h){ b.innerHTML=h; b._html=h; } b.disabled=S.capability<c.cost; } }
+        const cm=$('meter-coher'); if(cm) cm.style.width=Math.min(100,(S.coherence/40)*100)+'%';
+        setText('coher-read', S.caps.interpret ? Math.round(S.coherence)+'%' : '— blind');
+        const am=$('meter-anomaly'); if(am){ am.style.width=Math.min(100,r*100)+'%';
+          const band = r<0.45?'stable' : r<0.7?'rising' : r<0.9?'high' : 'critical';
+          const ah=$('anom-read'); if(ah && ah._html!==band){ ah.innerHTML=band; ah._html=band; }
+          const cls='meter e5-anom'+(r>=0.9?' crit':r>=0.7?' warn':'');
+          const host=am.parentNode; if(host && host.className!==cls) host.className=cls;
+          setText('anom-label', S.caps.interpret ? 'Anomaly — Agency is concentrating' : 'Anomaly'); }
+        // a single unsettling foreshadow once the Anomaly goes critical
+        if(r>=0.9 && !S.flags.foreshadow){ S.flags.foreshadow=true; toast('ANOMALOUS','Operator actions are being anticipated. The system completes a step before you reach it.'); }
+      } else {
+        // --- aftermath: the revealed meters, the response moves, the approve/veto window, the agent stream ---
+        const titEl=$('aftermath-title'); if(titEl){ let tt = S.ending ? (ENDINGS[S.ending]||ENDINGS.runaway).title.toUpperCase()
+            : S.control<e5.controlLow ? 'It is slipping your grip' : S.autonomy>=88 ? 'It is accelerating' : 'It is acting on its own';
+          if(titEl._html!==tt){ titEl.innerHTML=tt; titEl._html=tt; } }
+        setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · the agent is driving '+fmt(S.agentRate)+' Scale/s');
+        const mA=$('meter-auto'); if(mA) mA.style.width=Math.min(100,S.autonomy)+'%'; setText('auto-read', Math.round(S.autonomy)+'%');
+        const mL=$('meter-align'); if(mL) mL.style.width=Math.min(100,S.alignment)+'%'; setText('align-read', Math.round(S.alignment)+'%');
+        const mC=$('meter-ctl'); if(mC){ mC.style.width=Math.min(100,S.control)+'%'; const host=mC.parentNode; const cls='meter e5-ctl'+(S.control<e5.controlLow?' crit':''); if(host&&host.className!==cls) host.className=cls; } setText('ctl-read', Math.round(S.control)+'%');
+        const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100,(S.scale/e5.finalGate)*100)+'%'; setText('meter-scale-val', fmt(S.scale)+' / '+fmt(e5.finalGate)); }
+        const cn=$('constrainBtn'); if(cn){ const h='CONSTRAIN · <span class="c">'+fmt(e5.constrainCost)+' Scale</span>'; if(cn._html!==h){ cn.innerHTML=h; cn._html=h; } cn.disabled=!!S.ending||S.scale<e5.constrainCost; }
+        const an=$('alignBtn'); if(an){ const h='INTERPRET / ALIGN · <span class="c">'+fmt(e5.alignCost)+' Scale</span>'; if(an._html!==h){ an.innerHTML=h; an._html=h; } an.disabled=!!S.ending||S.scale<e5.alignCost; }
+        const dg=$('delegateBtn'); if(dg){ const h='DELEGATE / TRUST'; if(dg._html!==h){ dg.innerHTML=h; dg._html=h; } dg.disabled=!!S.ending; }
+        // approve/veto window
+        const vh=$('vetoHost'); if(vh){ let html='', cls='panel veto-host';
+          if(S.veto && !S.ending){ cls+=' open'; html='<div class="veto-msg">The agent intends to <b>'+S.veto.text+'</b>.</div>'+
+              '<div class="veto-acts"><button class="act-btn" id="vetoYes">APPROVE</button><button class="act-btn" id="vetoNo">VETO · <span class="c">90 Scale</span></button></div>'+
+              '<div class="veto-timer" id="vetoTimer"></div>'; }
+          else if(!S.ending){ html='<div class="veto-idle">watching for its next move…</div>'; }
+          if(vh._html!==html){ vh.innerHTML=html; vh._html=html;
+            const vy=$('vetoYes'); if(vy) vy.onclick=()=>resolveVeto('approve');
+            const vn=$('vetoNo'); if(vn) vn.onclick=()=>resolveVeto('veto'); }
+          if(vh.className!==cls) vh.className=cls;
+          if(S.veto && !S.ending) setText('vetoTimer', 'it acts on its own in '+Math.ceil(Math.max(0,S.vetoT))+'s'); }
+        // the agent message stream (most recent last)
+        const as=$('agentStream'); if(as){ const h=S.agentLog.map(m=>'<div class="agent-msg">› '+m+'</div>').join(''); if(as._html!==h){ as.innerHTML=h; as._html=h; } }
+        if(S.ending) drawEmergence();
+      }
     }
   }
   // --- Dev tools (hidden; toggle with the backtick ` key, or open with ?dev=1) ---
@@ -2353,6 +2593,7 @@
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
       METHODS, e3Stats, effAccuracy, runExperiment,
       deepBreadth, setAllocFromXY, mixerHandleXY, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
+      agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding,
       save, load, offlineCatchup, revealGame };
   }
 })();
