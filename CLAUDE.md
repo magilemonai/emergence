@@ -143,7 +143,7 @@ ending, not a pre-emergence escape); **3 moves + veto** (no extra aftermath laye
 - **Live cadence tuning** (Cody's hands): pre-emergence climb length, the Anomaly band thresholds,
   aftermath veto cadence + how fast Control bleeds, finalGate timing. Dev-assisted autoplay says
   ~2.7m pre + ~2.9m aftermath; needs a real run to trust against 7-9 min.
-- **Music** (in flight): ambient/spacey loop via Suno; a separate darker post-emergence track is worth it (see chat).
+- **Music** ✅ WIRED: a whole-game ambient bed (Cody's Suno tracks in `assets/`): **Graviton Lullaby** plays from the cold-open under every era's SFX and **crossfades to Unmoored Presence at the emergence rupture** (the bed destabilizes with the glitch). `MUSIC` controller near `playSound`; starts on first user gesture (autoplay policy); header **♪ toggle** persists to localStorage. Per-era tracks are a possible future pass.
 
 **Also still open (earlier eras):**
 1. **Pacing fixes from the real run (dev-assisted, so relative shapes only):** ✅ Symbolic

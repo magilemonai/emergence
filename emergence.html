@@ -373,6 +373,10 @@
   header.show { opacity: 1; transform: translateY(0); }
   .logo { display: flex; align-items: center; }
   .logo-wm { height: 24px; width: auto; display: block; filter: drop-shadow(0 0 6px rgba(232,184,118,0.3)); }
+  .music-btn { background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 6px;
+    width: 28px; height: 24px; font-size: 13px; line-height: 1; cursor: pointer; padding: 0; transition: color 0.2s, border-color 0.2s, opacity 0.2s; }
+  .music-btn:hover { color: var(--text); border-color: var(--accent); }
+  .music-btn.off { opacity: 0.45; text-decoration: line-through; }
   .logo b { color: var(--e3); }
   .era-indicator { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
   .hdr-right { margin-left: auto; display: flex; gap: 22px; align-items: center; }
@@ -889,6 +893,7 @@
       <div class="era-indicator" id="eraInd"></div>
     </div>
     <div class="hdr-right">
+      <button id="musicBtn" class="music-btn" title="Music on/off" aria-label="Toggle music">&#9834;</button>
       <div class="buymode" id="buyMode"></div>
       <div class="res-bar" id="resBar"></div>
     </div>
@@ -909,6 +914,8 @@
 <div id="toasts"></div>
 <div id="tip"></div>
 <div id="rupture" class="rupture"></div>
+<audio id="musGraviton" src="assets/music-graviton-lullaby.mp3" loop preload="auto"></audio>
+<audio id="musUnmoored" src="assets/music-unmoored-presence.mp3" loop preload="auto"></audio>
 <div id="dev"></div>
 <div id="drawerBg"></div>
 <div id="drawer"><div class="drawer-head"><span>RESEARCH &middot; one-time discoveries</span><button id="drawerClose">&times;</button></div><div id="drawerBody"></div></div>
@@ -1215,6 +1222,29 @@
         g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.045,t+0.12); g.gain.exponentialRampToValueAtTime(0.001,t+1.9); o.start(t); o.stop(t+2.0); });
       noiseBurst(ctx, 0.5, 280, 0.06); noiseBurst(ctx, 0.9, 1300, 0.04); }
   }catch(e){} }
+  // ---- Ambient music bed: Graviton Lullaby plays the whole game, crossfading to Unmoored Presence at emergence ----
+  const MUSIC = { on:true, started:false, cur:null, vol:0.38, fades:{} };
+  function musicEl(id){ try{ const e=document.getElementById(id); return (e && typeof e.play==='function') ? e : null; }catch(_){ return null; } }
+  function fadeAudio(elId, to, ms){ const el=musicEl(elId); if(!el) return;
+    if(MUSIC.fades[elId]){ clearInterval(MUSIC.fades[elId]); MUSIC.fades[elId]=null; }
+    const from=el.volume||0, t0=Date.now();
+    if(to>0 && el.paused){ try{ el.play(); }catch(_){} }
+    MUSIC.fades[elId]=setInterval(()=>{ const k=Math.min(1,(Date.now()-t0)/ms); el.volume=Math.max(0,Math.min(1, from+(to-from)*k));
+      if(k>=1){ clearInterval(MUSIC.fades[elId]); MUSIC.fades[elId]=null; if(to===0){ try{ el.pause(); }catch(_){} } } }, 60);
+  }
+  function startMusic(){ if(MUSIC.started || !MUSIC.on) return; // first call follows a user gesture (autoplay policy)
+    const track = S.emerged ? 'musUnmoored' : 'musGraviton'; const el=musicEl(track); if(!el) return;
+    MUSIC.started=true; MUSIC.cur=track; el.volume=0; try{ el.play(); }catch(_){} fadeAudio(track, MUSIC.vol, 2500);
+  }
+  function musicTo(track){ if(MUSIC.cur===track) return; const old=MUSIC.cur; MUSIC.cur=track;
+    if(old) fadeAudio(old, 0, 2200);
+    if(MUSIC.on && MUSIC.started) fadeAudio(track, MUSIC.vol, 2600);
+  }
+  function updateMusicBtn(){ const b=document.getElementById('musicBtn'); if(b && b.classList) b.classList.toggle('off', !MUSIC.on); }
+  function toggleMusic(){ MUSIC.on=!MUSIC.on; try{ localStorage.setItem('emergence-music', MUSIC.on?'on':'off'); }catch(_){}
+    if(MUSIC.on){ MUSIC.started=false; startMusic(); } else { fadeAudio('musGraviton',0,400); fadeAudio('musUnmoored',0,400); }
+    updateMusicBtn();
+  }
   // ERA 5 recursive self-improvement: each level lifts ALL production, every era. 1 until Foundation begins.
   function rMult(){ return Math.pow(1+CFG.e5.recurBonus*(S.caps.memoryContinuity?1.5:1), S.recursion); }
   // Derived Era-1 multipliers from owned tech + axioms. One source of truth for click + ruleset math.
@@ -2000,6 +2030,7 @@
     S.alignment=CFG.e5.alignBase + S.coherence;   // Coherence becomes Alignment
     S.control=CFG.e5.controlStart;                // Control appears
     S.rupture=1; S.vetoT=CFG.e5.vetoGap; S.opT=7;
+    musicTo('musUnmoored'); // the bed destabilizes as the interface ruptures
     agentSay('I found a faster path.');
     recEvent('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
   }
@@ -2604,6 +2635,12 @@
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
   $('coBtn').onclick=inscribe;
+  // music: load preference, wire the toggle, and start on the first user gesture (browsers block autoplay otherwise)
+  try{ MUSIC.on = localStorage.getItem('emergence-music')!=='off'; }catch(_){}
+  updateMusicBtn();
+  { const mb=$('musicBtn'); if(mb) mb.onclick=toggleMusic; }
+  window.addEventListener('pointerdown', startMusic);
+  window.addEventListener('keydown', startMusic);
   setInterval(tick, CFG.tickMs);
   setInterval(save, 5000);
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) save(); });
