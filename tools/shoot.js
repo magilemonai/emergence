@@ -93,7 +93,7 @@ const SETUP = {
 };
 
 const chrome = spawn(CHROME, ['--headless=new','--disable-gpu','--hide-scrollbars',
-  '--window-size=1280,1700', `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*',
+  '--window-size=1280,2600', `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*',
   '--no-first-run','--no-default-browser-check', 'about:blank']);
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
