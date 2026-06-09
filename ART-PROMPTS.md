@@ -45,6 +45,32 @@ square, generous transparent margin, ~1024px, no text, no checkerboard if you ca
 
 ---
 
+---
+
+## Era 1 — Origins TEXTURE OVERLAYS (from the carved-stone critique)
+
+Procedural grain + ink + benches are wired. These PNGs add the final layer — irregular
+edges and real sub-materials — that CSS can't fake. All **transparent PNG, ~1024px, no text**.
+Drop in `images/`, I key (if needed) → `assets/` and wire with `::before`/`::after`.
+
+1. `stone-edge-chips` — a **transparent chipped/worn rectangular border frame** (interior fully
+   transparent, only the edge): chipped corners, rubbed highlights, small cracks. Warm grey-stone
+   with faint bronze dust. Tiles over any panel/button edge to break the perfect rectangle. **Highest impact.**
+2. `era1-record-clay` — a seamless **clay-tablet / parchment face** texture: dusty, light warm
+   ochre, faint etched tally scratches. For The Record cards.
+3. `era1-forge-basalt` — a seamless **dark basalt / charcoal face** texture: near-black, soot,
+   a few faint ember specks low. For The Forge cards.
+4. `era1-core-disk` — a **circular carved stone slab/anvil**: concentric construction rings, chips,
+   a worn center, warm bronze edge light. The ritual focal object behind the evolving core.
+5. `seal-discovered` — a small **bronze stamped wax/clay seal medallion** (line-art, transparent):
+   the "DISCOVERED" status stamp for completed research, replacing the modern disabled button.
+6. `carved-divider` — a thin **engraved bronze divider rule** with a small central sigil,
+   transparent: section breaks in the research archive.
+
+(All single-hue ochre/bronze on transparent. If a flat solid bg is easier, white-bg keys fine.)
+
+---
+
 ### Wiring checklist (Claude, once PNGs land in `images/` → keyed to `assets/`)
 - `UPICON.node = 'assets/icon-node.png'` (Compute Node tile).
 - `ERAS[4].sigil = 'assets/era4-sigil.png'`; `ERAS[5].sigil = 'assets/era5-sigil.png'`.
