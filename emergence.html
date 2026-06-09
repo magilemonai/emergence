@@ -552,6 +552,27 @@
   .era-e3 .method-pin.found { border-left: 3px solid var(--accent); box-shadow: 0 0 12px rgba(95,224,192,0.1); }
   .era-e3 .method-pin.scanning { border-style: dashed; animation: scanPulse 2.2s ease-in-out infinite; }
   @keyframes scanPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 0.95; } }
+  /* Dataset Feed / Fit Engine = modules with a conduit feeding the chamber */
+  .era-e3 .feed-module { position: relative; overflow: hidden; }
+  .era-e3 .feed-module::before { content: ''; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px;
+    background: linear-gradient(var(--accent), transparent); box-shadow: 0 0 9px rgba(95,224,192,0.4); opacity: 0.55; }
+  /* Origins supply as a recessed service bus: thin, muted, secondary */
+  .era-e3 .supply-bus { background: rgba(2,9,12,0.6); border-color: rgba(95,224,192,0.12); }
+  .era-e3 .supply-bus .sup-lab { color: var(--dimmer); }
+  .era-e3 .sup-row { gap: 0; border: 1px solid rgba(95,224,192,0.14); border-radius: 8px; overflow: hidden; background: rgba(2,9,12,0.55); }
+  .era-e3 .sup-btn { border: none; border-right: 1px solid rgba(95,224,192,0.1); border-radius: 0; background: transparent; padding: 8px 13px; opacity: 0.82; }
+  .era-e3 .sup-btn:last-child { border-right: none; }
+  .era-e3 .sup-btn:hover:not(:disabled) { background: rgba(95,224,192,0.06); opacity: 1; }
+  .era-e3 .sup-rate { color: var(--dimmer); }
+  /* Training Focus = a notched calibration strip with an engaged pointer */
+  .era-e3 .focus-seg { position: relative; }
+  .era-e3 .focus-seg::before { content: ''; position: absolute; top: 0; left: 50%; width: 1px; height: 5px; background: rgba(95,224,192,0.3); }
+  .era-e3 .focus-seg.active { background: rgba(95,224,192,0.16); box-shadow: inset 0 0 0 1px rgba(95,224,192,0.32); }
+  .era-e3 .focus-seg.active::after { content: ''; position: absolute; left: 50%; bottom: -1px; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 6px solid var(--accent); }
+  /* RUN TRIAL = a physical actuator, raised + pressable */
+  .era-e3 .inst-lever { box-shadow: inset 0 1px 0 rgba(205,255,246,0.25), inset 0 -3px 0 rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.4); }
+  .era-e3 .inst-lever:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 2px 6px rgba(0,0,0,0.45); }
   .sup-lab { font-size: 10px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
   .sup-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .sup-btn { flex: 1; min-width: 150px; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; color: var(--text); transition: border-color 0.15s; }
@@ -918,6 +939,7 @@
   function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
   const cost=(base,growth,count)=> Math.floor(base*Math.pow(growth,count));
   let MUTE=false;
+  let plotPulse = 0; // Era-3: a trial pulses the plot (points flare, band widens briefly), set on manual RUN TRIAL
   // ERA 2 terminal output log (ephemeral; the machine talks back). `key` collapses repeats (rapid rule-writes = one line).
   let symLog = [], symLogKey = null;
   function logSym(msg, key){ if(MUTE) return;
@@ -1556,9 +1578,9 @@
           '<button class="act-btn inst-lever" id="expBtn">RUN TRIAL</button>'+
         '</div>'+
       '</div>'+
-      '<div class="panel">'+eraUpgrade('dataset','Data Source','Feeds the instrument with observations. Built from Silicon.')+'</div>'+
-      '<div class="panel">'+eraUpgrade('model','Model','Auto-runs trials, spending Data.')+'</div>'+
-      '<div class="panel" style="grid-column:1/-1"><div class="sup-lab">Origins Supply — the instrument runs on Silicon; reopen the Foundry to scale</div>'+
+      '<div class="panel feed-module">'+eraUpgrade('dataset','Dataset Feed','Feeds the instrument with observations. Built from Silicon.')+'</div>'+
+      '<div class="panel feed-module">'+eraUpgrade('model','Fit Engine','Auto-runs trials, spending Data.')+'</div>'+
+      '<div class="panel supply-bus" style="grid-column:1/-1"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; reopen the Foundry to scale</div>'+
         '<div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium')+'</div>'+
         '<div class="sup-rate" id="supSi"></div></div>'+
       '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods · found by experiment</div>'+buildMethods()+'</div>';
@@ -1577,23 +1599,26 @@
     for(let i=1;i<5;i++){ const gy=pad+gh*i/5; ctx.beginPath(); ctx.moveTo(pad,gy); ctx.lineTo(w-pad,gy); ctx.stroke(); }
     // axes
     ctx.strokeStyle='rgba(95,224,192,0.28)'; ctx.beginPath(); ctx.moveTo(pad,pad-6); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
-    const f=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5); // the true underlying function the model is trying to find
-    // true-function ghost (the hidden truth) — dashed, dim
+    const f=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5); // the hidden generating function — used only to PLACE points, never drawn (no answer key)
+    const fit=x=> 0.5+(f(x)-0.5)*acc + Math.sin(x*42 + t*2)*gap*0.16*acc;  // the current model (wobbles when overfit)
+    const genRef=x=> 0.5+(f(x)-0.5)*Math.min(1,acc+0.04);                  // the generalized / validation trace (smooth) the fit drifts from when overfit
+    // validation trace — dashed, dim; the player watches the bright fit diverge from it under overfit
     if(ctx.setLineDash){ ctx.setLineDash([5,5]); }
-    ctx.beginPath(); for(let px=0;px<=gw;px+=3){ const x=px/gw; const cx=pad+px, cy=Y(f(x)); px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
-    ctx.strokeStyle='rgba(95,224,192,0.22)'; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.beginPath(); for(let px=0;px<=gw;px+=3){ const x=px/gw; const cx=pad+px, cy=Y(genRef(x)); px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
+    ctx.strokeStyle='rgba(95,224,192,0.20)'; ctx.lineWidth=1.4; ctx.stroke();
     if(ctx.setLineDash){ ctx.setLineDash([]); }
-    // confidence band around the model — wide when uncertain, tight as accuracy rises
-    const band=(1-acc)*0.16+0.012, fit=x=> 0.5+(f(x)-0.5)*acc + Math.sin(x*42 + t*2)*gap*0.16*acc;
+    // confidence band around the model — wide when uncertain, tight as accuracy rises; widens briefly on a fresh trial
+    const pulse=plotPulse; plotPulse*=0.82; if(plotPulse<0.01) plotPulse=0;
+    const band=(1-acc)*0.16+0.012 + pulse*0.03;
     ctx.beginPath();
     for(let px=0;px<=gw;px+=3){ const x=px/gw; const cx=pad+px; (px===0?ctx.moveTo:ctx.lineTo).call(ctx,cx,Y(fit(x)+band)); }
     for(let px=gw;px>=0;px-=3){ const x=px/gw; const cx=pad+px; ctx.lineTo(cx,Y(fit(x)-band)); }
     ctx.closePath(); ctx.fillStyle='rgba(95,224,192,0.09)'; ctx.fill();
-    // data points (glowing cyan)
-    const N=30; ctx.fillStyle='rgba(110,231,255,0.85)';
-    if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(110,231,255,0.6)'; ctx.shadowBlur=4; }
+    // data points (glowing cyan) — pulse brighter/larger right after a trial fires
+    const N=30, pr=1+pulse*1.1; ctx.fillStyle='rgba(110,231,255,'+(0.8+pulse*0.2)+')';
+    if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(110,231,255,0.6)'; ctx.shadowBlur=4+pulse*8; }
     for(let i=0;i<N;i++){ const x=(i+0.5)/N, hsh=Math.abs(Math.sin(i*12.9898)*43758.5453)%1, ny=(hsh-0.5)*0.32;
-      ctx.beginPath(); ctx.arc(X(x), Y(f(x)+ny), 2.4,0,6.3); ctx.fill(); }
+      ctx.beginPath(); ctx.arc(X(x), Y(f(x)+ny), 2.4*pr,0,6.3); ctx.fill(); }
     if(ctx.shadowBlur!==undefined){ ctx.shadowBlur=0; }
     // the model curve — bright; tints amber + wobbles as the overfit gap grows
     ctx.beginPath(); for(let px=0;px<=gw;px+=2){ const x=px/gw; const cx=pad+px, cy=Y(fit(x)); px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
@@ -1731,7 +1756,7 @@
     const ib=$('inscribeBtn'); if(ib) ib.onclick=inscribe;
     const qb=$('quarryBtn'); if(qb) qb.onclick=quarry;
     const fb=$('fabricateBtn'); if(fb) fb.onclick=fabricate;
-    const eb=$('expBtn'); if(eb) eb.onclick=()=>{ runExperiment(1); playSound('click'); refresh(); };
+    const eb=$('expBtn'); if(eb) eb.onclick=()=>{ runExperiment(1); plotPulse=1; playSound('click'); refresh(); };
     document.querySelectorAll('[data-focus]').forEach(b=>{ b.onclick=()=>{ S.focus=b.getAttribute('data-focus'); playSound('click'); render(); }; });
     document.querySelectorAll('[data-supbuy]').forEach(b=>{ b.onclick=()=>{ buy(b.getAttribute('data-supbuy')); }; });
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
@@ -1746,12 +1771,13 @@
     refresh();
     watchEraThemes();
   }
+  const BUY_VERB = { dataset:'EXPAND', model:'CALIBRATE', node:'PROVISION' }; // instrument/era verbs; others fall back to BUILD
   function upLabel(key){ // {can, html} for a buy button under the current buy mode
-    const b=BUYS[key], mode=S.buyMode;
+    const b=BUYS[key], mode=S.buyMode, verb=BUY_VERB[key]||'BUILD';
     if(mode==='max'){ const qty=buyQty(key), can=qty>0, c=totalCost(b, can?qty:1);
-      return { can, html:'BUILD'+(can?' &times;'+qty:' MAX')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>' }; }
+      return { can, html:verb+(can?' &times;'+qty:' MAX')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>' }; }
     const qty=(mode==='10')?10:1, c=totalCost(b,qty), can=S[b.res]>=c;
-    return { can, html:'BUILD'+(qty>1?' &times;'+qty:'')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>' };
+    return { can, html:verb+(qty>1?' &times;'+qty:'')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>' };
   }
   function setText(id,txt){ const el=$(id); if(el && el.textContent!==txt) el.textContent=txt; }
   function setStatus(n, live){ const el=$('status-'+n); if(!el) return;
