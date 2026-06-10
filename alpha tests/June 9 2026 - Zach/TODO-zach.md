@@ -44,15 +44,14 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 - [x] 6.2 "Write Rule" must not look like a text-input field (it's a click) (42)
 - [x] 6.3 Make Compile legible + non-scary (what it resets, why it's good) (44)
 - [x] 6.4 Relabel so the era doesn't read as "the game ended" (era name repeats pre/post) (46)
-- [ ] 6.5 De-jargon (theorems/lemmas/daemon/PID/axioms) + a clear moment-to-moment goal (41,43,47,48) — PAUSE for design fork
+- [x] 6.5 → folded into the Legibility + Teaching pass below
 
-## Batch 7 — Statistical legibility (REDESIGN)
-- [ ] 7.1 Discovered Methods persist + are readable (stop pop-and-vanish) (50)
-- [ ] 7.2 Make accuracy-vs-overfit-gap readable (the "accuracy up but bar down" confusion) (51)
-- [ ] 7.3 Clarify the verbs (Run Trial / Expand / Calibrate / Focus) + a clear goal (49,52-54) — PAUSE for design fork
-
-## Batch 8 — Teaching layer (REDESIGN, the throughline)
-- [ ] 8.1 Onboarding/teaching beats for Symbolic & Statistical (Origins taught by accident; later eras don't teach) (57) — PAUSE for design fork
+## Batch L — Legibility + Teaching pass (APPROVED 2026-06-10; bundles 6.5 + 7.1-7.3 + 8.1)
+> Principle: keep the authentic vocabulary, pair it with plain words inline; one dismissible in-world teaching beat per era; objective line carries the goal.
+- [x] L.1 Inline plain-language pairing — Symbolic (Inference=reasoning power, Theorem=technique, Daemon=automation, Axiom=permanent boost) + Statistical (Run Trial, Expand=more data, Calibrate=tune, Methods=techniques, overfit gap) (6.5, 7.3)
+- [ ] L.2 First-time teaching beat per era — Symbolic as a CRT boot-message, Statistical as an instrument-calibration readout (in-world, dismissible, 3 steps) (8.1)
+- [ ] L.3 Moment-to-moment goal/stuck hints — no-proof nudge in Symbolic ("pick a technique to aim reasoning at"); Methods persist + readable in Statistical (6.5 goal, 7.1)
+- [ ] L.4 Statistical accuracy legibility — show "Accuracy − overfit = effective / needed" so "accuracy up but bar down" makes sense (7.2)
 
 ## Deferred (NOT this loop — revisit later)
 - Pointer hints (11) · Civ-style timeline/log (13) · sub-age reskins within Origins (30-31 full) · Tally Marks ordering (20) ·

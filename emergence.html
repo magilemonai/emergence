@@ -831,6 +831,10 @@
   .tile-name { font-size: 18px; color: var(--text); text-align: center; }
   .tile-eyebrow { display: block; font-size: 11px; letter-spacing: 0.06em; color: var(--dimmer); text-transform: uppercase; opacity: 0.8; margin-bottom: 1px; }
   .verb-yield { font-size: 0.82em; opacity: 0.85; font-variant-numeric: tabular-nums; margin-left: 4px; }
+  /* plain-language partner for jargon labels (Zach: "the words mean nothing") — keep the term, demystify it inline */
+  .lbl-plain { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.72; font-size: 0.82em; font-style: italic; }
+  .sym-help { font-size: 12px; color: var(--dim); line-height: 1.6; margin: 2px 0 10px; }
+  .sym-help b { color: var(--text); } .sym-help i { color: var(--accent); font-style: normal; }
   .conv-toggle { float: right; background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 5px;
     width: 22px; height: 19px; font-size: 10px; line-height: 1; cursor: pointer; padding: 0; transition: color 0.15s, border-color 0.15s; }
   .conv-toggle:hover { color: var(--text); border-color: var(--ec, var(--accent)); }
@@ -1741,7 +1745,7 @@
       '<span class="dmn-proc"><b>'+proc+'</b><span class="dmn-inst" id="cnt-'+key+'"></span><span class="dmn-desc">'+desc+'</span></span>'+
       '<span class="dmn-rate" id="eff-'+key+'"></span>'+
       '<button class="up-buy dmn-cmd" data-buy="'+key+'" id="buy-'+key+'"></button></div>';
-    let html='<div class="daemon-table"><div class="daemon-head"><span>PID</span><span>PROCESS</span><span>OUTPUT</span><span>SPAWN</span></div>';
+    let html='<div class="daemon-table"><div class="daemon-head"><span>#</span><span>PROGRAM</span><span>WHAT IT DOES</span><span>BUILD</span></div>';
     html+=row('001','ruleset','ruleset.d','writes rules automatically');
     if(S.tech.inference) html+=row('002','daemon','inference.d','fires the write action for you');
     return html+'</div>';
@@ -1752,15 +1756,16 @@
     body += '<div class="panel sym-hero" style="grid-column:1/-1">'+
       '<div class="term-head"><img class="boot-glyph" src="assets/boot-glyph.png" alt="">'+
         '<span class="term-title">INFERENCE&nbsp;ENGINE</span><span class="term-path">~/prove a theorem</span><span class="term-dot"></span></div>'+
+      '<div class="sym-help">Your Rulesets generate <b>Inference</b> <i>(reasoning power)</i>. Aim it at a <b>Theorem</b> <i>(a technique to unlock)</i> below to prove it. Prove the <b>Expert System</b> to finish the era.</div>'+
       '<div class="proof-rate term-out" id="infRate"></div><div class="proof-active" id="proofActive"></div>'+
       '<div class="term-log" id="termLog"></div>'+
       '<button class="act-btn term-cmd" id="ruleBtn2"><span class="term-prompt">&gt;</span>WRITE A RULE<span class="term-key">RUN &#8629;</span></button>'+
       '<div class="act-sub" id="manualSub" style="text-align:left"></div></div>';
     // Automation: a daemon registry / process table, not upgrade cards
-    body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Automation &middot; daemon registry</div>'+buildDaemons()+'</div>';
+    body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Automation &middot; daemons <span class="lbl-plain">(programs that write rules for you)</span></div>'+buildDaemons()+'</div>';
     // The theorems to choose from
-    if(S.flags.tree) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Theorems &amp; Lemmas · pick what to prove next</div>'+buildProofList()+'</div>';
-    if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile &amp; Axioms</div>'+buildCompile()+'</div>';
+    if(S.flags.tree) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Theorems <span class="lbl-plain">(techniques to unlock — aim your reasoning at one)</span></div>'+buildProofList()+'</div>';
+    if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile <span class="lbl-plain">(bank permanent boosts)</span></div>'+buildCompile()+'</div>';
     return eraShell(2, false, body);
   }
   const TH_ICON = { optimization:'assets/th-optimization.png', formalLogic:'assets/th-formalLogic.png',
@@ -1938,6 +1943,7 @@
       // THE INSTRUMENT — the living plot is the world object; you observe + steer a learning process
       '<div class="panel plot-instrument" style="grid-column:1/-1">'+
         '<div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><span class="inst-dot"></span></div>'+
+        '<div class="sym-help"><b>Run Trials</b> to raise Accuracy. Your <b>Focus</b> steers it — <i>Fit</i> climbs fast but overfits, <i>Generalize</i> closes that gap, <i>Explore</i> finds new Methods. Reach <b>88% effective accuracy</b> to generalize and finish the era.</div>'+
         '<canvas id="scatter" class="scatter"></canvas>'+
         '<div class="proof-rate inst-readout" id="accRate"></div>'+
         '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
@@ -1952,7 +1958,7 @@
       '<div class="panel supply-bus" style="grid-column:1/-1"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; reopen the Foundry to scale</div>'+
         '<div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium')+'</div>'+
         '<div class="sup-rate" id="supSi"></div></div>'+
-      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods · found by experiment</div>'+buildMethods()+'</div>';
+      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods <span class="lbl-plain">(techniques you discover by experimenting)</span></div>'+buildMethods()+'</div>';
     return eraShell(3, false, body);
   }
   function drawScatter(){ // Era 3 signature viz: a living fit — points, the true-function ghost, a confidence band, and the model curve learning the shape (wobbling when overfit)
