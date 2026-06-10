@@ -572,6 +572,10 @@
   .era-tag { font-size: 10px; letter-spacing: 2px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--ec); color: var(--ec); text-transform: uppercase; }
   .era-name { font-size: 18px; color: var(--text); }
   .era-name small { color: var(--dim); font-size: 10px; margin-left: 8px; letter-spacing: 0.5px; }
+  .era-objective { margin-left: auto; font-size: 11.5px; letter-spacing: 0.03em; color: var(--accent); opacity: 0.95;
+    font-variant-numeric: tabular-nums; white-space: nowrap; font-family: var(--era-display, inherit); }
+  .era-objective:empty { display: none; }
+  .era-objective + .era-status { margin-left: 10px; }
   .era-status { margin-left: auto; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
   .era-status.legacy { color: var(--dimmer); }
   .era-status.live { color: var(--good); }
@@ -1701,7 +1705,7 @@
         (op?'<span class="op-badge">⟳ agent</span>':'')+'<span class="era-status legacy">complete</span><span class="era-expand-btn">▸ EXPAND</span></div></div>';
     const right = done
       ? '<span class="era-status legacy">complete</span><button class="era-toggle" data-toggle="'+n+'">▾ COLLAPSE</button>'
-      : '<span class="era-status" id="status-'+n+'"></span>';
+      : '<span class="era-objective" id="obj-'+n+'"></span><span class="era-status" id="status-'+n+'"></span>';
     return '<div class="era era-e'+n+op+' '+(obsolete?'obsolete':'')+'" data-era="'+n+'" style="--ec:'+e.color+'"><div class="era-screen"><div class="era-header">'+nameBlock+(op?'<span class="op-badge">⟳ agent</span>':'')+right+'</div><div class="era-body">'+body+'</div></div></div>';
   }
   function buildCompile(){
@@ -2285,6 +2289,21 @@
       '<br><span style="color:var(--dim)">▼ consumed −'+fmt(fl.out)+'/s</span>'+
       '<br>= net '+(net>=0?'+':'−')+fmt(Math.abs(net))+'/s'; }
   function applyTip(id,tip){ const el=$(id); if(el && el._tip!==tip){ el.setAttribute('data-tip',tip); el._tip=tip; } }
+  // The per-era objective (reintroduced per Cody) — a subtle "what am I after" line in the active era header. For Origins it
+  // frames the NEXT age as the goal (Zach: "Stone Age" read as the title; he wanted to know the thing he was chasing).
+  function objectiveText(n){
+    if(n===1){
+      if(S.flags.canFabricate || S.flags.o_foundry) return 'Fabricate the Logic Machine &middot; '+fmt(S.silicon)+'/'+CFG.e1.siliconGate+' Silicon';
+      if(S.flags.o_smelter) return 'Reach the Silicon Age &middot; unlock the Foundry';
+      if(S.flags.o_scriptorium) return 'Reach the Bronze Age &middot; unlock the Kiln';
+      return 'Reach the Bronze Age';
+    }
+    if(n===2) return S.flags.symbolicDone ? '' : 'Prove the Expert System';
+    if(n===3) return 'Generalize &middot; '+Math.round(effAccuracy()*100)+'% / '+Math.round(CFG.e3.genThreshold*100)+'% accuracy';
+    if(n===4) return 'Train a frontier model &middot; '+Math.round(deepBreadth()*100)+'% / '+Math.round(CFG.e4.breadthGate*100)+'% breadth';
+    if(n===5) return S.emerged ? '' : 'Improve the system'; // deliberately vague — don't spoil the hidden emergence threshold
+    return '';
+  }
   function setStatus(n, live){ const el=$('status-'+n); if(!el) return;
     if(S.obsolete[n]){ el.textContent='LEGACY'; el.className='era-status legacy'; return; }
     // a subtle live pulse, not the bare word "RUNNING" (Zach: "I don't know why it says running"); the objective line carries the real goal
@@ -2310,6 +2329,7 @@
     const st=stats();
     setText('manualSub', '+'+fmt(st.click)+' rules · the original verb');
     setStatus(1,S.scribe>0||S.miner>0); setStatus(2,S.ruleset>0||S.daemon>0); setStatus(3,S.model>0); setStatus(4,S.node>0); setStatus(5,S.recursion>0||S.emerged);
+    for(let n=1;n<=5;n++){ const o=$('obj-'+n); if(o){ const t=objectiveText(n), h=t?'&#9656; '+t:''; if(o._html!==h){ o.innerHTML=h; o._html=h; } } } // per-era objective line
     // Era 1 — Origins live values
     if($('coreArt')){ // Origins live values update whenever its panel is on screen — current OR a revisited/expanded completed era (not gated on maxEra)
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
