@@ -654,8 +654,7 @@
     border: 1px solid rgba(214,168,95,0.6); border-radius: 3px 8px 4px 7px; color: var(--ink-cream);
     box-shadow: 0 10px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,220,160,0.08), inset 0 -4px 10px rgba(0,0,0,0.34); }
   body.theme-1 #tip i { color: var(--bronze-lit); font-style: italic; }
-  body.theme-1 #tip::after { content: ''; position: absolute; left: 22px; bottom: -6px; width: 10px; height: 10px; transform: rotate(45deg);
-    background: #21150b; border-right: 1px solid rgba(214,168,95,0.55); border-bottom: 1px solid rgba(214,168,95,0.55); }
+  /* (Origins tooltip is a clean rectangle — the little pointer diamond was removed per Cody) */
   /* Symbolic: tooltips are terminal popups — phosphor border, glow, mono, a leading prompt */
   body.theme-2 #tip { background: linear-gradient(180deg, rgba(8,20,11,0.97), rgba(5,12,7,0.98));
     border: 1px solid rgba(125,255,160,0.5); border-radius: 2px; color: var(--text); font-family: var(--era-font);
@@ -906,13 +905,7 @@
       <div class="era-indicator" id="eraInd"></div>
     </div>
     <div class="hdr-right">
-      <div class="sound-wrap">
-        <button id="musicBtn" class="music-btn" title="Sound settings" aria-label="Sound settings">&#9834;</button>
-        <div id="soundPanel" class="sound-panel">
-          <div class="snd-row"><span>Music</span><input type="range" id="musVol" min="0" max="100" aria-label="Music volume"></div>
-          <div class="snd-row"><span>Sound FX</span><input type="range" id="sfxVol" min="0" max="100" aria-label="Sound FX volume"></div>
-        </div>
-      </div>
+      <button id="musicBtn" class="music-btn" title="Sound settings" aria-label="Sound settings">&#9834;</button>
       <div class="buymode" id="buyMode"></div>
       <div class="res-bar" id="resBar"></div>
     </div>
@@ -933,6 +926,10 @@
 <div id="toasts"></div>
 <div id="tip"></div>
 <div id="rupture" class="rupture"></div>
+<div id="soundPanel" class="sound-panel">
+  <div class="snd-row"><span>Music</span><input type="range" id="musVol" min="0" max="100" aria-label="Music volume"></div>
+  <div class="snd-row"><span>Sound FX</span><input type="range" id="sfxVol" min="0" max="100" aria-label="Sound FX volume"></div>
+</div>
 <audio id="musBoneLoam" src="assets/music-bone-loam.mp3" loop preload="none"></audio>
 <audio id="musPhosphor" src="assets/music-phosphor-logic.mp3" loop preload="none"></audio>
 <audio id="musGlass" src="assets/music-glass-algorithm.mp3" loop preload="none"></audio>
@@ -2727,7 +2724,7 @@
         try{ localStorage.setItem('emergence-sfxvol',SFX.vol); localStorage.setItem('emergence-sfx',SFX.on?'on':'off'); }catch(_){} }; } }
   window.addEventListener('pointerdown', startMusic);
   window.addEventListener('keydown', startMusic);
-  document.addEventListener('pointerdown', e=>{ const p=$('soundPanel'); if(p && p.classList.contains('show') && e.target.closest && !e.target.closest('.sound-wrap')) p.classList.remove('show'); });
+  document.addEventListener('pointerdown', e=>{ const p=$('soundPanel'); if(p && p.classList.contains('show') && e.target.closest && !e.target.closest('#soundPanel') && e.target.id!=='musicBtn') p.classList.remove('show'); });
   setInterval(tick, CFG.tickMs);
   setInterval(save, 5000);
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) save(); });
