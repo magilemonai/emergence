@@ -823,6 +823,13 @@
   .tile-name { font-size: 18px; color: var(--text); text-align: center; }
   .tile-eyebrow { display: block; font-size: 11px; letter-spacing: 0.06em; color: var(--dimmer); text-transform: uppercase; opacity: 0.8; margin-bottom: 1px; }
   .verb-yield { font-size: 0.82em; opacity: 0.85; font-variant-numeric: tabular-nums; margin-left: 4px; }
+  .conv-toggle { float: right; background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 5px;
+    width: 22px; height: 19px; font-size: 10px; line-height: 1; cursor: pointer; padding: 0; transition: color 0.15s, border-color 0.15s; }
+  .conv-toggle:hover { color: var(--text); border-color: var(--ec, var(--accent)); }
+  .conv-toggle.paused { color: var(--accent); border-color: var(--accent); }
+  .tile.paused { opacity: 0.62; }
+  .tile.paused .tile-name::after { content: ' · PAUSED'; color: var(--accent); font-size: 0.7em; letter-spacing: 0.06em; }
+  .tile.starved .tile-name::after { content: ' · IDLE — no input'; color: var(--dimmer); font-size: 0.7em; letter-spacing: 0.04em; }
   .age-flash { animation: ageFlash 1.2s ease-out; }
   @keyframes ageFlash { 0% { filter: brightness(2.6) drop-shadow(0 0 26px var(--accent)); } 30% { filter: brightness(1.5) drop-shadow(0 0 16px var(--accent)); } 100% { filter: none; } }
   @media (prefers-reduced-motion: reduce) { .age-flash { animation: none; } }
@@ -1075,7 +1082,7 @@
     veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
-    tech: {}, obsolete: {}, collapsed: {}, flags: {}, clicks: 0,
+    tech: {}, obsolete: {}, collapsed: {}, flags: {}, paused: {}, clicks: 0, // paused: converters the player has switched off (anti-soft-lock)
   }; }
   const S = freshState();
   const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0, rules:0, data:0, insight:0, capability:0, scale:0 }; // net per-second flow, captured each tick
@@ -1512,21 +1519,21 @@
     for(const k in FLOW){ FLOW[k].in=0; FLOW[k].out=0; } // gross-flow accumulator, reset each tick
     if(S.scribe>0){ const a=S.scribe*os.scribeY*dt; S.marks+=a; fIn('marks',a); }
     if(S.miner>0){  const a=S.miner*os.minerY*dt;  S.ore+=a;   fIn('ore',a); }
-    // Scriptorium: Marks -> Knowledge, but each unit also burns Ore (tablets). Throttled by whichever runs short.
-    if(S.scriptorium>0){
+    // Scriptorium: Marks -> Knowledge, but each unit also burns Ore (tablets). Throttled by whichever runs short. Pausable.
+    if(S.scriptorium>0 && !S.paused.scriptorium){
       let out=Math.min(S.marks, S.scriptorium*os.scrR*dt);
       const up=out*e1.scriptoriumUpkeep; if(up>S.ore) out *= (up>0 ? S.ore/up : 0);
       S.marks-=out; S.ore-=out*e1.scriptoriumUpkeep; S.knowledge+=out;
       fOut('marks',out); fOut('ore',out*e1.scriptoriumUpkeep); fIn('knowledge',out);
     }
-    // Smelter: Ore -> Metal, but each unit also burns Knowledge (know-how). Competes with the Foundry for Knowledge.
-    if(S.smelter>0){
+    // Smelter: Ore -> Metal, but each unit also burns Knowledge (know-how). Competes with the Foundry for Knowledge. Pausable.
+    if(S.smelter>0 && !S.paused.smelter){
       let out=Math.min(S.ore, S.smelter*os.smR*dt);
       const up=out*e1.smelterUpkeep; if(up>S.knowledge) out *= (up>0 ? S.knowledge/up : 0);
       S.ore-=out; S.knowledge-=out*e1.smelterUpkeep; S.metal+=out;
       fOut('ore',out); fOut('knowledge',out*e1.smelterUpkeep); fIn('metal',out);
     }
-    if(S.foundry>0){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c;
+    if(S.foundry>0 && !S.paused.foundry){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c;
       fOut('metal',c); fOut('knowledge',c); fIn('silicon',c); }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
@@ -1806,12 +1813,16 @@
       flows.map(([s,v,r])=>'<div class="eff-row '+(s==='+'?'pos':'neg')+'"><span>'+r+'</span><span>'+s+fmt(v)+'</span></div>').join('');
   }
   function esc(s){ return String(s).replace(/"/g,'&quot;'); }
+  const CONVERTERS = new Set(['scriptorium','smelter','foundry']); // pausable; their primary input (for the starved indicator)
+  const CONV_INPUT = { scriptorium:'marks', smelter:'ore', foundry:'metal' };
   function buildTile(type, key){
     if(type==='build'){
       const b=OBUILD[key];
       const tip = '<i>'+(FLAVOR[key]||'')+'</i><br>'+b.mech;
+      // converters can be paused so a consumer can't drain a stock to a soft-lock (Zach's Marks=0 trap)
+      const pauseBtn = CONVERTERS.has(key) ? '<button class="conv-toggle" data-pause="'+key+'" id="pause-'+key+'" title="Pause / resume this converter"></button>' : '';
       return '<div class="tile build" id="btile-'+key+'" data-tip="'+esc(tip)+'">'+tileIcon(BICON[key]||'')+
-        '<div class="tile-body"><div class="tile-name">'+b.name+' <span class="tile-count" id="cnt-'+key+'"></span></div>'+
+        '<div class="tile-body"><div class="tile-name">'+b.name+' <span class="tile-count" id="cnt-'+key+'"></span>'+pauseBtn+'</div>'+
         '<div class="tile-eff" id="eff-'+key+'"></div>'+
         '<button class="up-buy tile-btn" data-buy="'+key+'" id="buy-'+key+'"></button></div></div>';
     }
@@ -2257,6 +2268,7 @@
     document.querySelectorAll('[data-focus]').forEach(b=>{ b.onclick=()=>{ S.focus=b.getAttribute('data-focus'); playSound('click'); render(); }; });
     document.querySelectorAll('[data-supbuy]').forEach(b=>{ b.onclick=()=>{ buy(b.getAttribute('data-supbuy')); }; });
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
+    document.querySelectorAll('[data-pause]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const k=e.currentTarget.dataset.pause; S.paused[k]=!S.paused[k]; playSound('click'); render(); });
     document.querySelectorAll('[data-disco]').forEach(b=> b.onclick=e=>buyDisco(e.currentTarget.dataset.disco));
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
     document.querySelectorAll('[data-proof]').forEach(b=> b.onclick=e=>selectProof(e.currentTarget.dataset.proof));
@@ -2347,7 +2359,10 @@
       const badge=$('researchBadge'), resb=$('researchBtn');
       if(badge){ if(avail>0){ setText('researchBadge', avail+''); badge.classList.add('show'); } else badge.classList.remove('show'); }
       if(resb) resb.classList.toggle('has', avail>0);
-      for(const key of WORKS_ORDER){ const el=$('eff-'+key); if(!el) continue; const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } }
+      for(const key of WORKS_ORDER){ const el=$('eff-'+key); if(!el) continue; const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; }
+        if(CONVERTERS.has(key)){ const paused=!!S.paused[key], starved=!paused && S[key]>0 && (S[CONV_INPUT[key]]||0)<0.5;
+          const pb=$('pause-'+key); if(pb){ const ph=paused?'&#9654;':'&#9208;'; if(pb._html!==ph){ pb.innerHTML=ph; pb._html=ph; } if(pb.classList) pb.classList.toggle('paused',paused); }
+          const tile=$('btile-'+key); if(tile){ const tc='tile build'+(paused?' paused':'')+(starved?' starved':''); if(tile.className!==tc) tile.className=tc; } } }
       for(const [k] of RATE_DEFS){ if(!$('ramt-'+k)) continue;
         setText('ramt-'+k, fmt(S[k]));
         const rt=RATES[k]||0, ps=$('rps-'+k), cls='rate-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero'));

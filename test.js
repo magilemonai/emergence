@@ -302,6 +302,27 @@ function testOffline(){
   ok(T.accuracy > 0, 'accuracy still accrues offline');
 }
 
+function testConverterPause(){
+  section('Origins — pausable converters (anti-soft-lock)');
+  const EM = freshGame(); const S = EM.S;
+  // a scriptorium draining Marks faster than scribes make them → Marks crash (Zach's trap)
+  S.scribe = 2; S.scriptorium = 8; S.marks = 50; S.ore = 300;
+  for(let i=0;i<30;i++) EM.produce(0.5);
+  ok(S.marks < 5, 'over-built scriptoria drain Marks toward 0 (the soft-lock)');
+  // pause the scriptorium → Marks recover from the scribes (escape)
+  S.paused.scriptorium = true; const m0 = S.marks;
+  for(let i=0;i<10;i++) EM.produce(0.5);
+  ok(S.marks > m0 + 1, 'pausing the scriptorium lets Marks recover — escape the soft-lock');
+  // resume → consumes + produces again
+  S.paused.scriptorium = false; S.marks = 100; const k0 = S.knowledge;
+  EM.produce(1);
+  ok(S.knowledge > k0 && S.marks < 100, 'resuming the converter consumes + produces again');
+  // pause state survives a save/load
+  S.flags.firstAuto = true; S.paused.scriptorium = true; EM.save();
+  S.paused.scriptorium = false; EM.load();
+  ok(S.paused.scriptorium === true, 'paused state round-trips through save/load');
+}
+
 function testNoNaN(){
   section('Production never yields NaN');
   const EM = freshGame(); const S = EM.S;
@@ -617,6 +638,7 @@ testTechTree();
 testCompile();
 testSaveLoad();
 testOffline();
+testConverterPause();
 testNoNaN();
 testNoIdleRebuild();
 testFoundation();

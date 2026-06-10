@@ -32,8 +32,8 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 - [x] 3.3 Give each age-up a small felt beat (it currently does "nothing") (30-31, light pass)
 
 ## Batch 4 — Economy fix (REDESIGN, highest mechanical priority)
-- [ ] 4.1 **Toggleable / throttle-able converters** so a subtraction can't soft-lock you (the Marks=0 trap) (26-28)
-- [ ] 4.2 Make starvation feedback legible (a converter idling for lack of input should read clearly) (29)
+- [x] 4.1 **Toggleable / throttle-able converters** so a subtraction can't soft-lock you (the Marks=0 trap) (26-28)
+- [x] 4.2 Make starvation feedback legible (a converter idling for lack of input should read clearly) (29)
 
 ## Batch 5 — Scroll snappier + discrete (decision 2)
 - [ ] 5.1 Snap-to-era scrolling so you land cleanly in one world (38-39)
