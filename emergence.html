@@ -823,6 +823,9 @@
   .tile-name { font-size: 18px; color: var(--text); text-align: center; }
   .tile-eyebrow { display: block; font-size: 11px; letter-spacing: 0.06em; color: var(--dimmer); text-transform: uppercase; opacity: 0.8; margin-bottom: 1px; }
   .verb-yield { font-size: 0.82em; opacity: 0.85; font-variant-numeric: tabular-nums; margin-left: 4px; }
+  .age-flash { animation: ageFlash 1.2s ease-out; }
+  @keyframes ageFlash { 0% { filter: brightness(2.6) drop-shadow(0 0 26px var(--accent)); } 30% { filter: brightness(1.5) drop-shadow(0 0 16px var(--accent)); } 100% { filter: none; } }
+  @media (prefers-reduced-motion: reduce) { .age-flash { animation: none; } }
   .tile-count { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .tile-flavor { font-size: 14px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
   .tile-mech { font-size: 14px; color: var(--dim); line-height: 1.45; }
@@ -1082,6 +1085,7 @@
   function fIn(k,a){ if(FLOW[k]) FLOW[k].in+=a; }
   function fOut(k,a){ if(FLOW[k]) FLOW[k].out+=a; }
   let viewEra = 1; // the era currently most in view (drives the contextual top bar); follows scroll
+  let _lastAge = null; // tracks Origins age (stone/bronze/silicon) to fire a felt "age-up" flash on change
   // Progressive UI: each section animates in only the first time it appears (survives re-renders).
   const _seen = new Set();
   function intro(key){ if(_seen.has(key)) return ''; _seen.add(key); return ' intro'; }
@@ -2333,6 +2337,10 @@
     // Era 1 — Origins live values
     if($('coreArt')){ // Origins live values update whenever its panel is on screen — current OR a revisited/expanded completed era (not gated on maxEra)
       setText('coreAge', ['','STONE AGE','BRONZE AGE','SILICON AGE'][S.age]||'');
+      // age-up felt beat: a brief bloom on the evolving core + its label (the discovery toast already announces the age)
+      if(_lastAge===null){ _lastAge=S.age; } else if(S.age>_lastAge){ _lastAge=S.age;
+        for(const id of ['coreArt','coreAge','core']){ const el=$(id)||(id==='core'?document.querySelector('.era-e1 .core'):null);
+          if(el&&el.classList){ el.classList.remove('age-flash'); if(el.offsetWidth!==undefined) void el.offsetWidth; el.classList.add('age-flash'); } } }
       const ca=$('coreArt'); if(ca && ca.setAttribute){ const src=['','assets/core-stone-sym.png','assets/core-bronze-sym.png','assets/core-silicon-sym.png'][S.age]||'assets/core-stone-sym.png'; if(ca._src!==src){ ca.setAttribute('src',src); ca._src=src; } }
       const er=$('eff-refine'); if(er) setText('eff-refine', S.refine>0 ? ('now +'+Math.round(S.refine*CFG.e1.refineBonus*100)+'% to all production') : 'each level: +'+Math.round(CFG.e1.refineBonus*100)+'% to all production');
       const avail=DISCO.reduce((a,n)=>a+(canBuyDisco(n.id)?1:0),0);

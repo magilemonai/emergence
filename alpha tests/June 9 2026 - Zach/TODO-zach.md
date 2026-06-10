@@ -29,7 +29,7 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 ## Batch 3 — Objective + age framing (decision 1)
 - [x] 3.1 Reintroduce a per-era **objective line** ("▸ next: …" with progress) — designed, subtle, not naggy (55)
 - [x] 3.2 Frame the **next age as the goal**; "Stone Age" in the corner shouldn't read as the title (32)
-- [ ] 3.3 Give each age-up a small felt beat (it currently does "nothing") (30-31, light pass)
+- [x] 3.3 Give each age-up a small felt beat (it currently does "nothing") (30-31, light pass)
 
 ## Batch 4 — Economy fix (REDESIGN, highest mechanical priority)
 - [ ] 4.1 **Toggleable / throttle-able converters** so a subtraction can't soft-lock you (the Marks=0 trap) (26-28)
