@@ -808,6 +808,7 @@
   .tile-body { width: 100%; min-width: 0; }
   .tile-name { font-size: 18px; color: var(--text); text-align: center; }
   .tile-eyebrow { display: block; font-size: 11px; letter-spacing: 0.06em; color: var(--dimmer); text-transform: uppercase; opacity: 0.8; margin-bottom: 1px; }
+  .verb-yield { font-size: 0.82em; opacity: 0.85; font-variant-numeric: tabular-nums; margin-left: 4px; }
   .tile-count { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .tile-flavor { font-size: 14px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
   .tile-mech { font-size: 14px; color: var(--dim); line-height: 1.45; }
@@ -1326,7 +1327,9 @@
   function buyDisco(id){
     const n=DISCOMAP[id]; if(!canBuyDisco(id)) return;
     if(n.costs){ for(const k in n.costs) S[k]-=n.costs[k]; } else { S[n.res]-=n.cost; }
-    S.disco[id]=true; if(n.effect) n.effect(); recEvent('disco:'+id,{target:n.target||null}); playSound('buy'); render();
+    S.disco[id]=true; if(n.effect) n.effect(); recEvent('disco:'+id,{target:n.target||null});
+    toast('DISCOVERED · '+(n.lead||n.name), '<i>'+n.flavor+'</i><br>'+n.mech); // a felt confirmation (Zach: discovering an upgrade "didn't feel like anything"); toast() carries the sound
+    render();
   }
   function inscribe(ev){
     S.clicks++; const g=oStats().inscribe; S.marks+=g; S.started=true; playSound('click'); recClick('inscribe');
@@ -1823,8 +1826,8 @@
     return '<div class="panel core-panel'+(S.flags.canScribe?'':' solo')+intro('core')+'">'+
       '<div class="core-wrap"><div class="core"><div class="core-ring"></div><div class="core-ring core-ring2"></div><img class="core-art" id="coreArt" src="assets/core-'+(['','stone','bronze','silicon'][S.age]||'stone')+'-sym.png" alt=""></div><div class="core-age" id="coreAge">STONE AGE</div></div>'+
       '<div class="core-side">'+
-        '<div class="core-verbs"><button class="act-btn" id="inscribeBtn">INSCRIBE A MARK</button>'+
-          (S.flags.o_materials?'<button class="act-btn" id="quarryBtn">QUARRY ORE</button>':'')+'</div>'+
+        '<div class="core-verbs"><button class="act-btn" id="inscribeBtn">INSCRIBE A MARK <span class="verb-yield" id="inscribeYield"></span></button>'+
+          (S.flags.o_materials?'<button class="act-btn" id="quarryBtn">QUARRY ORE <span class="verb-yield" id="quarryYield"></span></button>':'')+'</div>'+
         '<button class="research-btn" id="researchBtn"><img class="rb-ic" src="assets/era1-sigil.png">RESEARCH<span class="rb-badge" id="researchBadge"></span></button>'+
       '</div></div>';
   }
@@ -2261,6 +2264,7 @@
       if(btn._html!==st.html){ btn.innerHTML=st.html; btn._html=st.html; }
       if(btn.disabled!==!st.can) btn.disabled=!st.can;
     }
+    if($('inscribeYield')){ const o=oStats(); setText('inscribeYield','+'+fmt(o.inscribe)); if($('quarryYield')) setText('quarryYield','+'+fmt(o.quarry)); } // live per-click yield, so click-upgrades are felt
     const st=stats();
     setText('manualSub', '+'+fmt(st.click)+' rules · the original verb');
     setStatus(1,S.scribe>0||S.miner>0); setStatus(2,S.ruleset>0||S.daemon>0); setStatus(3,S.model>0); setStatus(4,S.node>0); setStatus(5,S.recursion>0||S.emerged);

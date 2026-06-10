@@ -17,7 +17,7 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 - [x] 1.2 Flows show **+gross − drain = net /s** (resource tooltip: ▲ produced / ▼ consumed / = net) (25)
 - [x] 1.3 Remove completed discoveries from the research list on completion (12)
 - [x] 1.4 Building/discovery name becomes the **title**; flavor line demoted to sub/tooltip (decision 4; 17)
-- [ ] 1.5 Resource counts always legible + a discovered upgrade is *felt* (pop / before→after) (21-22)
+- [x] 1.5 Resource counts always legible + a discovered upgrade is *felt* (live per-click yield on Inscribe/Quarry + a discovery toast) (21-22)
 - [ ] 1.6 Sound: volume slider; separate SFX control; **Quarry ≠ Inscribe sound** (33-35)
 - [ ] 1.7 Clarify or drop the bare "running" status indicator (36)
 
