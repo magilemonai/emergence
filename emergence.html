@@ -377,6 +377,13 @@
     width: 28px; height: 24px; font-size: 13px; line-height: 1; cursor: pointer; padding: 0; transition: color 0.2s, border-color 0.2s, opacity 0.2s; }
   .music-btn:hover { color: var(--text); border-color: var(--accent); }
   .music-btn.off { opacity: 0.45; text-decoration: line-through; }
+  .sound-wrap { position: relative; }
+  .sound-panel { position: absolute; top: 32px; right: 0; z-index: 80; display: none; flex-direction: column; gap: 9px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; min-width: 170px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.55); }
+  .sound-panel.show { display: flex; }
+  .snd-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; letter-spacing: 0.04em; color: var(--dim); }
+  .snd-row input[type=range] { width: 96px; accent-color: var(--accent); cursor: pointer; }
   .logo b { color: var(--e3); }
   .era-indicator { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
   .hdr-right { margin-left: auto; display: flex; gap: 22px; align-items: center; }
@@ -895,7 +902,13 @@
       <div class="era-indicator" id="eraInd"></div>
     </div>
     <div class="hdr-right">
-      <button id="musicBtn" class="music-btn" title="Music on/off" aria-label="Toggle music">&#9834;</button>
+      <div class="sound-wrap">
+        <button id="musicBtn" class="music-btn" title="Sound settings" aria-label="Sound settings">&#9834;</button>
+        <div id="soundPanel" class="sound-panel">
+          <div class="snd-row"><span>Music</span><input type="range" id="musVol" min="0" max="100" aria-label="Music volume"></div>
+          <div class="snd-row"><span>Sound FX</span><input type="range" id="sfxVol" min="0" max="100" aria-label="Sound FX volume"></div>
+        </div>
+      </div>
       <div class="buymode" id="buyMode"></div>
       <div class="res-bar" id="resBar"></div>
     </div>
@@ -1168,18 +1181,32 @@
   }
   function floatNum(text,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=text; el.style.color=color; el.style.left=(x+(Math.random()*24-12))+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
   let actx=null; const ac=()=>actx||(actx=new(window.AudioContext||window.webkitAudioContext)());
+  // Sound FX, controlled separately from Music (Zach: muting music left SFX running; wants a volume slider too).
+  const SFX = { on:true, vol:0.85 };
+  let _sfxGain=null;
+  function sfxOut(){ const ctx=ac(); if(!_sfxGain){ _sfxGain=ctx.createGain(); _sfxGain.connect(ctx.destination); } _sfxGain.gain.value = SFX.on?SFX.vol:0; return _sfxGain; }
   function noiseBurst(ctx, dur, hpFreq, vol){ // a short filtered-noise transient (chisel/stone grit)
     const n=ctx.createBuffer(1, Math.max(1,Math.floor(ctx.sampleRate*dur)), ctx.sampleRate), d=n.getChannelData(0);
     for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
     const s=ctx.createBufferSource(); s.buffer=n; const g=ctx.createGain(); g.gain.value=vol;
     const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=hpFreq;
-    s.connect(hp); hp.connect(g); g.connect(ctx.destination); s.start();
+    s.connect(hp); hp.connect(g); g.connect(sfxOut()); s.start();
   }
-  function playSound(type){ try{ const ctx=ac();
+  function playSound(type){ if(!SFX.on) return; try{ const ctx=ac();
+    // ERA 1 — Origins: Quarry sounds like quarrying — a lower, grittier stone-scrape, distinct from the chisel tick of Inscribe (Zach)
+    if(viewEra===1 && type==='quarry'){
+      const t=ctx.currentTime;
+      const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='sawtooth';
+      o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(52,t+0.13);
+      g.gain.setValueAtTime(0.13,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+      o.start(t); o.stop(t+0.14);
+      noiseBurst(ctx, 0.075, 480, 0.16); // scrape grit — stone on stone
+      return;
+    }
     // ERA 1 — Origins: percussive stone, no electronics (chisel taps + placed-stone thunks)
     if(viewEra===1 && (type==='click'||type==='buy')){
       const t=ctx.currentTime, deep=type==='buy';
-      const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='triangle';
+      const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='triangle';
       o.frequency.setValueAtTime(deep?150:200,t); o.frequency.exponentialRampToValueAtTime(deep?68:96,t+(deep?0.13:0.08));
       g.gain.setValueAtTime(deep?0.2:0.16,t); g.gain.exponentialRampToValueAtTime(0.001,t+(deep?0.14:0.09));
       o.start(t); o.stop(t+(deep?0.14:0.09));
@@ -1191,11 +1218,11 @@
       const t=ctx.currentTime;
       if(type==='click'){ // keyswitch clack: a sharp filtered-noise tick + a tiny thock
         noiseBurst(ctx, 0.018, 2600, 0.13);
-        const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='square';
+        const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='square';
         o.frequency.setValueAtTime(190,t); o.frequency.exponentialRampToValueAtTime(120,t+0.035);
         g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.04); o.start(t); o.stop(t+0.04);
       } else { // terminal confirm: a two-step square blip
-        const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='square';
+        const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='square';
         o.frequency.setValueAtTime(620,t); o.frequency.setValueAtTime(880,t+0.05);
         g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.13); o.start(t); o.stop(t+0.13);
       }
@@ -1204,10 +1231,10 @@
     // ERA 3 — Statistical: clean sine data-pings (a sample registers / instrument confirm)
     if(viewEra===3 && (type==='click'||type==='buy')){
       const t=ctx.currentTime;
-      if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sine';
+      if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='sine';
         o.frequency.setValueAtTime(880,t); o.frequency.exponentialRampToValueAtTime(1320,t+0.06);
         g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); o.start(t); o.stop(t+0.1);
-      } else { [0,0.06].forEach((dt,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sine';
+      } else { [0,0.06].forEach((dt,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='sine';
         o.frequency.setValueAtTime(i?990:660,t+dt); g.gain.setValueAtTime(0.06,t+dt); g.gain.exponentialRampToValueAtTime(0.001,t+dt+0.1); o.start(t+dt); o.stop(t+dt+0.1); }); }
       return;
     }
@@ -1215,19 +1242,19 @@
     if(viewEra===4 && (type==='click'||type==='buy')){
       const t=ctx.currentTime;
       if(type==='click'){ noiseBurst(ctx, 0.02, 600, 0.1);
-        const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='square';
+        const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='square';
         o.frequency.setValueAtTime(90,t); g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.05); o.start(t); o.stop(t+0.05);
-      } else { const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sawtooth';
+      } else { const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='sawtooth';
         o.frequency.setValueAtTime(70,t); o.frequency.exponentialRampToValueAtTime(240,t+0.22);
         g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.08,t+0.05); g.gain.exponentialRampToValueAtTime(0.001,t+0.28); o.start(t); o.stop(t+0.28);
         noiseBurst(ctx, 0.18, 400, 0.05); }
       return;
     }
-    if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='triangle'; o.frequency.setValueAtTime(330,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(520,ctx.currentTime+0.05); g.gain.setValueAtTime(0.1,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09); o.start();o.stop(ctx.currentTime+0.09); }
-    else if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(440,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.1); g.gain.setValueAtTime(0.13,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15); o.start();o.stop(ctx.currentTime+0.15); }
-    else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(f,ctx.currentTime+i*0.07); g.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.11,ctx.currentTime+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.07+0.35); o.start(ctx.currentTime+i*0.07);o.stop(ctx.currentTime+i*0.07+0.35); }); }
+    if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type='triangle'; o.frequency.setValueAtTime(330,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(520,ctx.currentTime+0.05); g.gain.setValueAtTime(0.1,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09); o.start();o.stop(ctx.currentTime+0.09); }
+    else if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type='sine'; o.frequency.setValueAtTime(440,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.1); g.gain.setValueAtTime(0.13,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15); o.start();o.stop(ctx.currentTime+0.15); }
+    else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type='sine'; o.frequency.setValueAtTime(f,ctx.currentTime+i*0.07); g.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.11,ctx.currentTime+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.07+0.35); o.start(ctx.currentTime+i*0.07);o.stop(ctx.currentTime+i*0.07+0.35); }); }
     else if(type==='glitch'){ const t=ctx.currentTime; // the rupture: a detuned cluster sliding downward + noise tearing — the interface stops being yours
-      [180,191,267,440,463].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type=i%2?'square':'sawtooth';
+      [180,191,267,440,463].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type=i%2?'square':'sawtooth';
         o.frequency.setValueAtTime(f,t); o.frequency.linearRampToValueAtTime(f*0.5,t+1.7);
         g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.045,t+0.12); g.gain.exponentialRampToValueAtTime(0.001,t+1.9); o.start(t); o.stop(t+2.0); });
       noiseBurst(ctx, 0.5, 280, 0.06); noiseBurst(ctx, 0.9, 1300, 0.04); }
@@ -1338,7 +1365,7 @@
     if(!S.flags.firstAuto) renderCold(); else refresh();
   }
   function quarry(ev){
-    const g=oStats().quarry; S.ore+=g; playSound('click'); recClick('quarry');
+    const g=oStats().quarry; S.ore+=g; playSound('quarry'); recClick('quarry');
     if(ev && ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),'#c08552', r.left+r.width/2, r.top-6); }
     refresh();
   }
@@ -2673,12 +2700,22 @@
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
   $('coBtn').onclick=inscribe;
-  // music: load preference, wire the toggle, and start on the first user gesture (browsers block autoplay otherwise)
-  try{ MUSIC.on = localStorage.getItem('emergence-music')!=='off'; }catch(_){}
+  // sound: load persisted Music + SFX volumes, wire the popover sliders, and start music on the first user gesture (autoplay policy)
+  try{ const mv=localStorage.getItem('emergence-musvol'); if(mv!==null) MUSIC.vol=Math.max(0,Math.min(1,+mv)); MUSIC.on = localStorage.getItem('emergence-music')!=='off' && MUSIC.vol>0;
+       const sv=localStorage.getItem('emergence-sfxvol'); if(sv!==null) SFX.vol=Math.max(0,Math.min(1,+sv)); SFX.on = localStorage.getItem('emergence-sfx')!=='off' && SFX.vol>0; }catch(_){}
   updateMusicBtn();
-  { const mb=$('musicBtn'); if(mb) mb.onclick=toggleMusic; }
+  { const mb=$('musicBtn'); if(mb) mb.onclick=()=>{ const p=$('soundPanel'); if(p) p.classList.toggle('show'); };
+    const mvEl=$('musVol'); if(mvEl){ mvEl.value=Math.round(MUSIC.vol*100);
+      mvEl.oninput=()=>{ MUSIC.vol=mvEl.value/100; MUSIC.on=MUSIC.vol>0;
+        try{ localStorage.setItem('emergence-musvol',MUSIC.vol); localStorage.setItem('emergence-music',MUSIC.on?'on':'off'); }catch(_){}
+        if(MUSIC.cur){ const el=musicEl(MUSIC.cur); if(el) el.volume=MUSIC.on?MUSIC.vol:0; }
+        if(MUSIC.on && !MUSIC.started) startMusic(); updateMusicBtn(); }; }
+    const svEl=$('sfxVol'); if(svEl){ svEl.value=Math.round(SFX.vol*100);
+      svEl.oninput=()=>{ SFX.vol=svEl.value/100; SFX.on=SFX.vol>0;
+        try{ localStorage.setItem('emergence-sfxvol',SFX.vol); localStorage.setItem('emergence-sfx',SFX.on?'on':'off'); }catch(_){} }; } }
   window.addEventListener('pointerdown', startMusic);
   window.addEventListener('keydown', startMusic);
+  document.addEventListener('pointerdown', e=>{ const p=$('soundPanel'); if(p && p.classList.contains('show') && e.target.closest && !e.target.closest('.sound-wrap')) p.classList.remove('show'); });
   setInterval(tick, CFG.tickMs);
   setInterval(save, 5000);
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) save(); });
