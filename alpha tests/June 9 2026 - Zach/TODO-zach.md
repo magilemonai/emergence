@@ -19,7 +19,7 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 - [x] 1.4 Building/discovery name becomes the **title**; flavor line demoted to sub/tooltip (decision 4; 17)
 - [x] 1.5 Resource counts always legible + a discovered upgrade is *felt* (live per-click yield on Inscribe/Quarry + a discovery toast) (21-22)
 - [x] 1.6 Sound: volume slider; separate SFX control; **Quarry ≠ Inscribe sound** (33-35)
-- [ ] 1.7 Clarify or drop the bare "running" status indicator (36)
+- [x] 1.7 Clarify or drop the bare "running" status indicator (36)
 
 ## Batch 2 — Research → persistent sidebar (REDESIGN-lite)
 - [ ] 2.1 Research no longer greys out / blocks the rest of the game; keep playing while it's open (8)

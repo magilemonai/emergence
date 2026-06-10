@@ -574,6 +574,8 @@
   .era-status { margin-left: auto; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
   .era-status.legacy { color: var(--dimmer); }
   .era-status.live { color: var(--good); }
+  .era-status.pulse { animation: statusPulse 2.2s ease-in-out infinite; font-size: 13px; }
+  @keyframes statusPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
   .era-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; transition: max-height 0.6s, opacity 0.5s, margin 0.5s; max-height: 6000px; }
   .panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px; }
   .panel-label { font-size: 11.5px; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
@@ -2266,8 +2268,10 @@
   function setText(id,txt){ const el=$(id); if(el && el.textContent!==txt) el.textContent=txt; }
   function setStatus(n, live){ const el=$('status-'+n); if(!el) return;
     if(S.obsolete[n]){ el.textContent='LEGACY'; el.className='era-status legacy'; return; }
-    const txt= live?'● RUNNING':'ACTIVE', cls='era-status'+(live?' live':'');
-    if(el.textContent!==txt) el.textContent=txt; if(el.className!==cls) el.className=cls; }
+    // a subtle live pulse, not the bare word "RUNNING" (Zach: "I don't know why it says running"); the objective line carries the real goal
+    const txt= live?'●':'', cls='era-status'+(live?' live pulse':'');
+    if(el.textContent!==txt) el.textContent=txt; if(el.className!==cls) el.className=cls;
+    const tip= live?'This era is producing':''; if(el._title!==tip){ el.setAttribute('title',tip); el._title=tip; } }
   function setClass(el, cls){ if(el && el.className!==cls) el.className=cls; }
   function refresh(){ // cheap per-tick value update; the DOM (and your buttons) stay put
     if(!S.flags.firstAuto) return;
