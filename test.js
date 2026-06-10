@@ -390,15 +390,20 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
   // Knowledge feeds BOTH the Language run AND Silicon production (Foundries/Smelters burn it), so keep its supply well ahead
   if(S.scriptorium < 140 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium'); // → Knowledge (Language)
   if(S.smelter < 50 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
-  if(S.foundry < 70 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
+  // Foundries burn Knowledge to make Silicon — hold off when Knowledge is low so they don't starve the Language run
+  if(S.foundry < 70 && S.knowledge > 400 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
   if(S.scribe < 120 && S.marks >= EM.totalCost(BUYS.scribe,1)) EM.buy('scribe');
   if(S.miner < 50 && S.ore >= EM.totalCost(BUYS.miner,1)) EM.buy('miner');
   if(S.dataset < 60 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset'); // → Data (Vision)
   if(S.model < 40 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');             // → Insight (Reasoning)
-  // grow Compute
-  if(S.node < 90 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
-  // STEER: route compute toward the run with the lowest level (countering its headwind) — not static 1/1/1
-  S.alloc = { vision: 0.12+(1-S.vision)*1.4, language: 0.12+(1-S.language)*1.4, reasoning: 0.12+(1-S.reasoning)*1.4 };
+  // grow Compute — but bound it so total feedstock draw can't outrun what the Origins economy supplies (esp. Knowledge)
+  if(S.node < 55 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
+  // STEER feedstock-aware: push the laggard, but never dump compute on a run whose feedstock is dry (that pours compute
+  // into a blocked run and deadlocks — Language←Knowledge especially). A starved run gets near-zero share until its
+  // supplier catches up, so the others keep progress and the breadth gate stays reachable.
+  const feed = { vision: S.data, language: S.knowledge, reasoning: S.insight };
+  S.alloc = {};
+  for(const k of ['vision','language','reasoning']) S.alloc[k] = (feed[k] < 150) ? 0.03 : (0.12 + (1-S[k])*1.4);
 }
 function foundationStep(EM){ // ERA 5 — climb the recursion ladder to emergence, then manage the aftermath to an ending
   const { S, CAPS } = EM; const e5 = EM.CFG.e5;
