@@ -796,7 +796,8 @@
   .core-verbs { display: flex; gap: 10px; }
   .core-verbs .act-btn { flex: 1; }
   .rates { margin-top: 4px; display: flex; flex-direction: column; }
-  .rate { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(28,39,64,0.45); }
+  .rate { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(28,39,64,0.45); cursor: help; }
+  .era-e1 .rate:hover, .res:hover { background: rgba(255,255,255,0.03); }
   .rate:last-child { border-bottom: none; }
   .rate-ic { width: 48px; height: 48px; object-fit: contain; flex: none; opacity: 0.95; }
   .rate-tx { display: flex; flex-direction: column; line-height: 1.1; }
@@ -1847,7 +1848,7 @@
   function buildRates(){
     let html='';
     for(const [k,lab,icon,show] of RATE_DEFS){ if(!show()) continue;
-      html += '<div class="rate"><img class="rate-ic" src="'+icon+'"><div class="rate-tx"><div class="rate-lab">'+lab+'</div>'+
+      html += '<div class="rate" id="rate-'+k+'" data-tip="'+esc('<i>'+(RESFLAVOR[k]||'')+'</i>')+'"><img class="rate-ic" src="'+icon+'"><div class="rate-tx"><div class="rate-lab">'+lab+'</div>'+
         '<div class="rate-amt" id="ramt-'+k+'"></div></div><div class="rate-ps" id="rps-'+k+'"></div></div>';
     }
     return '<div class="rates">'+html+'</div>';
@@ -2267,6 +2268,14 @@
     return { can, html:verb+(qty>1?' &times;'+qty:'')+' &middot; <span class="c">'+fmt(c)+' '+b.res+'</span>' };
   }
   function setText(id,txt){ const el=$(id); if(el && el.textContent!==txt) el.textContent=txt; }
+  // Flow breakdown tooltip (▲ produced / ▼ consumed / = net) for the Origins resources — shown on the FLOWS panel rows AND the top-bar resources
+  function flowTip(k){ const fl=FLOW[k], base='<i>'+(RESFLAVOR[k]||'')+'</i>';
+    if(!fl || (fl.in<=0.0005 && fl.out<=0.0005)) return base;
+    const net=fl.in-fl.out;
+    return base+'<br><span style="color:var(--good)">▲ produced +'+fmt(fl.in)+'/s</span>'+
+      '<br><span style="color:var(--dim)">▼ consumed −'+fmt(fl.out)+'/s</span>'+
+      '<br>= net '+(net>=0?'+':'−')+fmt(Math.abs(net))+'/s'; }
+  function applyTip(id,tip){ const el=$(id); if(el && el._tip!==tip){ el.setAttribute('data-tip',tip); el._tip=tip; } }
   function setStatus(n, live){ const el=$('status-'+n); if(!el) return;
     if(S.obsolete[n]){ el.textContent='LEGACY'; el.className='era-status legacy'; return; }
     // a subtle live pulse, not the bare word "RUNNING" (Zach: "I don't know why it says running"); the objective line carries the real goal
@@ -2281,15 +2290,7 @@
       const rt=RATES[d.k]||0, re=$('rr-'+d.k);
       if(re){ const t=(rt>0.0005?'+':'')+(Math.abs(rt)<0.0005?'':fmt(rt)+'/s'); re.textContent=t; re.className='res-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero')); }
       // live flow breakdown in the tooltip: produced vs consumed vs net (answers "build more, or stop draining?")
-      const fl=FLOW[d.k], host=$('res-'+d.k);
-      if(fl && host && (fl.in>0.0005 || fl.out>0.0005)){
-        const net=fl.in-fl.out;
-        const tip='<i>'+(RESFLAVOR[d.k]||'')+'</i>'+
-          '<br><span style="color:var(--good)">▲ produced +'+fmt(fl.in)+'/s</span>'+
-          '<br><span style="color:var(--dim)">▼ consumed −'+fmt(fl.out)+'/s</span>'+
-          '<br>= net '+(net>=0?'+':'−')+fmt(Math.abs(net))+'/s';
-        if(host._tip!==tip){ host.setAttribute('data-tip', tip); host._tip=tip; }
-      } }
+      if(FLOW[d.k]) applyTip('res-'+d.k, flowTip(d.k)); } // live flow breakdown on the top-bar resource
     for(const key in BUYS){ const cnt=$('cnt-'+key); if(!cnt) continue;
       setText('cnt-'+key, 'x'+S[key]);
       const btn=$('buy-'+key), st=upLabel(key);
@@ -2315,6 +2316,7 @@
         const rt=RATES[k]||0, ps=$('rps-'+k), cls='rate-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero'));
         setText('rps-'+k, (rt>=0?'+':'')+fmt(rt)+'/s');
         if(ps && ps.className!==cls) ps.className=cls;
+        applyTip('rate-'+k, flowTip(k)); // the breakdown right here on the FLOWS panel, where the eye goes
       }
       for(const n of DISCO){ const btn=$('dsc-'+n.id); if(!btn) continue; const tile=$('dtile-'+n.id);
         if(S.disco[n.id]){ setClass(tile,'tile disco owned'); const dh='<img class="disco-seal" src="assets/seal-discovered.png">DISCOVERED'; if(btn._html!==dh){ btn.innerHTML=dh; btn._html=dh; } if(!btn.disabled) btn.disabled=true; }

@@ -21,6 +21,16 @@ const SETUP = {
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;
     for(let i=0;i<10;i++){S.marks=4000;S.ore=3000;S.metal=800;['scribe','miner','scriptorium','smelter','foundry'].forEach(k=>E.buy(k));}
     S.refine=3; E.checkMiles(); for(let i=0;i<5;i++) E.tick();`,
+  flowtip: `const E=window.EMERGENCE,S=E.S; E.revealGame();
+    S.marks=400;S.ore=300;S.knowledge=80;S.metal=20;S.silicon=5;
+    for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }
+    S.marks=400;S.ore=300;S.knowledge=80;S.metal=20;
+    for(let i=0;i<8;i++){S.marks=400;S.ore=300;['scribe','miner','scriptorium','smelter'].forEach(k=>E.buy(k));}
+    E.checkMiles(); for(let i=0;i<6;i++) E.tick();
+    const el=document.getElementById('rate-marks'); const tip=document.getElementById('tip'); const r=el.getBoundingClientRect();
+    tip.innerHTML=el.getAttribute('data-tip'); tip.classList.add('show');
+    tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
+    tip.style.left=(r.right+14+window.scrollX)+'px'; tip.style.top=(r.top+window.scrollY)+'px';`,
   sound: `const E=window.EMERGENCE,S=E.S; E.revealGame();
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40; E.checkMiles(); for(let i=0;i<3;i++) E.tick();
     const mb=document.getElementById('musicBtn'); if(mb) mb.click();`,
