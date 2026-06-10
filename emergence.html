@@ -636,7 +636,9 @@
   .proof-active { margin-bottom: 12px; }
   .pa-top { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--dim); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
   .pa-top b { color: var(--text); }
-  .pa-idle { font-size: 10px; color: var(--dim); font-style: italic; }
+  .pa-idle { font-size: 12.5px; color: var(--accent); padding: 7px 10px; border: 1px dashed rgba(141,255,183,0.35); border-radius: 7px;
+    background: rgba(79,169,123,0.06); animation: statusPulse 2.4s ease-in-out infinite; }
+  .pa-idle b { color: var(--text); }
   .proof-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
   .proof-item { display: flex; flex-direction: column; align-items: stretch; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 14px 13px; background: var(--panel); transition: border-color 0.15s, box-shadow 0.15s; }
   .pf-ic { width: 66px; height: 66px; object-fit: contain; flex: none; align-self: center; }
@@ -1488,7 +1490,7 @@
     const next = METHODS.find(mm=>!S.methods[mm.id]);
     if(next && !MUTE){ const p=(e.discoverBase + S.data*e.dataDiscover)*f.disc*st.discMult*amount;
       if(Math.random() < p){ S.methods[next.id]=true; recEvent('method:'+next.id);
-        toast('METHOD DISCOVERED','<b>'+next.name+'</b> — '+next.desc); render(); } }
+        toast('METHOD DISCOVERED · '+next.name, next.desc+'<br><i>Kept in Methods, below.</i>'); render(); } }
   }
   const BUYS = {
     scribe:      { res:'marks', key:'scribe',      base:CFG.e1.scribeCost,      growth:CFG.e1.scribeGrowth },
@@ -1974,7 +1976,7 @@
         '<canvas id="scatter" class="scatter"></canvas>'+
         '<div class="proof-rate inst-readout" id="accRate"></div>'+
         '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
-        '<div class="meter-label"><span>effective accuracy → generalization (88%)</span><span id="acc-val"></span></div>'+
+        '<div class="meter-label"><span>effective = learned − overfit</span><span id="acc-val"></span></div>'+
         '<div class="inst-controls">'+
           '<div class="focus-dial"><div class="dial-lab">TRAINING FOCUS</div><div class="focus-seg-row">'+focusBtns+'</div></div>'+
           '<button class="act-btn inst-lever" id="expBtn">RUN TRIAL</button>'+
@@ -2436,7 +2438,7 @@
           const nm = id==='optimization'?('Optimization Lv '+(S.optLevel+1)) : id==='capacity'?('Inference Capacity Lv '+(S.infCapLevel+1)) : TREEMAP[id].name;
           const rate=symInfRate(), eta=rate>0?Math.ceil((c-acc)/rate):0;
           pa.innerHTML='<div class="pa-top"><span>Proving: <b>'+nm+'</b></span><span>'+fmt(acc)+' / '+fmt(c)+(eta?'  ·  ~'+eta+'s':'')+'</span></div><div class="meter"><i style="width:'+pct+'%;background:var(--e1)"></i></div>';
-        } else { pa.innerHTML='<div class="pa-idle">No active proof — pick a theorem below to aim your Inference at it.</div>'; } }
+        } else { pa.innerHTML='<div class="pa-idle">&#9656; Nothing selected — pick a <b>Theorem</b> below to aim your reasoning at it (otherwise Inference just banks).</div>'; } }
       // each provable item's button
       const items=['optimization','capacity', ...TREE.filter(n=>!S.tech[n.id]&&n.req.every(r=>S.tech[r])).map(n=>n.id)];
       for(const id of items){ const btn=$('pfb-'+id); if(!btn) continue;
@@ -2463,7 +2465,7 @@
     const ma=$('meter-acc');
     if(ma){ const eff=effAccuracy(), thr=CFG.e3.genThreshold;
       ma.style.width=Math.min(100, eff/thr*100)+'%';
-      setText('acc-val', (eff*100).toFixed(1)+'%  (raw '+(S.accuracy*100).toFixed(0)+'%, gap '+(S.gap*100).toFixed(0)+'%)');
+      setText('acc-val', (S.accuracy*100).toFixed(0)+'% − '+(S.gap*100).toFixed(0)+'% = '+(eff*100).toFixed(0)+'% / '+Math.round(thr*100)+'%'); // learned − overfit = effective / needed (explains "accuracy up but the bar drops")
       const exps=S.model*CFG.e3.expPerModel;
       setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':''));
       ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
