@@ -591,7 +591,7 @@
   .up-buy:hover:not(:disabled) { border-color: var(--ec); }
   .up-buy:disabled { opacity: 0.4; cursor: not-allowed; }
   .up-buy .c { color: var(--ec); }
-  .up-buy:disabled .c { color: var(--danger); }
+  .up-buy:disabled .c { color: inherit; } /* unaffordable = uniformly greyed (with the 0.4-opacity button), never red — red-in-anticipation "feels bad" (Zach) */
   /* Per-era DISPLAY font routes through headers + primary actions; eras without --era-display keep body font. */
   .era-name, .era-tag, .panel-label, .act-btn, .up-name, .tile-name, .era-indicator, .core-age { font-family: var(--era-display, inherit); }
   .meter { height: 5px; background: var(--panel); border-radius: 3px; overflow: hidden; margin-top: 8px; }
