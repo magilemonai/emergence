@@ -22,7 +22,7 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 - [x] 1.7 Clarify or drop the bare "running" status indicator (36)
 
 ## Batch 2 — Research → persistent sidebar (REDESIGN-lite)
-- [ ] 2.1 Research no longer greys out / blocks the rest of the game; keep playing while it's open (8)
+- [x] 2.1 Research no longer greys out / blocks the rest of the game; keep playing while it's open (8)
 - [ ] 2.2 Research becomes a **persistent, non-modal sidebar on the LEFT** (9, decision 5)
 - [ ] 2.3 Split **Research (unlocks that advance the age)** from **Upgrades (% bonuses)** into two surfaces (14-15)
 

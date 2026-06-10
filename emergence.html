@@ -2541,7 +2541,9 @@
   }
   function toggleDev(on){ S.dev = on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); if(S.dev) renderDev(); }
   let uiDrawer=false;
-  function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer); $('drawerBg').classList.toggle('show',uiDrawer); }
+  // Non-blocking: the drawer overlays from the side but the rest of the game stays live (Zach: opening Research greyed out everything).
+  // The backdrop no longer dims or captures clicks; the Research button (and ×) toggle it.
+  function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer); }
   // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).
   function setTheme(n){ if(typeof document==='undefined'||!document.body) return; const c='theme-'+n; if(document.body.className!==c) document.body.className=c; }
   let _eraIO=null;
