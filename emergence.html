@@ -402,7 +402,8 @@
   .res .val { font-size: 18px; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .res-ps { font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.2; margin-top: 1px; }
   .res-ps.pos { color: var(--good); } .res-ps.neg { color: var(--danger); } .res-ps.zero { color: var(--dimmer); }
-  main { flex: 1; overflow-y: auto; padding: 0; min-height: 0; }
+  main { flex: 1; overflow-y: auto; padding: 0; min-height: 0; scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce){ main { scroll-behavior: auto; } }
   main::-webkit-scrollbar { width: 9px; }
   main::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
   #coldopen { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 40px; transition: opacity 0.28s ease, transform 0.28s ease; }
@@ -428,15 +429,18 @@
   .viz-cap { position: absolute; top: 15px; left: 31px; font-size: 8.5px; letter-spacing: 3px; color: var(--dimmer); pointer-events: none; }
   #eras { display: none; padding: 18px; gap: 16px; flex-direction: column; max-width: 1180px; margin: 0 auto; }
   .era { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); font-family: var(--era-font);
-    padding: 16px 18px; transition: opacity 0.8s, filter 0.8s, transform 0.5s, background 0.6s, border-color 0.6s; position: relative; overflow: hidden; }
+    padding: 16px 18px; transition: opacity 0.8s, filter 0.8s, transform 0.5s, background 0.6s, border-color 0.6s; position: relative; overflow: hidden;
+    scroll-snap-align: start; scroll-margin-top: 14px; } /* scroll lands cleanly in one era (Zach wanted discrete worlds, not free scroll) */
   .panel { transition: background 0.5s, border-color 0.5s; }
   header { transition: opacity 0.6s, transform 0.6s, background 0.7s; }
   .era::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ec, var(--dim)); opacity: 0.8; }
   .era.obsolete { filter: grayscale(0.85) brightness(0.6); opacity: 0.5; }
   .era.obsolete .era-body { max-height: 0; opacity: 0; overflow: hidden; margin-top: 0; }
   .era-header { display: flex; align-items: center; gap: 12px; }
-  .era.collapsed { cursor: pointer; padding: 16px 18px; transition: border-color 0.2s, background 0.2s; }
-  .era.collapsed:hover { border-color: var(--ec); background: var(--panel-2); }
+  /* completed eras collapse harder — slimmer + dimmed — so the active era is unambiguous (Zach was unsure what was "running") */
+  .era.collapsed { cursor: pointer; padding: 8px 18px; opacity: 0.5; transition: border-color 0.2s, background 0.2s, opacity 0.2s; }
+  .era.collapsed:hover { border-color: var(--ec); background: var(--panel-2); opacity: 1; }
+  .era:not(.collapsed) { box-shadow: inset 0 2px 0 rgba(255,255,255,0.03), 0 0 0 1px var(--ec); } /* the active/open era reads as "you are here" */
   .era-expand-btn { margin-left: 14px; border: 1px solid var(--ec); color: var(--ec); font-size: 11px; font-weight: 700;
     letter-spacing: 1.5px; padding: 8px 18px; border-radius: 9px; white-space: nowrap; }
   .era.collapsed:hover .era-expand-btn { background: var(--ec); color: #0a0d14; }

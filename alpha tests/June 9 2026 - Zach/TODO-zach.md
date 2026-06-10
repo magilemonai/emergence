@@ -36,8 +36,8 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 - [x] 4.2 Make starvation feedback legible (a converter idling for lack of input should read clearly) (29)
 
 ## Batch 5 — Scroll snappier + discrete (decision 2)
-- [ ] 5.1 Snap-to-era scrolling so you land cleanly in one world (38-39)
-- [ ] 5.2 Collapse completed eras harder so the active era is unambiguous (40)
+- [x] 5.1 Snap-to-era scrolling so you land cleanly in one world (38-39)
+- [x] 5.2 Collapse completed eras harder so the active era is unambiguous (40)
 
 ## Batch 6 — Symbolic legibility (REDESIGN; decision 3)
 - [ ] 6.1 Copy away from "hand-written / by hand" → **early-analog-digital / CRT** framing, clearly on a computer (45)
