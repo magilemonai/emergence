@@ -833,10 +833,13 @@
   /* Research drawer */
   #drawerBg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 70; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
   #drawerBg.show { opacity: 1; pointer-events: auto; }
-  #drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(460px, 92vw); z-index: 71; background: var(--panel);
-    border-left: 1px solid var(--line); transform: translateX(100%); transition: transform 0.3s ease-out;
-    display: flex; flex-direction: column; box-shadow: -14px 0 44px rgba(0,0,0,0.55); }
+  /* Push-content LEFT sidebar (Cody): slides in from the left and shifts the era content right so nothing is covered. */
+  #drawer { position: fixed; top: 54px; left: 0; height: calc(100% - 54px); width: 340px; max-width: 88vw; z-index: 71; background: var(--panel);
+    border-right: 1px solid var(--line); transform: translateX(-100%); transition: transform 0.3s ease-out;
+    display: flex; flex-direction: column; box-shadow: 14px 0 44px rgba(0,0,0,0.55); }
   #drawer.show { transform: translateX(0); }
+  main { transition: padding-left 0.3s ease-out; }
+  @media (min-width: 880px){ body.drawer-open main { padding-left: 340px; } } /* wide screens push; narrow screens overlay */
   .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
     border-bottom: 1px solid var(--line); font-size: 10px; letter-spacing: 2px; color: var(--e0); text-transform: uppercase; }
   .drawer-head button { background: none; border: none; color: var(--dim); font-size: 20px; line-height: 1; cursor: pointer; }
@@ -845,7 +848,7 @@
   /* Origins: research is a stone-tablet archive, not a web slideout */
   body.theme-1 #drawer { background-image: var(--stone-noise), linear-gradient(rgba(16,11,7,0.70), rgba(13,9,6,0.82)), url(assets/era1-record-clay.png);
     background-size: 220px 220px, auto, 360px; background-blend-mode: overlay, normal, normal;
-    border-left: 2px solid var(--bronze-line); box-shadow: inset 16px 0 30px rgba(0,0,0,0.45), -22px 0 54px rgba(0,0,0,0.62); }
+    border-right: 2px solid var(--bronze-line); box-shadow: inset -16px 0 30px rgba(0,0,0,0.45), 22px 0 54px rgba(0,0,0,0.62); }
   body.theme-1 .drawer-head { font-family: var(--era-display); color: var(--bronze-lit); letter-spacing: 0.14em; font-size: 13px;
     border-bottom: none; text-shadow: 0 1px 0 rgba(0,0,0,0.6); }
   body.theme-1 .drawer-head button { color: var(--dimmer); font-size: 16px; opacity: 0.7; }
@@ -854,6 +857,9 @@
   .research-divider { display: block; width: 82%; height: auto; margin: 2px auto 12px; opacity: 0.9; }
   body:not(.theme-1) .research-divider { display: none; }
   .archive-sub { display: flex; align-items: center; gap: 9px; padding: 0 2px; margin-bottom: 4px; }
+  .rsec-label { font-family: var(--era-display, inherit); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--bronze-lit, var(--accent)); margin: 14px 2px 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(176,125,63,0.28); }
+  .rsec-label:first-child { margin-top: 4px; }
   .archive-sigil { width: 26px; height: 26px; object-fit: contain; flex: none; opacity: 0.9; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
   .archive-sub span { font-family: var(--era-font); font-style: italic; font-size: 12.5px; color: var(--muted-cream); line-height: 1.35; }
   .archive-sub b { font-style: normal; color: var(--bronze-lit); }
@@ -1823,17 +1829,23 @@
     }
     return out ? '<div class="benches">'+out+'</div>' : '<div class="up-desc">Make a discovery to unlock something to build.</div>';
   }
+  // Two kinds of research (Zach: "building a thing deserves its own world" vs the % bonuses). Discoveries unlock new craft;
+  // Refinements sharpen what you already have. Split into two labelled sections in the sidebar.
+  const DISCO_REFINE = new Set(['tally','apprenticeship','alphabet','bronzeCasting','wheel','numerals','glassmaking']);
+  function discoCat(id){ return DISCO_REFINE.has(id) ? 'refine' : 'discover'; }
   function buildResearch(){
-    let html='';
-    // Show only what's available to discover NOW. Completed discoveries leave the list (Zach: "I don't need them once I've done them —
-    // I can see them on the main screen"). The (have/total) count keeps the sense of progress.
-    for(const n of DISCO){ if(discoVisible(n.id) && !S.disco[n.id]) html += buildTile('disco', n.id); }
+    // Show only what's available to discover NOW; completed ones leave the list (you see the result on the main screen).
+    const vis = DISCO.filter(n=>discoVisible(n.id) && !S.disco[n.id]);
+    const tiles = arr => arr.map(n=>buildTile('disco', n.id)).join('');
+    const disc = vis.filter(n=>discoCat(n.id)==='discover'), ref = vis.filter(n=>discoCat(n.id)==='refine');
     const have=DISCO.reduce((a,n)=>a+(S.disco[n.id]?1:0),0);
-    const body = html || '<div class="up-desc" style="text-align:center;padding:18px 8px">All current discoveries made. Keep building to reveal what comes next.</div>';
+    let body='';
+    if(disc.length) body += '<div class="rsec-label">Discoveries &middot; unlock new craft</div><div class="ogrid">'+tiles(disc)+'</div>';
+    if(ref.length)  body += '<div class="rsec-label">Refinements &middot; sharpen what you have</div><div class="ogrid">'+tiles(ref)+'</div>';
+    if(!body) body = '<div class="up-desc" style="text-align:center;padding:18px 8px">All current research made. Keep building to reveal what comes next.</div>';
     return '<div class="archive-sub"><img class="archive-sigil" src="assets/era1-sigil.png" alt="">'+
       '<span>Tablets of knowing &mdash; each carved once, kept forever <b>('+have+'/'+DISCO.length+')</b></span></div>'+
-      '<img class="research-divider" src="assets/carved-divider.png" alt="">'+
-      '<div class="ogrid">'+body+'</div>';
+      '<img class="research-divider" src="assets/carved-divider.png" alt="">'+ body;
   }
   const RATE_DEFS = [
     ['marks','Marks','assets/icon-marks.png', ()=>true],
@@ -2540,7 +2552,8 @@
   let uiDrawer=false;
   // Non-blocking: the drawer overlays from the side but the rest of the game stays live (Zach: opening Research greyed out everything).
   // The backdrop no longer dims or captures clicks; the Research button (and ×) toggle it.
-  function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer); }
+  function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer);
+    if(document.body&&document.body.classList) document.body.classList.toggle('drawer-open',uiDrawer); } // push the era content right
   // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).
   function setTheme(n){ if(typeof document==='undefined'||!document.body) return; const c='theme-'+n; if(document.body.className!==c) document.body.className=c; }
   let _eraIO=null;
