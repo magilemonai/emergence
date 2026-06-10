@@ -1791,12 +1791,15 @@
   }
   function buildResearch(){
     let html='';
-    for(const n of DISCO){ if(discoVisible(n.id)) html += buildTile('disco', n.id); }
+    // Show only what's available to discover NOW. Completed discoveries leave the list (Zach: "I don't need them once I've done them —
+    // I can see them on the main screen"). The (have/total) count keeps the sense of progress.
+    for(const n of DISCO){ if(discoVisible(n.id) && !S.disco[n.id]) html += buildTile('disco', n.id); }
     const have=DISCO.reduce((a,n)=>a+(S.disco[n.id]?1:0),0);
+    const body = html || '<div class="up-desc" style="text-align:center;padding:18px 8px">All current discoveries made. Keep building to reveal what comes next.</div>';
     return '<div class="archive-sub"><img class="archive-sigil" src="assets/era1-sigil.png" alt="">'+
       '<span>Tablets of knowing &mdash; each carved once, kept forever <b>('+have+'/'+DISCO.length+')</b></span></div>'+
       '<img class="research-divider" src="assets/carved-divider.png" alt="">'+
-      '<div class="ogrid">'+html+'</div>';
+      '<div class="ogrid">'+body+'</div>';
   }
   const RATE_DEFS = [
     ['marks','Marks','assets/icon-marks.png', ()=>true],

@@ -15,7 +15,7 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 ## Batch 1 — Origins polish (FIX NOW, low risk, all in the era Zach loved)
 - [x] 1.1 Grey out unaffordable buys; remove red cost text entirely (Zach 23-24)
 - [x] 1.2 Flows show **+gross − drain = net /s** (resource tooltip: ▲ produced / ▼ consumed / = net) (25)
-- [ ] 1.3 Remove completed discoveries from the research list on completion (12)
+- [x] 1.3 Remove completed discoveries from the research list on completion (12)
 - [ ] 1.4 Building/discovery name becomes the **title**; flavor line demoted to sub/tooltip (decision 4; 17)
 - [ ] 1.5 Resource counts always legible + a discovered upgrade is *felt* (pop / before→after) (21-22)
 - [ ] 1.6 Sound: volume slider; separate SFX control; **Quarry ≠ Inscribe sound** (33-35)
