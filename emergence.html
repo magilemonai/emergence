@@ -510,6 +510,10 @@
   .era-e2 .caret { display: inline-block; width: 9px; height: 1.05em; margin-left: 7px; vertical-align: -2px;
     background: var(--good); box-shadow: 0 0 8px var(--phosphor); animation: termBlink 1.1s steps(1) infinite; }
   @keyframes termBlink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+  /* a key badge so "WRITE A RULE" reads as a command you RUN, not a text field to type in (Zach) */
+  .era-e2 .term-key { margin-left: auto; font-size: 10px; letter-spacing: 1px; color: var(--good); border: 1px solid rgba(141,255,183,0.4);
+    border-radius: 4px; padding: 1px 6px; opacity: 0.85; }
+  .era-e2 .term-cmd { display: flex; align-items: center; gap: 8px; }
   /* the output log: the machine talking back */
   .era-e2 .term-log { font-family: var(--era-font); font-size: 12.5px; line-height: 1.7; margin: 9px 0 11px; min-height: 54px;
     border-top: 1px dashed rgba(79,169,123,0.22); padding-top: 8px; }
@@ -1115,7 +1119,7 @@
   }
   const ERAS = {
     1: { color: 'var(--e0)', tag: 'Origins', name: 'From Marks to Matter', sub: 'recording the world, then reshaping it', sigil: 'assets/era1-sigil.png' },
-    2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Hand-Written Logic', sub: 'rules authored by hand', sigil: 'assets/sigil-symbolic.png' },
+    2: { color: 'var(--e1)', tag: 'Symbolic', name: 'Symbolic Logic', sub: 'reasoning written as explicit rules', sigil: 'assets/sigil-symbolic.png' },
     3: { color: 'var(--e2)', tag: 'Statistical', name: 'Learning From Data', sub: 'patterns drawn from examples', sigil: 'assets/sigil-statistical.png' },
     4: { color: 'var(--e3)', tag: 'Deep', name: 'Neural Scaling', sub: 'compute-bound capability', sigil: 'assets/era4-sigil.png' },
     5: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical', sigil: 'assets/era5-sigil.png' },
@@ -1124,13 +1128,13 @@
   const TREE = [
     { id:'formalLogic', name:'Formal Logic',      cost:650,   req:[],                          row:0, col:0,    desc:'+50% to all rule production. The base of every technique above.' },
     { id:'fwdChain',    name:'Forward Chaining',  cost:1400,  req:['formalLogic'],             row:1, col:-1.1, desc:'Rulesets are 80% more productive.' },
-    { id:'bwdChain',    name:'Backward Chaining', cost:1400,  req:['formalLogic'],             row:1, col:1.1,  desc:'Writing a rule by hand is 3× stronger.' },
+    { id:'bwdChain',    name:'Backward Chaining', cost:1400,  req:['formalLogic'],             row:1, col:1.1,  desc:'Each rule you author directly is 3× stronger.' },
     { id:'rete',        name:'Rete Network',      cost:3200,  req:['fwdChain'],                row:2, col:-1.8, desc:'Each Ruleset boosts every other Ruleset (+3% each).' },
     { id:'inference',   name:'Inference Engine',  cost:4600,  req:['fwdChain','bwdChain'],     row:2, col:0,    desc:'Unlocks Inference Daemons — automation that writes rules as if you were clicking.' },
     { id:'heuristics',  name:'Heuristic Search',  cost:3200,  req:['bwdChain'],                row:2, col:1.8,  desc:'Manual + Daemon writing scales with Rulesets owned (+8% each).' },
     { id:'knowledge',   name:'Knowledge Base',    cost:8500,  req:['rete','inference'],        row:3, col:-1.0, desc:'Unlocks Compile — distil a whole run into permanent Axioms.' },
     { id:'metalogic',   name:'Meta-Logic',        cost:16000, req:['knowledge'],               row:3, col:1.0,  desc:'Every Axiom becomes 50% more powerful.' },
-    { id:'expert',      name:'Expert System',     cost:30000, req:['metalogic','heuristics'], reqAxioms:5, row:4, col:0, desc:'Complete the Symbolic Era. A system that reasons on its own — and the ceiling hand-written logic can never break.' },
+    { id:'expert',      name:'Expert System',     cost:30000, req:['metalogic','heuristics'], reqAxioms:5, row:4, col:0, desc:'Complete the Symbolic Era and open the next. A system that reasons on its own — and the ceiling rule-based logic can never break, which is why the era after this one learns from data instead.' },
   ];
   const TREEMAP = Object.fromEntries(TREE.map(n=>[n.id,n]));
   // ---- Era 1 (Origins) discoveries: a web of one-time unlocks; Knowledge (K) and Materials (M) interleave and cross-gate. ----
@@ -1167,10 +1171,10 @@
     { id:'treeUnlock', cond:()=> S.ruleset>=2,
       fire:()=>{ S.flags.tree=true; toast('SYMBOLIC TECHNIQUE','A map of technique opens. Spend Rules to unlock <b>Formal Logic</b>, then branch outward.'); } },
     { id:'compileUnlock', cond:()=> S.tech.knowledge,
-      fire:()=>{ S.flags.compile=true; toast('COMPILE','<b>Compile</b> a run into permanent <b>Axioms</b> that multiply everything.'); } },
+      fire:()=>{ S.flags.compile=true; toast('COMPILE UNLOCKED','<b>Compile</b> distils a whole run into permanent <b>Axioms</b> — each one permanently boosts all production. It resets your Rules, Rulesets and Daemons, so compile when growth stalls and rebuild from a higher floor.'); } },
     { id:'era3', cond:()=> S.flags.symbolicDone,
       fire:()=>{ S.dataset += CFG.e3.seedDatasets; S.silicon += CFG.e3.seedSilicon; openEra(3); // seed Datasets + Silicon so it starts in motion; scaling needs more Silicon (Origins)
-        toast('THE STATISTICAL ERA','Hand-written logic has hit its ceiling. Now intelligence is <b>learned from Data</b>. Datasets run on <b>Silicon</b> — to grow, you reopen the Foundry. Set your <b>Training Focus</b> and experiment toward a model that generalizes.'); } },
+        toast('SYMBOLIC COMPLETE › A NEW ERA BEGINS','The Expert System works — and rule-based logic has hit its ceiling. <b>The third era begins: Statistical.</b> Now intelligence is <b>learned from Data</b>, not written by rule. Datasets run on <b>Silicon</b> (reopen the Foundry to grow), and you set a <b>Training Focus</b> and experiment toward a model that generalizes. Scroll down into the new world.'); } },
     // ERA 4 — Deep: a model that generalizes becomes the seed of a model you scale with Compute.
     { id:'era4', cond:()=> S.maxEra>=3 && effAccuracy()>=CFG.e3.genThreshold,
       fire:()=>{ S.node += CFG.e4.seedNodes; S.silicon += CFG.e4.seedSilicon; S.data += CFG.e4.seedData; openEra(4);
@@ -1690,7 +1694,7 @@
     ore:'The world before we reshaped it.',
     metal:'Stone, disciplined by fire.',
     silicon:'Sand, taught to carry thought.',
-    rules:'Intelligence spelled out by hand, one clause at a time.',
+    rules:'Logic spelled out explicitly, one clause at a time.',
     axioms:'Truths kept across every reset.',
     data:'Experience, stored for the machine to study.',
     insight:'The pattern beneath the noise.',
@@ -1727,7 +1731,7 @@
     return '<div class="compile-wrap">'+
       '<div class="cstat"><div class="cs-label">Axioms</div><div class="cs-val" id="axVal" style="color:var(--accent)"></div></div>'+
       '<div class="cstat"><div class="cs-label">Production bonus</div><div class="cs-val" id="axBonus"></div></div>'+
-      '<div class="compile-act"><button class="act-btn" id="compileBtn"></button><div class="act-sub" id="compileSub">Resets Rules, Rulesets and Daemons. Technique and Axioms stay.</div></div>'+
+      '<div class="compile-act"><button class="act-btn" id="compileBtn"></button><div class="act-sub" id="compileSub">Bank this run as permanent <b>Axioms</b> — each one boosts <b>all</b> rule production, forever. It clears your current Rules, Rulesets and Daemons; your Technique and Axioms are kept, so you come back stronger. Best when growth stalls.</div></div>'+
     '</div>';
   }
   function buildDaemons(){ // Era-2 automation as a daemon registry (process rows + spawn commands), not cards
@@ -1750,7 +1754,7 @@
         '<span class="term-title">INFERENCE&nbsp;ENGINE</span><span class="term-path">~/prove a theorem</span><span class="term-dot"></span></div>'+
       '<div class="proof-rate term-out" id="infRate"></div><div class="proof-active" id="proofActive"></div>'+
       '<div class="term-log" id="termLog"></div>'+
-      '<button class="act-btn term-cmd" id="ruleBtn2"><span class="term-prompt">&gt;</span>write rule<span class="caret"></span></button>'+
+      '<button class="act-btn term-cmd" id="ruleBtn2"><span class="term-prompt">&gt;</span>WRITE A RULE<span class="term-key">RUN &#8629;</span></button>'+
       '<div class="act-sub" id="manualSub" style="text-align:left"></div></div>';
     // Automation: a daemon registry / process table, not upgrade cards
     body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Automation &middot; daemon registry</div>'+buildDaemons()+'</div>';
@@ -2418,7 +2422,7 @@
     if(cb){ const g=axiomGain();
       setText('axVal', fmt(S.axioms));
       setText('axBonus', '+'+Math.round(S.axioms*st.axBonus*100)+'%');
-      const html='COMPILE · <span class="c" style="color:var(--accent)">+'+g+' axioms</span>';
+      const html='COMPILE · <span class="c" style="color:var(--accent)">bank +'+g+' permanent Axioms</span>';
       if(cb._html!==html){ cb.innerHTML=html; cb._html=html; }
       if(cb.disabled!==(g<1)) cb.disabled=(g<1);
     }

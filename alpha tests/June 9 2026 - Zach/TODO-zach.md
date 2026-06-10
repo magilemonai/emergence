@@ -40,10 +40,10 @@ Heavy REDESIGN items (Batches 6-8) — do the concrete, clear wins and PAUSE to 
 - [x] 5.2 Collapse completed eras harder so the active era is unambiguous (40)
 
 ## Batch 6 — Symbolic legibility (REDESIGN; decision 3)
-- [ ] 6.1 Copy away from "hand-written / by hand" → **early-analog-digital / CRT** framing, clearly on a computer (45)
-- [ ] 6.2 "Write Rule" must not look like a text-input field (it's a click) (42)
-- [ ] 6.3 Make Compile legible + non-scary (what it resets, why it's good) (44)
-- [ ] 6.4 Relabel so the era doesn't read as "the game ended" (era name repeats pre/post) (46)
+- [x] 6.1 Copy away from "hand-written / by hand" → **early-analog-digital / CRT** framing, clearly on a computer (45)
+- [x] 6.2 "Write Rule" must not look like a text-input field (it's a click) (42)
+- [x] 6.3 Make Compile legible + non-scary (what it resets, why it's good) (44)
+- [x] 6.4 Relabel so the era doesn't read as "the game ended" (era name repeats pre/post) (46)
 - [ ] 6.5 De-jargon (theorems/lemmas/daemon/PID/axioms) + a clear moment-to-moment goal (41,43,47,48) — PAUSE for design fork
 
 ## Batch 7 — Statistical legibility (REDESIGN)
