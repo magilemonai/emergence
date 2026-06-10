@@ -807,6 +807,7 @@
     border: 1px solid rgba(201,146,95,0.45); border-radius: 9px; }
   .tile-body { width: 100%; min-width: 0; }
   .tile-name { font-size: 18px; color: var(--text); text-align: center; }
+  .tile-eyebrow { display: block; font-size: 11px; letter-spacing: 0.06em; color: var(--dimmer); text-transform: uppercase; opacity: 0.8; margin-bottom: 1px; }
   .tile-count { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .tile-flavor { font-size: 14px; font-style: italic; color: var(--dim); line-height: 1.45; margin: 2px 0; }
   .tile-mech { font-size: 14px; color: var(--dim); line-height: 1.45; }
@@ -1096,10 +1097,10 @@
   const DISCO = [
     { id:'tally',        name:'Tally Marks',    res:'marks',     cost:6,   req:[],                         flavor:'A notch for each thing worth counting.',           mech:'Inscribing by hand is twice as productive.' },
     { id:'scribe',       name:'The Scribe',     res:'marks',     cost:20,  req:['tally'],                  flavor:'Hands trained to the work, and only the work.',     mech:'Unlocks the Scribe — automates Marks.',               effect(){ S.flags.canScribe=true; } },
-    { id:'stoneworking', name:'Stoneworking',   res:'marks',     cost:38,  req:['tally'],                  target:30,  flavor:'The first deliberate reshaping of the world.',      mech:'Unlocks Quarrying and Miners.',                       effect(){ S.flags.o_materials=true; } },
+    { id:'stoneworking', name:'Stoneworking',   lead:'Quarrying & Miners', res:'marks', cost:38,  req:['tally'],          target:30,  flavor:'The first deliberate reshaping of the world.',      mech:'Unlocks Quarrying and Miners.',                       effect(){ S.flags.o_materials=true; } },
     { id:'apprenticeship',name:'Apprenticeship', costs:{marks:277, ore:315}, req:['scribe','stoneworking'], flavor:'A craft taught, not stumbled into.',                mech:'Scribes and Miners work 50% faster.' },
-    { id:'clayTablets',  name:'Clay Tablets',   res:'marks',     cost:110, req:['scribe','stoneworking'],  reqRes:{ore:15},  target:60,  flavor:'Something firmer than memory to hold a thought.',   mech:'Unlocks the Scriptorium — Marks become Knowledge.',   effect(){ S.flags.o_scriptorium=true; } },
-    { id:'kiln',         name:'The Kiln',       res:'ore',       cost:110, req:['clayTablets'],            reqRes:{knowledge:30}, target:120, flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
+    { id:'clayTablets',  name:'Clay Tablets',   lead:'The Scriptorium', res:'marks', cost:110, req:['scribe','stoneworking'], reqRes:{ore:15}, target:60, flavor:'Something firmer than memory to hold a thought.',   mech:'Unlocks the Scriptorium — Marks become Knowledge.',   effect(){ S.flags.o_scriptorium=true; } },
+    { id:'kiln',         name:'The Kiln',       lead:'The Smelter', res:'ore', cost:110, req:['clayTablets'],          reqRes:{knowledge:30}, target:120, flavor:'Captured fire, hot enough to change a stone.',      mech:'Unlocks the Smelter — Ore becomes Metal. (Bronze Age)',effect(){ S.flags.o_smelter=true; S.age=2; } },
     { id:'alphabet',     name:'The Alphabet',   res:'knowledge', cost:120, req:['clayTablets'],            flavor:'A handful of signs that can spell anything at all.',mech:'Scriptoria work 60% faster.' },
     { id:'bronzeCasting',name:'Bronze Casting', res:'metal',     cost:90,  req:['kiln'],                   flavor:'Pour the metal; let the mold decide its shape.',    mech:'Smelters work 60% faster.' },
     { id:'wheel',        name:'The Wheel',      res:'ore',       cost:130, req:['kiln'],                   flavor:'The load that once broke backs now simply rolls.',  mech:'Miners haul 80% more Ore — but Scribes, pulled to the carts, work 20% slower.' },
@@ -1771,8 +1772,10 @@
     }
     const n=DISCOMAP[key];
     const tip = '<i>'+n.flavor+'</i><br>'+n.mech;
+    // Lead the tile with the thing you'll actually look at (the building), not the flavor-name (Zach: "name the thing the thing you're going to be looking at").
+    const title = n.lead ? '<span class="tile-eyebrow">'+n.name+'</span>'+n.lead : n.name;
     return '<div class="tile disco" id="dtile-'+key+'" data-tip="'+esc(tip)+'">'+tileIcon(DICON[key]||'')+
-      '<div class="tile-body"><div class="tile-name">'+n.name+'</div>'+
+      '<div class="tile-body"><div class="tile-name">'+title+'</div>'+
       '<div class="tile-mech">'+n.mech+'</div>'+
       '<button class="up-buy tile-btn" data-disco="'+key+'" id="dsc-'+key+'"></button></div></div>';
   }
