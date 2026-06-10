@@ -1050,6 +1050,11 @@
   }; }
   const S = freshState();
   const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0, rules:0, data:0, insight:0, capability:0, scale:0 }; // net per-second flow, captured each tick
+  // Gross produced vs consumed, per second, for the Origins resources — surfaced in the resource tooltip so the player can
+  // see WHY a stock is draining ("scriptoria consume Marks faster than scribes make them") instead of just a red net number.
+  const FLOW = { marks:{in:0,out:0}, ore:{in:0,out:0}, knowledge:{in:0,out:0}, metal:{in:0,out:0}, silicon:{in:0,out:0} };
+  function fIn(k,a){ if(FLOW[k]) FLOW[k].in+=a; }
+  function fOut(k,a){ if(FLOW[k]) FLOW[k].out+=a; }
   let viewEra = 1; // the era currently most in view (drives the contextual top bar); follows scroll
   // Progressive UI: each section animates in only the first time it appears (survives re-renders).
   const _seen = new Set();
@@ -1458,21 +1463,25 @@
     const os=oStats();
     const e1=CFG.e1;
     const _b={marks:S.marks,knowledge:S.knowledge,ore:S.ore,metal:S.metal,silicon:S.silicon,rules:S.rules,data:S.data,insight:S.insight,capability:S.capability,scale:S.scale};
-    if(S.scribe>0) S.marks += S.scribe*os.scribeY*dt;
-    if(S.miner>0)  S.ore   += S.miner*os.minerY*dt;
+    for(const k in FLOW){ FLOW[k].in=0; FLOW[k].out=0; } // gross-flow accumulator, reset each tick
+    if(S.scribe>0){ const a=S.scribe*os.scribeY*dt; S.marks+=a; fIn('marks',a); }
+    if(S.miner>0){  const a=S.miner*os.minerY*dt;  S.ore+=a;   fIn('ore',a); }
     // Scriptorium: Marks -> Knowledge, but each unit also burns Ore (tablets). Throttled by whichever runs short.
     if(S.scriptorium>0){
       let out=Math.min(S.marks, S.scriptorium*os.scrR*dt);
       const up=out*e1.scriptoriumUpkeep; if(up>S.ore) out *= (up>0 ? S.ore/up : 0);
       S.marks-=out; S.ore-=out*e1.scriptoriumUpkeep; S.knowledge+=out;
+      fOut('marks',out); fOut('ore',out*e1.scriptoriumUpkeep); fIn('knowledge',out);
     }
     // Smelter: Ore -> Metal, but each unit also burns Knowledge (know-how). Competes with the Foundry for Knowledge.
     if(S.smelter>0){
       let out=Math.min(S.ore, S.smelter*os.smR*dt);
       const up=out*e1.smelterUpkeep; if(up>S.knowledge) out *= (up>0 ? S.knowledge/up : 0);
       S.ore-=out; S.knowledge-=out*e1.smelterUpkeep; S.metal+=out;
+      fOut('ore',out); fOut('knowledge',out*e1.smelterUpkeep); fIn('metal',out);
     }
-    if(S.foundry>0){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c; }
+    if(S.foundry>0){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c;
+      fOut('metal',c); fOut('knowledge',c); fIn('silicon',c); }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
       const st=stats();
@@ -1559,7 +1568,8 @@
         }
       }
     }
-    if(dt>0){ for(const k in _b) RATES[k]=(S[k]-_b[k])/dt; } // net per-second flow for every resource (all eras)
+    if(dt>0){ for(const k in _b) RATES[k]=(S[k]-_b[k])/dt; // net per-second flow for every resource (all eras)
+      for(const k in FLOW){ FLOW[k].in/=dt; FLOW[k].out/=dt; } } // gross in/out → per-second
   }
   function checkMiles(){
     let fired=false;
@@ -1593,7 +1603,7 @@
   function buildHeader(){
     if(!S.flags.firstAuto) return;
     $('resBar').innerHTML = RES_DEFS.filter(d=>d.show()).map(d=>
-      '<div class="res show" data-tip="'+esc('<i>'+(RESFLAVOR[d.k]||'')+'</i>')+'"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div><div class="res-ps" id="rr-'+d.k+'"></div></div>').join('');
+      '<div class="res show" id="res-'+d.k+'" data-tip="'+esc('<i>'+(RESFLAVOR[d.k]||'')+'</i>')+'"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div><div class="res-ps" id="rr-'+d.k+'"></div></div>').join('');
     const bm=$('buyMode');
     if(S.flags.canScribe){ // buy-mode only matters once you have repeatable things to build
       bm.classList.add('show');
@@ -2228,7 +2238,17 @@
     setText('eraInd', ERAS[S.maxEra].tag.toUpperCase()+' ERA');
     for(const d of RES_DEFS){ setText('rv-'+d.k, fmt(S[d.k]));
       const rt=RATES[d.k]||0, re=$('rr-'+d.k);
-      if(re){ const t=(rt>0.0005?'+':'')+(Math.abs(rt)<0.0005?'':fmt(rt)+'/s'); re.textContent=t; re.className='res-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero')); } }
+      if(re){ const t=(rt>0.0005?'+':'')+(Math.abs(rt)<0.0005?'':fmt(rt)+'/s'); re.textContent=t; re.className='res-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero')); }
+      // live flow breakdown in the tooltip: produced vs consumed vs net (answers "build more, or stop draining?")
+      const fl=FLOW[d.k], host=$('res-'+d.k);
+      if(fl && host && (fl.in>0.0005 || fl.out>0.0005)){
+        const net=fl.in-fl.out;
+        const tip='<i>'+(RESFLAVOR[d.k]||'')+'</i>'+
+          '<br><span style="color:var(--good)">▲ produced +'+fmt(fl.in)+'/s</span>'+
+          '<br><span style="color:var(--dim)">▼ consumed −'+fmt(fl.out)+'/s</span>'+
+          '<br>= net '+(net>=0?'+':'−')+fmt(Math.abs(net))+'/s';
+        if(host._tip!==tip){ host.setAttribute('data-tip', tip); host._tip=tip; }
+      } }
     for(const key in BUYS){ const cnt=$('cnt-'+key); if(!cnt) continue;
       setText('cnt-'+key, 'x'+S[key]);
       const btn=$('buy-'+key), st=upLabel(key);
