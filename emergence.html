@@ -378,9 +378,10 @@
   .music-btn:hover { color: var(--text); border-color: var(--accent); }
   .music-btn.off { opacity: 0.45; text-decoration: line-through; }
   .sound-wrap { position: relative; }
-  .sound-panel { position: absolute; top: 32px; right: 0; z-index: 80; display: none; flex-direction: column; gap: 9px;
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; min-width: 170px;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.55); }
+  /* fixed + high z-index so it floats above the era panels (an absolute panel inside the header gets painted over by later DOM) */
+  .sound-panel { position: fixed; top: 54px; right: 16px; z-index: 9000; display: none; flex-direction: column; gap: 9px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; min-width: 180px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.6); }
   .sound-panel.show { display: flex; }
   .snd-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; letter-spacing: 0.04em; color: var(--dim); }
   .snd-row input[type=range] { width: 96px; accent-color: var(--accent); cursor: pointer; }
@@ -2708,7 +2709,10 @@
   try{ const mv=localStorage.getItem('emergence-musvol'); if(mv!==null) MUSIC.vol=Math.max(0,Math.min(1,+mv)); MUSIC.on = localStorage.getItem('emergence-music')!=='off' && MUSIC.vol>0;
        const sv=localStorage.getItem('emergence-sfxvol'); if(sv!==null) SFX.vol=Math.max(0,Math.min(1,+sv)); SFX.on = localStorage.getItem('emergence-sfx')!=='off' && SFX.vol>0; }catch(_){}
   updateMusicBtn();
-  { const mb=$('musicBtn'); if(mb) mb.onclick=()=>{ const p=$('soundPanel'); if(p) p.classList.toggle('show'); };
+  { const mb=$('musicBtn'); if(mb) mb.onclick=()=>{ const p=$('soundPanel'); if(!p) return;
+      if(!p.classList.contains('show') && mb.getBoundingClientRect){ const r=mb.getBoundingClientRect(); // anchor under the button (fixed + computed = on top AND aligned)
+        p.style.top=(r.bottom+8)+'px'; p.style.left='auto'; p.style.right=Math.max(8,(window.innerWidth-r.right))+'px'; }
+      p.classList.toggle('show'); };
     const mvEl=$('musVol'); if(mvEl){ mvEl.value=Math.round(MUSIC.vol*100);
       mvEl.oninput=()=>{ MUSIC.vol=mvEl.value/100; MUSIC.on=MUSIC.vol>0;
         try{ localStorage.setItem('emergence-musvol',MUSIC.vol); localStorage.setItem('emergence-music',MUSIC.on?'on':'off'); }catch(_){}
