@@ -35,7 +35,7 @@ His new verdict: Origins + Symbolic are good now; **"statistical, deep, and foun
 - [x] R2.8 Audit each era for a couple of high-value color cues (extend the overfit→yellow idea he praised).
 
 ### Teaching / copy clarity (extend the legibility pass — copy only, no mechanic change)
-- [ ] R2.9 Statistical teaching: explain the fundamentals — what a "trial" is, what "accuracy" means, and **why 88%** (an AI-specific target) — and clarify the scatter goal ("are points matching the line or the line the points?") (H1, H2).
+- [x] R2.9 Statistical teaching: explain the fundamentals — what a "trial" is, what "accuracy" means, and **why 88%** (an AI-specific target) — and clarify the scatter goal ("are points matching the line or the line the points?") (H1, H2).
 - [ ] R2.10 Deep teaching: an explicit, interactive explanation of the triangle (it's draggable; breakthrough/drift = steer compute there), and **explain the 78% breadth goal** (why not 100; it's an AI thing) (I1, I2).
 - [ ] R2.11 Foundation: explain the Self-Improve **disabled state** (what it needs and how close you are) (J3); and **name the agent plainly** at emergence — "symbiotic agent" + a description of the qualities you gave it (J5).
 

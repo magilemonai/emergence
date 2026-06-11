@@ -1821,8 +1821,10 @@
   const TEACH = {
     2: { cls:'teach-crt', title:'&gt; EXPERT SYSTEM — BOOT OK', lead:'This machine reasons by proving techniques.',
       steps:['Your <b>Rulesets</b> generate <b>Inference</b> — reasoning power.','Aim it at a <b>Theorem</b> to prove, and unlock, that technique.','Prove the <b>Expert System</b> to complete the era.'] },
-    3: { cls:'teach-inst', title:'INSTRUMENT&nbsp;CALIBRATION', lead:'You are training a model to learn from data.',
-      steps:['<b>Run Trials</b> to raise Accuracy.','Watch the <b>overfit gap</b> — memorizing isn’t learning.','Steer your <b>Focus</b> (Fit / Generalize / Explore). Reach <b>88%</b> to generalize.'] },
+    3: { cls:'teach-inst', title:'INSTRUMENT&nbsp;CALIBRATION', lead:'You are training a model to find the pattern in data — without just memorizing it.',
+      steps:['A <b>Trial</b> is one round of training on examples; each raises <b>Accuracy</b> (how often the model is right).',
+        'Memorizing isn’t learning — the <b>overfit gap</b> is how much it’s just memorizing. <b>Effective = accuracy − overfit.</b>',
+        'Steer your <b>Focus</b>: Fit climbs fast (but overfits), Generalize shrinks the gap, Explore finds Methods. Reach <b>88% effective</b> — the bar where it works on data it has never seen.'] },
   };
   function teachBeat(n){ const b=TEACH[n]; if(!b || S.flags['taught'+n]) return '';
     return '<div class="panel teach-beat '+b.cls+'" style="grid-column:1/-1">'+
@@ -2026,7 +2028,7 @@
       // THE INSTRUMENT — the living plot is the world object; you observe + steer a learning process
       '<div class="panel plot-instrument" style="grid-column:1/-1">'+
         '<div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><span class="inst-dot"></span></div>'+
-        '<div class="sym-help"><b>Run Trials</b> to raise Accuracy. Your <b>Focus</b> steers it — <i>Fit</i> climbs fast but overfits, <i>Generalize</i> closes that gap, <i>Explore</i> finds new Methods. Reach <b>88% effective accuracy</b> to generalize and finish the era.</div>'+
+        '<div class="sym-help">The glowing <b>curve</b> is the model’s guess; the <b>dots</b> are real data — a good model follows the data’s shape without hugging every dot (that’s overfitting). <b>Run Trials</b> to raise Accuracy; <b>Focus</b> steers it — <i>Fit</i> climbs fast but overfits, <i>Generalize</i> closes the gap, <i>Explore</i> finds Methods. Reach <b>88% effective</b> to finish the era.</div>'+
         '<canvas id="scatter" class="scatter"></canvas>'+
         '<div class="proof-rate inst-readout" id="accRate"></div>'+
         '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
