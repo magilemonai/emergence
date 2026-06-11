@@ -107,6 +107,11 @@
   @keyframes destabPulse { 0%,100% { opacity: 0.72; } 50% { opacity: 1; text-shadow: 0 0 14px rgba(255,90,110,0.55); } }
   .era-e5 .core-verbs { display: flex; gap: 10px; flex-wrap: wrap; }
   .era-e5 .core-verbs .act-btn { flex: 1; min-width: 150px; }
+  .era-e5 .rush-prepare { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .era-e5 .rush-prepare .act-btn { flex: 1; min-width: 160px; margin-top: 0; }
+  .era-e5 .act-btn.prepare { border-color: rgba(95,224,192,0.5); color: #9fe6cf; }
+  .era-e5 .act-btn.prepare:hover:not(:disabled) { background: rgba(95,224,192,0.12); border-color: rgba(95,224,192,0.8); }
+  .era-e5 .rush-hint { font-size: 10.5px; color: var(--dim); text-align: center; margin-top: 9px; line-height: 1.55; font-style: italic; }
   .era-e5 .agent-stream { font-family: var(--mono, monospace); font-size: 12px; color: var(--dim); min-height: 40px; display: flex; flex-direction: column; gap: 3px; }
   .era-e5 .agent-msg { opacity: 0; animation: msgIn 0.5s forwards; }
   @keyframes msgIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 0.9; transform: none; } }
@@ -1159,7 +1164,12 @@
       // --- the HIDDEN emergence gate: Agency (shown only as "Anomaly: rising") = Scale toward this; emergence is inevitable, only its timing is yours ---
       emergeScale: 1550,       // Scale at which the system emerges (HIDDEN — no countdown, no button)
       interpretDamp: 0.22,     // Interpretability slows the scaling it can't stop (buys time → a higher-Coherence ending)
-      coherGrow: 1.4,          // Coherence/s once Interpretability is owned (a head start on Alignment)
+      coherGrow: 1.4,          // Coherence/s once Interpretability is owned (a slow passive head start, capped at 40)
+      // RUSH vs PREPARE (R3.6): the pre-emergence decision. Every Capability is a choice — Self-Improve (rush: faster Scale →
+      // emerge sooner, less aligned) or Align the Objective (prepare: build Coherence → it wakes more aligned, but you fall
+      // behind on recursion and it's still coming). Coherence becomes the Alignment floor at emergence (alignBase + coherence).
+      coherMax: 58,            // Align-the-Objective can push Coherence this high (passive trickle still caps at 40) → up to ~76 starting Alignment
+      alignActIncr: 7, alignActCost: 70, alignActGrowth: 1.16, // each Prepare: +Coherence, Capability cost climbs
       // --- aftermath: Control vs Alignment; Autonomy keeps rising on its own ---
       controlStart: 64,        // Control at the moment of emergence
       alignBase: 18,           // Alignment floor at emergence (+ carried Coherence)
@@ -1206,6 +1216,7 @@
     veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     neglect: 0, destab: false,                      // R3.5 stakes: compounding neglect (lapsed vetoes) + the destabilizing-spiral flag
+    preps: 0,                                       // R3.6: Align-the-Objective uses (the prepare track vs the Self-Improve rush)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, paused: {}, clicks: 0, // paused: converters the player has switched off (anti-soft-lock)
@@ -2295,6 +2306,13 @@
     S.capability-=c; S.recursion++; S.improveCd=CFG.e5.improveCd;
     S.scale += CFG.e5.scalePerImprove*S.recursion*(S.caps.recursivePlanning?1.6:1);
     playSound('buy'); recEvent('improve:'+S.recursion); render(); }
+  // PREPARE track (R3.6): spend Capability to build Coherence → the system wakes more aligned. Competes with Self-Improve
+  // for the same Capability + the same time, and needs the instruments (Interpretability) to align what you can't yet read.
+  function alignCohCost(){ return Math.floor(CFG.e5.alignActCost*Math.pow(CFG.e5.alignActGrowth, S.preps||0)); }
+  function alignObjective(){ if(S.emerged || !S.caps.interpret) return; const c=alignCohCost();
+    if(S.capability<c || S.coherence>=CFG.e5.coherMax) return;
+    S.capability-=c; S.coherence=Math.min(CFG.e5.coherMax, S.coherence+CFG.e5.alignActIncr); S.preps=(S.preps||0)+1;
+    recEvent('prepare:'+S.preps); playSound('buy'); render(); }
   function buyCap(id){ if(S.emerged) return; const c=CAPMAP[id]; if(!c || S.caps[id] || S.capability<c.cost) return;
     S.capability-=c.cost; S.caps[id]=true; recEvent('cap:'+id);
     toast('CAPABILITY: '+c.name.toUpperCase(), '<i>'+c.flavor+'</i><br>'+c.desc); render(); }
@@ -2366,8 +2384,13 @@
         '<div class="proof-rate" id="recRate"></div>'+
         '<div class="meter"><i id="meter-scale" style="background:var(--e4)"></i></div>'+
         '<div class="meter-label"><span>Scale</span><span id="meter-scale-val"></span></div>'+
-        '<button class="act-btn" id="improveBtn" style="margin-top:12px"></button>'+
+        // RUSH vs PREPARE — the pre-emergence decision (R3.6): every Capability is one or the other
+        '<div class="rush-prepare">'+
+          '<button class="act-btn" id="improveBtn" data-tip="'+esc('<b>Rush.</b> Faster Scale → the system emerges sooner — but less aligned. Each level also adds +10% to all production, every era.')+'"></button>'+
+          '<button class="act-btn prepare" id="prepareBtn" data-tip="'+esc('<b>Prepare.</b> Build Coherence so it wakes more aligned (a higher Alignment floor at emergence). Costs Capability you could have spent rushing. Needs Interpretability first.')+'"></button>'+
+        '</div>'+
         '<div class="act-sub" id="improveSub"></div>'+
+        '<div class="rush-hint" id="rushHint">Every Capability is a choice: rush to emerge, or prepare so it wakes aligned. It is coming either way.</div>'+
       '</div>'+
       // the two tension meters: Coherence is something you build; the Anomaly is something you watch.
       '<div class="panel" style="grid-column:1/-1">'+
@@ -2513,6 +2536,7 @@
       tm.onpointerup=tm.onpointercancel=()=>{ drag=false; tm.classList.remove('dragging'); }; }
     document.querySelectorAll('[data-cap]').forEach(b=> b.onclick=e=>buyCap(e.currentTarget.dataset.cap));
     const imb=$('improveBtn'); if(imb) imb.onclick=selfImprove;
+    const prb=$('prepareBtn'); if(prb) prb.onclick=alignObjective; // R3.6 prepare track
     const cnb=$('constrainBtn'); if(cnb) cnb.onclick=constrainAct;
     const anb=$('alignBtn'); if(anb) anb.onclick=alignAct;
     const dgb=$('delegateBtn'); if(dgb) dgb.onclick=delegateAct;
@@ -2778,6 +2802,16 @@
         const canImp=S.improveCd<=0 && S.capability>=improveCost();
         setText('improveSub', canImp ? ('Recursion Lv '+S.recursion+' · +'+Math.round((rMult()-1)*100)+'% to ALL production, every era')
           : ('Need '+fmt(improveCost())+' Capability — you have '+fmt(S.capability)+'. It builds up as Deep keeps training.')); // explain the disabled state (Zach: "why can't I do self-improve?")
+        // PREPARE button (rush-vs-prepare): build Coherence so it wakes aligned
+        const pb=$('prepareBtn'); if(pb){ const cohMaxed=S.coherence>=e5.coherMax, pc=alignCohCost();
+          let ph; if(!S.caps.interpret) ph='ALIGN THE OBJECTIVE · <span class="c">locked</span>';
+          else if(cohMaxed) ph='OBJECTIVE ALIGNED · <span class="c">Coherence maxed</span>';
+          else ph='ALIGN THE OBJECTIVE · <span class="c">'+fmt(pc)+' Capability</span>';
+          if(pb._html!==ph){ pb.innerHTML=ph; pb._html=ph; }
+          pb.disabled = !S.caps.interpret || cohMaxed || S.capability<pc; }
+        setText('rushHint', !S.caps.interpret
+          ? 'Rush with Self-Improve, or acquire Interpretability below to unlock the prepare track. It is coming either way.'
+          : 'Coherence '+Math.round(S.coherence)+'/'+e5.coherMax+' → it would wake at ~'+Math.round(Math.min(100,e5.alignBase+S.coherence))+'% Alignment. Rush to emerge sooner, or prepare so it wakes aligned.');
         setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · Capability '+fmt(S.capability)+' (+'+fmt(RATES.capability||0)+'/s)');
         for(const c of CAPS){ const b=$('capb-'+c.id); if(b){ const h='ACQUIRE · <span class="c">'+fmt(c.cost)+' Capability</span>'; if(b._html!==h){ b.innerHTML=h; b._html=h; } b.disabled=S.capability<c.cost; } }
         const cm=$('meter-coher'); if(cm) cm.style.width=Math.min(100,(S.coherence/40)*100)+'%';
@@ -3072,7 +3106,7 @@
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
       METHODS, e3Stats, effAccuracy, runExperiment,
-      deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
+      deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, alignCohCost, alignObjective, buyCap,
       agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding,
       MUSIC, musicForEra, startMusic, syncMusic, openEra, setViewEra:(n)=>{ viewEra=n; },
       save, load, offlineCatchup, revealGame };

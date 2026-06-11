@@ -453,8 +453,9 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
 function foundationStep(EM){ // ERA 5 — climb the recursion ladder to emergence, then manage the aftermath to an ending
   const { S, CAPS } = EM; const e5 = EM.CFG.e5;
   if(S.maxEra < 5) return;
-  if(!S.emerged){ // pre-emergence: buy capabilities + pace the recursion ladder
+  if(!S.emerged){ // pre-emergence: buy capabilities, then play rush-vs-prepare (R3.6) — prepare a little, then rush
     for(const c of CAPS) if(!S.caps[c.id] && S.capability >= c.cost) EM.buyCap(c.id);
+    if(S.caps.interpret && S.coherence < 36 && S.capability >= EM.alignCohCost()){ EM.alignObjective(); return; } // build some Coherence so it wakes aligned
     if(S.capability >= EM.improveCost()) EM.selfImprove();
     return;
   }
@@ -613,6 +614,25 @@ function testDeepSteering(){
   ok(Math.abs(S.vision - vLocked) < 1e-6, 'a locked run is frozen (no drift, no climb) while the timer runs');
   ok(S.locks.vision < e4.lockDur, 'lock timer counts down');
 }
+function testPreEmergence(){
+  section('Era 5 — rush vs prepare (pre-emergence decision)');
+  // Align the Objective: gated on Interpretability, spends Capability, raises Coherence → a higher Alignment floor at emergence
+  let EM = freshGame(); let S = EM.S; const e5 = EM.CFG.e5;
+  S.maxEra=5; S.capability=400;
+  EM.alignObjective(); // no Interpretability yet → blocked
+  ok(S.coherence===0 && S.capability===400, 'Align the Objective is locked until Interpretability is acquired');
+  S.caps.interpret=true; const cap0=S.capability, coh0=S.coherence, cost=EM.alignCohCost();
+  EM.alignObjective();
+  ok(S.coherence>coh0 && S.capability===cap0-cost, 'Align the Objective: spends Capability → +Coherence');
+  ok(EM.alignCohCost() > cost, 'prepare cost climbs with each use');
+  // prepared emergence wakes more aligned than a rushed one (Coherence becomes the Alignment floor)
+  const wakeAlign = (coh)=>{ const E=freshGame(), s=E.S; s.maxEra=5; s.coherence=coh; s.agency=120; E.emerge(); return s.alignment; };
+  ok(wakeAlign(50) > wakeAlign(0) + 25, 'a prepared (high-Coherence) emergence starts with much higher Alignment than a rushed one');
+  // Coherence is capped (prepare can't trivialize it)
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.caps.interpret=true; S.capability=1e9;
+  for(let i=0;i<40;i++) EM.alignObjective();
+  ok(S.coherence <= e5.coherMax + 1e-6, 'Coherence is capped at coherMax (prepare has a ceiling)');
+}
 function testFoundation(){
   section('Era 5 — emergence threshold, recursion pacing, aftermath loop');
   // recursion cost is a STEEP climb (the burst fix): cost grows sharply per level
@@ -698,6 +718,7 @@ testConverterPause();
 testNoNaN();
 testNoIdleRebuild();
 testDeepSteering();
+testPreEmergence();
 testFoundation();
 testMusic();
 testProgression();

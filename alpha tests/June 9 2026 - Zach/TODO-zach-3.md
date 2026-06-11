@@ -16,7 +16,7 @@ The throughline: Origins/Symbolic became good via legibility; the back half is l
 
 ## D6 — Foundation: depth + aftermath stakes (the finale; heaviest, do after Deep)
 - [x] R3.5 **Aftermath stakes:** neglecting Control/Alignment visibly **drags you toward Runaway** under pressure; lapsing a veto window costs something real. The three moves + veto should have teeth (Zach: "time-critical, but nothing bad happened").
-- [ ] R3.6 **Pre-emergence depth:** a real turn-to-turn decision — e.g. push fast toward emergence vs build Coherence first, trading ending quality for speed (Zach: "just a bar that fills + buttons").
+- [x] R3.6 **Pre-emergence depth:** a real turn-to-turn decision — e.g. push fast toward emergence vs build Coherence first, trading ending quality for speed (Zach: "just a bar that fills + buttons").
 
 ## D9 — Educational tidbits in the log (cheap, fold in along the way)
 - [ ] R3.7 Short "did you know"-style notes in the Goals log explaining the real AI concepts (why 88% / generalization, what breadth/capability mean, what an agent is). Keep them short + earned, not preachy. (Foxfire-adjacent.)

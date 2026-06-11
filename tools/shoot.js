@@ -104,8 +104,8 @@ const SETUP = {
     tip.style.left='150px'; tip.style.top='980px';`,
   foundation: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
     S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9; E.checkMiles();
-    S.capability=4000;S.scale=320;S.recursion=4;S.caps={selfModel:true,toolAccess:true,interpret:true};
-    E.checkMiles(); for(let i=0;i<5;i++) E.tick();`, // pre-emergence: the recursion ladder + the rising Anomaly
+    S.capability=4000;S.scale=320;S.recursion=4;S.coherence=24;S.caps={selfModel:true,toolAccess:true,interpret:true};
+    E.checkMiles(); for(let i=0;i<5;i++) E.tick();`, // pre-emergence: rush (Self-Improve) vs prepare (Align the Objective) + the rising Anomaly
   emergence: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
     S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9;S.recursion=8;S.scale=1600;S.coherence=20;
     S.caps={selfModel:true,toolAccess:true,recursivePlanning:true,worldModel:true};
