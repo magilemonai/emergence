@@ -1792,11 +1792,12 @@
       '<div class="term-log" id="termLog"></div>'+
       '<button class="act-btn term-cmd" id="ruleBtn2"><span class="term-prompt">&gt;</span>WRITE A RULE<span class="term-key">RUN &#8629;</span></button>'+
       '<div class="act-sub" id="manualSub" style="text-align:left"></div></div>';
+    // Compile surfaces at the TOP once unlocked — it's the big new mechanic, not a footnote at the bottom (Zach)
+    if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel'+intro('compile')+'" style="grid-column:1/-1"><div class="panel-label">Compile <span class="lbl-plain">(bank permanent boosts)</span></div>'+buildCompile()+'</div>';
     // Automation: a daemon registry / process table, not upgrade cards
     body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Automation &middot; daemons <span class="lbl-plain">(programs that write rules for you)</span></div>'+buildDaemons()+'</div>';
     // The theorems to choose from
     if(S.flags.tree) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Theorems <span class="lbl-plain">(techniques to unlock — aim your reasoning at one)</span></div>'+buildProofList()+'</div>';
-    if(S.flags.compile && !S.flags.symbolicDone) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Compile <span class="lbl-plain">(bank permanent boosts)</span></div>'+buildCompile()+'</div>';
     return eraShell(2, false, body);
   }
   const TH_ICON = { optimization:'assets/th-optimization.png', formalLogic:'assets/th-formalLogic.png',
@@ -1940,19 +1941,20 @@
   function buildOrigins(){ // ERA 1
     // Progressive disclosure: sections appear as the player earns them.
     let body = buildCore();                                   // the core + Research button (at reveal)
-    if(S.flags.canScribe) body += buildRatesPanel();          // 2. Flows (with your first automation)
-    if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // 3. Works (Research lives in the drawer)
-    if(S.flags.o_scriptorium) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Refinement · spend surplus Ore to sharpen every craft</div>'+ // 4. the always-a-near-win sink
-      '<div class="refine-row" data-tip="'+esc('<i>Practice compounds. Sink your surplus back into the work.</i><br>+'+Math.round(CFG.e1.refineBonus*100)+'% to ALL Origins production per level. Repeatable.')+'">'+
-      '<div class="refine-info"><div class="up-name">Refine the Craft <span class="up-count" id="cnt-refine"></span></div><div class="tile-eff" id="eff-refine"></div></div>'+
-      '<button class="up-buy" data-buy="refine" id="buy-refine"></button></div></div>';
-    if(S.flags.o_foundry){                                    // 5. Fabrication (silicon age)
+    // New unlocks surface at the TOP — the goal/new thing shouldn't hide at the bottom (Zach: "new stuff should be at the top because that is the goal")
+    if(S.flags.o_foundry){                                    // Fabrication (silicon age) — the era goal, top of the stack
       body += '<div class="panel'+intro('fab')+'" style="grid-column:1/-1"><div class="panel-label">Fabrication</div>'+
         '<div class="fab-wrap"><img class="fab-ic" src="assets/logic-machine.png"><div class="fab-body">'+
         '<div class="meter"><i id="meter-silicon" style="background:var(--accent)"></i></div>'+
         '<div class="meter-label"><span>Silicon toward the Logic Machine</span><span id="meter-silicon-val"></span></div>'+
         '<button class="act-btn" id="fabricateBtn" style="margin-top:12px">FABRICATE THE LOGIC MACHINE</button></div></div></div>';
     }
+    if(S.flags.o_scriptorium) body += '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Refinement · spend surplus Ore to sharpen every craft</div>'+ // the always-a-near-win sink, above Works
+      '<div class="refine-row" data-tip="'+esc('<i>Practice compounds. Sink your surplus back into the work.</i><br>+'+Math.round(CFG.e1.refineBonus*100)+'% to ALL Origins production per level. Repeatable.')+'">'+
+      '<div class="refine-info"><div class="up-name">Refine the Craft <span class="up-count" id="cnt-refine"></span></div><div class="tile-eff" id="eff-refine"></div></div>'+
+      '<button class="up-buy" data-buy="refine" id="buy-refine"></button></div></div>';
+    if(S.flags.canScribe) body += buildRatesPanel();          // Flows
+    if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // Works (the known things, below)
     return eraShell(1, false, body);
   }
   function buildMethods(){
