@@ -34,7 +34,10 @@ const SETUP = {
   goals: `const E=window.EMERGENCE,S=E.S; E.revealGame();
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40;
     for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }
-    S.marks=4000;S.ore=3000;S.metal=800; E.checkMiles(); for(let i=0;i<4;i++) E.tick();
+    S.marks=4000;S.ore=3000;S.metal=800; E.checkMiles();
+    S.flags.origindone=S.flags.symbolicDone=true; E.openEra(2); E.openEra(3); // advance so educational tidbits are in the log
+    S.gap=E.CFG.e3.gapMax*0.6; S.data=500; E.runExperiment(0.01); // trip the overfitting tidbit
+    E.setViewEra(3); for(let i=0;i<4;i++) E.tick();
     const gb=document.getElementById('goalsBtn'); if(gb) gb.click();`,
   sound: `const E=window.EMERGENCE,S=E.S; E.revealGame();
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40; E.checkMiles(); for(let i=0;i<3;i++) E.tick();

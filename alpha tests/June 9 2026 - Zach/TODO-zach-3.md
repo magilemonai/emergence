@@ -19,7 +19,7 @@ The throughline: Origins/Symbolic became good via legibility; the back half is l
 - [x] R3.6 **Pre-emergence depth:** a real turn-to-turn decision — e.g. push fast toward emergence vs build Coherence first, trading ending quality for speed (Zach: "just a bar that fills + buttons").
 
 ## D9 — Educational tidbits in the log (cheap, fold in along the way)
-- [ ] R3.7 Short "did you know"-style notes in the Goals log explaining the real AI concepts (why 88% / generalization, what breadth/capability mean, what an agent is). Keep them short + earned, not preachy. (Foxfire-adjacent.)
+- [x] R3.7 Short "did you know"-style notes in the Goals log explaining the real AI concepts (why 88% / generalization, what breadth/capability mean, what an agent is). Keep them short + earned, not preachy. (Foxfire-adjacent.)
 
 ## D3 — Statistical: relabel RUN TRIAL (not three buttons)
 - [ ] R3.8 The single RUN TRIAL button names itself after the active focus — "RUN FIT TRIAL" / "RUN GENERALIZE TRIAL" / "RUN EXPLORE TRIAL" — so set-focus-then-run reads as one action. (Keeps the focus dial + auto-running Models; doesn't split the mechanic.)

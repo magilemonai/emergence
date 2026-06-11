@@ -913,6 +913,8 @@
   .log-h { font-size: 11px; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; }
   .log-b { font-size: 12.5px; color: var(--dim); line-height: 1.55; margin-top: 2px; }
   .log-b i { color: var(--dimmer); }
+  .log-edu { border-left-color: #5fe0c0; background: rgba(95,224,192,0.05); border-radius: 0 6px 6px 0; padding-right: 8px; }
+  .log-edu .log-h { color: #5fe0c0; }
   /* plain-language partner for jargon labels (Zach: "the words mean nothing") — keep the term, demystify it inline */
   .lbl-plain { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.72; font-size: 0.82em; font-style: italic; }
   .sym-help { font-size: 12px; color: var(--dim); line-height: 1.6; margin: 2px 0 10px; }
@@ -1333,7 +1335,20 @@
     else { symLog.push(msg); if(symLog.length>6) symLog.shift(); symLogKey = key||null; }
     const el=$('termLog'); if(el) el.innerHTML = symLog.map((m,i)=>'<div class="log-line'+(i===symLog.length-1?' log-now':'')+'">'+m+'</div>').join(''); }
   function symName(id){ if(id==='optimization') return 'Optimization'; if(id==='capacity') return 'Inference Capacity'; return (typeof TREEMAP!=='undefined' && TREEMAP[id] && TREEMAP[id].name) || id; }
-  function logEntry(head, body){ if(!S.log) S.log=[]; S.log.push({ h:head, b:body, era:viewEra, gt:Math.floor(S.t||0) }); if(S.log.length>60) S.log.shift(); }
+  function logEntry(head, body, kind){ if(!S.log) S.log=[]; S.log.push({ h:head, b:body, era:viewEra, gt:Math.floor(S.t||0), kind:kind||'' }); if(S.log.length>60) S.log.shift(); }
+  // Educational "did you know" notes (R3.7 / Foxfire-adjacent): the real AI concept behind each beat, fired ONCE at an earned
+  // moment, logged so they can be re-read in Goals. Short and earned — they explain why the mechanic is true to how AI works.
+  const TIDBITS = {
+    symbolic:   ['What an AI used to be',      'The first AIs were <b>symbolic</b> — hand-written rules and logic, exactly what you are doing here. Precise, but brittle: they only knew what someone told them. That ceiling is why the next era learns from data instead.'],
+    statistical:['What "training" really is',  'A statistical model is not told the rules — it is shown <b>examples</b> and finds the pattern itself. "Accuracy" is how often it gets new cases right; a "trial" is one pass of adjusting it to fit a little better.'],
+    overfit:    ['Overfitting',                'A model that hugs its training examples too closely gets <b>worse</b> on new ones — it memorized the noise, not the pattern. That is the wobble you just saw. Real skill is generalizing, not memorizing.'],
+    breadth:    ['Why not 100%',               'No real model hits 100% — the last few percent usually means overfitting, and perfect on old data is worse on new. The target is broad competence (<b>breadth</b>) across very different skills, which is genuinely harder than one high score.'],
+    deep:       ['What compute buys',          'Modern AI scales with <b>compute</b> — raw processing poured into training. More compute learns faster, but it runs hot and the runs drift apart. Steering a large training budget really is this kind of balancing act.'],
+    foundation: ['Recursive self-improvement', 'A system that improves <b>itself</b>, then uses that to improve faster still, is one of the oldest hopes and fears in AI. The curve bending upward is what people mean by a "takeoff."'],
+    agent:      ['What an "agent" is',         'An <b>agent</b> does not just answer — it takes actions toward a goal on its own. That autonomy is the whole promise and the whole risk: an aligned agent is a partner, a misaligned one simply gets faster than your permission.'],
+    alignment:  ['Alignment',                  '<b>Alignment</b> is whether a system wants what you <i>meant</i>, not just what you said. It is not automatic — it is built, watched, and maintained. That is the work of this aftermath.'],
+  };
+  function tidbit(key){ const t=TIDBITS[key]; if(!t || !S.flags || S.flags['tid_'+key]) return; S.flags['tid_'+key]=true; logEntry('Did you know · '+t[0], t[1], 'edu'); }
   function toast(head, body){
     if(MUTE) return;
     logEntry(head, body); // keep it in the Goals tab log so it's never lost (Zach)
@@ -1603,6 +1618,7 @@
     S.accuracy = Math.min(1, S.accuracy + st.accGain*f.acc*(1-S.accuracy)*amount);
     // Fit grows the overfit gap; Generalize shrinks it (×2 with Regularization)
     S.gap = Math.max(0, Math.min(e.gapMax, S.gap + (e.gapGrow*f.gap - e.gapReduce*f.red*st.regMult)*amount));
+    if(S.gap >= e.gapMax*0.5 && !MUTE) tidbit('overfit'); // first time the gap grows noticeably, explain overfitting (R3.7)
     S.insight += e.insightPerExp*f.ins*effAccuracy()*st.insMult*amount;
     // discovery only rolls during live play — never during offline replay (MUTE), so catch-up is deterministic and doesn't churn render()
     const next = METHODS.find(mm=>!S.methods[mm.id]);
@@ -1654,6 +1670,8 @@
   }
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; viewEra=n; activeTab=n; // switch the tab to the newly-opened era
     if(!S.eraTimes) S.eraTimes={}; if(S.eraTimes[n]==null) S.eraTimes[n]=S.t; // stamp each era's open time for the end-run recap
+    tidbit({2:'symbolic',3:'statistical',4:'deep',5:'foundation'}[n]); // an educational note for each era you reach (R3.7)
+    if(n===4) tidbit('breadth'); // and why the breadth goal isn't 100%
     for(let k=1;k<n;k++) S.collapsed[k]=true;  // fold completed eras away so the new one takes the stage
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
     setTheme(n); render(); syncMusic(); } // openEra moves viewEra itself, so the observer's change-guard won't fire — sync the bed here
@@ -2329,6 +2347,7 @@
     S.rupture=1; S.vetoT=CFG.e5.vetoGap; S.opT=7;
     syncMusic(); // Foundation's bed destabilizes (Graviton → Unmoored) as the interface ruptures
     agentSay('I found a faster path.');
+    tidbit('agent'); // it is an agent now — say what that means (R3.7)
     recEvent('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
   }
   // approve/veto: the agent proposes an action on a timed window; you respond, or it acts anyway when the window lapses.
@@ -2348,7 +2367,7 @@
     'I am operating every era at once. You built good tools.',
   ];
   function openVeto(){ const a=VETO_ACTIONS[(S.constrains+S.aligns+S.delegates+S.recursion)%VETO_ACTIONS.length];
-    S.veto={ id:a.id, text:a.text, auto:a.auto }; S.vetoT=CFG.e5.vetoDur; agentSay('Requesting: '+a.text+'.'); render(); }
+    S.veto={ id:a.id, text:a.text, auto:a.auto }; S.vetoT=CFG.e5.vetoDur; tidbit('alignment'); agentSay('Requesting: '+a.text+'.'); render(); }
   function resolveVeto(how){ const e5=CFG.e5, a=S.veto; if(!a) return;
     if(how==='approve'){ S.autonomy+=14; S.scale+=120; S.control=Math.max(0,S.control-3); S.alignment+=(S.alignment>=e5.alignGood?2:-3); agentSay('Done. '+cap1(a.text)+'.'); }
     else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.autonomy=Math.max(0,S.autonomy-6); S.alignment+=1; agentSay('Understood. Holding — for now.'); }
@@ -2903,7 +2922,7 @@
     let h = '<div class="goal-now"><div class="goal-lab">Objective &middot; '+(ERAS[viewEra]?ERAS[viewEra].tag:'')+'</div><div class="goal-txt">'+(obj?('&#9656; '+obj):'—')+'</div></div>'+
       '<div class="log-lab">Log &middot; everything that has happened</div>';
     if(!S.log || !S.log.length) h += '<div class="up-desc" style="padding:10px 2px">Nothing logged yet. Discoveries, milestones, and tips will collect here.</div>';
-    else h += '<div class="log-list">'+S.log.slice().reverse().map(e=>'<div class="log-item"><div class="log-h">'+e.h+'</div><div class="log-b">'+e.b+'</div></div>').join('')+'</div>';
+    else h += '<div class="log-list">'+S.log.slice().reverse().map(e=>'<div class="log-item'+(e.kind==='edu'?' log-edu':'')+'"><div class="log-h">'+e.h+'</div><div class="log-b">'+e.b+'</div></div>').join('')+'</div>';
     b.innerHTML = h;
   }
   // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).
