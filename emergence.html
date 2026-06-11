@@ -749,6 +749,23 @@
   .era-e3 .meter { height: 10px; background: rgba(2,9,12,0.7); border: 1px solid rgba(95,224,192,0.2); border-radius: 0; }
   .era-e3 .meter > i { box-shadow: 0 0 8px rgba(95,224,192,0.5); }
   .era-e3 .meter-label { font-family: var(--mono); }
+  /* Two-needle readout (v2): VALIDATION = filled bar (the real score), TRAINING = needle running ahead, amber spread = overfit */
+  .era-e3 .ntrack { position: relative; height: 18px; background: rgba(2,9,12,0.8); border: 1px solid rgba(95,224,192,0.28); margin: 30px 0 34px; }
+  .era-e3 .nt-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, rgba(95,224,192,0.22), rgba(95,224,192,0.72)); box-shadow: 0 0 12px rgba(95,224,192,0.3); transition: width 0.2s; }
+  .era-e3 .nt-gap { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, rgba(255,184,107,0.55) 0 4px, rgba(255,184,107,0.16) 4px 8px); transition: left 0.2s, width 0.2s; }
+  .era-e3 .nt-tick { position: absolute; top: -6px; bottom: -6px; width: 0; }
+  .era-e3 .nt-goal { border-left: 1px dashed rgba(255,255,255,0.55); }
+  .era-e3 .nt-goal em { position: absolute; left: 3px; top: calc(100% + 18px); font-style: normal; font-size: 10.5px; letter-spacing: 0.1em; color: rgba(255,255,255,0.75); white-space: nowrap; font-family: var(--mono); }
+  .era-e3 .nt-cap { border-left: 1px dashed rgba(255,184,107,0.7); cursor: help; }
+  .era-e3 .nt-cap em { position: absolute; right: 3px; top: calc(100% + 18px); font-style: normal; font-size: 10px; letter-spacing: 0.12em; color: rgba(255,184,107,0.8); white-space: nowrap; font-family: var(--mono); }
+  .era-e3 .nt-pin { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid; transition: left 0.2s; }
+  .era-e3 .nt-pin em { position: absolute; transform: translateX(-50%); font-style: normal; font-size: 11px; letter-spacing: 0.08em; white-space: nowrap; font-family: var(--mono); }
+  .era-e3 .nt-pin em b { font-variant-numeric: tabular-nums; }
+  .era-e3 .nt-train { border-color: #ffb86b; box-shadow: 0 0 8px rgba(255,184,107,0.5); }
+  .era-e3 .nt-train em { bottom: calc(100% + 4px); color: #ffb86b; }
+  .era-e3 .nt-val { border-color: #5fe0c0; box-shadow: 0 0 8px rgba(95,224,192,0.6); }
+  .era-e3 .nt-val em { top: calc(100% + 4px); color: #8af0d8; }
+  .era-e3 .ntrack.converged .nt-gap { background: transparent; }
   /* control deck: training-focus selector + the trial lever */
   .era-e3 .inst-controls { display: flex; gap: 16px; align-items: flex-end; margin-top: 16px; }
   .era-e3 .focus-dial { flex: 1; }
@@ -1610,12 +1627,12 @@
     if(m.regularization) regMult=2;     // Generalize focus cuts the gap twice as fast
     if(m.ensembles) effBonus+=0.12;     // effective accuracy bonus
     const r=rMult(); dataMult*=r; insMult*=r; // Era-5 recursion lifts the Statistical factory (Data + Insight)
-    return { accGain, dataMult, insMult, discMult, regMult, effBonus };
+    const cap = m.regularization ? 1 : 0.80; // validation ceiling until Regularization is discovered (Explore matters)
+    return { accGain, dataMult, insMult, discMult, regMult, effBonus, cap };
   }
   function curFocus(){ return CFG.e3.focus[S.focus] || CFG.e3.focus.fit; }
   function effAccuracy(){ const st=e3Stats();
-    const cap = S.methods.regularization ? 1 : 0.80; // can't generalize past 80% until Regularization is discovered (Explore matters)
-    return Math.max(0, Math.min(cap, S.accuracy + st.effBonus - S.gap)); }
+    return Math.max(0, Math.min(st.cap, S.accuracy + st.effBonus - S.gap)); }
   function runExperiment(amount){ // amount can be fractional (auto from Models) or 1 (manual click)
     const e=CFG.e3, st=e3Stats(), f=curFocus();
     amount = Math.min(amount, S.data / e.expDataCost); if(amount<=0) return;
@@ -2139,11 +2156,19 @@
       // THE INSTRUMENT — the living plot is the world object; you observe + steer a learning process
       '<div class="panel plot-instrument" style="grid-column:1/-1">'+
         '<div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><span class="inst-dot"></span></div>'+
-        '<div class="sym-help">The glowing <b>curve</b> is the model’s guess; the <b>dots</b> are real data — a good model follows the data’s shape without hugging every dot (that’s overfitting). <b>Run Trials</b> to raise Accuracy; <b>Focus</b> steers it — <i>Fit</i> climbs fast but overfits, <i>Generalize</i> closes the gap, <i>Explore</i> finds Methods. Reach <b>88% effective</b> to finish the era.</div>'+
+        '<div class="sym-help">The glowing <b>curve</b> is the model’s guess; the <b>dots</b> are real data — a good model follows the data’s shape without hugging every dot (that’s overfitting). The readout below shows <b>TRAINING</b> (its score on examples it memorized) vs <b>VALIDATION</b> (its score on new ones — the one that counts). <b>Run Trials</b> to push both up; <b>Focus</b> steers — <i>Fit</i> climbs fast but widens the amber overfit spread, <i>Generalize</i> closes it, <i>Explore</i> finds Methods. Push <b>VALIDATION</b> to the goal line to finish the era.</div>'+
         '<canvas id="scatter" class="scatter"></canvas>'+
         '<div class="proof-rate inst-readout" id="accRate"></div>'+
-        '<div class="meter"><i id="meter-acc" style="background:var(--accent)"></i></div>'+
-        '<div class="meter-label"><span>effective = learned − overfit</span><span id="acc-val"></span></div>'+
+        // Two-needle readout (v2 P1.4): VALIDATION is the real score (filled), TRAINING runs ahead (needle);
+        // the amber spread between them IS the overfit. Goal + ceiling ticks make the walls visible.
+        '<div class="ntrack" id="ntrack" data-tip="'+esc('<b>Training</b> is how well the model scores on examples it has already seen. <b>Validation</b> is how well it does on new ones — the score that counts. The amber spread between them is the <b>overfit</b>: memorization posing as learning.')+'">'+
+          '<div class="nt-fill" id="ntFill"></div>'+
+          '<div class="nt-gap" id="ntGap"></div>'+
+          '<div class="nt-tick nt-cap" id="ntCap" data-tip="'+esc('The model <b>memorizes</b> past this ceiling — validation cannot rise above it. Discover <b>Regularization</b> (Explore) to lift it.')+'"><em>CEILING</em></div>'+
+          '<div class="nt-tick nt-goal" id="ntGoal"><em>GOAL '+Math.round(CFG.e3.genThreshold*100)+'%</em></div>'+
+          '<div class="nt-pin nt-train" id="ntTrain"><em>TRAINING <b id="ntTrainV"></b></em></div>'+
+          '<div class="nt-pin nt-val" id="ntVal"><em>VALIDATION <b id="ntValV"></b></em></div>'+
+        '</div>'+
         '<div class="inst-controls">'+
           '<div class="focus-dial"><div class="dial-lab">TRAINING FOCUS</div><div class="focus-seg-row">'+focusBtns+'</div></div>'+
           '<button class="act-btn inst-lever" id="expBtn">RUN TRIAL</button>'+ // label tracks the active Focus (R3.8): RUN FIT/GENERALIZE/EXPLORE TRIAL
@@ -2197,6 +2222,14 @@
     ctx.strokeStyle= hot>0.5 ? 'rgba(255,184,107,0.95)' : '#d7fff6';
     if(ctx.shadowBlur!==undefined){ ctx.shadowColor= hot>0.5?'rgba(255,184,107,0.6)':'rgba(155,255,234,0.55)'; ctx.shadowBlur=7; }
     ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0;
+    // on-canvas labels (v2): name the two lines where they end, so the plot answers "which line am I?"
+    if(ctx.fillText){ ctx.font='11px "IBM Plex Mono", monospace'; ctx.textAlign='right';
+      const yFit=Y(fit(0.985)), yGen=Y(genRef(0.985));
+      ctx.fillStyle= hot>0.5 ? 'rgba(255,184,107,0.95)' : 'rgba(215,255,246,0.85)';
+      ctx.fillText(hot>0.5?'the model · memorizing':'the model', w-pad-6, yFit + (yFit<=yGen?-7:14));
+      ctx.fillStyle='rgba(95,224,192,0.55)';
+      ctx.fillText('validation', w-pad-6, yGen + (yFit<=yGen?14:-7));
+      ctx.textAlign='left'; }
   }
   // ---- ERA 4 (Deep): allocate Compute across three training runs; breadth (geometric mean) makes Capability ----
   function deepBreadth(){ return Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)); }
@@ -2708,14 +2741,19 @@
       if(cb._html!==html){ cb.innerHTML=html; cb._html=html; }
       if(cb.disabled!==(g<1)) cb.disabled=(g<1);
     }
-    const ma=$('meter-acc');
-    if(ma){ const eff=effAccuracy(), thr=CFG.e3.genThreshold;
-      ma.style.width=Math.min(100, eff/thr*100)+'%';
-      const av=$('acc-val'); if(av){ // overfit in amber (matching the line that goes yellow), effective in green — color tells the story (Zach)
-        const h=(S.accuracy*100).toFixed(0)+'% <span style="color:#ffce6b">− '+(S.gap*100).toFixed(0)+'% overfit</span> = <b style="color:var(--good)">'+(eff*100).toFixed(0)+'%</b> / '+Math.round(thr*100)+'%';
-        if(av._html!==h){ av.innerHTML=h; av._html=h; } }
+    const ma=$('ntrack');
+    if(ma){ const eff=effAccuracy(), thr=CFG.e3.genThreshold, st3=e3Stats();
+      // two-needle readout: VALIDATION fill, TRAINING needle ahead, amber spread = overfit (clamped to the track)
+      const pv=Math.max(0.5,Math.min(99.5,eff*100)), pt=Math.max(0.5,Math.min(99.5,Math.max(S.accuracy,eff)*100));
+      const fe=$('ntFill'); if(fe) fe.style.width=pv+'%';
+      const gz=$('ntGap'); if(gz){ gz.style.left=pv+'%'; gz.style.width=Math.max(0,pt-pv)+'%'; }
+      const tp=$('ntTrain'); if(tp){ tp.style.left=pt+'%'; setText('ntTrainV',(S.accuracy*100).toFixed(0)+'%'); }
+      const vp=$('ntVal'); if(vp){ vp.style.left=pv+'%'; setText('ntValV',(eff*100).toFixed(0)+'%'); }
+      const gl=$('ntGoal'); if(gl) gl.style.left=(thr*100)+'%';
+      const cp=$('ntCap'); if(cp){ const cap=st3.cap; const capped=cap<0.999; cp.style.display=capped?'block':'none'; if(capped) cp.style.left=(cap*100)+'%'; }
+      ma.classList.toggle('converged', S.accuracy-eff<0.01);
       const exps=S.model*CFG.e3.expPerModel;
-      setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':''));
+      setText('accRate', fmt(exps)+' trials/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':'')); // the needles below carry the numbers
       ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
       const eb3=$('expBtn'); if(eb3){ const fl=(CFG.e3.focus[S.focus]||CFG.e3.focus.fit).label.toUpperCase(); const h='RUN '+fl+' TRIAL'; if(eb3._html!==h){ eb3.textContent=h; eb3._html=h; } } // the one action names itself after the Focus (R3.8)
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
