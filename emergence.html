@@ -35,6 +35,11 @@
     --stone-panel: #1b130c; --stone-raised: #2a1d12; --stone-edge: #6f512e;
     --bronze-line: #b07d3f; --bronze-lit: #d6a85f; --ink-cream: #efe0c2; --muted-cream: #a99572;
   }
+  /* Origins sub-ages (R3.9): a LIGHT reskin — shift accents + frame tint as you reach Bronze / Silicon, so the age is felt
+     in the UI, not just the core icon. Not a full per-age theme. (Selector requires theme-1, so it's inert in other eras.) */
+  body.theme-1.oage-2 { --accent: #d98237; --bronze-lit: #e6b066; --bronze-line: #bf7e3a; --stone-edge: #845c30; --line: #6b4926; } /* Bronze: hotter copper */
+  body.theme-1.oage-3 { --accent: #c4b277; --bronze-lit: #d6cb9e; --bronze-line: #9a9272; --stone-edge: #7b776a; --line: #585441; --panel-2: #2a2418; } /* Silicon: cooled + greyed, tilting toward the logic to come */
+  body.theme-1.oage-2 .era-e1, body.theme-1.oage-3 .era-e1 { transition: background-color 0.8s ease, border-color 0.8s ease; }
   /* ERA 2 — Symbolic: cold, digital, terminal. Monospace. */
   .theme-2, .era-e2 {
     --bg: #020c09; --panel: #061009; --panel-2: #08160d; --line: #1c3a26;
@@ -2525,6 +2530,7 @@
   }
   function render(){ // structural rebuild — only on unlocks, era changes, or buy-mode change
     if(!S.flags.firstAuto) return;
+    applyOriginsAge(); // reflect the current Origins sub-age (Bronze/Silicon) in the skin (R3.9)
     buildHeader();
     $('eras').innerHTML = buildEras();
     if(S.maxEra===1) $('drawerBody').innerHTML = buildResearch(); // research tiles live in the drawer now
@@ -2928,7 +2934,9 @@
   }
   // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).
   function setTheme(n){ if(typeof document==='undefined'||!document.body) return; const b=document.body;
-    for(let k=1;k<=5;k++) b.classList.remove('theme-'+k); b.classList.add('theme-'+n); if(TABS) b.classList.add('tabs'); } // classList (not className) so 'tabs'/'rupturing' survive
+    for(let k=1;k<=5;k++) b.classList.remove('theme-'+k); b.classList.add('theme-'+n); if(TABS) b.classList.add('tabs'); applyOriginsAge(); } // classList (not className) so 'tabs'/'rupturing' survive
+  function applyOriginsAge(){ if(typeof document==='undefined'||!document.body||!document.body.classList) return; // R3.9: Bronze/Silicon sub-age reskin (inert outside theme-1)
+    const b=document.body; b.classList.remove('oage-2','oage-3'); if(S.age>=2) b.classList.add('oage-'+Math.min(3,S.age)); }
   let _eraIO=null;
   function watchEraThemes(){
     if(TABS) return; // tab mode: theme + viewEra are set on tab click, not scroll
