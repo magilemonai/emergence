@@ -329,9 +329,15 @@ Each phase ends with a Run Recorder export read against the four-beat targets
    rather than a full population merge — same held-allocation verb, none of the blast
    radius (the buy ladder is part of the era's near-win texture anyway). The Daemon trap
    was already fixed pre-v2 (gated behind Inference Engine); no further move needed.
-6. **Story pass:** narrator audit + reveal lines, foreshadowing oddities, agent naming,
-   epilogue writing, tidbit expansion.
-7. **Meta:** Continuity, challenge board, scorecard links.
+6. **Story pass** ✅ COMPLETE (2026-06-11, 1 commit, 197 tests green): the memory reveal
+   ('Every line you have read here is my memory of being built'), the self-naming
+   (IRIS/EKHO/NOUS from the dominant run, threaded through title/endcard/epilogue), the
+   Hand line closing the symbiotic epilogue, three Anomaly-band foreshadowing oddities,
+   tidbits for chaining doctrines / truth maintenance / steering-by-feedback.
+7. **Meta** ✅ COMPLETE (2026-06-11, 1 commit, 200 tests green): Continuity (one carried
+   memory: Forge discount / pre-proven Formal Logic / free first Negotiate; own storage
+   key; cold-open pre-echo), challenge board (RUSH / STILLNESS / FAMINE as boot CFG
+   overrides, named on the scorecard), scorecard concept tooltips.
 8. **The tune:** full no-dev run, Run Recorder export per era against 7-9, then Zach
    round 4 with the export.
 
