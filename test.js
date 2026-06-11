@@ -643,6 +643,26 @@ function testDeepSteering(){
   const b0 = bleed(0), b3 = bleed(3);
   ok(EM.stabilizerCost() > 0 && EM.lockCost() > 0, 'steering tools have positive Capability costs');
   ok(b3 < b0, 'Stabilizer reduces drift erosion (a run bleeds less with stabilizer levels): '+(b3*100).toFixed(1)+'% < '+(b0*100).toFixed(1)+'%');
+  // v2 P4.4 — stabilizer cost is linear (a ladder you can actually climb)
+  S.stabilizer=0; const sc0=EM.stabilizerCost(); S.stabilizer=4; const sc4=EM.stabilizerCost();
+  ok(sc4-sc0===240 && sc4<500, 'stabilizer cost climbs linearly (140/200/260/320/380)');
+
+  // v2 P4.2 — events are telegraphed 3s out, and the telegraph names what actually lands
+  EM = freshGame(); S = EM.S; S.maxEra=4; S.node=10; S.data=S.insight=S.knowledge=1e6; S.started=true;
+  S.vision=0.9; S.language=0.4; S.reasoning=0.6; S.alloc={vision:1,language:1,reasoning:1};
+  S.eventT=2.9; EM.produce(0.05);
+  ok(!!S.eventNext && !!S.eventNext.run, 'a forming event is telegraphed before it lands');
+  const predicted=S.eventNext.type;
+  S.eventT=0.01; EM.produce(0.05);
+  ok(!!S.event && S.event.type===predicted, 'the telegraphed event is the one that lands');
+  ok(S.eventNext===null, 'the telegraph clears once the event fires');
+
+  // v2 P4.3 — momentum: a run held at-or-above demand builds a fed-streak; a starved one resets
+  EM = freshGame(); S = EM.S; S.maxEra=4; S.node=10; S.data=S.insight=S.knowledge=1e6; S.started=true;
+  S.vision=0.5; S.language=0.5; S.reasoning=0.5; S.alloc={vision:100,language:1,reasoning:1};
+  for(let i=0;i<80;i++) EM.produce(0.1);
+  ok(S.fedT.vision>6, 'a run fed beyond its demand builds momentum ('+S.fedT.vision.toFixed(1)+'s streak)');
+  ok(S.fedT.language===0 || S.fedT.language<S.fedT.vision, 'a starved run holds no momentum');
 
   // buyStabilizer spends Capability and raises the level
   EM = freshGame(); S = EM.S; S.maxEra=4; S.capability = EM.stabilizerCost()+5; const lvl0=S.stabilizer, capB=S.capability;

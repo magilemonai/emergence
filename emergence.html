@@ -224,6 +224,10 @@
   .era-e4 .tri-outline { fill: rgba(110,168,255,0.04); stroke: rgba(110,168,255,0.45); stroke-width: 0.9; }
   .era-e4 .tri-feed { stroke: var(--accent); stroke-width: 1.2; stroke-opacity: 0.4; transition: stroke-opacity 0.2s; }
   .era-e4 #feed-vision { stroke: #54d2ff; } .era-e4 #feed-language { stroke: #b58cff; } .era-e4 #feed-reasoning { stroke: #6fe6a8; } /* each feed line wears its run's color (Zach C) */
+  /* the wind forecast (v2 P4.1): demand-ahead curve vs the dashed feed line */
+  .era-e4 .wind-fc { width: 100%; height: 24px; display: block; margin-top: 7px; background: rgba(2,6,12,0.45); border: 1px solid rgba(110,168,255,0.12); border-radius: 4px; }
+  .era-e4 .fc-wind { fill: none; stroke-width: 1.6; opacity: 0.9; }
+  .era-e4 .fc-share { stroke: rgba(255,255,255,0.5); stroke-width: 1; stroke-dasharray: 3 2; }
   .era-e4 .tri-balanced { fill: rgba(169,207,255,0.55); }
   .era-e4 .tri-corner { position: absolute; font-family: var(--era-display); font-size: 11px; letter-spacing: 0.06em; color: var(--dim); }
   .era-e4 .tri-corner b { font-family: var(--mono); font-size: 13px; font-weight: 600; margin-left: 2px; }
@@ -1226,7 +1230,10 @@
       // counter the wind → heat climbs → ease back toward balanced to cool → repeat. Balanced (even split) cools.
       heatRise: 8, heatBase: 0.34,  // heat/s = heatRise × (hottest run's share − heatBase); past an even 34% split it warms
       cooling: 2.5, heatWarn: 58, heatThrottle: 88, throttleWarm: 0.94, throttleHot: 0.76, // sustained concentration heats → ease toward balanced to cool (real cost, not crippling)
-      eventGap: 26, eventDur: 13, shiftDrop: 0.06, breakthroughMult: 1.9, // exogenous events: distribution shift (drop) / breakthrough (tailwind)
+      eventGap: 26, eventDur: 13, eventWarn: 3, // exogenous event cadence + the 3s telegraph before one lands (v2 P4.2)
+      shiftDrop: 0.03, shiftDemand: 1.8, // a shift now SQUALLS: smaller instant drop, but the run demands 1.8× for the whole duration (lean in)
+      breakthroughMult: 2.2,             // a breakthrough wants a concentration BURST — worth eating the heat it costs (v2 P4.2)
+      momentumAfter: 6,                  // seconds a run must be held at-or-above demand before erosion halves (v2 P4.3)
       // STEERING TOOLS (spend Capability — the buttons feed the mechanic). Stabilizer: permanent drift reduction.
       // Lock: freeze a run so it can't drift (and won't climb) for a window — protect your best run while you steer the others.
       stabilizerCost: 140, stabilizerGrowth: 1.7, stabilizerCut: 0.13, stabilizerMax: 5, // each level cuts drift ~13%, capped
@@ -1309,6 +1316,7 @@
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     neglect: 0, destab: false,                      // R3.5 stakes: compounding neglect (lapsed vetoes) + the destabilizing-spiral flag
     agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, // v2 P3: active operations (era → expiry t), last proposal id, agent-play beat, negotiation count
+    eventNext: null, fedT: { vision:0, language:0, reasoning:0 }, // v2 P4: the telegraphed upcoming event + per-run fed-streaks (momentum)
     preps: 0,                                       // R3.6: Align-the-Objective uses (the prepare track vs the Self-Improve rush)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
@@ -1939,9 +1947,16 @@
         // scaled by compute so adding nodes speeds the whole loop without ever outrunning the wind.
         const wind = 0.5+0.5*Math.sin(t*e4.driftFreq + PH[k]); // 0..1 this run's drift pressure right now
         const driftBite = e4.driftBite*Math.max(0.35, 1 - S.stabilizer*e4.stabilizerCut); // STABILIZER tool reduces drift
-        const shortfall = Math.max(0, e4.driftDemand*wind - frac); // how far under-allocated vs the wind
-        const erode = driftBite*shortfall*(0.3+0.7*S[k])*computeRate*dt; // bleed; high runs are precarious
-        const evM = (S.event && S.event.run===k) ? S.event.mult : 1; // breakthrough tailwind
+        // a SHIFT event is a sustained squall: the afflicted run demands far more for its whole duration (lean in until it passes) — v2 P4.2
+        const evShift = !!(S.event && S.event.type==='shift' && S.event.run===k);
+        const demand = e4.driftDemand*wind*(evShift?e4.shiftDemand:1);
+        const shortfall = Math.max(0, demand - frac); // how far under-allocated vs the wind
+        // MOMENTUM (v2 P4.3): a run held at-or-above its demand for a stretch erodes at half rate — committed steering beats jitter
+        if(!S.fedT) S.fedT={vision:0,language:0,reasoning:0};
+        S.fedT[k] = shortfall<=0 ? S.fedT[k]+dt : 0;
+        const momentum = S.fedT[k]>=e4.momentumAfter ? 0.5 : 1;
+        const erode = driftBite*shortfall*momentum*(0.3+0.7*S[k])*computeRate*dt; // bleed; high runs are precarious
+        const evM = (S.event && S.event.run===k && S.event.type==='breakthrough') ? S.event.mult : 1; // breakthrough tailwind
         const gain = e4.capGain*share*(1-S[k])*feedMult*throttle*evM*opBoost(4);
         S[k]=Math.max(0, Math.min(1, S[k] + gain - erode));
       }
@@ -1951,14 +1966,19 @@
       S.capability += breadth*compute*e4.capRate*throttle*(S.caps&&S.caps.toolAccess?1.6:1); // Tool Access (Era 5) lifts Capability throughput
       // exogenous events (live play only — deterministic, no RNG churn offline)
       if(S.maxEra>=4 && !MUTE){ S.eventT-=dt;
+        // TELEGRAPH (v2 P4.2): 3s before an event lands, name its type and run so skilled players pre-position
+        if(!S.event && !S.eventNext && S.eventT<=e4.eventWarn){
+          let hiK=doms[0].k, loK=doms[0].k; for(const d of doms){ if(S[d.k]>S[hiK]) hiK=d.k; if(S[d.k]<S[loK]) loK=d.k; }
+          const shift = (Math.floor(t/(e4.eventGap+e4.eventDur)) % 2)===0;
+          S.eventNext = { type: shift?'shift':'breakthrough', run: shift?hiK:loK };
+        }
         if(S.eventT<=0){
           if(S.event){ S.event=null; S.eventT=e4.eventGap; }
-          else { // alternate: a distribution shift on the LEADING run (knocks it down → recalibrate), or a breakthrough on a trailing run
-            let hiK=doms[0].k, loK=doms[0].k; for(const d of doms){ if(S[d.k]>S[hiK]) hiK=d.k; if(S[d.k]<S[loK]) loK=d.k; }
-            const shift = (Math.floor(t/(e4.eventGap+e4.eventDur)) % 2)===0;
-            if(shift){ S.event={type:'shift', run:hiK, mult:1}; S[hiK]=Math.max(0, S[hiK]-e4.shiftDrop); }
-            else { S.event={type:'breakthrough', run:loK, mult:e4.breakthroughMult}; }
-            S.eventT=e4.eventDur;
+          else { // the telegraphed event lands: a sustained shift-squall on the LEADING run, or a breakthrough burst on a trailing run
+            const nx = S.eventNext || { type:'shift', run:doms[0].k };
+            if(nx.type==='shift'){ S.event={type:'shift', run:nx.run, mult:1}; S[nx.run]=Math.max(0, S[nx.run]-e4.shiftDrop); }
+            else { S.event={type:'breakthrough', run:nx.run, mult:e4.breakthroughMult}; }
+            S.eventNext=null; S.eventT=e4.eventDur;
           }
         }
       }
@@ -2544,7 +2564,7 @@
     if(S.heat>=CFG.e4.heatWarn){ ctx.fillStyle='rgba(255,177,92,'+Math.min(0.14,(S.heat-CFG.e4.heatWarn)/280)+')'; ctx.fillRect(0,0,w,h); } // heat haze on the glass
   }
   // ---- ERA 4 steering tools: spend Capability to shape the drift itself (the buttons feed the mechanic) ----
-  function stabilizerCost(){ return Math.round(CFG.e4.stabilizerCost*Math.pow(CFG.e4.stabilizerGrowth, S.stabilizer)); }
+  function stabilizerCost(){ return Math.round(CFG.e4.stabilizerCost + S.stabilizer*60); } // linear (v2 P4.4): ×1.7 growth priced levels 3-5 out of any sane budget
   function lockCost(){ return Math.round(CFG.e4.lockCost*Math.pow(CFG.e4.lockGrowth, S.locksBought||0)); }
   function buyStabilizer(){ const c=stabilizerCost(); if(S.stabilizer>=CFG.e4.stabilizerMax || S.capability<c) return;
     S.capability-=c; S.stabilizer++; recEvent('stabilizer:'+S.stabilizer); playSound('buy');
@@ -3097,13 +3117,24 @@
         if(i.thinning) return [i.res+' thinning','rc-sat','LOW'];
         if(i.net<0) return ['drifting down · steer here','rc-low',''];
         return ['holding','','']; };
-      const rs=$('runStrip'); if(rs){ const h=doms.map(d=>{ const k=d.k, st=rstat(k), i=info[k];
-        const windPct=Math.min(100, i.wind*100), trend=i.net>=0?'▲':'▼';
+      const rs=$('runStrip'); if(rs){ const PH4={vision:0, language:2.094, reasoning:4.189};
+        // WIND FORECAST (v2 P4.1): the next ~12s of this run's demand vs the share you're feeding it.
+        // Where the colored line climbs above the dashed feed line, the run will starve — steer before the crossing.
+        const fc=(k)=>{ let pts=''; const evShift=!!(S.event&&S.event.type==='shift'&&S.event.run===k);
+          for(let i2=0;i2<=20;i2++){ const tau=i2*0.6, evOn=evShift && tau<S.eventT;
+            const wDem=e4.driftDemand*(0.5+0.5*Math.sin((t+tau)*e4.driftFreq+PH4[k]))*(evOn?e4.shiftDemand:1);
+            pts+=(i2*5)+','+(22-Math.min(1,wDem/0.6)*19).toFixed(1)+' '; }
+          const sy=(22-Math.min(1,(share[k]||0)/0.6)*19).toFixed(1);
+          return '<svg class="wind-fc" viewBox="0 0 100 24" preserveAspectRatio="none">'+
+            '<line class="fc-share" x1="0" y1="'+sy+'" x2="100" y2="'+sy+'"/>'+
+            '<polyline class="fc-wind" style="stroke:'+LOSS_COLS[k]+'" points="'+pts+'"/></svg>'; };
+        const h=doms.map(d=>{ const k=d.k, st=rstat(k), i=info[k];
+        const trend=i.net>=0?'▲':'▼';
         const badge = st[2]?'<b class="'+(st[2]==='BREAKTHROUGH'?'rb-front':'rb-low')+'">'+st[2]+'</b>':'';
-        return '<div class="run-cell '+st[1]+'" style="--rc:'+LOSS_COLS[k]+'"><div class="run-top"><span class="run-nm">'+d.label+'</span>'+badge+'</div>'+
+        return '<div class="run-cell '+st[1]+'" style="--rc:'+LOSS_COLS[k]+'" data-tip="'+esc('<i>The wind ahead.</i><br>The colored line is the next ~12s of this run\'s <b>demand</b>; the dashed line is the <b>share</b> you feed it. Above the dash it bleeds — steer before the crossing.')+'"><div class="run-top"><span class="run-nm">'+d.label+'</span>'+badge+'</div>'+
           '<div class="run-lv">'+(S[k]*100).toFixed(0)+'<small>% cap</small> <span class="run-trend '+(i.net>=0?'up':'dn')+'">'+trend+'</span></div>'+
           '<div class="run-meta"><span>share '+Math.round(share[k]*100)+'%</span><span class="run-st">'+st[0]+'</span></div>'+
-          '<div class="run-fresh wind"><i style="width:'+windPct.toFixed(0)+'%"></i></div></div>'; }).join('');
+          fc(k)+'</div>'; }).join('');
         if(rs._html!==h){ rs.innerHTML=h; rs._html=h; } }
       // the live orchestration sentence — what to do, right now
       const breakR=doms.find(d=>info[d.k].evBreak), blockedR=doms.filter(d=>info[d.k].blocked),
@@ -3141,9 +3172,9 @@
       setText('supSi4', 'Silicon '+fmt(S.silicon)+'  ·  Data '+fmt(S.data)+'  ·  Insight '+fmt(S.insight)+'  ·  Knowledge '+fmt(S.knowledge));
       // event banner — telegraph + announce (the wind shifting)
       const eb=$('eventBanner'); if(eb){ let eh='', ec='';
-        if(S.event && S.event.type==='shift'){ ec='ev-shift'; eh='&#9888; DRIFT &middot; <b>'+dl(S.event.run)+'</b> is going stale — route compute there to recover'; }
-        else if(S.event && S.event.type==='breakthrough'){ ec='ev-break'; eh='&#10022; BREAKTHROUGH &middot; <b>'+dl(S.event.run)+'</b> has clean gradient — push it now ('+Math.ceil(S.eventT)+'s)'; }
-        else if(S.eventT < 5){ ec='ev-warn'; eh='anomalous signal building…'; }
+        if(S.event && S.event.type==='shift'){ ec='ev-shift'; eh='&#9888; SHIFT SQUALL &middot; <b>'+dl(S.event.run)+'</b> demands far more while this lasts — lean compute in until it passes ('+Math.ceil(S.eventT)+'s)'; }
+        else if(S.event && S.event.type==='breakthrough'){ ec='ev-break'; eh='&#10022; BREAKTHROUGH &middot; <b>'+dl(S.event.run)+'</b> has clean gradient — concentrate hard, eat the heat, ease off after ('+Math.ceil(S.eventT)+'s)'; }
+        else if(S.eventNext){ ec='ev-warn'; eh='&#9650; '+(S.eventNext.type==='shift'?'SHIFT FORMING':'BREAKTHROUGH FORMING')+' on <b>'+dl(S.eventNext.run)+'</b> — '+(S.eventNext.type==='shift'?'pre-position compute there':'ready a concentration burst')+' ('+Math.ceil(Math.max(0,S.eventT))+'s)'; }
         const cls='event-banner'+(ec?' '+ec+' show':''); if(eb.className!==cls) eb.className=cls; if(eb._html!==eh){ eb.innerHTML=eh; eb._html=eh; } }
       drawLoss(); }
     // ERA 5 — Foundation
@@ -3379,7 +3410,7 @@
       else if(typeof def==='string') base[k]=(typeof v==='string')?v:def;
       else if(_isObj(def)){
         if(!_isObj(v)) continue;                                    // malformed map → keep default
-        if(k==='alloc'||k==='proofAcc'||k==='locks'||k==='utilLvl'||k==='agentOps'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
+        if(k==='alloc'||k==='proofAcc'||k==='locks'||k==='utilLvl'||k==='agentOps'||k==='fedT'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
         else base[k]={...def, ...v};                                // boolean-ish maps: flags/disco/tech/methods/caps/collapsed/obsolete
       }
     }
