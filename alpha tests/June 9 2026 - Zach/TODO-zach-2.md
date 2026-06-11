@@ -40,7 +40,7 @@ His new verdict: Origins + Symbolic are good now; **"statistical, deep, and foun
 - [x] R2.11 Foundation: explain the Self-Improve **disabled state** (what it needs and how close you are) (J3); and **name the agent plainly** at emergence — "symbiotic agent" + a description of the qualities you gave it (J5).
 
 ### Finale balance
-- [ ] R2.12 Fix the recursion burst: steepen the Self-Improve ladder so it isn't 5 levels in ~1.3s against the Deep Capability stockpile (J2). *(Balance/test only.)*
+- [x] R2.12 Fix the recursion burst: steepen the Self-Improve ladder so it isn't 5 levels in ~1.3s against the Deep Capability stockpile (J2). *(Balance/test only.)*
 
 ---
 

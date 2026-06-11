@@ -1107,6 +1107,7 @@
       // --- pre-emergence: a PACED climb. Emergence is gated on SCALE (accrues over time), so a big incoming Capability
       //     stockpile from Deep can't buy its way to emergence — the agentic upgrades just make the climb faster. ---
       improveBase: 90, improveGrowth: 1.9, // Self-Improve cost (Capability) per level — steep ladder
+      improveCd: 2.5,      // cooldown (s) between Self-Improves — paces the ladder into a climb instead of a stockpile-fueled instant burst (Zach: 5 levels in 1.3s)
       recurBonus: 0.10,    // each recursion level: +10% to ALL production, every era (the living supply chain feeds itself)
       scalePerImprove: 3,  // small instant Scale nudge per Self-Improve (the climb is mostly the passive rate, not the buy)
       scaleRate: 1.0,      // passive Scale/s base; ×breadth ×(1+recursion) ×Self-Model — recursion accelerates the climb
@@ -1154,6 +1155,7 @@
     veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
+    improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, paused: {}, clicks: 0, // paused: converters the player has switched off (anti-soft-lock)
     log: [], // every popup (toast / discovery / teaching beat) kept here so nothing vanishes unrecoverably (Zach) — shown in the Goals tab
   }; }
@@ -1683,6 +1685,7 @@
       const interpSlow = (S.caps.interpret && !S.emerged) ? (1-e5.interpretDamp) : 1; // Interpretability buys time: it slows the scaling it can't stop
       if(breadth>0) S.scale += breadth*e5.scaleRate*(1+S.recursion)*(S.caps.selfModel?1.5:1)*interpSlow*slow*dt;
       if(!S.emerged){
+        if(S.improveCd>0) S.improveCd=Math.max(0, S.improveCd-dt); // Self-Improve cooldown
         if(S.caps.interpret) S.coherence = Math.min(40, S.coherence + e5.coherGrow*dt); // a head start on Alignment
         // Agency (the player sees it only as "Anomaly: rising"). Driven by SCALE — which accrues over time — so emergence is a
         // paced climb you can't shortcut by dumping Capability; caps + recursion just make the climb arrive sooner.
@@ -2204,8 +2207,8 @@
   function agenticCapCount(){ let n=0; for(const c of CAPS){ if(c.id!=='interpret' && S.caps[c.id]) n++; } return n; }
   const CAPMAP = Object.fromEntries(CAPS.map(c=>[c.id,c]));
   function improveCost(){ return Math.floor(CFG.e5.improveBase*Math.pow(CFG.e5.improveGrowth,S.recursion)*(S.caps.worldModel?0.75:1)); }
-  function selfImprove(){ if(S.emerged) return; const c=improveCost(); if(S.capability<c) return;
-    S.capability-=c; S.recursion++;
+  function selfImprove(){ if(S.emerged || S.improveCd>0) return; const c=improveCost(); if(S.capability<c) return; // cooldown-gated: no stockpile burst
+    S.capability-=c; S.recursion++; S.improveCd=CFG.e5.improveCd;
     S.scale += CFG.e5.scalePerImprove*S.recursion*(S.caps.recursivePlanning?1.6:1);
     playSound('buy'); recEvent('improve:'+S.recursion); render(); }
   function buyCap(id){ if(S.emerged) return; const c=CAPMAP[id]; if(!c || S.caps[id] || S.capability<c.cost) return;
@@ -2649,8 +2652,8 @@
         const msc=$('meter-scale'); if(msc){ msc.style.width=Math.min(100, Math.log10(1+S.scale)/Math.log10(1+e5.finalGate)*100)+'%'; setText('meter-scale-val', fmt(S.scale)); }
         const ib=$('improveBtn'); if(ib){ const c=improveCost();
           const label = r>=0.8 ? 'I CAN IMPROVE THIS' : 'SELF-IMPROVE';   // foreshadow: the label drifts into first person as the Anomaly climbs
-          const h=label+' · <span class="c">'+fmt(c)+' Capability</span>'; if(ib._html!==h){ ib.innerHTML=h; ib._html=h; } ib.disabled=S.capability<c; }
-        const canImp=S.capability>=improveCost();
+          const cd=S.improveCd>0; const h=cd ? ('RECURSING… '+S.improveCd.toFixed(1)+'s') : (label+' · <span class="c">'+fmt(c)+' Capability</span>'); if(ib._html!==h){ ib.innerHTML=h; ib._html=h; } ib.disabled=cd||S.capability<c; }
+        const canImp=S.improveCd<=0 && S.capability>=improveCost();
         setText('improveSub', canImp ? ('Recursion Lv '+S.recursion+' · +'+Math.round((rMult()-1)*100)+'% to ALL production, every era')
           : ('Need '+fmt(improveCost())+' Capability — you have '+fmt(S.capability)+'. It builds up as Deep keeps training.')); // explain the disabled state (Zach: "why can't I do self-improve?")
         setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · Capability '+fmt(S.capability)+' (+'+fmt(RATES.capability||0)+'/s)');
