@@ -20,9 +20,10 @@ The original repo stays untouched as the shipped v1.
   methods are deterministic purchases, never rolls; offline catch-up has zero RNG left.
   Phase 3 (Era 5 aftermath: substrate proposals + NEGOTIATE + agent-plays-your-controls +
   asymmetric meters + run-data epilogues) ✅ — 167 tests green.
-  Next: Phase 4 (Era 4 weather: wind forecast sparkline, 3s event telegraphs, momentum,
-  stabilizer retune), then Phase 5 (Era 1 Hands lever + Commissions; Era 2 fork +
-  contradictions). Build order in DESIGN-v2 §10.
+  Phase 4 (Era 4 weather: 12s wind-forecast sparklines, named 3s telegraphs, shift
+  squalls vs breakthrough bursts, momentum, linear stabilizer) ✅ — 173 tests green.
+  Next: Phase 5 (Era 1 Hands lever + Commissions; Era 2 fork + contradictions + Daemon
+  move + visible proof stream). Build order in DESIGN-v2 §10.
 
 ## What this is
 

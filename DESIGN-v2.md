@@ -314,8 +314,10 @@ Each phase ends with a Run Recorder export read against the four-beat targets
    asymmetric meters (Control structural 0.4/s drift, Alignment relational 0.45/s decay
    +12/act, Autonomy only rises); endings open with run-data epilogues, all three
    ambivalent. Foreshadowing oddities + agent naming stay in Phase 6 (story pass).
-4. **Era 4 weather:** forecast sparkline, 3s telegraphs, differentiated event responses,
-   momentum, stabilizer retune.
+4. **Era 4 weather** ✅ COMPLETE (2026-06-11, 1 commit, 173 tests green): per-run 12s
+   wind-forecast sparkline (demand curve vs dashed feed line), 3s named telegraphs,
+   shift = sustained 1.8× squall / breakthrough = 2.2× concentration burst that collides
+   with heat, 6s momentum halves erosion, stabilizer linearized.
 5. **Era 1 + 2 loops:** Hands lever + Commissions; Symbolic fork + contradictions + Daemon
    move + visible proof stream.
 6. **Story pass:** narrator audit + reveal lines, foreshadowing oddities, agent naming,
