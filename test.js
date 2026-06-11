@@ -250,14 +250,35 @@ function testStatistical(){
 }
 
 function testTechTree(){
-  section('Symbolic tech tree — prerequisites + effects');
+  section('Symbolic tech tree — prerequisites + effects + the doctrine fork');
   const EM = freshGame(); const S = EM.S; S.rules = 1e9;
   ok(!EM.canBuyTech('fwdChain'), 'cannot buy a node before its prerequisite');
   EM.buyTech('formalLogic');
   near(EM.stats().global, 1.5, 1e-9, 'Formal Logic gives +50% global production');
   EM.buyTech('bwdChain');
   ok(EM.stats().click >= 3, 'Backward Chaining at least triples click value');
-  ['fwdChain','rete','inference','heuristics','knowledge','metalogic'].forEach(id => EM.buyTech(id));
+  // v2 P5.1 — the doctrine fork: committing to one chain closes the other, and either reaches the capstone
+  ok(!EM.canBuyTech('fwdChain') && !EM.canProve('fwdChain'), 'committing to Backward closes Forward (the doctrine fork)');
+  ok(EM.canBuyTech('inference'), 'the Inference Engine accepts either doctrine (reqAny)');
+  EM.buyTech('inference'); EM.buyTech('heuristics');
+  ok(EM.canBuyTech('knowledge'), 'Knowledge Base reachable through the Backward doctrine');
+  EM.buyTech('knowledge'); EM.buyTech('metalogic'); S.axioms=5;
+  ok(EM.canBuyTech('expert'), 'the Expert System no longer requires both branches');
+  // v2 P5.1 — contradictions: the halt drags the engine; a discard is a permanent lean
+  { const E2=freshGame(), s=E2.S; s.maxEra=2; s.ruleset=12; s.started=true;
+    s.runRules=2999; const g0=E2.stats().global;
+    for(let i=0;i<30 && !s.contra;i++) E2.tick();
+    ok(!!s.contra, 'crossing a runRules threshold trips a contradiction');
+    ok(E2.stats().global < g0, 'an unresolved contradiction drags all rule production');
+    const ry0=E2.stats().rulesetYield;
+    E2.resolveContra('fwd');
+    ok(!s.contra && s.paraFwd===1, 'discarding the specific rule clears the halt and leans Rulesets');
+    ok(E2.stats().rulesetYield > ry0, 'the lean is real (ruleset yield rises past the dragged rate)');
+    s.runRules=12999; for(let i=0;i<30 && !s.contra;i++) E2.tick();
+    ok(!!s.contra, 'the next threshold arms a second contradiction');
+    E2.compile && (s.flags.compile=true, s.runRules=90000, E2.compile());
+    ok(!s.contra && s.contraN===0, 'Compile clears the halt and re-arms the thresholds for the next run'); }
+  S.axioms = 0; // (tree above is proven through Meta-Logic via the Backward doctrine)
   ok(!EM.canBuyTech('expert'), 'Expert System blocked without enough Axioms');
   S.axioms = 20;
   ok(EM.canBuyTech('expert'), 'Expert System buyable once Axioms requirement met');
@@ -408,6 +429,7 @@ function symbolicStep(EM){
   // live mechanic and made the chain look faster/safer than the player's experience.)
   const { S, TREE, BUYS } = EM;
   if(S.flags.symbolicDone) return;
+  if(S.contra) EM.resolveContra(S.ruleset>8?'fwd':'bwd'); // clear a contradiction the way a player leaning on automation would
   const clicks = (S.ruleset + S.daemon < 1) ? 8 : 1;
   for(let i=0;i<clicks;i++) EM.writeRule(FAKE_EV);
   // grow generators: Rulesets (emit Inference) + Daemons (write Rules)

@@ -631,8 +631,23 @@
   .era-e2 .era-body { filter: contrast(1.05) brightness(0.98) saturate(1.04); }
   /* segmented, terminal-native proof progress bar */
   .era-e2 .proof-active .meter { height: 12px; background: repeating-linear-gradient(90deg, rgba(79,169,123,0.14) 0 8px, transparent 8px 11px), rgba(0,0,0,0.5); border: 1px solid rgba(141,255,183,0.24); border-radius: 0; margin-top: 8px; }
+  /* contradiction halt (v2 P5.1): the CRT finally malfunctions */
+  .era-e2 .contra-host { display: none; }
+  .era-e2 .contra-host.open { display: block; border: 1px solid rgba(255,95,109,0.55); border-radius: 8px; padding: 10px 13px; margin: 0 0 12px;
+    background: rgba(255,95,109,0.07); font-family: var(--mono); animation: evPulse 1.2s ease-in-out infinite; }
+  .era-e2 .contra-msg { font-size: 12.5px; color: #ff8a98; margin-bottom: 9px; letter-spacing: 0.03em; }
+  .era-e2 .contra-msg b { color: #ffb6bf; }
+  .era-e2 .contra-acts { display: flex; gap: 9px; flex-wrap: wrap; }
+  .era-e2 .contra-acts button { flex: 1; min-width: 200px; background: rgba(0,0,0,0.35); border: 1px solid rgba(141,255,183,0.4); border-radius: 7px;
+    color: var(--text); font-family: var(--mono); font-size: 12px; padding: 8px 11px; cursor: pointer; transition: all 0.15s; text-align: left; }
+  .era-e2 .contra-acts button:hover { border-color: var(--accent); background: rgba(79,169,123,0.12); }
+  .era-e2 .contra-acts button small { display: block; color: var(--dim); font-size: 10.5px; margin-top: 3px; }
+  /* the active proof STREAMS (v2 P5.1): the segmented fill scrolls while inference pours in */
   .era-e2 .proof-active .meter > i { background: var(--accent) !important; opacity: 0.85; box-shadow: 0 0 7px rgba(255,205,107,0.4);
-    -webkit-mask: repeating-linear-gradient(90deg,#000 0 8px, transparent 8px 11px); mask: repeating-linear-gradient(90deg,#000 0 8px, transparent 8px 11px); }
+    -webkit-mask: repeating-linear-gradient(90deg,#000 0 8px, transparent 8px 11px); mask: repeating-linear-gradient(90deg,#000 0 8px, transparent 8px 11px);
+    animation: proofFlow 0.8s linear infinite; }
+  @keyframes proofFlow { to { -webkit-mask-position: 11px 0; mask-position: 11px 0; } }
+  @media (prefers-reduced-motion: reduce) { .era-e2 .proof-active .meter > i { animation: none; } }
   /* tighter theorem rows + brighter active state */
   .era-e2 .proof-item { padding: 8px 12px; }
   .era-e2 .pf-desc { font-size: 12px; }
@@ -1177,6 +1192,9 @@
       lemmaBase: 55, lemmaGrowth: 1.72, lemmaBonus: 0.075, // repeatable Optimization lemma — softer growth so it stays an affordable near-win through the back half (kills the drought)
       infCapBase: 120, infCapStep: 220,                  // banked Inference cap = base + level×step
       capLemmaBase: 80, capLemmaGrowth: 1.6,             // cost to prove the next Inference Capacity level — softer growth too
+      // CONTRADICTIONS (v2 P5.1): at runRules thresholds the terminal halts on two conflicting rules. Rule
+      // production drags until you discard one; each discard is a small permanent lean (the CRT finally malfunctions).
+      contraAt: [3000, 12000, 30000], contraSlow: 0.6, contraBonus: 0.06,
     },
     e3: { // ERA 3 — Statistical (experiments + accuracy curve + Training Focus + probabilistic discovery)
       datasetCost: 30, datasetGrowth: 1.16, datasetYield: 1.2,   // Data/sec per Dataset (bought with SILICON — reach-back to Origins)
@@ -1317,6 +1335,7 @@
     neglect: 0, destab: false,                      // R3.5 stakes: compounding neglect (lapsed vetoes) + the destabilizing-spiral flag
     agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, // v2 P3: active operations (era → expiry t), last proposal id, agent-play beat, negotiation count
     eventNext: null, fedT: { vision:0, language:0, reasoning:0 }, // v2 P4: the telegraphed upcoming event + per-run fed-streaks (momentum)
+    contra: null, contraN: 0, paraFwd: 0, paraBwd: 0, // v2 P5.1 contradictions: active conflict, count this run, permanent discard leans
     preps: 0,                                       // R3.6: Align-the-Objective uses (the prepare track vs the Self-Improve rush)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
@@ -1358,16 +1377,19 @@
     5: { color: 'var(--e4)', tag: 'Foundation', name: 'Emergent Generality', sub: 'the curve bends vertical', sigil: 'assets/era5-sigil.png' },
   };
   // ---- Era 1 tech tree (the Symbolic blueprint). row = tier (top→down), col = horizontal slot. ----
+  // v2 P5.1 — the DOCTRINE fork: Forward and Backward Chaining are mutually exclusive (excl), and the engine
+  // commits for the whole run. Either doctrine reaches the capstone (reqAny accepts one of a set), so the choice
+  // is a build identity (automation vs authorship) rather than a detour: pick the hallway you walk.
   const TREE = [
     { id:'formalLogic', name:'Formal Logic',      cost:650,   req:[],                          row:0, col:0,    desc:'+50% to all rule production. The base of every technique above.' },
-    { id:'fwdChain',    name:'Forward Chaining',  cost:1400,  req:['formalLogic'],             row:1, col:-1.1, desc:'Rulesets are 80% more productive.' },
-    { id:'bwdChain',    name:'Backward Chaining', cost:1400,  req:['formalLogic'],             row:1, col:1.1,  desc:'Each rule you author directly is 3× stronger.' },
+    { id:'fwdChain',    name:'Forward Chaining',  cost:1400,  req:['formalLogic'], excl:'bwdChain', row:1, col:-1.1, desc:'DOCTRINE · Rulesets are 80% more productive. Committing here closes Backward Chaining.' },
+    { id:'bwdChain',    name:'Backward Chaining', cost:1400,  req:['formalLogic'], excl:'fwdChain', row:1, col:1.1,  desc:'DOCTRINE · Each rule you author directly is 3× stronger. Committing here closes Forward Chaining.' },
     { id:'rete',        name:'Rete Network',      cost:3200,  req:['fwdChain'],                row:2, col:-1.8, desc:'Each Ruleset boosts every other Ruleset (+3% each).' },
-    { id:'inference',   name:'Inference Engine',  cost:4600,  req:['fwdChain','bwdChain'],     row:2, col:0,    desc:'Unlocks Inference Daemons — automation that writes rules as if you were clicking.' },
+    { id:'inference',   name:'Inference Engine',  cost:4600,  req:[], reqAny:['fwdChain','bwdChain'], row:2, col:0, desc:'Unlocks Inference Daemons — automation that writes rules as if you were clicking.' },
     { id:'heuristics',  name:'Heuristic Search',  cost:3200,  req:['bwdChain'],                row:2, col:1.8,  desc:'Manual + Daemon writing scales with Rulesets owned (+8% each).' },
-    { id:'knowledge',   name:'Knowledge Base',    cost:8500,  req:['rete','inference'],        row:3, col:-1.0, desc:'Unlocks Compile — distil a whole run into permanent Axioms.' },
+    { id:'knowledge',   name:'Knowledge Base',    cost:8500,  req:['inference'], reqAny:['rete','heuristics'], row:3, col:-1.0, desc:'Unlocks Compile — distil a whole run into permanent Axioms.' },
     { id:'metalogic',   name:'Meta-Logic',        cost:16000, req:['knowledge'],               row:3, col:1.0,  desc:'Every Axiom becomes 50% more powerful.' },
-    { id:'expert',      name:'Expert System',     cost:30000, req:['metalogic','heuristics'], reqAxioms:5, row:4, col:0, desc:'Complete the Symbolic Era and open the next. A system that reasons on its own — and the ceiling rule-based logic can never break, which is why the era after this one learns from data instead.' },
+    { id:'expert',      name:'Expert System',     cost:30000, req:['metalogic'], reqAxioms:5, row:4, col:0, desc:'Complete the Symbolic Era and open the next. A system that reasons on its own — and the ceiling rule-based logic can never break, which is why the era after this one learns from data instead.' },
   ];
   const TREEMAP = Object.fromEntries(TREE.map(n=>[n.id,n]));
   // ---- Era 1 (Origins) discoveries: a web of one-time unlocks; Knowledge (K) and Materials (M) interleave and cross-gate. ----
@@ -1631,6 +1653,8 @@
     if(T.bwdChain) click*=3;
     if(T.rete) rulesetMult*=(1+0.03*S.ruleset);
     if(T.heuristics) click*=(1+0.08*S.ruleset);
+    click*=(1+CFG.e2.contraBonus*(S.paraBwd||0)); rulesetMult*=(1+CFG.e2.contraBonus*(S.paraFwd||0)); // discarded-rule leans (contradictions)
+    if(S.contra) global*=CFG.e2.contraSlow; // an unresolved contradiction drags the whole engine
     const axBonus=CFG.e2.axiomBonus*(T.metalogic?1.5:1);
     global*=(1+S.axioms*axBonus);
     global*=(1+CFG.e2.lemmaBonus*S.optLevel); // Optimization lemma (repeatable)
@@ -1649,6 +1673,8 @@
     if(id==='optimization' || id==='capacity') return true; // repeatable lemmas
     const n=TREEMAP[id]; if(!n || S.tech[id]) return false;
     if(!n.req.every(r=>S.tech[r])) return false;
+    if(n.reqAny && !n.reqAny.some(r=>S.tech[r])) return false; // either path serves (the doctrine fork)
+    if(n.excl && S.tech[n.excl]) return false;                  // the engine committed to the other doctrine
     if(n.reqAxioms && S.axioms < n.reqAxioms) return false;
     return true;
   }
@@ -1721,6 +1747,8 @@
   function canBuyTech(id){
     const n=TREEMAP[id]; if(!n || S.tech[id]) return false;
     if(!n.req.every(r=>S.tech[r])) return false;
+    if(n.reqAny && !n.reqAny.some(r=>S.tech[r])) return false; // either path serves (the doctrine fork)
+    if(n.excl && S.tech[n.excl]) return false;                  // the engine committed to the other doctrine
     if(n.reqAxioms && S.axioms < n.reqAxioms) return false;
     return S.rules >= n.cost;
   }
@@ -1736,7 +1764,16 @@
     const g=axiomGain(); if(g<1) return;
     S.axioms+=g; S.totalAxioms+=g; S.compiles++;
     S.rules=0; S.runRules=0; S.ruleset=0; S.daemon=0;
+    S.contra=null; S.contraN=0; // a fresh run writes fresh conflicts (the thresholds re-arm)
     logSym('compile complete › +'+g+' axioms · run reset'); playSound('milestone'); render();
+  }
+  // v2 P5.1: resolve a contradiction by discarding one side. Either discard is a small permanent lean —
+  // dropping the SPECIFIC rule favors broad machinery (Rulesets); dropping the GENERAL one favors the author's hand.
+  function resolveContra(side){ if(!S.contra) return;
+    if(side==='fwd') S.paraFwd=(S.paraFwd||0)+1; else S.paraBwd=(S.paraBwd||0)+1;
+    S.contraN=(S.contraN||0)+1; S.contra=null;
+    logSym('contradiction resolved › '+(side==='fwd'?'specific rule discarded · Rulesets lean +'+Math.round(CFG.e2.contraBonus*100)+'%':'general rule discarded · your hand leans +'+Math.round(CFG.e2.contraBonus*100)+'%'));
+    playSound('buy'); render();
   }
   // ---- Era 3 (Statistical): experiments push Accuracy up a curve; Methods are discovered by chance ----
   const METHODS = [
@@ -1896,6 +1933,14 @@
       if(S.ruleset>0) g += S.ruleset*st.rulesetYield*dt;
       if(S.daemon>0)  g += S.daemon*CFG.e2.daemonRate*st.click*dt;
       if(g>0){ S.rules+=g; S.runRules+=g; }
+      // CONTRADICTION (v2 P5.1): deterministic runRules thresholds; live play only (offline stays clean)
+      if(!MUTE && !S.contra && S.contraN<CFG.e2.contraAt.length && S.runRules>=CFG.e2.contraAt[S.contraN] && !S.flags.symbolicDone){
+        const seed=Math.floor(S.runRules);
+        S.contra={ a:1000+seed%3989, b:4000+(seed*7)%5989 };
+        logSym('<b>CONTRADICTION DETECTED</b> › rule #'+S.contra.a+' conflicts with rule #'+S.contra.b);
+        toast('CONTRADICTION DETECTED', 'Rule <b>#'+S.contra.a+'</b> conflicts with rule <b>#'+S.contra.b+'</b>. The engine drags until you <b>discard one</b> — and either discard teaches it something permanent.');
+        render();
+      }
       // Inference: emitted by Rulesets, poured into the active proof (or banked)
       const inf = symInfRate()*dt;
       if(inf>0){
@@ -2174,6 +2219,7 @@
       '<div class="term-head"><img class="boot-glyph" src="assets/boot-glyph.png" alt="">'+
         '<span class="term-title">INFERENCE&nbsp;ENGINE</span><span class="term-path">~/prove a theorem</span><span class="term-dot"></span></div>'+
       '<div class="sym-help">Your Rulesets generate <b>Inference</b> <i>(reasoning power)</i>. Aim it at a <b>Theorem</b> <i>(a technique to unlock)</i> below to prove it. Prove the <b>Expert System</b> to finish the era.</div>'+
+      '<div class="contra-host" id="contraHost"></div>'+
       '<div class="proof-rate term-out" id="infRate"></div><div class="proof-active" id="proofActive"></div>'+
       '<div class="term-log" id="termLog"></div>'+
       '<button class="act-btn term-cmd" id="ruleBtn2"><span class="term-prompt">&gt;</span>WRITE A RULE<span class="term-key">RUN &#8629;</span></button>'+
@@ -2200,9 +2246,11 @@
     return '<div class="proof-item'+(isLem?' lemma':'')+'" id="pf-'+id+'">'+ic+'<div class="pf-main"><div class="pf-name">'+name+'</div><div class="pf-desc">'+desc+'</div>'+
       '<button class="up-buy pf-btn" data-proof="'+id+'" id="pfb-'+id+'"></button></div></div>';
   }
+  function treeVisible(n){ // a theorem is offered when its prereqs are met AND the engine has not committed to the other doctrine
+    return !S.tech[n.id] && n.req.every(r=>S.tech[r]) && (!n.reqAny || n.reqAny.some(r=>S.tech[r])) && !(n.excl && S.tech[n.excl]); }
   function buildProofList(){
     let items = proofItem('optimization') + proofItem('capacity');
-    for(const n of TREE){ if(!S.tech[n.id] && n.req.every(r=>S.tech[r])) items += proofItem(n.id); }
+    for(const n of TREE){ if(treeVisible(n)) items += proofItem(n.id); }
     const proven = TREE.filter(n=>S.tech[n.id]);
     let pv = '';
     if(proven.length){
@@ -3012,6 +3060,15 @@
     const ir=$('infRate');
     if(ir){
       setText('infRate', 'Inference  '+fmt(S.inference)+' / '+fmt(infCap())+'   ·   +'+fmt(symInfRate())+'/s'+(S.ruleset===0?' (build Rulesets to reason)':''));
+      // contradiction halt (v2 P5.1) — the terminal stops until you discard a rule
+      { const ch=$('contraHost'); if(ch){ let h='';
+          if(S.contra && !S.flags.symbolicDone) h='<div class="contra-msg">&#9888; CONTRADICTION DETECTED &middot; rule <b>#'+S.contra.a+'</b> conflicts with rule <b>#'+S.contra.b+'</b> &middot; engine dragging at '+Math.round(CFG.e2.contraSlow*100)+'%</div>'+
+            '<div class="contra-acts"><button id="contraFwd">&gt; DISCARD #'+S.contra.a+' <small>the specific rule &middot; Rulesets lean +'+Math.round(CFG.e2.contraBonus*100)+'% forever</small></button>'+
+            '<button id="contraBwd">&gt; DISCARD #'+S.contra.b+' <small>the general rule &middot; your hand leans +'+Math.round(CFG.e2.contraBonus*100)+'% forever</small></button></div>';
+          if(ch._html!==h){ ch.innerHTML=h; ch._html=h;
+            const cf=$('contraFwd'); if(cf) cf.onclick=()=>resolveContra('fwd');
+            const cb2=$('contraBwd'); if(cb2) cb2.onclick=()=>resolveContra('bwd'); }
+          const cls='contra-host'+(h?' open':''); if(ch.className!==cls) ch.className=cls; } }
       const pa=$('proofActive');
       if(pa){ if(S.activeProof){ const id=S.activeProof, c=proofCost(id), acc=S.proofAcc[id]||0, pct=Math.min(100,acc/c*100);
           const nm = id==='optimization'?('Optimization Lv '+(S.optLevel+1)) : id==='capacity'?('Inference Capacity Lv '+(S.infCapLevel+1)) : TREEMAP[id].name;
@@ -3019,7 +3076,7 @@
           pa.innerHTML='<div class="pa-top"><span>Proving: <b>'+nm+'</b></span><span>'+fmt(acc)+' / '+fmt(c)+(eta?'  ·  ~'+eta+'s':'')+'</span></div><div class="meter"><i style="width:'+pct+'%;background:var(--e1)"></i></div>';
         } else { pa.innerHTML='<div class="pa-idle">&#9656; Nothing selected — pick a <b>Theorem</b> below to aim your reasoning at it (otherwise Inference just banks).</div>'; } }
       // each provable item's button
-      const items=['optimization','capacity', ...TREE.filter(n=>!S.tech[n.id]&&n.req.every(r=>S.tech[r])).map(n=>n.id)];
+      const items=['optimization','capacity', ...TREE.filter(treeVisible).map(n=>n.id)];
       for(const id of items){ const btn=$('pfb-'+id); if(!btn) continue;
         const c=proofCost(id), active=S.activeProof===id;
         const lockAx = TREEMAP[id] && TREEMAP[id].reqAxioms && S.axioms<TREEMAP[id].reqAxioms;
@@ -3420,6 +3477,7 @@
     if(Array.isArray(loaded.agentLog)) base.agentLog=loaded.agentLog.filter(x=>typeof x==='string').slice(-6);
     if(Array.isArray(loaded.log)) base.log=loaded.log.filter(x=>x&&typeof x.h==='string'&&typeof x.b==='string').slice(-60);
     if(_isObj(loaded.veto) && typeof loaded.veto.text==='string') base.veto=loaded.veto;
+    if(_isObj(loaded.contra) && typeof loaded.contra.a==='number') base.contra=loaded.contra; // an unresolved contradiction survives a reload
     return base;
   }
   function normalizeREC(r){
@@ -3502,7 +3560,7 @@
     window.EMERGENCE={ S, CFG, BUYS, MILES, ERAS, TREE, TREEMAP, DISCO, DISCOMAP, VIZ_STATIONS, fmt,
       unitCost, totalCost, buyQty, buy, writeRule, inscribe, quarry, fabricate, produce, checkMiles, tick,
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
-      symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
+      symInfRate, infCap, proofCost, canProve, selectProof, completeProof, resolveContra, treeVisible,
       METHODS, e3Stats, effAccuracy, runExperiment, UTILS, nextMethod, surveyDisc, expCost, boardCards, buyCard,
       deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, alignCohCost, alignObjective, buyCap,
       agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding, opBoost, PROPMAP, epilogue,
