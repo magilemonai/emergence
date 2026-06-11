@@ -14,9 +14,13 @@ The original repo stays untouched as the shipped v1.
 
 - **The plan:** `DESIGN-v2.md` — full-game overhaul (story spine, per-era core-loop
   redesigns, UI system, educational layer, NG+ meta). Build order in §10.
-- **v2 progress:** Phase 1 (legibility frame) ✅ COMPLETE — 7 commits, 129 tests green.
-  Next: Phase 2 (Era 3 rebuild: Experiment Board replaces RNG discovery, distribution
-  shift events, focus live-effect chips), then Phase 3 (Era 5 aftermath negotiation).
+- **v2 progress:** Phase 1 (legibility frame) ✅ + Phase 2 (Era 3 rebuild: Experiment
+  Board replaces RNG discovery, distribution shifts, focus effect chips) ✅ — 147 tests
+  green. Era 3 economy note: Data now buys trials AND experiment cards (a real tension);
+  methods are deterministic purchases, never rolls; offline catch-up has zero RNG left.
+  Next: Phase 3 (Era 5 aftermath: substrate-driven proposals, NEGOTIATE verb,
+  agent-plays-the-game, asymmetric meters, epilogues), then Phase 4 (Era 4 weather:
+  wind forecast, 3s telegraphs, momentum, stabilizer retune). Build order in DESIGN-v2 §10.
 
 ## What this is
 

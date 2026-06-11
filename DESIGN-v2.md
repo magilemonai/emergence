@@ -297,8 +297,14 @@ Each phase ends with a Run Recorder export read against the four-beat targets
    TRAINING/VALIDATION readout with overfit spread + ceiling/goal ticks + on-canvas
    curve labels, Era 4 tri-color completion (colored feed lines, corner fields,
    run-colored intakes/orchestration).
-2. **Era 3 rebuild:** Experiment Board, distribution shift, focus-button live effects.
-   Retune to 7-9. (The weakest era goes first.)
+2. **Era 3 rebuild** ✅ COMPLETE (2026-06-11, 3 commits, 147 tests green): Experiment
+   Board (next Method face-up with a Data price; Explore fills a SURVEY that discounts
+   cards; funding consumes it; rotating Holdout/Sweep/Ablation utilities; RNG discovery
+   deleted), distribution shifts (deterministic triggers at 0.55/0.78 raw accuracy, 5s
+   telegraph, points migrate, hit scales with overfit, tidbit logged), focus-button
+   effect chips (TRAIN/VAL/OVERFIT/SURVEY signatures in track colors). Autoplayer Deep
+   knowledge-deadlock fixed (sink-pausing decoupled from node count; Deep 41.6m→11.1m).
+   Era 3 autoplay ~4.9m — the by-hand 7-9 tune waits for the Phase 8 pacing pass.
 3. **Era 5 aftermath:** substrate-driven proposals, Negotiate, agent-plays-the-game,
    asymmetric meters, epilogues. (The finale earns its rupture.)
 4. **Era 4 weather:** forecast sparkline, 3s telegraphs, differentiated event responses,
