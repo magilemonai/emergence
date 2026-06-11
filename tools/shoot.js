@@ -39,6 +39,10 @@ const SETUP = {
     S.gap=E.CFG.e3.gapMax*0.6; S.data=500; E.runExperiment(0.01); // trip the overfitting tidbit
     E.setViewEra(3); for(let i=0;i<4;i++) E.tick();
     const gb=document.getElementById('goalsBtn'); if(gb) gb.click();`,
+  ending: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
+    E.openEra(2);E.openEra(3);E.openEra(4);E.openEra(5); S.vision=0.8;S.language=0.74;S.reasoning=0.79;
+    E.emerge(); S.alignment=82;S.control=46;S.neglect=3;S.negotiates=4;S.constrains=2;S.scale=4100;S.emergedT=1620;S.endT=1840;
+    E.resolveEnding(); E.setViewEra(5); for(let i=0;i<4;i++) E.tick();`,
   shift: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
     S.silicon=5000;S.data=800;S.insight=2000;S.dataset=18;S.model=12;S.foundry=14;S.accuracy=0.56;S.gap=0.18;
     E.checkMiles(); E.setViewEra(3); E.produce(0.1); for(let i=0;i<4;i++) E.tick();`,

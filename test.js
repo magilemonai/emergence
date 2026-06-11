@@ -743,6 +743,33 @@ function testFoundation(){
   ok(S.vetoT < EM.CFG.e5.vetoGap, 'negotiation costs time — the next window comes sooner');
   ok(S.scale > scN, 'the negotiated action still pays Scale (net of the negotiation cost)');
 
+  // v2 P3.3 — the agent PLAYS the eras it operates (state actually moves, not just narration)
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000;
+  S.agentOps[3]=S.t+30; S.gap=0.2; S.focus='fit'; S.playT=0;
+  EM.produce(0.1);
+  ok(S.focus==='generalize', 'operating Era 3 with a high gap, the agent flips your focus dial to Generalize');
+  S.agentOps[4]=S.t+30; const a0=S.alloc[['vision','language','reasoning'].reduce((a,b)=>S[a]<=S[b]?a:b)]||0;
+  S.playT=0; EM.produce(0.1);
+  const low=['vision','language','reasoning'].reduce((a,b)=>S[a]<=S[b]?a:b);
+  ok((S.alloc[low]||0)>a0, 'operating Era 4, the agent drags the triangle toward the lagging run');
+
+  // v2 P3.4 — asymmetric meters: vetoes and constraints no longer hand Autonomy back
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000; S.autonomy=50;
+  EM.openVeto(); EM.resolveVeto('veto');
+  ok(S.autonomy>=50, 'a veto holds the line; Autonomy does not fall');
+  EM.constrainAct();
+  ok(S.autonomy>=50, 'Constrain slows growth via the drag; Autonomy does not fall');
+  ok(EM.CFG.e5.alignDecay > EM.CFG.e5.controlDrift, 'Alignment decays faster than Control (relational vs structural)');
+
+  // v2 P3.4 — epilogues read the run back
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.alignment=90; S.control=50; S.neglect=3; EM.resolveEnding();
+  let ep = EM.epilogue();
+  ok(Array.isArray(ep) && ep.length>=4, 'the ending opens with a multi-beat epilogue');
+  ok(ep.some(l=>l.indexOf('3 times')>=0 || l.indexOf('3 windows')>=0), 'the epilogue cites your actual neglect count');
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.alignment=20; S.control=10; S.neglect=0; S.delegates=3; EM.resolveEnding();
+  ep = EM.epilogue();
+  ok(ep.some(l=>l.indexOf('handed it speed')>=0), 'the runaway epilogue knows you delegated');
+
   // endings resolve from the final mix (flavor, never a fail-state)
   EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.alignment=90; S.control=50; EM.resolveEnding();
   ok(S.ending==='symbiotic', 'high Alignment → Symbiotic ending');

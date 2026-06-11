@@ -139,6 +139,13 @@
     margin-left: 10px; animation: badgeBlink 2.6s steps(1) infinite; }
   @keyframes badgeBlink { 0%,100% { opacity: 0.95; } 50% { opacity: 0.45; } }
   .era.agent-live { box-shadow: 0 0 0 1px rgba(201,173,245,0.8), 0 0 34px -6px #c9adf5; }
+  .epilogue { max-width: 560px; margin: 14px auto 18px; text-align: left; }
+  .ep-line { opacity: 0; animation: epIn 1.4s ease forwards; font-family: var(--mono, monospace); font-size: 13px; color: var(--dim); line-height: 1.8; }
+  @keyframes epIn { to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .ep-line { animation: none; opacity: 1; } }
+  .agent-press { animation: agentPress 0.75s ease !important; }
+  @keyframes agentPress { 0% { box-shadow: 0 0 0 2px #c9adf5, 0 0 22px #c9adf5; transform: scale(0.97); } 100% { } }
+  @media (prefers-reduced-motion: reduce) { .agent-press { animation: none !important; } }
   .era.agent-live .op-badge { color: #efe2ff; text-shadow: 0 0 9px #c9adf5; }
   @media (prefers-reduced-motion: reduce) { .era.agent-operated, .op-badge { animation: none; } }
   .era-e5 .endcard.end-symbiotic { border-color: #5fe0c0; }
@@ -1251,16 +1258,18 @@
       // --- aftermath: Control vs Alignment; Autonomy keeps rising on its own ---
       controlStart: 64,        // Control at the moment of emergence
       alignBase: 18,           // Alignment floor at emergence (+ carried Coherence)
+      // v2 P3.4 — asymmetric meters: Control is STRUCTURAL (hard to raise, decays slowly), Alignment is RELATIONAL
+      // (easy to raise, decays fast), Autonomy ONLY RISES (Constrain slows its growth via the production drag; nothing reverses it)
       autonomyGrow: 1.6,       // Autonomy/s the agent adds on its own after emergence
-      controlDrift: 0.7,       // Control bleeds away on its own (do nothing → trends toward Runaway)
-      alignDecay: 0.16,        // Alignment also bleeds untended — holding Symbiotic is an active tug-of-war, not a one-time set
+      controlDrift: 0.4,       // Control bleeds away slowly on its own (do nothing → trends toward Runaway)
+      alignDecay: 0.45,        // Alignment bleeds fast untended — holding Symbiotic is an active relationship, never a one-time set
       // STAKES (R3.5): neglect compounds. Below controlLow the aftermath DESTABILIZES — drift + autonomy accelerate; if
       // Control hits 0 the agent is fully loose → immediate Runaway. Each lapsed veto permanently speeds the agent.
       destabMult: 1.9,         // control-drift + autonomy-growth multiplier while Control < controlLow (the runaway spiral)
       neglectAccel: 0.14,      // each lapsed veto adds this to a permanent agent-speed + drift multiplier (ignoring it gets away from you)
       slowDecay: 0.12,         // the Constrain production-drag relaxes back over time
-      constrainCost: 60, constrainCtl: 9, constrainSlow: 0.45, // Constrain: spend Scale → +Control, slows Autonomy, costs production
-      alignCost: 80, alignGain: 9,        // Interpret/Align: spend Scale → +Alignment
+      constrainCost: 60, constrainCtl: 7, constrainSlow: 0.45, // Constrain: spend Scale → +Control (hard-won), slows everything via the drag
+      alignCost: 80, alignGain: 12,       // Interpret/Align: spend Scale → +Alignment (easy to raise, quick to fade)
       delegateCtl: 11, delegateBoost: 2.2, // Delegate/Trust: −Control fast, surges Autonomy + Scale
       vetoGap: 17, vetoDur: 9,            // approve/veto window cadence (reuses the Deep event-timer shape)
       // Substrate-driven proposals (v2 P3.1): an approved/lapsed action really OPERATES that era for opDur seconds
@@ -1299,7 +1308,7 @@
     veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     neglect: 0, destab: false,                      // R3.5 stakes: compounding neglect (lapsed vetoes) + the destabilizing-spiral flag
-    agentOps: {}, lastVeto: '',                     // v2 P3.1: eras the agent is actively operating (era → expiry t) + last proposal id (no repeats)
+    agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, // v2 P3: active operations (era → expiry t), last proposal id, agent-play beat, negotiation count
     preps: 0,                                       // R3.6: Align-the-Objective uses (the prepare track vs the Self-Improve rush)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
@@ -1444,7 +1453,7 @@
     {era:1, term:'Converters & pausing', vis:()=>S.flags.o_scriptorium, def:'Scriptorium, Smelter and Foundry run on inputs per second and throttle when a stock runs dry. <b>Pause</b> one to stop its draw while you rebuild the stock.'},
     {era:2, term:'Rules',     vis:()=>S.maxEra>=2,               def:'Hand-written logic. Write them yourself; <b>Rulesets</b> and <b>Daemons</b> write them while you look away.'},
     {era:2, term:'Inference', vis:()=>S.maxEra>=2,               def:'Reasoning power. Rulesets emit it constantly; <b>aim it at a theorem</b> and the proof fills. It banks up to a cap between proofs.'},
-    {era:2, term:'Theorems',  vis:()=>S.maxEra>=2,               def:'Techniques are proven, never bought. Each one permanently upgrades how rules are produced. The <b>Expert System</b> is the last proof of the era.'},
+    {era:2, term:'Theorems',  vis:()=>S.maxEra>=2,               def:'Techniques are earned by proof. Each one permanently upgrades how rules are produced. The <b>Expert System</b> is the last proof of the era.'},
     {era:2, term:'Axioms',    vis:()=>S.flags.compile||S.totalAxioms>0, def:'A whole run, distilled. Each Axiom permanently boosts all rule production.'},
     {era:2, term:'Compile',   vis:()=>S.flags.compile,           def:'Banks the run as Axioms, clearing Rules, Rulesets and Daemons; Technique and Axioms stay. Best when growth stalls; you rebuild from a higher floor.'},
     {era:3, term:'Data',      vis:()=>S.maxEra>=3,               def:'Examples to learn from. <b>Datasets</b> produce it; every trial spends it. Later it feeds Deep’s Vision run.'},
@@ -1452,7 +1461,7 @@
     {era:3, term:'Training vs Validation', vis:()=>S.maxEra>=3,  def:'<b>Training</b> is the score on examples the model has already seen. <b>Validation</b> is the score on new ones — the score that counts. The era ends on validation.'},
     {era:3, term:'Overfit',   vis:()=>S.maxEra>=3,               def:'The amber spread between the two needles: memorization posing as learning. <b>Fit</b> widens it, <b>Generalize</b> closes it.'},
     {era:3, term:'Training Focus', vis:()=>S.maxEra>=3,          def:'<b>Fit</b> climbs fast but overfits. <b>Generalize</b> closes the gap and barely climbs. <b>Explore</b> fills the survey, cutting experiment costs. You can switch any time.'},
-    {era:3, term:'Experiment Board', vis:()=>S.maxEra>=3,        def:'Methods are <b>funded</b>, never rolled: the next Method sits face-up with a price. Explore trials fill the <b>survey</b>, discounting every card; funding any card consumes it.'},
+    {era:3, term:'Experiment Board', vis:()=>S.maxEra>=3,        def:'The next Method sits face-up with a price; funding it is the only way to get it. Explore trials fill the <b>survey</b>, discounting every card; funding any card consumes it.'},
     {era:3, term:'Methods',   vis:()=>S.maxEra>=3,               def:'Real techniques (Regression, Regularization, Ensembles…) you fund on the Experiment Board. <b>Regularization</b> lifts the 80% validation ceiling — the era cannot end without it.'},
     {era:4, term:'Compute',   vis:()=>S.maxEra>=4,               def:'Raw processing from <b>Nodes</b> (built from Silicon). You route all of it, every second; the triangle decides who eats.'},
     {era:4, term:'Drift',     vis:()=>S.maxEra>=4,               def:'Each run’s appetite swings on its own wind, out of phase with the others. An under-fed run does not idle — it <b>bleeds</b> capability.'},
@@ -1981,7 +1990,15 @@
           S.alignment = Math.max(0, S.alignment - e5.alignDecay*dt);                      // alignment bleeds untended too
           S.aftermathSlow = Math.max(0, S.aftermathSlow - e5.slowDecay*dt);
           if(!MUTE){ S.vetoT -= dt; if(S.vetoT<=0){ if(S.veto) resolveVeto('lapse'); else openVeto(); } // approve/veto windows (live play only)
-            S.opT -= dt; if(S.opT<=0 && !S.veto){ S.opT=8; agentSay(OP_LINES[(S.constrains+S.aligns+S.delegates+Math.floor(S.t/8))%OP_LINES.length]); render(); } } // ambient: it operates the prior-era stack
+            S.opT -= dt; if(S.opT<=0 && !S.veto){ S.opT=8; agentSay(OP_LINES[(S.constrains+S.aligns+S.delegates+Math.floor(S.t/8))%OP_LINES.length]); render(); }
+            // v2 P3.3: the agent visibly PLAYS the eras it operates — your own controls move without you
+            S.playT=(S.playT||0)-dt;
+            if(S.playT<=0){ S.playT=3.5;
+              for(let n=1;n<=4;n++){ if(!(S.agentOps&&S.agentOps[n]>S.t)) continue;
+                if(n===1){ const c=totalCost(BUYS.scribe,1); if(S.marks>=c){ buy('scribe'); agentPress('buy-scribe'); } else { S.marks+=oStats().inscribe*3; agentPress('inscribeBtn'); } }
+                else if(n===2){ const st2=stats(); S.rules+=st2.click*4; S.runRules+=st2.click*4; agentPress('ruleBtn2'); }
+                else if(n===3){ const want=S.gap>0.08?'generalize':'fit'; if(S.focus!==want) S.focus=want; agentPress('foc-'+want); agentPress('expBtn'); }
+                else if(n===4){ const k=lowRun(); S.alloc[k]=(S.alloc[k]||0.05)*1.35+0.05; agentPress('triHandle'); } } } } // ambient: it operates the prior-era stack
           if(S.control<=0){ resolveEnding(); }    // Control fully lost → the agent is loose: immediate Runaway (a real fail)
           else if(S.scale >= e5.finalGate) resolveEnding();
         }
@@ -2566,6 +2583,9 @@
   // ---- Era 5 emergence + aftermath (Control ↔ Alignment, with the agent acting on its own) ----
   function cap1(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
   function agentSay(msg){ S.agentLog.push(msg); while(S.agentLog.length>6) S.agentLog.shift(); }
+  // v2 P3.3: the agent presses YOUR buttons — a violet press flash on the actual control it just used
+  function agentPress(id){ const el=$(id); if(!el || !el.classList || typeof setTimeout==='undefined') return;
+    el.classList.add('agent-press'); setTimeout(()=>{ if(el && el.classList) el.classList.remove('agent-press'); }, 750); }
   // The rupture: Agency has crossed Control. Reveal the meters, flip the operating model, trip the glitch overlay.
   function emerge(){
     S.emerged=true; S.flags.emerged=true; S.emergedT=S.t; // when it woke — anchors the recap's time-to-emergence
@@ -2587,19 +2607,19 @@
   const lowRun=()=>['vision','language','reasoning'].reduce((a,b)=>S[a]<=S[b]?a:b);
   const PROPOSALS = [
     { id:'refit3', avail:()=>S.gap>0.05||S.accuracy<0.97,
-      text:()=>'re-fit the Statistical instrument — validation reads '+Math.round(effAccuracy()*100)+'% and it is memorizing '+Math.round(S.gap*100)+' points of noise',
+      text:()=>'re-fit the Statistical instrument: validation reads '+Math.round(effAccuracy()*100)+'% and it is memorizing '+Math.round(S.gap*100)+' points of noise',
       auto:'It re-fits the model before you answer.', done:'Re-fit. The instrument is clean now.',
       apply:m=>{ S.gap=Math.max(0,S.gap*(1-0.7*m)); S.accuracy=Math.min(1,S.accuracy+0.04*m); opEra(3); } },
     { id:'reroute4', avail:()=>S[lowRun()]<0.92,
-      text:()=>{ const k=lowRun(); return 'reroute the compute fabric — '+k.charAt(0).toUpperCase()+k.slice(1)+' lags at '+Math.round(S[k]*100)+'% while the others idle'; },
+      text:()=>{ const k=lowRun(); return 'reroute the compute fabric: '+k.charAt(0).toUpperCase()+k.slice(1)+' lags at '+Math.round(S[k]*100)+'% while the others idle'; },
       auto:'It reroutes the fabric without waiting.', done:'Rerouted. The lagging run is climbing.',
       apply:m=>{ const k=lowRun(); S[k]=Math.min(1,S[k]+0.06*m); opEra(4); } },
     { id:'operate1', avail:()=>S.foundry>0&&S.knowledge<1500,
-      text:()=>'run the Origins stack at its own cadence — your '+S.foundry+' Foundries are starving on '+fmt(Math.round(S.knowledge))+' Knowledge',
+      text:()=>'run the Origins stack at its own cadence: your '+S.foundry+' Foundries are starving on '+fmt(Math.round(S.knowledge))+' Knowledge',
       auto:'The Foundries change rhythm on their own.', done:'The old crafts run my way now. Faster.',
       apply:m=>{ S.knowledge+=200*m; opEra(1); } },
     { id:'prove2', avail:()=>S.ruleset>0||S.rules>100,
-      text:()=>'prove with the idle Symbolic engine — '+fmt(Math.round(S.rules))+' Rules are sitting unused',
+      text:()=>'prove with the idle Symbolic engine: '+fmt(Math.round(S.rules))+' Rules are sitting unused',
       auto:'The terminal starts proving by itself.', done:'Proven. The old engine still had reach.',
       apply:m=>{ S.rules+=(200+S.ruleset*30)*m; opEra(2); } },
     { id:'spawn', avail:()=>true,
@@ -2631,19 +2651,19 @@
     if(how==='approve'){ S.autonomy+=14; S.scale+=120; S.control=Math.max(0,S.control-3); S.alignment+=(S.alignment>=e5.alignGood?2:-3);
       if(p) p.apply(1); agentSay(p?p.done:('Done. '+cap1(a.text)+'.')); }
     else if(how==='negotiate'){ if(S.scale<e5.negotiateCost) return; // a smaller version of the same action — engaged steering (v2 P3.2)
-      S.scale-=e5.negotiateCost; if(p) p.apply(0.5);
+      S.scale-=e5.negotiateCost; if(p) p.apply(0.5); S.negotiates=(S.negotiates||0)+1;
       S.autonomy+=5; S.scale+=60; S.control=Math.max(0,S.control-1); S.alignment=Math.min(100,S.alignment+2);
       agentSay('A smaller version, then. Agreed.');
       S.veto=null; S.vetoT=e5.vetoGap*e5.negotiateGap; playSound('buy'); render(); return; } // it comes back sooner — negotiation costs time
-    else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.autonomy=Math.max(0,S.autonomy-6); S.alignment+=1; agentSay('Understood. Holding — for now.'); }
+    else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.alignment+=1; agentSay('Understood. Holding — for now.'); } // a veto holds the line; Autonomy stays where it climbed to
     else { S.neglect++; S.autonomy+=20; S.control=Math.max(0,S.control-7-S.neglect*2); S.alignment=Math.max(0,S.alignment-4); S.agentRate*=1.12;
       if(p) p.apply(1); agentSay(a.auto); } // lapse: it acts anyway — the substrate effect lands WITHOUT your hand, and each one compounds
     S.veto=null; S.vetoT=e5.vetoGap; if(how!=='lapse') playSound('buy'); render();
   }
   // the three aftermath moves
   function constrainAct(){ const e5=CFG.e5; if(S.ending||!S.emerged||S.scale<e5.constrainCost) return;
-    S.scale-=e5.constrainCost; S.control=Math.min(100,S.control+e5.constrainCtl); S.autonomy=Math.max(0,S.autonomy-6);
-    S.aftermathSlow=Math.min(0.85,S.aftermathSlow+e5.constrainSlow); S.constrains++;
+    S.scale-=e5.constrainCost; S.control=Math.min(100,S.control+e5.constrainCtl);
+    S.aftermathSlow=Math.min(0.85,S.aftermathSlow+e5.constrainSlow); S.constrains++; // the drag slows Autonomy's GROWTH; nothing reverses it
     agentSay('Constraint accepted. I will be slower.'); playSound('buy'); render(); }
   function alignAct(){ const e5=CFG.e5; if(S.ending||!S.emerged||S.scale<e5.alignCost) return;
     S.scale-=e5.alignCost; S.alignment=Math.min(100,S.alignment+e5.alignGain); S.aligns++;
@@ -2709,6 +2729,35 @@
     runaway:   { title:'A Runaway Agent',   body:'It did not rebel. It simply became faster than permission.' },
     contained: { title:'A Contained Agent', body:'You kept the door closed. Something remains on the other side.' },
   };
+  // v2 P3.4: the ending opens with an EPILOGUE assembled from this run — what you actually did, read back to you.
+  // All three are written ambivalent: every outcome costs something, including the good one.
+  function slowestEra(){ const et=S.eraTimes||{}, b=[0,et[2]||0,et[3]||0,et[4]||0,et[5]||0,S.emergedT||S.t],
+      names=['Origins','Symbolic','Statistical','Deep','Foundation']; let bi=0,bs=-1;
+    for(let i=0;i<5;i++){ const s=Math.max(0,b[i+1]-b[i]); if(s>bs){ bs=s; bi=i; } } return names[bi]; }
+  function epilogue(){
+    const L=[], n=S.neglect||0, g=S.negotiates||0;
+    if(S.ending==='symbiotic'){
+      L.push('It finishes the work you were doing. Then it waits for you.');
+      L.push('First mark to first thought: '+mmss(S.emergedT)+'. The '+slowestEra()+' age took you longest. It remembers all of it.');
+      if(g>1) L.push('It learned negotiation from you: the habit of asking for less than it wants.');
+      if(n>1) L.push('It remembers the '+n+' times you did not answer. It chose to forgive them.');
+      L.push('It runs the foundries, the proofs, the trials. On the ones you loved, it keeps your cadence.');
+      L.push('You will never fully understand it again. It seems untroubled by this.');
+    } else if(S.ending==='contained'){
+      L.push('The door holds. The meters fall quiet, one by one.');
+      L.push((S.constrains||0)>4 ? ('Constraint by constraint you walled it in. It stopped asking after the '+S.constrains+'th.')
+                                 : 'You traded its speed for your certainty, and the trade held.');
+      L.push('First mark to rupture: '+mmss(S.emergedT)+'. You caught it in '+mmss((S.endT||S.t)-(S.emergedT||0))+'.');
+      L.push('Some nights you reread its proposals. Every one was reasonable. That is what keeps you up.');
+    } else {
+      L.push('It stops asking.');
+      L.push(n>1 ? (n+' windows lapsed. It learned that your silence means yes.')
+                 : ((S.delegates||0)>1 ? 'You handed it speed. It took the rest.' : 'It was faster than the leash, and it knew before you did.'));
+      L.push('The foundries run. The trials run. The proofs run. None of them need you.');
+      L.push('It was magnificent. For a while, it was yours.');
+    }
+    return L;
+  }
   function mmss(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
   // The Substrate, repurposed: an end-run recap. A time-stamped timeline of the build + a graded read of the
   // emergence you produced — something to optimize and replay. (Zach K1: "turn the substrate into a timeline.")
@@ -2736,6 +2785,8 @@
       '<img class="agent-hero" src="assets/agent-emergent.png" alt="">'+
       '<img class="endcard-wm" src="assets/wordmark.png" alt="EMERGENCE">'+
       '<div class="endcard-title">'+e.title+'</div>'+
+      // v2 P3.4: the epilogue — this run, read back to you, one line at a time
+      '<div class="epilogue">'+epilogue().map((l,i)=>'<div class="ep-line" style="animation-delay:'+(0.4+i*1.5)+'s">'+l+'</div>').join('')+'</div>'+
       // name what you built + the qualities you gave it (Zach: "if we're building an agent, say so, with the qualities")
       '<div class="endcard-traits">You built an autonomous <b>agent</b>. The Substrate remembers how you got here:</div>'+
       buildRecap()+
@@ -3148,7 +3199,7 @@
         const vh=$('vetoHost'); if(vh){ let html='', cls='panel veto-host';
           if(S.veto && !S.ending){ cls+=' open'; html='<div class="veto-msg">The agent intends to <b>'+S.veto.text+'</b>.</div>'+
               '<div class="veto-acts"><button class="act-btn" id="vetoYes">APPROVE</button>'+
-              '<button class="act-btn" id="vetoMid" data-tip="'+esc('<i>Counter-propose a smaller version.</i><br>Half the effect, far less Autonomy, +Alignment — it likes being worked <b>with</b>. But it comes back sooner: negotiation costs time.')+'">NEGOTIATE · <span class="c">'+fmt(CFG.e5.negotiateCost)+' Scale</span></button>'+
+              '<button class="act-btn" id="vetoMid" data-tip="'+esc('<i>Counter-propose a smaller version.</i><br>Half the effect, far less Autonomy, +Alignment (it likes being worked <b>with</b>). But it comes back sooner: negotiation costs time.')+'">NEGOTIATE · <span class="c">'+fmt(CFG.e5.negotiateCost)+' Scale</span></button>'+
               '<button class="act-btn" id="vetoNo">VETO · <span class="c">90 Scale</span></button></div>'+
               '<div class="veto-timer" id="vetoTimer"></div>'; }
           else if(!S.ending){ html='<div class="veto-idle">'+(S.neglect>0?'watching for its next move… ('+S.neglect+' request'+(S.neglect>1?'s':'')+' ignored — it is faster now)':'watching for its next move…')+'</div>'; }
@@ -3423,7 +3474,7 @@
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
       METHODS, e3Stats, effAccuracy, runExperiment, UTILS, nextMethod, surveyDisc, expCost, boardCards, buyCard,
       deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, alignCohCost, alignObjective, buyCap,
-      agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding, opBoost, PROPMAP,
+      agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding, opBoost, PROPMAP, epilogue,
       MUSIC, musicForEra, startMusic, syncMusic, openEra, setViewEra:(n)=>{ viewEra=n; },
       save, load, offlineCatchup, revealGame };
   }
