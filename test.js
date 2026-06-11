@@ -581,6 +581,35 @@ function reportPacingEra2(){
   }
 }
 
+function testDeepSteering(){
+  section('Era 4 — steering tools (stabilizer + lock)');
+  // Stabilizer: spend Capability → permanent drift reduction. A starved high-wind run bleeds LESS after buying it.
+  let EM = freshGame(); let S = EM.S; const e4 = EM.CFG.e4;
+  S.maxEra=4; S.node=30; S.data=S.insight=S.knowledge=1e6; S.started=true;
+  S.vision=0.8; S.language=0.8; S.reasoning=0.8; S.alloc={vision:1,language:1,reasoning:1};
+  // find a moment Vision is under heavy wind, measure its bleed over 4s with and without stabilizer
+  S.t = 9.0; // (vision wind near peak here for PH.vision=0)
+  const bleed = (stab)=>{ const E2=freshGame(), s=E2.S; s.maxEra=4; s.node=30; s.data=s.insight=s.knowledge=1e6; s.started=true;
+    s.vision=s.language=s.reasoning=0.8; s.alloc={vision:1,language:1,reasoning:1}; s.stabilizer=stab; s.t=9.0;
+    const v0=s.vision; for(let i=0;i<40;i++) E2.tick(); return v0 - s.vision; };
+  const b0 = bleed(0), b3 = bleed(3);
+  ok(EM.stabilizerCost() > 0 && EM.lockCost() > 0, 'steering tools have positive Capability costs');
+  ok(b3 < b0, 'Stabilizer reduces drift erosion (a run bleeds less with stabilizer levels): '+(b3*100).toFixed(1)+'% < '+(b0*100).toFixed(1)+'%');
+
+  // buyStabilizer spends Capability and raises the level
+  EM = freshGame(); S = EM.S; S.maxEra=4; S.capability = EM.stabilizerCost()+5; const lvl0=S.stabilizer, capB=S.capability;
+  EM.buyStabilizer();
+  ok(S.stabilizer===lvl0+1 && S.capability < capB, 'buyStabilizer: +1 level, spends Capability');
+
+  // Lock: freeze a run so it neither drifts nor climbs for the window; costs Capability
+  EM = freshGame(); S = EM.S; S.maxEra=4; S.node=30; S.data=S.insight=S.knowledge=1e6; S.started=true;
+  S.vision=0.7; S.language=0.7; S.reasoning=0.7; S.alloc={vision:1,language:1,reasoning:1};
+  S.capability = EM.lockCost()+5; const capC=S.capability; EM.lockRun('vision'); const vLocked=S.vision;
+  ok(S.locks.vision > 0 && S.capability < capC, 'lockRun: sets a freeze timer, spends Capability');
+  S.t=9.0; for(let i=0;i<30;i++) EM.tick(); // 3s under wind — locked Vision must not move
+  ok(Math.abs(S.vision - vLocked) < 1e-6, 'a locked run is frozen (no drift, no climb) while the timer runs');
+  ok(S.locks.vision < e4.lockDur, 'lock timer counts down');
+}
 function testFoundation(){
   section('Era 5 — emergence threshold, recursion pacing, aftermath loop');
   // recursion cost is a STEEP climb (the burst fix): cost grows sharply per level
@@ -665,6 +694,7 @@ testOffline();
 testConverterPause();
 testNoNaN();
 testNoIdleRebuild();
+testDeepSteering();
 testFoundation();
 testMusic();
 testProgression();

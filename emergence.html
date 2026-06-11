@@ -227,6 +227,24 @@
   .era-e4 .orchestration .o-low { color: var(--hot); }
   .era-e4 .feed-module { position: relative; overflow: hidden; }
   .era-e4 .feed-module::before { content: ''; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; background: linear-gradient(var(--accent),transparent); box-shadow: 0 0 9px rgba(110,168,255,0.4); opacity: 0.55; }
+  /* Deep steering tools */
+  .era-e4 .steer-tools { background: rgba(2,6,12,0.55); border-color: rgba(110,168,255,0.14); }
+  .steer-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; align-items: stretch; }
+  @media (max-width: 760px){ .steer-grid { grid-template-columns: 1fr; } }
+  .steer-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 11px 13px; border: 1px solid rgba(110,168,255,0.3); border-radius: 8px; background: rgba(110,168,255,0.06); color: var(--text); cursor: pointer; text-align: left; transition: background 0.12s, border-color 0.12s; }
+  .steer-btn:hover:not(:disabled) { background: rgba(110,168,255,0.14); border-color: rgba(110,168,255,0.55); }
+  .steer-btn:disabled { opacity: 0.4; cursor: default; } .steer-btn.maxed { opacity: 0.6; }
+  .steer-btn .steer-nm { font-size: 12px; letter-spacing: 1px; } .steer-btn .steer-nm b { color: var(--accent); font-weight: 600; }
+  .steer-btn .steer-eff { font-size: 11px; color: #6fe6a8; } .steer-btn .steer-cost { font-size: 11px; color: var(--dim); }
+  .lock-set { display: flex; flex-direction: column; gap: 6px; }
+  .lock-lab { font-size: 10.5px; letter-spacing: 0.5px; color: var(--dim); text-transform: uppercase; }
+  .lock-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; flex: 1; }
+  .lock-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 6px; border: 1px solid color-mix(in srgb, var(--rc) 35%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--rc) 8%, transparent); color: var(--text); cursor: pointer; transition: background 0.12s; }
+  .lock-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--rc) 18%, transparent); }
+  .lock-btn:disabled { cursor: default; opacity: 0.5; }
+  .lock-btn.active { border-color: var(--rc); background: color-mix(in srgb, var(--rc) 22%, transparent); opacity: 1; box-shadow: 0 0 10px color-mix(in srgb, var(--rc) 30%, transparent); }
+  .lock-btn .lk-nm { font-size: 11px; color: var(--rc); } .lock-btn .lk-st { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .lock-btn.active .lk-st { color: var(--text); }
   .era-e4 .supply-bus { background: rgba(2,6,12,0.6); border-color: rgba(110,168,255,0.12); }
   .era-e4 .sup-row { gap: 0; border: 1px solid rgba(110,168,255,0.14); border-radius: 8px; overflow: hidden; background: rgba(2,6,12,0.5); }
   .era-e4 .sup-btn { border: none; border-right: 1px solid rgba(110,168,255,0.1); border-radius: 0; background: transparent; opacity: 0.82; }
@@ -1117,6 +1135,10 @@
       heatRise: 8, heatBase: 0.34,  // heat/s = heatRise × (hottest run's share − heatBase); past an even 34% split it warms
       cooling: 2.5, heatWarn: 58, heatThrottle: 88, throttleWarm: 0.94, throttleHot: 0.76, // sustained concentration heats → ease toward balanced to cool (real cost, not crippling)
       eventGap: 26, eventDur: 13, shiftDrop: 0.06, breakthroughMult: 1.9, // exogenous events: distribution shift (drop) / breakthrough (tailwind)
+      // STEERING TOOLS (spend Capability — the buttons feed the mechanic). Stabilizer: permanent drift reduction.
+      // Lock: freeze a run so it can't drift (and won't climb) for a window — protect your best run while you steer the others.
+      stabilizerCost: 140, stabilizerGrowth: 1.7, stabilizerCut: 0.13, stabilizerMax: 5, // each level cuts drift ~13%, capped
+      lockCost: 90, lockGrowth: 1.35, lockDur: 28, // Capability to freeze one run for lockDur seconds (cost climbs as you lean on it)
       domains: [
         { k:'vision',    label:'Vision',    desc:'Perception. Sees structure in raw signal.' },
         { k:'language',  label:'Language',  desc:'Symbols and meaning. The thread back to logic.' },
@@ -1167,6 +1189,7 @@
     // Era 4 — Deep (compute allocation across three training runs)
     node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision:1, language:1, reasoning:1 }, capability: 0,
     heat: 0, event: null, eventT: 12, // Deep: heat (soft cap) + exogenous event {type:'shift'|'breakthrough', run, mult}
+    stabilizer: 0, locksBought: 0, locks: { vision:0, language:0, reasoning:0 }, // Deep steering tools: drift-reduction level, lock-uses tally, per-run freeze timers
     // Era 5 — Foundation (recursion → agency → emergence → aftermath)
     scale: 0, recursion: 0, caps: {}, emerged: false, agentRate: 0,
     eraTimes: {}, emergedT: 0, endT: 0,             // game-time stamps for the end-run recap (per-era open, emergence, ending)
@@ -1672,6 +1695,8 @@
       const throttle = S.heat>=e4.heatThrottle ? e4.throttleHot : (S.heat>=e4.heatWarn ? e4.throttleWarm : 1);
       const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1; let maxShare=0;
       for(const d of doms){ const k=d.k, frac=(S.alloc[k]||0)/tw; if(frac>maxShare) maxShare=frac;
+        // LOCK (steering tool): a locked run is frozen — it can't drift down, and it doesn't climb or draw feedstock. Hold your best run here.
+        if(S.locks && S.locks[k]>0){ S.locks[k]=Math.max(0, S.locks[k]-dt); continue; }
         const share=compute*frac;
         // feedstock: this run draws its own earlier-era resource; if dry, it can't be pushed (go reopen that era)
         const res=e4.feedstock[k], need=share*e4.feedPerShare; let feedMult=1;
@@ -1680,8 +1705,9 @@
         // give it less than it demands and it actively bleeds capability — faster the higher it sits, and
         // scaled by compute so adding nodes speeds the whole loop without ever outrunning the wind.
         const wind = 0.5+0.5*Math.sin(t*e4.driftFreq + PH[k]); // 0..1 this run's drift pressure right now
+        const driftBite = e4.driftBite*Math.max(0.35, 1 - S.stabilizer*e4.stabilizerCut); // STABILIZER tool reduces drift
         const shortfall = Math.max(0, e4.driftDemand*wind - frac); // how far under-allocated vs the wind
-        const erode = e4.driftBite*shortfall*(0.3+0.7*S[k])*computeRate*dt; // bleed; high runs are precarious
+        const erode = driftBite*shortfall*(0.3+0.7*S[k])*computeRate*dt; // bleed; high runs are precarious
         const evM = (S.event && S.event.run===k) ? S.event.mult : 1; // breakthrough tailwind
         const gain = e4.capGain*share*(1-S[k])*feedMult*throttle*evM;
         S[k]=Math.max(0, Math.min(1, S[k] + gain - erode));
@@ -2174,6 +2200,13 @@
         '</div>'+
       '</div>'+
       '<div class="panel feed-module"><div class="panel-label">Compute Supply &middot; rack provisioning</div>'+eraUpgrade('node','Compute Node','Built from Silicon. Produces Compute; draws Data + Insight to run.')+'</div>'+
+      // STEERING TOOLS — spend Capability to shape the drift (Zach: "the buttons need to affect the steering")
+      '<div class="panel steer-tools" style="grid-column:1/-1"><div class="panel-label">Steering Tools &middot; spend Capability to shape the drift</div>'+
+        '<div class="steer-grid">'+
+          '<button class="steer-btn" id="stabBtn" data-tip="'+esc('<b>Stabilizer</b><br><i>Calmer optimization landscape.</i><br>Permanently reduces how hard the drift bites every run. Stacks.')+'">'+
+            '<span class="steer-nm">STABILIZER <b id="stabLvl"></b></span><span class="steer-eff" id="stabEff"></span><span class="steer-cost" id="stabCost"></span></button>'+
+          '<div class="lock-set"><span class="lock-lab">LOCK A RUN &middot; freeze it ~'+CFG.e4.lockDur+'s so it can\'t drift</span><div class="lock-row" id="lockRow"></div></div>'+
+        '</div></div>'+
       '<div class="panel"><div class="panel-label">Run Status</div><div class="up-desc" id="deepStats" style="line-height:1.7"></div></div>'+
       '<div class="panel supply-bus" style="grid-column:1/-1"><div class="sup-lab">Supply bus — a blocked run needs you to reopen its feedstock\'s era, in place</div>'+
         '<div class="intake-manifold">'+
@@ -2221,6 +2254,16 @@
     }
     if(S.heat>=CFG.e4.heatWarn){ ctx.fillStyle='rgba(255,177,92,'+Math.min(0.14,(S.heat-CFG.e4.heatWarn)/280)+')'; ctx.fillRect(0,0,w,h); } // heat haze on the glass
   }
+  // ---- ERA 4 steering tools: spend Capability to shape the drift itself (the buttons feed the mechanic) ----
+  function stabilizerCost(){ return Math.round(CFG.e4.stabilizerCost*Math.pow(CFG.e4.stabilizerGrowth, S.stabilizer)); }
+  function lockCost(){ return Math.round(CFG.e4.lockCost*Math.pow(CFG.e4.lockGrowth, S.locksBought||0)); }
+  function buyStabilizer(){ const c=stabilizerCost(); if(S.stabilizer>=CFG.e4.stabilizerMax || S.capability<c) return;
+    S.capability-=c; S.stabilizer++; recEvent('stabilizer:'+S.stabilizer); playSound('buy');
+    toast('Stabilizer ↑', 'Drift reduced '+Math.round(S.stabilizer*CFG.e4.stabilizerCut*100)+'% — the wind bites less'); render(); }
+  function lockRun(k){ const c=lockCost(); if(!S.locks || S.capability<c || S.locks[k]>0) return;
+    S.capability-=c; S.locks[k]=CFG.e4.lockDur; S.locksBought=(S.locksBought||0)+1; recEvent('lock:'+k); playSound('buy');
+    const lbl=(CFG.e4.domains.find(d=>d.k===k)||{}).label||k;
+    toast('Run locked', lbl+' frozen for '+CFG.e4.lockDur+'s — it can\'t drift while you steer the others'); render(); }
   // ---- ERA 5 (Foundation): recursive self-improvement, emergent capabilities, and the agent that appears ----
   // Each upgrade is individually rational. None says "summon an agent." But the agentic ones quietly raise hidden Agency.
   const CAPS = [
@@ -2460,6 +2503,8 @@
     const anb=$('alignBtn'); if(anb) anb.onclick=alignAct;
     const dgb=$('delegateBtn'); if(dgb) dgb.onclick=delegateAct;
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
+    const sbb=$('stabBtn'); if(sbb) sbb.onclick=buyStabilizer; // Deep steering tools
+    const lrw=$('lockRow'); if(lrw) lrw.onclick=e=>{ const b=e.target.closest && e.target.closest('[data-lock]'); if(b && !b.disabled) lockRun(b.dataset.lock); }; // delegate (lockRow rebuilt each tick)
     refresh();
     watchEraThemes();
   }
@@ -2683,6 +2728,16 @@
       else if(driftR.length) ds = driftR.join(' & ')+(driftR.length>1?' are':' is')+' drifting — steer compute there to hold breadth. Heat '+hstate.toLowerCase()+'.';
       else ds = 'All three runs holding. They drift apart on their own — keep routing compute against the wind. Heat '+hstate.toLowerCase()+'. Capability '+fmt(S.capability)+'.';
       setText('deepStats', ds);
+      // STEERING TOOLS — live cost/state (spend Capability)
+      const stb=$('stabBtn'); if(stb){ const maxed=S.stabilizer>=e4.stabilizerMax, sc=stabilizerCost();
+        setText('stabLvl', 'Lv'+S.stabilizer+(maxed?' · max':'/'+e4.stabilizerMax));
+        setText('stabEff', S.stabilizer>0 ? '−'+Math.round(S.stabilizer*e4.stabilizerCut*100)+'% drift' : 'calms the wind');
+        setText('stabCost', maxed?'—':fmt(sc)+' Capability'); stb.disabled = maxed || S.capability<sc; stb.classList.toggle('maxed', maxed); }
+      const lr=$('lockRow'); if(lr){ const lc=lockCost(); let lh='';
+        for(const d of doms){ const k=d.k, t=S.locks?S.locks[k]:0, on=t>0;
+          lh += '<button class="lock-btn'+(on?' active':'')+'" style="--rc:'+LOSS_COLS[k]+'" data-lock="'+k+'" '+(on||S.capability<lc?'disabled':'')+'>'+
+            '<span class="lk-nm">'+d.label+'</span><span class="lk-st">'+(on?'&#128274; '+Math.ceil(t)+'s':fmt(lc)+' Cap')+'</span></button>'; }
+        if(lr._html!==lh){ lr.innerHTML=lh; lr._html=lh; } }
       for(const key of ['foundry','smelter','scriptorium','dataset','model']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('intk-si', fmt(totalCost(BUYS.node,1))+'/rack');
       setText('intk-da', '−'+fmt(share.vision*computeRate*e4.feedPerShare)+'/s');
@@ -2910,7 +2965,7 @@
       else if(typeof def==='string') base[k]=(typeof v==='string')?v:def;
       else if(_isObj(def)){
         if(!_isObj(v)) continue;                                    // malformed map → keep default
-        if(k==='alloc'||k==='proofAcc'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
+        if(k==='alloc'||k==='proofAcc'||k==='locks'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
         else base[k]={...def, ...v};                                // boolean-ish maps: flags/disco/tech/methods/caps/collapsed/obsolete
       }
     }
@@ -3002,7 +3057,7 @@
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
       METHODS, e3Stats, effAccuracy, runExperiment,
-      deepBreadth, setAllocFromXY, mixerHandleXY, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
+      deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, buyCap,
       agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding,
       MUSIC, musicForEra, startMusic, syncMusic, openEra, setViewEra:(n)=>{ viewEra=n; },
       save, load, offlineCatchup, revealGame };
