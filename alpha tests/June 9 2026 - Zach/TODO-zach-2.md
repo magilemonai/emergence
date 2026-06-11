@@ -26,7 +26,7 @@ His new verdict: Origins + Symbolic are good now; **"statistical, deep, and foun
 - [x] R2.1 Quarry sound is still too close to Inscribe — make the Origins quarry a noticeably gravellier/lower scrape (F6).
 - [x] R2.2 Hide the green live-pulse status dot early in Origins — it's premature noise ("I don't need to know that yet") (F2).
 - [x] R2.3 New unlocks surface at the TOP of the era, not the bottom: Origins (Refinement, Fabricate-the-Logic-Machine) + Symbolic (Compile) (D-ask).
-- [ ] R2.4 Make the pause control more discoverable + a zero-Marks prompt ("out of Marks — click here to pause your scriptoria") (F3).
+- [x] R2.4 Make the pause control more discoverable + a zero-Marks prompt ("out of Marks — click here to pause your scriptoria") (F3).
 - [ ] R2.5 Make the Origins Research button bigger/more prominent (use the empty space by the core/age icon) (F4).
 - [ ] R2.6 Symbolic: make the Axiom production-bonus effect more visible/felt when writing rules post-compile (G4).
 

@@ -850,10 +850,11 @@
   .era-e2 .teach-crt { font-family: var(--mono, monospace); background: linear-gradient(180deg, rgba(8,22,12,0.6), rgba(5,14,8,0.7)); box-shadow: inset 0 0 30px rgba(40,140,70,0.08); }
   .era-e2 .teach-crt .teach-title { text-shadow: 0 0 8px var(--phosphor, rgba(125,255,176,0.5)); }
   .era-e3 .teach-inst { background: linear-gradient(180deg, rgba(8,28,34,0.5), rgba(4,16,20,0.6)); }
-  .conv-toggle { float: right; background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 5px;
-    width: 22px; height: 19px; font-size: 10px; line-height: 1; cursor: pointer; padding: 0; transition: color 0.15s, border-color 0.15s; }
-  .conv-toggle:hover { color: var(--text); border-color: var(--ec, var(--accent)); }
+  .conv-toggle { float: right; background: rgba(0,0,0,0.18); border: 1px solid var(--line); color: var(--dim); border-radius: 5px;
+    width: 26px; height: 22px; font-size: 12px; line-height: 1; cursor: pointer; padding: 0; transition: color 0.15s, border-color 0.15s, background 0.15s; }
+  .conv-toggle:hover { color: var(--text); border-color: var(--ec, var(--accent)); background: rgba(0,0,0,0.3); }
   .conv-toggle.paused { color: var(--accent); border-color: var(--accent); }
+  .conv-toggle.attention { color: var(--accent); border-color: var(--accent); animation: anomPulse 1s ease-in-out infinite; } /* starving — draw the eye */
   .tile.paused { opacity: 0.62; }
   .tile.paused .tile-name::after { content: ' · PAUSED'; color: var(--accent); font-size: 0.7em; letter-spacing: 0.06em; }
   .tile.starved .tile-name::after { content: ' · IDLE — no input'; color: var(--dimmer); font-size: 0.7em; letter-spacing: 0.04em; }
@@ -2410,8 +2411,12 @@
       if(resb) resb.classList.toggle('has', avail>0);
       for(const key of WORKS_ORDER){ const el=$('eff-'+key); if(!el) continue; const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; }
         if(CONVERTERS.has(key)){ const paused=!!S.paused[key], starved=!paused && S[key]>0 && (S[CONV_INPUT[key]]||0)<0.5;
-          const pb=$('pause-'+key); if(pb){ const ph=paused?'&#9654;':'&#9208;'; if(pb._html!==ph){ pb.innerHTML=ph; pb._html=ph; } if(pb.classList) pb.classList.toggle('paused',paused); }
-          const tile=$('btile-'+key); if(tile){ const tc='tile build'+(paused?' paused':'')+(starved?' starved':''); if(tile.className!==tc) tile.className=tc; } } }
+          const pb=$('pause-'+key); if(pb){ const ph=paused?'&#9654;':'&#9208;'; if(pb._html!==ph){ pb.innerHTML=ph; pb._html=ph; } if(pb.classList){ pb.classList.toggle('paused',paused); pb.classList.toggle('attention',starved); } } // pulse the toggle when starving (draw the eye to it)
+          const tile=$('btile-'+key); if(tile){ const tc='tile build'+(paused?' paused':'')+(starved?' starved':''); if(tile.className!==tc) tile.className=tc; }
+          // zero-input prompt (Zach): when a converter drains its input dry, tell the player they can pause it. Re-arms on recovery.
+          if(starved && !S.flags['warn_'+key] && !MUTE){ S.flags['warn_'+key]=true;
+            toast('OUT OF '+CONV_INPUT[key].toUpperCase(), 'Your '+OBUILD[key].name+'s are using '+CONV_INPUT[key]+' faster than it’s made. <b>Pause one</b> with the ⏸ on its tile, or build more upstream.'); }
+          else if(!starved && S.flags['warn_'+key]) S.flags['warn_'+key]=false; } }
       for(const [k] of RATE_DEFS){ if(!$('ramt-'+k)) continue;
         setText('ramt-'+k, fmt(S[k]));
         const rt=RATES[k]||0, ps=$('rps-'+k), cls='rate-ps '+(rt>0.0005?'pos':(rt<-0.0005?'neg':'zero'));
