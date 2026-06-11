@@ -214,6 +214,7 @@
   .era-e4 .tri-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .era-e4 .tri-outline { fill: rgba(110,168,255,0.04); stroke: rgba(110,168,255,0.45); stroke-width: 0.9; }
   .era-e4 .tri-feed { stroke: var(--accent); stroke-width: 1.2; stroke-opacity: 0.4; transition: stroke-opacity 0.2s; }
+  .era-e4 #feed-vision { stroke: #54d2ff; } .era-e4 #feed-language { stroke: #b58cff; } .era-e4 #feed-reasoning { stroke: #6fe6a8; } /* each feed line wears its run's color (Zach C) */
   .era-e4 .tri-balanced { fill: rgba(169,207,255,0.55); }
   .era-e4 .tri-corner { position: absolute; font-family: var(--era-display); font-size: 11px; letter-spacing: 0.06em; color: var(--dim); }
   .era-e4 .tri-corner b { font-family: var(--mono); font-size: 13px; font-weight: 600; margin-left: 2px; }
@@ -267,6 +268,10 @@
   .era-e4 .intake { flex: 1 1 180px; position: relative; overflow: hidden; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
     color: var(--dim); padding: 8px 11px; border: 1px solid rgba(110,168,255,0.16); border-radius: 6px; background: rgba(2,6,12,0.5); }
   .era-e4 .intake b { color: var(--bluehot); margin-left: 6px; }
+  /* each intake wears its run's color so the feedstock→run mapping reads at a glance (Zach C) */
+  .era-e4 .in-da { border-left: 3px solid #54d2ff; } .era-e4 .in-da b { color: #54d2ff; }
+  .era-e4 .in-kn { border-left: 3px solid #b58cff; } .era-e4 .in-kn b { color: #b58cff; }
+  .era-e4 .in-in { border-left: 3px solid #6fe6a8; } .era-e4 .in-in b { color: #6fe6a8; }
   .era-e4 .intake::after { content: ''; position: absolute; left: -40%; top: 0; bottom: 0; width: 40%;
     background: linear-gradient(90deg, transparent, rgba(110,168,255,0.14), transparent); animation: intakeFlow 2.4s linear infinite; }
   @keyframes intakeFlow { to { left: 110%; } }
@@ -2249,6 +2254,15 @@
   function buildMixer(){
     return '<div class="tri-mixer" id="triMixer">'+
       '<svg class="tri-svg" viewBox="0 0 100 100" preserveAspectRatio="none">'+
+        // corner fields (v2): each vertex glows its run's color, fading toward the middle — the pad itself shows what living near a corner means
+        '<defs>'+
+          '<radialGradient id="triGV" cx="50%" cy="0%" r="92%"><stop offset="0%" stop-color="#54d2ff" stop-opacity="0.20"/><stop offset="60%" stop-color="#54d2ff" stop-opacity="0"/></radialGradient>'+
+          '<radialGradient id="triGL" cx="0%" cy="100%" r="92%"><stop offset="0%" stop-color="#b58cff" stop-opacity="0.20"/><stop offset="60%" stop-color="#b58cff" stop-opacity="0"/></radialGradient>'+
+          '<radialGradient id="triGR" cx="100%" cy="100%" r="92%"><stop offset="0%" stop-color="#6fe6a8" stop-opacity="0.20"/><stop offset="60%" stop-color="#6fe6a8" stop-opacity="0"/></radialGradient>'+
+        '</defs>'+
+        '<polygon points="50,7 7,92 93,92" fill="url(#triGV)"/>'+
+        '<polygon points="50,7 7,92 93,92" fill="url(#triGL)"/>'+
+        '<polygon points="50,7 7,92 93,92" fill="url(#triGR)"/>'+
         '<line class="tri-feed" id="feed-vision" x1="50" y1="9" x2="50" y2="63.7"/>'+
         '<line class="tri-feed" id="feed-language" x1="9" y1="90" x2="50" y2="63.7"/>'+
         '<line class="tri-feed" id="feed-reasoning" x1="91" y1="90" x2="50" y2="63.7"/>'+
@@ -2815,11 +2829,12 @@
         if(rs._html!==h){ rs.innerHTML=h; rs._html=h; } }
       // the live orchestration sentence — what to do, right now
       const breakR=doms.find(d=>info[d.k].evBreak), blockedR=doms.filter(d=>info[d.k].blocked),
-            driftR=doms.filter(d=>info[d.k].net<0 && !info[d.k].blocked && !info[d.k].evBreak).map(d=>dl(d.k));
+            driftD=doms.filter(d=>info[d.k].net<0 && !info[d.k].blocked && !info[d.k].evBreak),
+            driftR=driftD.map(d=>dl(d.k)), driftC=driftD.map(d=>'<b style="color:'+LOSS_COLS[d.k]+'">'+dl(d.k)+'</b>');
       const parts=[];
-      if(breakR) parts.push('<b class="o-front">'+dl(breakR.k)+'</b> breakthrough — push it now');
+      if(breakR) parts.push('<b class="o-front" style="color:'+LOSS_COLS[breakR.k]+'">'+dl(breakR.k)+'</b> breakthrough — push it now');
       blockedR.forEach(d=> parts.push('<b class="o-low">'+dl(d.k)+'</b> blocked — restore '+info[d.k].res+' from '+FEEDERA[info[d.k].res]));
-      if(driftR.length) parts.push(driftR.join(' &amp; ')+(driftR.length>1?' are':' is')+' drifting — steer there');
+      if(driftC.length) parts.push(driftC.join(' &amp; ')+(driftC.length>1?' are':' is')+' drifting — steer there');
       if(!parts.length) parts.push('holding course — watch the wind shift');
       const ol=$('orchLine'); const orch=parts.join(' · '); if(ol && ol._html!==orch){ ol.innerHTML=orch; ol._html=orch; }
       setText('deepRate', fmt(computeRate)+' compute/s  ·  '+S.node+' nodes  ·  feeds: V←Data L←Knowledge R←Insight');
