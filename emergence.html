@@ -195,16 +195,19 @@
   .era-e4 .run-trend.up { color: var(--good); } .era-e4 .run-trend.dn { color: var(--hot); }
   .era-e4 .fabric-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; align-items: stretch; }
   .era-e4 .dial-lab { font-size: 10px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; }
-  .era-e4 .tri-mixer { position: relative; width: 100%; padding-bottom: 78%; background: radial-gradient(120% 120% at 50% 40%, rgba(14,40,70,0.4), rgba(2,6,12,0.7)); border: 1px solid rgba(110,168,255,0.18); border-radius: 8px; touch-action: none; cursor: crosshair; transition: border-color 0.15s; }
+  /* the field tinted toward each run's color at its corner — the center reads as a blend (Zach's idea) */
+  .era-e4 .tri-mixer { position: relative; width: 100%; padding-bottom: 78%; border: 1px solid rgba(110,168,255,0.18); border-radius: 8px; touch-action: none; cursor: crosshair; transition: border-color 0.15s;
+    background: radial-gradient(70% 70% at 50% 4%, rgba(84,210,255,0.20), transparent 70%), radial-gradient(70% 70% at 4% 96%, rgba(181,140,255,0.20), transparent 70%), radial-gradient(70% 70% at 96% 96%, rgba(111,230,168,0.20), transparent 70%), radial-gradient(120% 120% at 50% 40%, rgba(14,40,70,0.5), rgba(2,6,12,0.78)); }
   .era-e4 .tri-mixer:hover { border-color: rgba(110,168,255,0.4); }
   .era-e4 .tri-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .era-e4 .tri-outline { fill: rgba(110,168,255,0.04); stroke: rgba(110,168,255,0.45); stroke-width: 0.9; }
   .era-e4 .tri-feed { stroke: var(--accent); stroke-width: 1.2; stroke-opacity: 0.4; transition: stroke-opacity 0.2s; }
   .era-e4 .tri-balanced { fill: rgba(169,207,255,0.55); }
   .era-e4 .tri-corner { position: absolute; font-family: var(--era-display); font-size: 11px; letter-spacing: 0.06em; color: var(--dim); }
-  .era-e4 .tri-corner b { color: var(--bluehot); font-family: var(--mono); font-size: 13px; font-weight: 600; margin-left: 2px; }
-  .era-e4 .tc-v { top: 0; left: 50%; transform: translateX(-50%); text-align: center; }
-  .era-e4 .tc-l { bottom: 1%; left: 2%; } .era-e4 .tc-r { bottom: 1%; right: 2%; }
+  .era-e4 .tri-corner b { font-family: var(--mono); font-size: 13px; font-weight: 600; margin-left: 2px; }
+  .era-e4 .tc-v { top: 0; left: 50%; transform: translateX(-50%); text-align: center; color: #54d2ff; } .era-e4 .tc-v b { color: #54d2ff; }
+  .era-e4 .tc-l { bottom: 1%; left: 2%; color: #b58cff; } .era-e4 .tc-l b { color: #b58cff; }
+  .era-e4 .tc-r { bottom: 1%; right: 2%; color: #6fe6a8; } .era-e4 .tc-r b { color: #6fe6a8; }
   .era-e4 .tri-bal-lab { position: absolute; left: 50%; top: 63.7%; transform: translate(-50%, 7px); font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; color: var(--dimmer); text-transform: uppercase; pointer-events: none; }
   .era-e4 .tri-handle { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--bluehot); border: 2px solid #fff; box-shadow: 0 0 16px rgba(110,168,255,0.9), 0 2px 4px rgba(0,0,0,0.5); transform: translate(-50%,-50%); transition: left 0.1s, top 0.1s, transform 0.1s, box-shadow 0.1s; pointer-events: none; }
   .era-e4 .tri-mixer.dragging .tri-handle { transform: translate(-50%,-50%) scale(1.22); box-shadow: 0 0 24px rgba(110,168,255,1), 0 2px 4px rgba(0,0,0,0.5); }
@@ -2140,7 +2143,7 @@
         '<div class="sup-rate" id="supSi4"></div></div>';
     return eraShell(4, S.obsolete[4], body);
   }
-  const LOSS_COLS={ vision:'#6ea8ff', language:'#7fd3ff', reasoning:'#b9c8ff' };
+  const LOSS_COLS={ vision:'#54d2ff', language:'#b58cff', reasoning:'#6fe6a8' }; // distinct hues per run (Zach: color-code V/L/R) — cyan / violet / green, all readable on Deep's blue
   function drawLoss(){ // Era 4 signature viz: three loss curves descending in parallel; the frontier run flares, heat hazes the glass
     const cv=$('losscurve'); if(!cv || !cv.getContext) return;
     const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return;
@@ -2551,7 +2554,10 @@
       const computeRate=S.node*e4.nodeCompute, dl=k=>doms.find(d=>d.k===k).label, t=S.t||0, PH={vision:0,language:2.094,reasoning:4.189};
       const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1, share={}, info={};
       // mixer: handle + feed lines (brightness ∝ share) + live vertex %; per-run drift/feedstock/event status
-      const hx=mixerHandleXY(), th=$('triHandle'); if(th){ th.style.left=(hx.x*100)+'%'; th.style.top=(hx.y*100)+'%'; }
+      const hx=mixerHandleXY(), th=$('triHandle'); if(th){ th.style.left=(hx.x*100)+'%'; th.style.top=(hx.y*100)+'%';
+        const fv=(S.alloc.vision||0)/tw, fl=(S.alloc.language||0)/tw, fr=(S.alloc.reasoning||0)/tw; // handle = blend of the three run colors by allocation
+        const mr=Math.round(84*fv+181*fl+111*fr), mg=Math.round(210*fv+140*fl+230*fr), mb2=Math.round(255*fv+255*fl+168*fr);
+        const bc='rgb('+mr+','+mg+','+mb2+')'; if(th._bc!==bc){ th.style.background=bc; th.style.boxShadow='0 0 16px '+bc+', 0 2px 4px rgba(0,0,0,0.5)'; th._bc=bc; } }
       for(const d of doms){ const k=d.k; share[k]=(S.alloc[k]||0)/tw;
         const ln=$('feed-'+k); if(ln && ln.setAttribute){ ln.setAttribute('x2',(hx.x*100).toFixed(1)); ln.setAttribute('y2',(hx.y*100).toFixed(1)); if(ln.style) ln.style.strokeOpacity=(0.1+0.9*share[k]).toFixed(2); }
         setText('pct-'+k, Math.round(share[k]*100)+'%');

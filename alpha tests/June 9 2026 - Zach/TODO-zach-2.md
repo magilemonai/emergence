@@ -31,7 +31,7 @@ His new verdict: Origins + Symbolic are good now; **"statistical, deep, and foun
 - [x] R2.6 Symbolic: make the Axiom production-bonus effect more visible/felt when writing rules post-compile (G4).
 
 ### Color-as-signal (his #2 cross-cutting ask, the non-controversial parts)
-- [ ] R2.7 **Deep: color-code Vision / Language / Reasoning** — matching loss-line colors, three colored triangle corners, gradient-blended center as you drag (C / I-color). *(Color/teaching only — no balance change.)*
+- [x] R2.7 **Deep: color-code Vision / Language / Reasoning** — matching loss-line colors, three colored triangle corners, gradient-blended center as you drag (C / I-color). *(Color/teaching only — no balance change.)*
 - [ ] R2.8 Audit each era for a couple of high-value color cues (extend the overfit→yellow idea he praised).
 
 ### Teaching / copy clarity (extend the legibility pass — copy only, no mechanic change)
