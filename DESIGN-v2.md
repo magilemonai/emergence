@@ -305,8 +305,15 @@ Each phase ends with a Run Recorder export read against the four-beat targets
    effect chips (TRAIN/VAL/OVERFIT/SURVEY signatures in track colors). Autoplayer Deep
    knowledge-deadlock fixed (sink-pausing decoupled from node count; Deep 41.6m→11.1m).
    Era 3 autoplay ~4.9m — the by-hand 7-9 tune waits for the Phase 8 pacing pass.
-3. **Era 5 aftermath:** substrate-driven proposals, Negotiate, agent-plays-the-game,
-   asymmetric meters, epilogues. (The finale earns its rupture.)
+3. **Era 5 aftermath** ✅ COMPLETE (2026-06-11, 2 commits, 167 tests green): proposals
+   generated from the live substrate with real numbers (re-fit / reroute / run the
+   Foundries / prove with idle Rules; spawn+rewrite fallbacks), effects land in the named
+   era (opBoost ×1.6 for ~22s, agent-live glow), lapses fire without you; NEGOTIATE
+   (half effect, +Alignment, 40 Scale, next window sooner; S.negotiates counted);
+   agent-play beat presses your actual controls (focus dial, triangle, buys, terminal);
+   asymmetric meters (Control structural 0.4/s drift, Alignment relational 0.45/s decay
+   +12/act, Autonomy only rises); endings open with run-data epilogues, all three
+   ambivalent. Foreshadowing oddities + agent naming stay in Phase 6 (story pass).
 4. **Era 4 weather:** forecast sparkline, 3s telegraphs, differentiated event responses,
    momentum, stabilizer retune.
 5. **Era 1 + 2 loops:** Hands lever + Commissions; Symbolic fork + contradictions + Daemon
