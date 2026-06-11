@@ -102,6 +102,34 @@ A six-persona board (engineer, product, UX, asset, story, alpha-tester) reviewed
 - ✅ Themes (blue/violet), test autoplayer extended through Deep+Foundation to emergence (85 green).
 - ✅ **Era 4-5 art generated + wired** (10 ChatGPT icons keyed to alpha): Era 4 sigil/node/run glyphs, Era 5 sigil/3 capabilities/agent-hero. No outstanding art.
 
+## Zach alpha rounds + "becoming a game" sprint (2026-06-10/11)
+
+Three Zach alpha rounds parsed (`alpha tests/June 9 2026 - Zach/`). His verdict flipped
+from "Symbolic/Statistical need a full redo, I'm lost" to "I'm building an AI… the emergence
+ending is kind of terrifying — almost a boss level." Round 1 (legibility) + round 2 (goals/log
+tab, era tabs, color-within-eras, teaching) shipped. **Round 3 — "becoming a game" (TODO-zach-3,
+R3.1–R3.9) — COMPLETE**, adding consequences/stakes to the toothless back half:
+- **R3.1 Deep drift teeth** — an under-fed run actively *bleeds* capability (allocation-shortfall
+  erosion, scales with compute so node-count can't outrun it). Balanced now loses; you must steer.
+- **R3.2 Heat** — concentrating to fight drift heats the fabric; hot throttles output → a real
+  concentrate→heat→ease→cool rhythm (was a dead gauge).
+- **R3.3 Substrate scorecard** — the ending repurposes the Substrate into a timestamped per-era
+  recap + an Emergence Quality grade (S–D). `S.eraTimes/emergedT/endT`.
+- **R3.4 Deep steering tools** — Stabilizer (spend Capability → permanent drift cut) + Lock (freeze
+  a run ~28s). Capability is now a spendable steering currency (the buttons feed the mechanic).
+- **R3.5 Aftermath stakes** — Control drifts + Alignment decays; below controlLow it DESTABILIZES
+  (spiral), lapsed vetoes compound, Control→0 = instant Runaway. Passive play loses fast; active
+  play earns Symbiotic.
+- **R3.6 Pre-emergence** — a rush-vs-prepare decision: Self-Improve (emerge sooner, less aligned)
+  vs Align the Objective (build Coherence → wakes aligned). Same Capability + clock.
+- **R3.7** educational "did you know" tidbits in the Goals log (Foxfire-adjacent).
+- **R3.8** Statistical RUN TRIAL relabels to the active Focus. **R3.9** Origins Bronze/Silicon
+  light sub-age reskin.
+- Tests grew 118 → **129 green** (Deep steering + pre-emergence suites). Autoplayer reworked to
+  play drift/heat/stakes (the Knowledge-deadlock the teeth exposed is fixed via a phased scribe→
+  scriptorium engine + sink-pausing). **Open:** Eras 4 & 5 were rebalanced — needs Cody/Zach hands-on
+  to confirm the drift/heat cadence and aftermath pressure feel right (bot proves completable, not fun).
+
 ## Post-Deep-lock state (2026-06-09)
 
 **Era 4 (Deep) is world-pass LOCKED** (ChatGPT-signed-off). It was redesigned from the
