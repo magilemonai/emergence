@@ -31,6 +31,11 @@ const SETUP = {
     tip.innerHTML=el.getAttribute('data-tip'); tip.classList.add('show');
     tip.style.position='absolute'; tip.style.opacity='1'; tip.style.transform='none';
     tip.style.left=(r.right+14+window.scrollX)+'px'; tip.style.top=(r.top+window.scrollY)+'px';`,
+  goals: `const E=window.EMERGENCE,S=E.S; E.revealGame();
+    S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40;
+    for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }
+    S.marks=4000;S.ore=3000;S.metal=800; E.checkMiles(); for(let i=0;i<4;i++) E.tick();
+    const gb=document.getElementById('goalsBtn'); if(gb) gb.click();`,
   sound: `const E=window.EMERGENCE,S=E.S; E.revealGame();
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40; E.checkMiles(); for(let i=0;i<3;i++) E.tick();
     const mb=document.getElementById('musicBtn'); if(mb) mb.click();`,

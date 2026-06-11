@@ -845,6 +845,24 @@
   .tile-name { font-size: 18px; color: var(--text); text-align: center; }
   .tile-eyebrow { display: block; font-size: 11px; letter-spacing: 0.06em; color: var(--dimmer); text-transform: uppercase; opacity: 0.8; margin-bottom: 1px; }
   .verb-yield { font-size: 0.82em; opacity: 0.85; font-variant-numeric: tabular-nums; margin-left: 4px; }
+  /* Goals + log tab (right side, mirrors Research-left) */
+  .goals-btn { background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 7px; padding: 5px 11px;
+    font-family: inherit; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .goals-btn:hover { color: var(--text); border-color: var(--accent); }
+  #goalsDrawer { position: fixed; top: 54px; right: 0; height: calc(100% - 54px); width: 340px; max-width: 88vw; z-index: 71; background: var(--panel);
+    border-left: 1px solid var(--line); transform: translateX(100%); transition: transform 0.3s ease-out; display: flex; flex-direction: column; box-shadow: -14px 0 44px rgba(0,0,0,0.55); }
+  #goalsDrawer.show { transform: translateX(0); }
+  #goalsBody { padding: 12px 14px; overflow-y: auto; }
+  @media (min-width: 880px){ body.goals-open main { padding-right: 340px; } }
+  .goal-now { border: 1px solid var(--ec, var(--accent)); border-radius: 9px; padding: 11px 13px; margin-bottom: 14px; background: rgba(255,255,255,0.02); }
+  .goal-lab, .log-lab { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dimmer); margin-bottom: 5px; }
+  .goal-txt { font-size: 14px; color: var(--accent); font-family: var(--era-display, inherit); }
+  .log-lab { margin: 4px 0 8px; }
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-item { border-left: 2px solid var(--line); padding: 5px 0 5px 10px; }
+  .log-h { font-size: 11px; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; }
+  .log-b { font-size: 12.5px; color: var(--dim); line-height: 1.55; margin-top: 2px; }
+  .log-b i { color: var(--dimmer); }
   /* plain-language partner for jargon labels (Zach: "the words mean nothing") — keep the term, demystify it inline */
   .lbl-plain { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.72; font-size: 0.82em; font-style: italic; }
   .sym-help { font-size: 12px; color: var(--dim); line-height: 1.6; margin: 2px 0 10px; }
@@ -965,6 +983,7 @@
       <div class="era-indicator" id="eraInd"></div>
     </div>
     <div class="hdr-right">
+      <button id="goalsBtn" class="goals-btn" title="Goals + log">▸ GOALS</button>
       <button id="musicBtn" class="music-btn" title="Sound settings" aria-label="Sound settings">&#9834;</button>
       <div class="buymode" id="buyMode"></div>
       <div class="res-bar" id="resBar"></div>
@@ -999,6 +1018,7 @@
 <div id="dev"></div>
 <div id="drawerBg"></div>
 <div id="drawer"><div class="drawer-head"><span>RESEARCH &middot; one-time discoveries</span><button id="drawerClose">&times;</button></div><div id="drawerBody"></div></div>
+<div id="goalsDrawer"><div class="drawer-head"><span>GOALS &middot; objective &amp; log</span><button id="goalsClose">&times;</button></div><div id="goalsBody"></div></div>
 <script>
 (() => {
   const CFG = {
@@ -1123,6 +1143,7 @@
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, paused: {}, clicks: 0, // paused: converters the player has switched off (anti-soft-lock)
+    log: [], // every popup (toast / discovery / teaching beat) kept here so nothing vanishes unrecoverably (Zach) — shown in the Goals tab
   }; }
   const S = freshState();
   const RATES = { marks:0, knowledge:0, ore:0, metal:0, silicon:0, rules:0, data:0, insight:0, capability:0, scale:0 }; // net per-second flow, captured each tick
@@ -1235,13 +1256,16 @@
     else { symLog.push(msg); if(symLog.length>6) symLog.shift(); symLogKey = key||null; }
     const el=$('termLog'); if(el) el.innerHTML = symLog.map((m,i)=>'<div class="log-line'+(i===symLog.length-1?' log-now':'')+'">'+m+'</div>').join(''); }
   function symName(id){ if(id==='optimization') return 'Optimization'; if(id==='capacity') return 'Inference Capacity'; return (typeof TREEMAP!=='undefined' && TREEMAP[id] && TREEMAP[id].name) || id; }
+  function logEntry(head, body){ if(!S.log) S.log=[]; S.log.push({ h:head, b:body, era:viewEra, gt:Math.floor(S.t||0) }); if(S.log.length>60) S.log.shift(); }
   function toast(head, body){
     if(MUTE) return;
+    logEntry(head, body); // keep it in the Goals tab log so it's never lost (Zach)
     const el=document.createElement('div'); el.className='toast';
     el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>';
     const box=$('toasts'); box.appendChild(el); playSound('milestone');
     while(box.children && box.children.length>3 && box.firstChild) box.removeChild(box.firstChild); // cap the stack — never bury the era
     setTimeout(()=>{ el.style.animation='toastOut 0.4s forwards'; setTimeout(()=>el.remove(),400); }, 4200);
+    if(uiGoals) refreshGoals(); // live-update the log if the tab is open
   }
   function floatNum(text,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=text; el.style.color=color; el.style.left=(x+(Math.random()*24-12))+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
   let actx=null; const ac=()=>actx||(actx=new(window.AudioContext||window.webkitAudioContext)());
@@ -2343,7 +2367,9 @@
     document.querySelectorAll('[data-supbuy]').forEach(b=>{ b.onclick=()=>{ buy(b.getAttribute('data-supbuy')); }; });
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
     document.querySelectorAll('[data-pause]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const k=e.currentTarget.dataset.pause; S.paused[k]=!S.paused[k]; playSound('click'); render(); });
-    document.querySelectorAll('[data-teach]').forEach(b=> b.onclick=e=>{ S.flags['taught'+e.currentTarget.dataset.teach]=true; playSound('click'); render(); });
+    document.querySelectorAll('[data-teach]').forEach(b=> b.onclick=e=>{ const n=e.currentTarget.dataset.teach; const tb=TEACH[n];
+      if(tb && !S.flags['taught'+n]) logEntry(tb.title.replace(/&[a-z]+;/g,' '), tb.lead+' '+tb.steps.join(' ')); // keep the teaching beat in the log
+      S.flags['taught'+n]=true; playSound('click'); render(); });
     document.querySelectorAll('[data-disco]').forEach(b=> b.onclick=e=>buyDisco(e.currentTarget.dataset.disco));
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
     document.querySelectorAll('[data-proof]').forEach(b=> b.onclick=e=>selectProof(e.currentTarget.dataset.proof));
@@ -2678,6 +2704,18 @@
   // The backdrop no longer dims or captures clicks; the Research button (and ×) toggle it.
   function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer);
     if(document.body&&document.body.classList) document.body.classList.toggle('drawer-open',uiDrawer); } // push the era content right
+  // ---- Goals + log tab (right side, mirrors Research-left) — current objective pinned on top, then a log of every popup so nothing's lost (Zach) ----
+  let uiGoals=false;
+  function toggleGoals(open){ uiGoals = open!==undefined?open:!uiGoals; const d=$('goalsDrawer'); if(d) d.classList.toggle('show',uiGoals);
+    if(document.body&&document.body.classList) document.body.classList.toggle('goals-open',uiGoals); if(uiGoals) refreshGoals(); }
+  function refreshGoals(){ const b=$('goalsBody'); if(!b) return;
+    const obj = objectiveText(viewEra) || objectiveText(S.maxEra);
+    let h = '<div class="goal-now"><div class="goal-lab">Objective &middot; '+(ERAS[viewEra]?ERAS[viewEra].tag:'')+'</div><div class="goal-txt">'+(obj?('&#9656; '+obj):'—')+'</div></div>'+
+      '<div class="log-lab">Log &middot; everything that has happened</div>';
+    if(!S.log || !S.log.length) h += '<div class="up-desc" style="padding:10px 2px">Nothing logged yet. Discoveries, milestones, and tips will collect here.</div>';
+    else h += '<div class="log-list">'+S.log.slice().reverse().map(e=>'<div class="log-item"><div class="log-h">'+e.h+'</div><div class="log-b">'+e.b+'</div></div>').join('')+'</div>';
+    b.innerHTML = h;
+  }
   // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).
   function setTheme(n){ if(typeof document==='undefined'||!document.body) return; const b=document.body;
     for(let k=1;k<=5;k++) b.classList.remove('theme-'+k); b.classList.add('theme-'+n); if(TABS) b.classList.add('tabs'); } // classList (not className) so 'tabs'/'rupturing' survive
@@ -2794,6 +2832,7 @@
     // Era-5 fields with null/array defaults the generic pass skips: a resolved ending + the agent stream must survive a reload.
     if(typeof loaded.ending==='string') base.ending=loaded.ending;
     if(Array.isArray(loaded.agentLog)) base.agentLog=loaded.agentLog.filter(x=>typeof x==='string').slice(-6);
+    if(Array.isArray(loaded.log)) base.log=loaded.log.filter(x=>x&&typeof x.h==='string'&&typeof x.b==='string').slice(-60);
     if(_isObj(loaded.veto) && typeof loaded.veto.text==='string') base.veto=loaded.veto;
     return base;
   }
@@ -2845,6 +2884,7 @@
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
   $('coBtn').onclick=inscribe;
+  { const gb=$('goalsBtn'); if(gb) gb.onclick=()=>toggleGoals(); const gc=$('goalsClose'); if(gc) gc.onclick=()=>toggleGoals(false); }
   // sound: load persisted Music + SFX volumes, wire the popover sliders, and start music on the first user gesture (autoplay policy)
   try{ const mv=localStorage.getItem('emergence-musvol'); if(mv!==null) MUSIC.vol=Math.max(0,Math.min(1,+mv)); MUSIC.on = localStorage.getItem('emergence-music')!=='off' && MUSIC.vol>0;
        const sv=localStorage.getItem('emergence-sfxvol'); if(sv!==null) SFX.vol=Math.max(0,Math.min(1,+sv)); SFX.on = localStorage.getItem('emergence-sfx')!=='off' && SFX.vol>0; }catch(_){}
