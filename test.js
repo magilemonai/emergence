@@ -833,6 +833,18 @@ function testFoundation(){
   ep = EM.epilogue();
   ok(ep.some(l=>l.indexOf('handed it speed')>=0), 'the runaway epilogue knows you delegated');
 
+  // v2 P7 — Continuity: one memory carried between runs
+  { const E7=freshGame(), s7=E7.S;
+    const base=E7.totalCost(E7.BUYS.scriptorium,1);
+    E7.CONT.boon='forge';
+    ok(E7.totalCost(E7.BUYS.scriptorium,1) < base, '"I remember the Forge" makes converters cheaper');
+    E7.CONT.boon='proof'; s7.knowledge=900; E7.openEra(2);
+    ok(s7.tech.formalLogic===true, '"I remember the proof" seeds Formal Logic at the Symbolic door');
+    E7.CONT.boon='negotiate'; s7.maxEra=5; E7.emerge(); s7.scale=10; s7.gap=0.2; s7.lastVeto='';
+    E7.openVeto(); E7.resolveVeto('negotiate');
+    ok(s7.negotiates===1 && s7.scale>10, '"I remember you" makes the first Negotiate free (works below the normal cost)');
+    E7.CONT.boon=null; }
+
   // v2 P6 — the story pass: naming, the memory reveal, foreshadowing oddities
   EM = freshGame(); S = EM.S; S.maxEra=5; S.vision=0.9; S.language=0.4; S.reasoning=0.5; EM.emerge();
   ok(S.agentName==='IRIS', 'a vision-dominant build wakes as IRIS');
