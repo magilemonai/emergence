@@ -803,6 +803,8 @@
   .era-e3 .focus-seg b { display: block; font-size: 13px; color: var(--text); letter-spacing: 0.04em; }
   .era-e3 .focus-seg span { display: block; font-size: 10.5px; color: var(--dimmer); line-height: 1.35; margin-top: 3px; }
   .era-e3 .focus-seg.active { background: rgba(95,224,192,0.14); box-shadow: inset 0 -3px 0 var(--accent); }
+  .era-e3 .foc-sig { display: flex; gap: 15px; justify-content: center; margin-top: 5px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; }
+  .era-e3 .foc-sig i { font-style: normal; white-space: nowrap; }
   .era-e3 .focus-seg.active b { color: var(--good); text-shadow: 0 0 8px rgba(95,224,192,0.45); }
   /* each Focus reads by color — Fit=warm/risky, Generalize=green/safe, Explore=blue/discovery (Zach: color the steering choice) */
   .era-e3 #foc-fit { border-top: 2px solid rgba(255,154,107,0.55); } .era-e3 #foc-generalize { border-top: 2px solid rgba(95,224,160,0.55); } .era-e3 #foc-explore { border-top: 2px solid rgba(110,168,255,0.55); }
@@ -2281,7 +2283,12 @@
   }
   function buildStatistical(){ // ERA 3 — the Model: steer Training Focus, train accuracy, discover methods
     const f=CFG.e3.focus;
-    const focusBtns = ['fit','generalize','explore'].map(k=>'<button class="focus-seg" data-focus="'+k+'" id="foc-'+k+'" data-tip="'+esc(f[k].desc)+'"><b>'+f[k].label+'</b><span>'+f[k].desc+'</span></button>').join('');
+    // each focus wears its consequences (v2 P2.3): the chips use the same colors as the needle track above
+    const SIG={ fit:[['TRAIN','&#9650;&#9650;','#ffb86b'],['VAL','&#9650;','#8af0d8'],['OVERFIT','&#9650;&#9650;','#ff8a5c']],
+                generalize:[['OVERFIT','&#9660;&#9660;','#7de6a8'],['VAL','&#9650;','#8af0d8'],['TRAIN','&middot;','#8a9aa0']],
+                explore:[['SURVEY','&#9650;&#9650;','#6ea8ff'],['VAL','&#9650;','#8af0d8'],['OVERFIT','&#9650;','#ff8a5c']] };
+    const focusBtns = ['fit','generalize','explore'].map(k=>'<button class="focus-seg" data-focus="'+k+'" id="foc-'+k+'" data-tip="'+esc(f[k].desc)+'"><b>'+f[k].label+'</b><span>'+f[k].desc+'</span>'+
+      '<span class="foc-sig">'+SIG[k].map(c=>'<i style="color:'+c[2]+'">'+c[0]+' '+c[1]+'</i>').join('')+'</span></button>').join('');
     let body = teachBeat(3) +
       // THE INSTRUMENT — the living plot is the world object; you observe + steer a learning process
       '<div class="panel plot-instrument" style="grid-column:1/-1">'+
