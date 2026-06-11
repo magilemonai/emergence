@@ -22,7 +22,7 @@ The throughline: Origins/Symbolic became good via legibility; the back half is l
 - [x] R3.7 Short "did you know"-style notes in the Goals log explaining the real AI concepts (why 88% / generalization, what breadth/capability mean, what an agent is). Keep them short + earned, not preachy. (Foxfire-adjacent.)
 
 ## D3 — Statistical: relabel RUN TRIAL (not three buttons)
-- [ ] R3.8 The single RUN TRIAL button names itself after the active focus — "RUN FIT TRIAL" / "RUN GENERALIZE TRIAL" / "RUN EXPLORE TRIAL" — so set-focus-then-run reads as one action. (Keeps the focus dial + auto-running Models; doesn't split the mechanic.)
+- [x] R3.8 The single RUN TRIAL button names itself after the active focus — "RUN FIT TRIAL" / "RUN GENERALIZE TRIAL" / "RUN EXPLORE TRIAL" — so set-focus-then-run reads as one action. (Keeps the focus dial + auto-running Models; doesn't split the mechanic.)
 
 ## D7 — Origins: light sub-age reskin (lowest priority, polish)
 - [ ] R3.9 Shift a few accent colors / frame textures when you reach Bronze / Silicon so the sub-age is felt — NOT a full per-sub-age theme, NOT a cut. (The objective line already frames them as goals.)

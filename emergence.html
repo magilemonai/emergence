@@ -2141,7 +2141,7 @@
         '<div class="meter-label"><span>effective = learned − overfit</span><span id="acc-val"></span></div>'+
         '<div class="inst-controls">'+
           '<div class="focus-dial"><div class="dial-lab">TRAINING FOCUS</div><div class="focus-seg-row">'+focusBtns+'</div></div>'+
-          '<button class="act-btn inst-lever" id="expBtn">RUN TRIAL</button>'+
+          '<button class="act-btn inst-lever" id="expBtn">RUN TRIAL</button>'+ // label tracks the active Focus (R3.8): RUN FIT/GENERALIZE/EXPLORE TRIAL
         '</div>'+
       '</div>'+
       '<div class="panel feed-module">'+eraUpgrade('dataset','Dataset Feed','Feeds the instrument with observations. Built from Silicon.')+'</div>'+
@@ -2711,6 +2711,7 @@
       const exps=S.model*CFG.e3.expPerModel;
       setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':''));
       ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
+      const eb3=$('expBtn'); if(eb3){ const fl=(CFG.e3.focus[S.focus]||CFG.e3.focus.fit).label.toUpperCase(); const h='RUN '+fl+' TRIAL'; if(eb3._html!==h){ eb3.textContent=h; eb3._html=h; } } // the one action names itself after the Focus (R3.8)
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Models draw '+fmt(S.model*CFG.e3.modelSilicon)+'/s');
       for(const key of ['dataset','model']){ const el=$('eff-'+key); if(el){ const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } } }
