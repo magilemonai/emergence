@@ -2368,10 +2368,11 @@
   }
   function setStatus(n, live){ const el=$('status-'+n); if(!el) return;
     if(S.obsolete[n]){ el.textContent='LEGACY'; el.className='era-status legacy'; return; }
-    // a subtle live pulse, not the bare word "RUNNING" (Zach: "I don't know why it says running"); the objective line carries the real goal
-    const txt= live?'●':'', cls='era-status'+(live?' live pulse':'');
+    // a subtle live pulse, not the bare word "RUNNING". Only meaningful once there are multiple eras to tell apart — premature in Origins-only (Zach).
+    const show = live && S.maxEra>=2;
+    const txt= show?'●':'', cls='era-status'+(show?' live pulse':'');
     if(el.textContent!==txt) el.textContent=txt; if(el.className!==cls) el.className=cls;
-    const tip= live?'This era is producing':''; if(el._title!==tip){ el.setAttribute('title',tip); el._title=tip; } }
+    const tip= show?'This era is producing':''; if(el._title!==tip){ el.setAttribute('title',tip); el._title=tip; } }
   function setClass(el, cls){ if(el && el.className!==cls) el.className=cls; }
   function refresh(){ // cheap per-tick value update; the DOM (and your buttons) stay put
     if(!S.flags.firstAuto) return;
