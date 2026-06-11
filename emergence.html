@@ -1008,6 +1008,19 @@
   .lbl-plain { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.72; font-size: 0.82em; font-style: italic; }
   .sym-help { font-size: 12px; color: var(--dim); line-height: 1.6; margin: 2px 0 10px; }
   .sym-help b { color: var(--text); } .sym-help i { color: var(--accent); font-style: normal; }
+  /* the Hands lever + Commissions (v2 P5.2) */
+  .era-e1 .lever-row { display: flex; align-items: center; gap: 14px; }
+  .era-e1 .lever-side { font-family: var(--era-display, inherit); font-size: 12px; letter-spacing: 0.1em; color: var(--dim); white-space: nowrap; min-width: 128px; }
+  .era-e1 .lever-side:last-child { text-align: right; }
+  .era-e1 #handsLever { flex: 1; appearance: none; -webkit-appearance: none; height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgba(224,169,63,0.5), rgba(90,70,50,0.6), rgba(192,133,82,0.5)); outline: none; cursor: ew-resize; }
+  .era-e1 #handsLever::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 2px solid rgba(255,244,214,0.8); box-shadow: 0 0 12px rgba(224,169,63,0.6), 0 2px 4px rgba(0,0,0,0.5); cursor: ew-resize; }
+  .era-e1 #handsLever::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 2px solid rgba(255,244,214,0.8); box-shadow: 0 0 12px rgba(224,169,63,0.6); cursor: ew-resize; }
+  .era-e1 .comm-panel { border-color: var(--accent); }
+  .era-e1 .comm-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .era-e1 .comm-info { flex: 1; min-width: 240px; }
+  .era-e1 .comm-meter { height: 7px; margin-top: 7px; }
+  .era-e1 .comm-acts { display: flex; gap: 9px; }
+  .era-e1 .comm-no { opacity: 0.7; }
   /* one-time in-world teaching beat (L.2) — reads as the machine/instrument talking, not a help popup */
   .teach-beat { position: relative; border: 1px solid var(--ec); border-radius: 12px; padding: 14px 18px; animation: vetoIn 0.4s ease; }
   .teach-title { font-family: var(--era-display, var(--mono, inherit)); font-size: 14px; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 5px; }
@@ -1180,6 +1193,18 @@
       smelterUpkeep: 0.25,     // Knowledge burned per Metal made (smithing know-how) — Materials drains Knowledge
       siliconGate: 120,        // silicon needed to fabricate the Logic Machine (after the ~5-min Foundry beat)
       refineBase: 120, refineGrowth: 1.28, refineBonus: 0.05, // Refinement: repeatable Ore-cost upgrade, +5%/lvl to ALL Origins production (fills the late lull)
+      // THE HANDS LEVER (v2 P5.2): one workforce, two crafts. The lever redistributes hands between the
+      // Record and the Forge (±40% at full lean) — the game's first allocation surface, held all era.
+      leverSwing: 0.8, leverFloor: 0.6, // side multiplier = floor + swing×(its share of the lever)
+      // COMMISSIONS (v2 P5.2): the world asks for things. Rotating one-time orders with a timer; each fulfilled
+      // order permanently leans a side (or sends hands). The back-half near-win engine — Refinement steps down to a sink.
+      commDur: 75, commCool: 18, commBonus: 0.05,
+      comms: [
+        { id:'tablets', name:'The temple asks for tablets',   res:'marks',     base:150, reward:'rec',   flavor:'A season of prayers, recorded.' },
+        { id:'roads',   name:'The road needs stone',          res:'ore',       base:150, reward:'forge', flavor:'Cart after cart, to somewhere new.' },
+        { id:'bronze',  name:'The forge-lord wants metal',    res:'metal',     base:60,  reward:'rec',   flavor:'Weapons or plowshares; he pays either way.' },
+        { id:'archive', name:'The archive buys what you know',res:'knowledge', base:90,  reward:'free',  flavor:'They copy your marks into their own.' },
+      ],
     },
     e2: { // ERA 2 — Symbolic (theorem-proving research + compile journey)
       clickBase: 1,
@@ -1310,6 +1335,7 @@
     // Era 1 — Origins
     marks: 0, knowledge: 0, ore: 0, metal: 0, silicon: 0, age: 1,
     scribe: 0, miner: 0, scriptorium: 0, smelter: 0, foundry: 0, disco: {},
+    lever: 0.5, comm: null, commN: 0, commCool: 0, commDone: 0, commRec: 0, commForge: 0, // v2 P5.2: the Hands lever + Commissions
     // Era 2 — Symbolic
     refine: 0,
     rules: 0, runRules: 0, axioms: 0, totalAxioms: 0, compiles: 0,
@@ -1690,6 +1716,14 @@
     S.proofAcc[id]=0; S.activeProof=null; recEvent('proof:'+id); playSound('milestone'); render();
   }
   // --- Era 1 (Origins): derived rates from owned discoveries, manual verbs, discoveries, fabrication ---
+  // v2 P5.2 — Commissions: fulfill (pay the order, take the lean) or decline (the caravan leaves now)
+  function fulfillComm(){ const c=S.comm; if(!c || S[c.res]<c.need) return;
+    const def=CFG.e1.comms[c.i]; S[c.res]-=c.need; S.comm=null; S.commCool=CFG.e1.commCool; S.commDone++;
+    if(def.reward==='rec'){ S.commRec++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Record leans <b>+'+Math.round(CFG.e1.commBonus*100)+'%</b>, permanently.'); }
+    else if(def.reward==='forge'){ S.commForge++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Forge leans <b>+'+Math.round(CFG.e1.commBonus*100)+'%</b>, permanently.'); }
+    else { S.scribe+=2; S.miner+=2; toast('COMMISSION FULFILLED', def.flavor+'<br>They send <b>hands</b>: +2 Scribes, +2 Miners.'); }
+    recEvent('comm:'+def.id); playSound('milestone'); render(); }
+  function declineComm(){ if(!S.comm) return; S.comm=null; S.commCool=CFG.e1.commCool; playSound('click'); render(); }
   function oStats(){
     const d=S.disco, e=CFG.e1;
     let inscribe=e.inscribeBase, quarry=e.quarryBase, scrR=e.scriptoriumRate, smR=e.smelterRate, foR=e.foundryRate;
@@ -1701,6 +1735,11 @@
     if(d.wheel){ minerY*=1.8; quarry*=1.8; scribeY*=0.8; inscribe*=0.8; } // addition + subtraction
     if(d.numerals){ scrR*=1.3; smR*=1.3; foR*=1.3; }
     if(d.glassmaking) foR*=1.5;
+    // THE HANDS LEVER (v2): one workforce, leaned between the crafts — plus the standing Commission leans
+    const lv=(typeof S.lever==='number')?S.lever:0.5;
+    const rec=(e.leverFloor+e.leverSwing*lv)*(1+e.commBonus*(S.commRec||0));
+    const fge=(e.leverFloor+e.leverSwing*(1-lv))*(1+e.commBonus*(S.commForge||0));
+    inscribe*=rec; scribeY*=rec; quarry*=fge; minerY*=fge;
     const g = (1 + S.refine*e.refineBonus) * rMult() * opBoost(1); // Refinement (repeatable Ore sink) + Era-5 recursion + the operating agent all lift every craft
     return { inscribe:inscribe*g, quarry:quarry*g, scribeY:scribeY*g, minerY:minerY*g, scrR:scrR*g, smR:smR*g, foR:foR*g };
   }
@@ -1926,6 +1965,17 @@
     }
     if(S.foundry>0 && !S.paused.foundry){ const c=Math.min(S.metal, S.knowledge, S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c;
       fOut('metal',c); fOut('knowledge',c); fIn('silicon',c); }
+    // COMMISSIONS (v2 P5.2) — the world asks; live play only, while Origins is the frontier
+    if(!MUTE && S.flags.o_smelter && S.flags.o_scriptorium && !S.flags.origindone){
+      const e1=CFG.e1;
+      if(S.comm){ S.comm.t-=dt; if(S.comm.t<=0){ S.comm=null; S.commCool=e1.commCool; toast('THE CARAVAN MOVES ON','The commission lapsed. Another will come.'); render(); } }
+      else { S.commCool-=dt;
+        if(S.commCool<=0){ const c=e1.comms[S.commN%e1.comms.length]; S.commN++;
+          const capacity = { marks:S.scribe*os.scribeY, ore:S.miner*os.minerY, metal:S.smelter*os.smR*0.5, knowledge:S.scriptorium*os.scrR*0.5 };
+          const need = Math.ceil(Math.max(c.base, (capacity[c.res]||0)*45));
+          S.comm={ i:e1.comms.indexOf(c), res:c.res, need, t:e1.commDur };
+          toast('A COMMISSION ARRIVES', c.name+' — <b>'+fmt(need)+' '+c.res+'</b>. Fulfilled orders lean your crafts permanently.'); render(); } }
+    }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
       const st=stats();
@@ -2387,6 +2437,20 @@
       '<div class="refine-row" data-tip="'+esc('<i>Practice compounds. Sink your surplus back into the work.</i><br>+'+Math.round(CFG.e1.refineBonus*100)+'% to ALL Origins production per level. Repeatable.')+'">'+
       '<div class="refine-info"><div class="up-name">Refine the Craft <span class="up-count" id="cnt-refine"></span></div><div class="tile-eff" id="eff-refine"></div></div>'+
       '<button class="up-buy" data-buy="refine" id="buy-refine"></button></div></div>';
+    // COMMISSIONS (v2 P5.2): the world asks — the back-half near-win engine
+    if(S.flags.o_smelter && S.flags.o_scriptorium && !S.flags.origindone && S.comm){ const c=CFG.e1.comms[S.comm.i];
+      body += '<div class="panel comm-panel'+intro('comm-'+S.commN)+'" style="grid-column:1/-1"><div class="panel-label">Commission &middot; the world asks</div>'+
+        '<div class="comm-row" data-tip="'+esc('<i>'+c.flavor+'</i><br>Fulfilled commissions permanently lean a craft (or send hands). Declined ones just leave.')+'">'+
+          '<div class="comm-info"><div class="up-name">'+c.name+'</div><div class="up-desc">'+fmt(S.comm.need)+' '+S.comm.res+' &middot; <span id="commT"></span></div>'+
+            '<div class="meter comm-meter"><i id="commTimer"></i></div></div>'+
+          '<div class="comm-acts"><button class="up-buy" id="commYes">FULFILL &middot; <span class="c">'+fmt(S.comm.need)+' '+S.comm.res+'</span></button>'+
+          '<button class="up-buy comm-no" id="commNo">DECLINE</button></div></div></div>'; }
+    // THE HANDS LEVER (v2 P5.2): one workforce, two crafts — the game's first allocation surface
+    if(S.flags.o_materials) body += '<div class="panel lever-panel" style="grid-column:1/-1"><div class="panel-label">The Hands <span class="lbl-plain">(one workforce, leaned between the crafts)</span></div>'+
+      '<div class="lever-row" data-tip="'+esc('<i>Every hand you have, somewhere on this line.</i><br>Lean toward the craft that is starving; the other slows. Centered is even.')+'">'+
+        '<span class="lever-side" id="levRec">THE RECORD</span>'+
+        '<input type="range" id="handsLever" min="0" max="100" value="'+Math.round((1-(typeof S.lever==='number'?S.lever:0.5))*100)+'">'+
+        '<span class="lever-side" id="levForge">THE FORGE</span></div></div>';
     if(S.flags.canScribe) body += buildRatesPanel();          // Flows
     if(S.flags.canScribe) body += '<div class="panel ogrid-panel'+intro('works')+'" style="grid-column:1/-1"><div class="panel-label">Works · build &amp; rebuild <span class="age-label" id="ageLabel"></span></div>'+buildWorks()+'</div>'; // Works (the known things, below)
     return eraShell(1, false, body);
@@ -2919,6 +2983,9 @@
     const rb=$('ruleBtn2'); if(rb) rb.onclick=writeRule;
     const ib=$('inscribeBtn'); if(ib) ib.onclick=inscribe;
     const qb=$('quarryBtn'); if(qb) qb.onclick=quarry;
+    const hl=$('handsLever'); if(hl) hl.oninput=()=>{ S.lever=1-(+hl.value/100); refresh(); }; // left = the Record, right = the Forge
+    const cy=$('commYes'); if(cy) cy.onclick=fulfillComm;
+    const cn=$('commNo'); if(cn) cn.onclick=declineComm;
     const fb=$('fabricateBtn'); if(fb) fb.onclick=fabricate;
     const eb=$('expBtn'); if(eb) eb.onclick=()=>{ runExperiment(1); plotPulse=1; playSound('click'); refresh(); };
     document.querySelectorAll('[data-focus]').forEach(b=>{ b.onclick=()=>{ S.focus=b.getAttribute('data-focus'); playSound('click'); render(); }; });
@@ -3007,6 +3074,12 @@
       if(btn.disabled!==!st.can) btn.disabled=!st.can;
     }
     if($('inscribeYield')){ const o=oStats(); setText('inscribeYield','+'+fmt(o.inscribe)); if($('quarryYield')) setText('quarryYield','+'+fmt(o.quarry)); } // live per-click yield, so click-upgrades are felt
+    { const lr=$('levRec'); if(lr){ const ec=CFG.e1, lv=(typeof S.lever==='number')?S.lever:0.5; // the Hands lever's live multipliers (v2)
+        setText('levRec','THE RECORD ×'+(ec.leverFloor+ec.leverSwing*lv).toFixed(2));
+        setText('levForge','×'+(ec.leverFloor+ec.leverSwing*(1-lv)).toFixed(2)+' THE FORGE'); } }
+    { const ct=$('commTimer'); if(ct && S.comm){ ct.style.width=Math.max(0,S.comm.t/CFG.e1.commDur*100)+'%';
+        setText('commT', Math.ceil(Math.max(0,S.comm.t))+'s before the caravan leaves');
+        const cy=$('commYes'); if(cy && cy.disabled!==(S[S.comm.res]<S.comm.need)) cy.disabled=(S[S.comm.res]<S.comm.need); } }
     const st=stats();
     // surface the Axiom multiplier at the point of action so its effect is felt (Zach: "hard to see that effect")
     const axMult = 1 + S.axioms*st.axBonus;
@@ -3478,6 +3551,7 @@
     if(Array.isArray(loaded.log)) base.log=loaded.log.filter(x=>x&&typeof x.h==='string'&&typeof x.b==='string').slice(-60);
     if(_isObj(loaded.veto) && typeof loaded.veto.text==='string') base.veto=loaded.veto;
     if(_isObj(loaded.contra) && typeof loaded.contra.a==='number') base.contra=loaded.contra; // an unresolved contradiction survives a reload
+    if(_isObj(loaded.comm) && typeof loaded.comm.need==='number') base.comm=loaded.comm;       // so does a standing commission
     return base;
   }
   function normalizeREC(r){
@@ -3559,7 +3633,7 @@
   if(typeof window!=='undefined' && window.__EMERGENCE_TEST__){
     window.EMERGENCE={ S, CFG, BUYS, MILES, ERAS, TREE, TREEMAP, DISCO, DISCOMAP, VIZ_STATIONS, fmt,
       unitCost, totalCost, buyQty, buy, writeRule, inscribe, quarry, fabricate, produce, checkMiles, tick,
-      oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
+      oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile, fulfillComm, declineComm,
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof, resolveContra, treeVisible,
       METHODS, e3Stats, effAccuracy, runExperiment, UTILS, nextMethod, surveyDisc, expCost, boardCards, buyCard,
       deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, alignCohCost, alignObjective, buyCap,

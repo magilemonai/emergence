@@ -116,6 +116,26 @@ function testUpkeep(){
 }
 
 function testDiscovery(){
+  section('Origins — the Hands lever + Commissions (v2 P5.2)');
+  { const EM=freshGame(), S=EM.S; S.started=true;
+    const n0=EM.oStats();
+    S.lever=1; const rec=EM.oStats();
+    ok(rec.scribeY>n0.scribeY && rec.minerY<n0.minerY, 'leaning the Hands toward the Record boosts scribes and slows miners');
+    S.lever=0; const fge=EM.oStats();
+    ok(fge.minerY>n0.minerY && fge.scribeY<n0.scribeY, 'leaning toward the Forge does the reverse');
+    near(n0.scribeY, EM.CFG.e1.scribeYield, 1e-9, 'centered lever is neutral (×1.0 both sides)');
+    // commissions: spawn → fulfill → permanent lean
+    S.lever=0.5; S.flags.o_smelter=S.flags.o_scriptorium=true; S.scribe=10; S.miner=10; S.scriptorium=4; S.smelter=4;
+    S.commCool=0; EM.produce(0.1);
+    ok(!!S.comm, 'a commission arrives once both crafts are real');
+    S[S.comm.res]=S.comm.need+5; const before=EM.oStats(), rew=EM.CFG.e1.comms[S.comm.i].reward;
+    EM.fulfillComm();
+    ok(!S.comm && S.commDone===1, 'fulfilling pays the order and clears the slot');
+    if(rew==='rec') ok(EM.oStats().scribeY>before.scribeY, 'the fulfilled order leans the Record permanently');
+    // expiry: the caravan leaves
+    S.commCool=0; EM.produce(0.1); ok(!!S.comm, 'the next commission rotates in after the cooldown');
+    S.comm.t=0.05; EM.produce(0.1); ok(!S.comm, 'an ignored commission lapses (the caravan moves on)'); }
+
   section('Origins — discovery web (prereqs, cross-gates, effects)');
   const EM = freshGame(); const S = EM.S;
   ok(EM.discoVisible('tally') && !EM.discoVisible('scribe'), 'only root discoveries are visible at start');
@@ -470,6 +490,7 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
   // and its source (scriptoria: Marks→Knowledge) is gated by Marks (scribes). So the late-Deep job is to flood the
   // Knowledge pipeline and stop the sinks from eating it out from under the Language run.
   S.paused = S.paused || {};
+  S.lever = 1; // lean the Hands hard toward the Record — Deep's bottleneck is Knowledge (v2 P5.2 lever)
   const os = EM.oStats();
   const marksIn = S.scribe*os.scribeY, scrDraw = S.scriptorium*os.scrR; // scriptoria eat Marks faster than scribes make them → deadlock
   // Phase the Knowledge engine: grow a big SCRIBE base first. While scriptoria out-draw scribes, pause scriptoria so
