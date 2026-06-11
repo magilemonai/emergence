@@ -32,7 +32,7 @@ His new verdict: Origins + Symbolic are good now; **"statistical, deep, and foun
 
 ### Color-as-signal (his #2 cross-cutting ask, the non-controversial parts)
 - [x] R2.7 **Deep: color-code Vision / Language / Reasoning** — matching loss-line colors, three colored triangle corners, gradient-blended center as you drag (C / I-color). *(Color/teaching only — no balance change.)*
-- [ ] R2.8 Audit each era for a couple of high-value color cues (extend the overfit→yellow idea he praised).
+- [x] R2.8 Audit each era for a couple of high-value color cues (extend the overfit→yellow idea he praised).
 
 ### Teaching / copy clarity (extend the legibility pass — copy only, no mechanic change)
 - [ ] R2.9 Statistical teaching: explain the fundamentals — what a "trial" is, what "accuracy" means, and **why 88%** (an AI-specific target) — and clarify the scatter goal ("are points matching the line or the line the points?") (H1, H2).

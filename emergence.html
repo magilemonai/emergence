@@ -732,6 +732,11 @@
   .era-e3 .focus-seg span { display: block; font-size: 9.5px; color: var(--dimmer); line-height: 1.35; margin-top: 3px; }
   .era-e3 .focus-seg.active { background: rgba(95,224,192,0.14); box-shadow: inset 0 -3px 0 var(--accent); }
   .era-e3 .focus-seg.active b { color: var(--good); text-shadow: 0 0 8px rgba(95,224,192,0.45); }
+  /* each Focus reads by color — Fit=warm/risky, Generalize=green/safe, Explore=blue/discovery (Zach: color the steering choice) */
+  .era-e3 #foc-fit { border-top: 2px solid rgba(255,154,107,0.55); } .era-e3 #foc-generalize { border-top: 2px solid rgba(95,224,160,0.55); } .era-e3 #foc-explore { border-top: 2px solid rgba(110,168,255,0.55); }
+  .era-e3 #foc-fit.active { box-shadow: inset 0 -3px 0 #ff9a6b; background: rgba(255,154,107,0.12); } .era-e3 #foc-fit.active b { color: #ff9a6b; text-shadow: 0 0 8px rgba(255,154,107,0.45); }
+  .era-e3 #foc-generalize.active { box-shadow: inset 0 -3px 0 #5fe0a0; background: rgba(95,224,160,0.12); } .era-e3 #foc-generalize.active b { color: #5fe0a0; text-shadow: 0 0 8px rgba(95,224,160,0.45); }
+  .era-e3 #foc-explore.active { box-shadow: inset 0 -3px 0 #6ea8ff; background: rgba(110,168,255,0.12); } .era-e3 #foc-explore.active b { color: #6ea8ff; text-shadow: 0 0 8px rgba(110,168,255,0.45); }
   .era-e3 .inst-lever { width: auto; min-width: 190px; align-self: stretch; font-family: var(--era-display); font-weight: 600; letter-spacing: 0.1em;
     background: linear-gradient(180deg, rgba(95,224,192,0.18), rgba(10,40,40,0.4)); border: 1px solid var(--accent); color: var(--good); border-radius: 9px; text-shadow: 0 0 9px rgba(95,224,192,0.45); }
   .era-e3 .inst-lever:hover:not(:disabled) { box-shadow: 0 0 20px rgba(95,224,192,0.25); }
@@ -2534,7 +2539,9 @@
     const ma=$('meter-acc');
     if(ma){ const eff=effAccuracy(), thr=CFG.e3.genThreshold;
       ma.style.width=Math.min(100, eff/thr*100)+'%';
-      setText('acc-val', (S.accuracy*100).toFixed(0)+'% − '+(S.gap*100).toFixed(0)+'% = '+(eff*100).toFixed(0)+'% / '+Math.round(thr*100)+'%'); // learned − overfit = effective / needed (explains "accuracy up but the bar drops")
+      const av=$('acc-val'); if(av){ // overfit in amber (matching the line that goes yellow), effective in green — color tells the story (Zach)
+        const h=(S.accuracy*100).toFixed(0)+'% <span style="color:#ffce6b">− '+(S.gap*100).toFixed(0)+'% overfit</span> = <b style="color:var(--good)">'+(eff*100).toFixed(0)+'%</b> / '+Math.round(thr*100)+'%';
+        if(av._html!==h){ av.innerHTML=h; av._html=h; } }
       const exps=S.model*CFG.e3.expPerModel;
       setText('accRate', 'Accuracy '+(S.accuracy*100).toFixed(1)+'%  ·  '+fmt(exps)+' exp/s  ·  Focus: '+curFocus().label+(S.data<CFG.e3.expDataCost?'  ·  need Data':''));
       ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
