@@ -458,9 +458,12 @@ function foundationStep(EM){ // ERA 5 — climb the recursion ladder to emergenc
     if(S.capability >= EM.improveCost()) EM.selfImprove();
     return;
   }
-  // aftermath: steer toward Alignment (a Symbiotic run), respond to the agent, then let Scale climb to the ending gate
-  if(S.aligns < 8 && S.scale >= e5.alignCost){ EM.alignAct(); return; }
-  if(S.veto) EM.resolveVeto('approve');
+  // aftermath (R3.5 stakes): Control drifts and the spiral accelerates if it falls below controlLow, Alignment decays
+  // untended, and a lapsed veto compounds. So actively DEFEND: veto when Control is shaky, constrain to hold Control,
+  // align to keep the Symbiotic door open — then let Scale climb to the ending gate.
+  if(S.veto){ EM.resolveVeto(S.control < e5.controlLow + 12 ? 'veto' : 'approve'); return; }
+  if(S.control < e5.controlLow + 16 && S.scale >= e5.constrainCost){ EM.constrainAct(); return; }
+  if(S.alignment < e5.alignGood + 6 && S.scale >= e5.alignCost){ EM.alignAct(); return; }
 }
 function testProgression(){
   section('Progression — autoplay Origins → Symbolic → Statistical → Deep → Foundation → Emergence');

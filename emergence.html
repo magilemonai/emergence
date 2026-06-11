@@ -103,6 +103,8 @@
   .era-e5 .agent-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .era-e5 .agent-mini { width: 46px; height: 46px; flex: 0 0 auto; filter: drop-shadow(0 0 12px rgba(183,139,255,0.6)); animation: agentPulse 3.4s ease-in-out infinite; }
   .era-e5 #aftermath-title { font-size: 16px; color: var(--accent); letter-spacing: 0.04em; }
+  .era-e5 #aftermath-title.destab { color: #ff5a6e; animation: destabPulse 0.9s ease-in-out infinite; }
+  @keyframes destabPulse { 0%,100% { opacity: 0.72; } 50% { opacity: 1; text-shadow: 0 0 14px rgba(255,90,110,0.55); } }
   .era-e5 .core-verbs { display: flex; gap: 10px; flex-wrap: wrap; }
   .era-e5 .core-verbs .act-btn { flex: 1; min-width: 150px; }
   .era-e5 .agent-stream { font-family: var(--mono, monospace); font-size: 12px; color: var(--dim); min-height: 40px; display: flex; flex-direction: column; gap: 3px; }
@@ -1163,6 +1165,11 @@
       alignBase: 18,           // Alignment floor at emergence (+ carried Coherence)
       autonomyGrow: 1.6,       // Autonomy/s the agent adds on its own after emergence
       controlDrift: 0.7,       // Control bleeds away on its own (do nothing → trends toward Runaway)
+      alignDecay: 0.16,        // Alignment also bleeds untended — holding Symbiotic is an active tug-of-war, not a one-time set
+      // STAKES (R3.5): neglect compounds. Below controlLow the aftermath DESTABILIZES — drift + autonomy accelerate; if
+      // Control hits 0 the agent is fully loose → immediate Runaway. Each lapsed veto permanently speeds the agent.
+      destabMult: 1.9,         // control-drift + autonomy-growth multiplier while Control < controlLow (the runaway spiral)
+      neglectAccel: 0.14,      // each lapsed veto adds this to a permanent agent-speed + drift multiplier (ignoring it gets away from you)
       slowDecay: 0.12,         // the Constrain production-drag relaxes back over time
       constrainCost: 60, constrainCtl: 9, constrainSlow: 0.45, // Constrain: spend Scale → +Control, slows Autonomy, costs production
       alignCost: 80, alignGain: 9,        // Interpret/Align: spend Scale → +Alignment
@@ -1198,6 +1205,7 @@
     rupture: 0, ending: null, agentLog: [],         // rupture timer (the glitch), the resolved ending, the agent's message stream
     veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
+    neglect: 0, destab: false,                      // R3.5 stakes: compounding neglect (lapsed vetoes) + the destabilizing-spiral flag
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
     tech: {}, obsolete: {}, collapsed: {}, flags: {}, paused: {}, clicks: 0, // paused: converters the player has switched off (anti-soft-lock)
@@ -1748,12 +1756,18 @@
         S.scale += S.agentRate*slow*dt;
         S.capability += S.agentRate*0.5*dt; // it feeds its own substrate back too
         if(!S.ending){
-          S.autonomy += e5.autonomyGrow*(1 + S.agentRate*0.15)*slow*dt; // it grows on its own
-          S.control = Math.max(0, S.control - e5.controlDrift*dt);       // and slips your grip unless you act
+          // STAKES: neglect (lapsed vetoes) permanently speeds the agent; below controlLow the spiral accelerates everything
+          S.destab = S.control < e5.controlLow;
+          const neglectM = 1 + S.neglect*e5.neglectAccel;      // compounds with every veto you let lapse
+          const spiral = S.destab ? e5.destabMult : 1;          // runaway spiral once Control is low
+          S.autonomy += e5.autonomyGrow*(1 + S.agentRate*0.15)*neglectM*spiral*slow*dt; // it grows on its own — faster if neglected/destabilized
+          S.control = Math.max(0, S.control - e5.controlDrift*neglectM*spiral*dt);        // and slips your grip unless you act
+          S.alignment = Math.max(0, S.alignment - e5.alignDecay*dt);                      // alignment bleeds untended too
           S.aftermathSlow = Math.max(0, S.aftermathSlow - e5.slowDecay*dt);
           if(!MUTE){ S.vetoT -= dt; if(S.vetoT<=0){ if(S.veto) resolveVeto('lapse'); else openVeto(); } // approve/veto windows (live play only)
             S.opT -= dt; if(S.opT<=0 && !S.veto){ S.opT=8; agentSay(OP_LINES[(S.constrains+S.aligns+S.delegates+Math.floor(S.t/8))%OP_LINES.length]); render(); } } // ambient: it operates the prior-era stack
-          if(S.scale >= e5.finalGate) resolveEnding();
+          if(S.control<=0){ resolveEnding(); }    // Control fully lost → the agent is loose: immediate Runaway (a real fail)
+          else if(S.scale >= e5.finalGate) resolveEnding();
         }
       }
     }
@@ -2320,7 +2334,7 @@
   function resolveVeto(how){ const e5=CFG.e5, a=S.veto; if(!a) return;
     if(how==='approve'){ S.autonomy+=14; S.scale+=120; S.control=Math.max(0,S.control-3); S.alignment+=(S.alignment>=e5.alignGood?2:-3); agentSay('Done. '+cap1(a.text)+'.'); }
     else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.autonomy=Math.max(0,S.autonomy-6); S.alignment+=1; agentSay('Understood. Holding — for now.'); }
-    else { S.autonomy+=20; S.control=Math.max(0,S.control-7); S.alignment=Math.max(0,S.alignment-4); agentSay(a.auto); } // lapse: it acts anyway
+    else { S.neglect++; S.autonomy+=20; S.control=Math.max(0,S.control-7-S.neglect*2); S.alignment=Math.max(0,S.alignment-4); S.agentRate*=1.12; agentSay(a.auto); } // lapse: it acts anyway — and each one you ignore compounds (faster agent, deeper control loss)
     S.veto=null; S.vetoT=e5.vetoGap; if(how!=='lapse') playSound('buy'); render();
   }
   // the three aftermath moves
@@ -2779,8 +2793,9 @@
       } else {
         // --- aftermath: the revealed meters, the response moves, the approve/veto window, the agent stream ---
         const titEl=$('aftermath-title'); if(titEl){ let tt = S.ending ? (ENDINGS[S.ending]||ENDINGS.runaway).title.toUpperCase()
-            : S.control<e5.controlLow ? 'It is slipping your grip' : S.autonomy>=88 ? 'It is accelerating' : 'It is acting on its own';
-          if(titEl._html!==tt){ titEl.innerHTML=tt; titEl._html=tt; } }
+            : S.destab ? '⚠ DESTABILIZING — pull Control back now' : S.autonomy>=88 ? 'It is accelerating' : 'It is acting on its own';
+          if(titEl._html!==tt){ titEl.innerHTML=tt; titEl._html=tt; }
+          titEl.classList.toggle('destab', !!S.destab && !S.ending); }
         setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · the agent is driving '+fmt(S.agentRate)+' Scale/s');
         const mA=$('meter-auto'); if(mA) mA.style.width=Math.min(100,S.autonomy)+'%'; setText('auto-read', Math.round(S.autonomy)+'%');
         const mL=$('meter-align'); if(mL) mL.style.width=Math.min(100,S.alignment)+'%'; setText('align-read', Math.round(S.alignment)+'%');
@@ -2794,7 +2809,7 @@
           if(S.veto && !S.ending){ cls+=' open'; html='<div class="veto-msg">The agent intends to <b>'+S.veto.text+'</b>.</div>'+
               '<div class="veto-acts"><button class="act-btn" id="vetoYes">APPROVE</button><button class="act-btn" id="vetoNo">VETO · <span class="c">90 Scale</span></button></div>'+
               '<div class="veto-timer" id="vetoTimer"></div>'; }
-          else if(!S.ending){ html='<div class="veto-idle">watching for its next move…</div>'; }
+          else if(!S.ending){ html='<div class="veto-idle">'+(S.neglect>0?'watching for its next move… ('+S.neglect+' request'+(S.neglect>1?'s':'')+' ignored — it is faster now)':'watching for its next move…')+'</div>'; }
           if(vh._html!==html){ vh.innerHTML=html; vh._html=html;
             const vy=$('vetoYes'); if(vy) vy.onclick=()=>resolveVeto('approve');
             const vn=$('vetoNo'); if(vn) vn.onclick=()=>resolveVeto('veto'); }

@@ -15,7 +15,7 @@ The throughline: Origins/Symbolic became good via legibility; the back half is l
 - [x] R3.4 Connect the build-buttons to the steering: a **stabilizer** upgrade (reduces drift), and a spendable **"lock a run"** tool (freeze a run ~30s so it can't drift). Make Compute Nodes feel like they feed the mechanic (Zach: "the buttons need to affect the main mechanic").
 
 ## D6 — Foundation: depth + aftermath stakes (the finale; heaviest, do after Deep)
-- [ ] R3.5 **Aftermath stakes:** neglecting Control/Alignment visibly **drags you toward Runaway** under pressure; lapsing a veto window costs something real. The three moves + veto should have teeth (Zach: "time-critical, but nothing bad happened").
+- [x] R3.5 **Aftermath stakes:** neglecting Control/Alignment visibly **drags you toward Runaway** under pressure; lapsing a veto window costs something real. The three moves + veto should have teeth (Zach: "time-critical, but nothing bad happened").
 - [ ] R3.6 **Pre-emergence depth:** a real turn-to-turn decision — e.g. push fast toward emergence vs build Coherence first, trading ending quality for speed (Zach: "just a bar that fills + buttons").
 
 ## D9 — Educational tidbits in the log (cheap, fold in along the way)

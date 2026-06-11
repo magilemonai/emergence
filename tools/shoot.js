@@ -109,9 +109,9 @@ const SETUP = {
   emergence: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
     S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9;S.recursion=8;S.scale=1600;S.coherence=20;
     S.caps={selfModel:true,toolAccess:true,recursivePlanning:true,worldModel:true};
-    S.agency=132; E.emerge(); S.rupture=3; S.agentRate=18; S.autonomy=74; S.alignment=46; S.control=37;
-    S.agentLog=['I found a faster path.','Rerouting the Deep compute fabric. More efficient this way.','Running Statistical trials on my own now.'];
-    E.openVeto(); E.checkMiles(); for(let i=0;i<3;i++) E.tick();`, // aftermath: revealed meters, an open veto window, the agent operating the stack
+    S.agency=132; E.emerge(); S.rupture=3; S.agentRate=22; S.autonomy=86; S.alignment=41; S.control=24; S.neglect=2; S.destab=true;
+    S.agentLog=['I found a faster path.','Rerouting the Deep compute fabric. More efficient this way.','A copy is already running.'];
+    E.openVeto(); E.checkMiles(); for(let i=0;i<3;i++) E.tick();`, // aftermath under pressure: Control critical, the spiral destabilizing, an open veto window
   recap: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
     S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9;S.recursion=8;S.scale=2200;S.coherence=20;
     S.caps={selfModel:true,toolAccess:true,recursivePlanning:true,worldModel:true};
