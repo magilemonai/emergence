@@ -1242,14 +1242,16 @@
     s.connect(hp); hp.connect(g); g.connect(sfxOut()); s.start();
   }
   function playSound(type){ if(!SFX.on) return; try{ const ctx=ac();
-    // ERA 1 — Origins: Quarry sounds like quarrying — a lower, grittier stone-scrape, distinct from the chisel tick of Inscribe (Zach)
+    // ERA 1 — Origins: Quarry sounds like quarrying — a heavy, gritty stone-DIG, clearly distinct from the high chisel tick of Inscribe (Zach checked twice; make it unmistakable)
     if(viewEra===1 && type==='quarry'){
       const t=ctx.currentTime;
+      // low thud that drops further than the chisel, much longer than Inscribe
       const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(sfxOut()); o.type='sawtooth';
-      o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(52,t+0.13);
-      g.gain.setValueAtTime(0.13,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
-      o.start(t); o.stop(t+0.14);
-      noiseBurst(ctx, 0.075, 480, 0.16); // scrape grit — stone on stone
+      o.frequency.setValueAtTime(90,t); o.frequency.exponentialRampToValueAtTime(36,t+0.17);
+      g.gain.setValueAtTime(0.17,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.19);
+      o.start(t); o.stop(t+0.19);
+      noiseBurst(ctx, 0.14, 280, 0.19);  // long low gravel scrape — the pick biting rock
+      noiseBurst(ctx, 0.05, 1900, 0.06); // a little surface crumble on top
       return;
     }
     // ERA 1 — Origins: percussive stone, no electronics (chisel taps + placed-stone thunks)
