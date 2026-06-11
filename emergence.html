@@ -437,6 +437,7 @@
   .res { text-align: right; min-width: 80px; opacity: 0; transition: opacity 0.5s; }
   .res.show { opacity: 1; }
   .res .label { font-size: 11px; letter-spacing: 1.4px; color: var(--dim); text-transform: uppercase; }
+  .res-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; box-shadow: 0 0 5px currentColor; } /* each resource wears its hue */
   .res .val { font-size: 18px; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .res-ps { font-size: 11.5px; font-variant-numeric: tabular-nums; line-height: 1.2; margin-top: 1px; }
   .res-ps.pos { color: var(--good); } .res-ps.neg { color: var(--danger); } .res-ps.zero { color: var(--dimmer); }
@@ -1849,24 +1850,28 @@
   function renderCold(){ $('coCount').innerHTML = fmt(S.marks)+'<small>MARKS</small>'; }
   // ---- Rendering: build DOM structure rarely, update live numbers every tick. ----
   // Rebuilding innerHTML every tick destroyed the buttons mid-click (the strobe + lost clicks).
+  // One fixed hue per resource, used everywhere it appears (Zach C: color differentiates WITHIN an era).
+  // Data/Insight deliberately match the Deep runs they feed (Data→Vision cyan, Insight→Reasoning green).
+  const RES_HUE={ marks:'#e6d2a4', ore:'#c08552', knowledge:'#e0a93f', metal:'#ef9f56', silicon:'#a9d8ce',
+    rules:'#8dffb7', axioms:'#ffcd6b', data:'#54d2ff', insight:'#6fe6a8', capability:'#6ea8ff', scale:'#b78bff' };
   const RES_DEFS=[
     // Contextual to the era you're viewing: its own resources, plus any earlier resource it still spends (e.g. Silicon in Era 3)
-    {k:'marks', show:()=>viewEra===1, color:'var(--e0)', label:'Marks'},
-    {k:'ore', show:()=>viewEra===1 && S.flags.o_materials, color:'#c08552', label:'Ore'},
-    {k:'knowledge', show:()=>viewEra===1 && S.flags.o_scriptorium, color:'var(--e0)', label:'Knowledge'},
-    {k:'metal', show:()=>viewEra===1 && S.flags.o_smelter, color:'#c08552', label:'Metal'},
-    {k:'silicon', show:()=>S.flags.o_foundry && (viewEra===1 || viewEra>=3), color:'var(--accent)', label:'Silicon'}, // Era 3 spends it
-    {k:'rules', show:()=>viewEra===2,  color:'var(--e1)', label:'Rules'},
-    {k:'axioms', show:()=>viewEra===2 && (S.flags.compile||S.totalAxioms>0), color:'var(--accent)', label:'Axioms'},
-    {k:'data', show:()=>viewEra>=3,  color:'var(--e2)', label:'Data'},
-    {k:'insight', show:()=>viewEra>=3,color:'var(--e2)', label:'Insight'},
-    {k:'capability', show:()=>viewEra>=4,color:'var(--e3)', label:'Capability'},
-    {k:'scale', show:()=>viewEra>=5, color:'var(--e4)', label:'Scale'},
+    {k:'marks', show:()=>viewEra===1, color:RES_HUE.marks, label:'Marks'},
+    {k:'ore', show:()=>viewEra===1 && S.flags.o_materials, color:RES_HUE.ore, label:'Ore'},
+    {k:'knowledge', show:()=>(viewEra===1 && S.flags.o_scriptorium) || viewEra===4, color:RES_HUE.knowledge, label:'Knowledge'}, // Era 4's Language run drains it — keep it visible there
+    {k:'metal', show:()=>viewEra===1 && S.flags.o_smelter, color:RES_HUE.metal, label:'Metal'},
+    {k:'silicon', show:()=>S.flags.o_foundry && (viewEra===1 || viewEra>=3), color:RES_HUE.silicon, label:'Silicon'}, // Era 3 spends it
+    {k:'rules', show:()=>viewEra===2,  color:RES_HUE.rules, label:'Rules'},
+    {k:'axioms', show:()=>viewEra===2 && (S.flags.compile||S.totalAxioms>0), color:RES_HUE.axioms, label:'Axioms'},
+    {k:'data', show:()=>viewEra>=3,  color:RES_HUE.data, label:'Data'},
+    {k:'insight', show:()=>viewEra>=3,color:RES_HUE.insight, label:'Insight'},
+    {k:'capability', show:()=>viewEra>=4,color:RES_HUE.capability, label:'Capability'},
+    {k:'scale', show:()=>viewEra>=5, color:RES_HUE.scale, label:'Scale'},
   ];
   function buildHeader(){
     if(!S.flags.firstAuto) return;
     $('resBar').innerHTML = RES_DEFS.filter(d=>d.show()).map(d=>
-      '<div class="res show" id="res-'+d.k+'" data-tip="'+esc('<i>'+(RESFLAVOR[d.k]||'')+'</i>')+'"><div class="label">'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div><div class="res-ps" id="rr-'+d.k+'"></div></div>').join('');
+      '<div class="res show" id="res-'+d.k+'" data-tip="'+esc('<i>'+(RESFLAVOR[d.k]||'')+'</i>')+'"><div class="label"><i class="res-dot" style="background:'+d.color+'"></i>'+d.label+'</div><div class="val" id="rv-'+d.k+'" style="color:'+d.color+'"></div><div class="res-ps" id="rr-'+d.k+'"></div></div>').join('');
     const bm=$('buyMode');
     if(S.flags.canScribe){ // buy-mode only matters once you have repeatable things to build
       bm.classList.add('show');
