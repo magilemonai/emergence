@@ -338,8 +338,16 @@ Each phase ends with a Run Recorder export read against the four-beat targets
    memory: Forge discount / pre-proven Formal Logic / free first Negotiate; own storage
    key; cold-open pre-echo), challenge board (RUSH / STILLNESS / FAMINE as boot CFG
    overrides, named on the scorecard), scorecard concept tooltips.
-8. **The tune:** full no-dev run, Run Recorder export per era against 7-9, then Zach
-   round 4 with the export.
+8. **The tune** — BOT-SIDE READ COMPLETE (2026-06-11); the by-hand run remains, by design.
+   Autoplayer splits (an optimal fast-clicking player): Origins 1.9m (pacing model at a
+   human 1 click/s: 7:48 ✅ in band), Symbolic 4.3m bot / ~5:17 modeled (slightly under
+   7-9; contradictions added texture + ~20s), Statistical ~4.9m (shifts add 1-2 real
+   minutes for humans re-fitting), Deep 8.4m ✅, pre-emergence ~4.2m, aftermath 2.5m.
+   Whole arc 26.3m bot. Deliberately NOT blind-tuning CFG against bot-only data: the bot
+   plays optimally and Zach's real runs land 2-4× slower (his Origins was 16m when the
+   bot said 2m). NEXT (Cody's hands): one full no-dev run, export from the dev panel,
+   read per-era splits against 7-9, then tune accGain / emergeScale / commission cadence
+   from THAT. Then Zach round 4.
 
 Autoplayer notes per phase: 2 removes Era-3 RNG (tests get more deterministic, not less);
 5 reworks the Origins step (lever instead of two buy lines) and Symbolic step (pick the

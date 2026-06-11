@@ -24,9 +24,12 @@ The original repo stays untouched as the shipped v1.
   squalls vs breakthrough bursts, momentum, linear stabilizer) ✅ — 173 tests green.
   Phase 5 (Era 1 Hands lever + Commissions; Era 2 doctrine fork + contradictions +
   streaming proofs) ✅ — 191 tests green; full arc 26.3m, Deep autoplay 8.4m.
-  Next: Phase 6 (story pass: narrator-is-the-agent reveal, foreshadowing oddities, agent
-  naming, tidbit expansion), Phase 7 (meta: Continuity NG+, challenge board), Phase 8
-  (pacing tune from a real run). Build order in DESIGN-v2 §10.
+  Phase 6 (story pass: memory reveal, agent self-naming IRIS/EKHO/NOUS, foreshadowing
+  oddities, doctrine/contradiction/negotiation tidbits) ✅ + Phase 7 (Continuity NG+,
+  RUSH/STILLNESS/FAMINE challenge board, scorecard concept tips) ✅ — 200 tests green.
+  Phase 8: bot-side pacing read done (arc 26.3m optimal; per-era read in DESIGN-v2 §10.8);
+  REMAINING: Cody's no-dev run + Run Recorder export → hand-tune → Zach round 4.
+  ALL v2 BUILD PHASES (1-7) COMPLETE; 33 commits on this fork, zero pushes anywhere.
 
 ## What this is
 
