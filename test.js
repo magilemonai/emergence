@@ -432,17 +432,23 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
   }
   if(S.dataset < 50 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset'); // → Data (Vision)
   if(S.model < 36 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');             // → Insight (Reasoning)
-  // STEER against the drift (R3.1 drift teeth): each run's wind oscillates out of phase and a run under the wind
-  // it isn't fed bleeds capability. Chase the wind — give the high-wind run the most share — plus a laggard nudge.
-  // A starved run (dry feedstock) gets near-zero share so we don't pour compute into a blocked run.
+  // STEER against the drift (R3.1) while playing the HEAT rhythm (R3.2). Passive balanced play now stalls below the gate:
+  // concentrating to climb a run heats the fabric, and hot fabric throttles ALL output. So bang-bang it — when hot, go
+  // balanced to COOL (full output again); when cool, HAMMER the lowest run at full output to ratchet breadth up. A
+  // starved run (dry feedstock) gets near-zero share so we never pour compute into a blocked run.
   const e4 = EM.CFG.e4, t = S.t || 0, PH = { vision:0, language:2.094, reasoning:4.189 };
   const feed = { vision: S.data, language: S.knowledge, reasoning: S.insight };
+  // Feed the HIGH-WIND run (its demand = driftDemand*wind); out of phase, so steering the peak run keeps the others
+  // mostly fed too. Add a laggard nudge to even them toward the gate. When heat nears the throttle, ease toward balanced
+  // (which cools); hysteresis so we don't chatter. A starved (dry-feedstock) run gets near-zero share.
+  S._deepCooling = S.heat >= e4.heatThrottle - 6 ? true : (S.heat <= e4.heatWarn - 10 ? false : !!S._deepCooling);
+  const chase = S._deepCooling ? 0.15 : 1; // cooling → flatten toward balanced; else chase the wind
+  const raw = {};
+  for(const k of ['vision','language','reasoning'])
+    raw[k] = (feed[k] < 120) ? 0.03 : (0.12 + e4.driftDemand*(0.5+0.5*Math.sin(t*e4.driftFreq+PH[k]))*2.0 + (1-S[k])*0.5);
+  const mean = (raw.vision + raw.language + raw.reasoning) / 3;
   S.alloc = {};
-  for(const k of ['vision','language','reasoning']){
-    if(feed[k] < 120){ S.alloc[k] = 0.03; continue; } // feedstock dry → don't dump compute into a blocked run
-    const wind = 0.5 + 0.5*Math.sin(t*e4.driftFreq + PH[k]);
-    S.alloc[k] = 0.1 + e4.driftDemand*wind*1.8 + (1-S[k])*0.6; // chase the wind + push the laggard
-  }
+  for(const k of ['vision','language','reasoning']) S.alloc[k] = Math.max(0.02, mean + (raw[k]-mean)*chase);
 }
 function foundationStep(EM){ // ERA 5 — climb the recursion ladder to emergence, then manage the aftermath to an ending
   const { S, CAPS } = EM; const e5 = EM.CFG.e5;
