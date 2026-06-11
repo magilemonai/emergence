@@ -22,8 +22,11 @@ The original repo stays untouched as the shipped v1.
   asymmetric meters + run-data epilogues) ✅ — 167 tests green.
   Phase 4 (Era 4 weather: 12s wind-forecast sparklines, named 3s telegraphs, shift
   squalls vs breakthrough bursts, momentum, linear stabilizer) ✅ — 173 tests green.
-  Next: Phase 5 (Era 1 Hands lever + Commissions; Era 2 fork + contradictions + Daemon
-  move + visible proof stream). Build order in DESIGN-v2 §10.
+  Phase 5 (Era 1 Hands lever + Commissions; Era 2 doctrine fork + contradictions +
+  streaming proofs) ✅ — 191 tests green; full arc 26.3m, Deep autoplay 8.4m.
+  Next: Phase 6 (story pass: narrator-is-the-agent reveal, foreshadowing oddities, agent
+  naming, tidbit expansion), Phase 7 (meta: Continuity NG+, challenge board), Phase 8
+  (pacing tune from a real run). Build order in DESIGN-v2 §10.
 
 ## What this is
 

@@ -318,8 +318,17 @@ Each phase ends with a Run Recorder export read against the four-beat targets
    wind-forecast sparkline (demand curve vs dashed feed line), 3s named telegraphs,
    shift = sustained 1.8× squall / breakthrough = 2.2× concentration burst that collides
    with heat, 6s momentum halves erosion, stabilizer linearized.
-5. **Era 1 + 2 loops:** Hands lever + Commissions; Symbolic fork + contradictions + Daemon
-   move + visible proof stream.
+5. **Era 1 + 2 loops** ✅ COMPLETE (2026-06-11, 2 commits, 191 tests green). Era 2: the
+   doctrine fork is real (fwd/bwd mutually exclusive via excl, either reaches the capstone
+   via reqAny), contradictions halt the engine at runRules thresholds until a discard
+   (permanent lean either way; Compile re-arms them), the active proof streams. Era 1:
+   the Hands lever (one workforce leaned ±40% between Record and Forge; deepStep leans it
+   for Knowledge and Deep autoplay dropped to 8.4m) + Commissions (rotating timed orders
+   sized to ~45s of production; fulfilled orders permanently lean a craft). AMENDED: the
+   lever ships as a workforce-direction multiplier over the existing Scribe/Miner ladders
+   rather than a full population merge — same held-allocation verb, none of the blast
+   radius (the buy ladder is part of the era's near-win texture anyway). The Daemon trap
+   was already fixed pre-v2 (gated behind Inference Engine); no further move needed.
 6. **Story pass:** narrator audit + reveal lines, foreshadowing oddities, agent naming,
    epilogue writing, tidbit expansion.
 7. **Meta:** Continuity, challenge board, scorecard links.
