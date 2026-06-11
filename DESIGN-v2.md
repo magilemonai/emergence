@@ -215,15 +215,14 @@ proposes, you click one of three buttons, two thresholds decide the text you get
 
 ## 5. The UI system overhaul
 
-1. **Era navigation: sigil jump-bar, scroll stays.** Five era sigils live in the header
-   (lit as unlocked, current one glowing); clicking smooth-scrolls to that era. The
-   scroll-driven theme/music crossfade is a signature and the supply-chain game needs
-   adjacency, so scrolling remains the spatial model; the sigils remove the cost of
-   distance. (This is the answer to Zach's twice-asked tabs request that keeps what makes
-   the scroll special. See 9.)
-2. **New unlocks pin to the top of their era** (Zach D, asked in every round). A new
-   section slides in under the era header with a one-time glow, and settles into place on
-   the next era change.
+1. **Era navigation: tabs, polished.** ✅ BUILT (P1.1). (Amended after reading the live
+   build: era tabs already shipped in Zach round 2 with `TABS = true`; the pre-plan audits
+   described an older layout.) v2 keeps tabs and finishes them: the strip is sticky so
+   switching is always in reach mid-era, the active sigil tab glows in its era color, and
+   keyboard focus rings exist.
+2. **New unlocks pin to the top of their era** (Zach D, asked in every round). ✅ BUILT
+   (P1.7; top placement for Origins/Symbolic pre-existed, v2 added the 9s era-colored
+   announce glow).
 3. **Legibility floor:** body text minimum 12px, control labels minimum 11px, meters 5px →
    12px with a soft fill animation. Numbers stay tabular. The top bar caps at five
    resources with a "+N" overflow popover instead of crowding.
@@ -280,7 +279,7 @@ Each phase ends with a Run Recorder export read against the four-beat targets
 
 | Decision | Status |
 |---|---|
-| Scroll navigation stays, sigil jump-bar added | Partially overrules "keep scroll" vs Zach's tabs: tabs rejected, distance cost fixed |
+| Era tabs (already shipped in round 2) kept and polished: sticky strip, glowing active sigil | Amended: the tabs decision was already made before this plan; v2 finishes it |
 | Era 1-2-4 world-pass locks reopened for surgical loop changes only (Hands lever, fork+contradictions, forecast/telegraph/colors) | Overrules the locks; the bar they passed was legibility, the new bar is "becoming a game" |
 | Objective philosophy unchanged: objective line + Goals tab, no banner | Reaffirms the standing decision |
 | RNG method discovery removed (Experiment Board) | Overrules the existing Explore-odds design |
@@ -291,9 +290,13 @@ Each phase ends with a Run Recorder export read against the four-beat targets
 
 ## 10. Build order (each phase = green tests + a commit + a screenshot)
 
-1. **Legibility frame:** sigil jump-bar, new-at-top, meters/fonts, resource hues,
-   glossary, Era 3 two-needle readout, Era 4 tri-color blend. (Touches everything,
-   validates instantly with Zach, zero balance risk.)
+1. **Legibility frame** ✅ COMPLETE (2026-06-11, 7 commits, 129 tests green): sticky
+   sigil-tab nav + focus rings, new-unlock announce glow, meters/fonts floor, resource
+   hue system (RES_HUE + header dots; Knowledge now visible in Era 4), Codex glossary
+   drawer ("?" in header, searchable, progression-gated), Era 3 two-needle
+   TRAINING/VALIDATION readout with overfit spread + ceiling/goal ticks + on-canvas
+   curve labels, Era 4 tri-color completion (colored feed lines, corner fields,
+   run-colored intakes/orchestration).
 2. **Era 3 rebuild:** Experiment Board, distribution shift, focus-button live effects.
    Retune to 7-9. (The weakest era goes first.)
 3. **Era 5 aftermath:** substrate-driven proposals, Negotiate, agent-plays-the-game,

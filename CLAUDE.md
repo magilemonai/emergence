@@ -1,7 +1,22 @@
-# EMERGENCE — Project State (CLAUDE.md)
+# EMERGENCE v2 — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
 > keep it current as the game evolves. Last updated 2026-06-11.
+
+## ⚠ THIS IS THE v2 REPO (EmergenceFable) — DO NOT PUSH TO GITHUB
+
+This directory (`~/Desktop/EmergenceFable`) is a deliberate fork of the original
+`~/Desktop/Emergence_Fable` repo, cloned 2026-06-11 with **no git remote** (verified:
+`git remote -v` is empty — keep it that way). Everything here is the **v2 overhaul**
+(Cody: "clear separation between this session's work and previous sessions"; nothing
+from here may reach the original GitHub repo `magilemonai/emergence` or its Pages site).
+The original repo stays untouched as the shipped v1.
+
+- **The plan:** `DESIGN-v2.md` — full-game overhaul (story spine, per-era core-loop
+  redesigns, UI system, educational layer, NG+ meta). Build order in §10.
+- **v2 progress:** Phase 1 (legibility frame) ✅ COMPLETE — 7 commits, 129 tests green.
+  Next: Phase 2 (Era 3 rebuild: Experiment Board replaces RNG discovery, distribution
+  shift events, focus live-effect chips), then Phase 3 (Era 5 aftermath negotiation).
 
 ## What this is
 
@@ -10,8 +25,7 @@ first inscribed mark, through materials and computation, toward emergent general
 single self-contained `emergence.html` (inline CSS + vanilla JS, no build step, no deps). Open
 the file in a browser to play.
 
-- **Live (GitHub Pages, auto-deploys on push to `main`):** https://magilemonai.github.io/emergence/
-- **Repo:** `magilemonai/emergence` (public). Source images in `images/`, wired assets in `assets/`.
+- **Repo:** local only (no remote). v1 lives at `~/Desktop/Emergence_Fable` → `magilemonai/emergence`.
 - **Tests:** `node test.js` (or `npm test`) — no deps. Must be green before committing.
 
 ## The five-era spine
