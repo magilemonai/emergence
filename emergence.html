@@ -1091,8 +1091,9 @@
       // "steer against the drift": the three runs drift apart on their own, so balanced is never optimal —
       // the triangle is the instrument to counter the wind. (Replaces saturation/lag/frontier.)
       allocMin: 0.05,       // every run keeps ≥5% of the budget — never all-zero (alpha P1 fixed by construction)
-      driftBase: 0.00026,   // peak headwind per run (erodes level/s); oscillates OUT OF PHASE so the bottleneck moves
-      driftFreq: 0.16,      // headwind oscillation speed (rad/s) — slow, so you have time to react
+      driftFreq: 0.16,      // wind oscillation speed (rad/s) — slow, so you have time to react
+      driftDemand: 0.55,    // at full wind a run WANTS this share of compute to hold; under-allocate it and it bleeds (out of phase, so the demand moves between runs)
+      driftBite: 0.0045,    // erosion strength when under the wind; scales with compute + the run's own height so node-count can't outrun it and high runs are precarious
       feedstock: { vision:'data', reasoning:'insight', language:'knowledge' }, // each run draws a SPECIFIC earlier-era resource — reopen that era to unblock it
       feedPerShare: 0.35,   // feedstock units drawn per unit of compute routed to a run (modest — a real pull, but solvable by scaling the era)
       heatPerCompute: 0.05, heatConc: 0.5, cooling: 1.0, heatWarn: 65, heatThrottle: 88, throttleWarm: 0.92, throttleHot: 0.72, // heat = soft safety cap only
@@ -1654,10 +1655,15 @@
         // feedstock: this run draws its own earlier-era resource; if dry, it can't be pushed (go reopen that era)
         const res=e4.feedstock[k], need=share*e4.feedPerShare; let feedMult=1;
         if(need>0){ if(S[res]>=need){ S[res]-=need; } else { feedMult = S[res]/need; S[res]=0; } }
-        const headwind = e4.driftBase*(0.5+0.5*Math.sin(t*e4.driftFreq + PH[k])); // 0..driftBase, peaks at different times per run
+        // drift teeth: each run's wind oscillates out of phase. At high wind the run DEMANDS a big share;
+        // give it less than it demands and it actively bleeds capability — faster the higher it sits, and
+        // scaled by compute so adding nodes speeds the whole loop without ever outrunning the wind.
+        const wind = 0.5+0.5*Math.sin(t*e4.driftFreq + PH[k]); // 0..1 this run's drift pressure right now
+        const shortfall = Math.max(0, e4.driftDemand*wind - frac); // how far under-allocated vs the wind
+        const erode = e4.driftBite*shortfall*(0.3+0.7*S[k])*computeRate*dt; // bleed; high runs are precarious
         const evM = (S.event && S.event.run===k) ? S.event.mult : 1; // breakthrough tailwind
         const gain = e4.capGain*share*(1-S[k])*feedMult*throttle*evM;
-        S[k]=Math.max(0, Math.min(1, S[k] + gain - headwind*dt));
+        S[k]=Math.max(0, Math.min(1, S[k] + gain - erode));
       }
       const conc=Math.max(0, maxShare-0.5);
       S.heat=Math.max(0,Math.min(120, S.heat + computeRate*e4.heatPerCompute*(1+conc*e4.heatConc)*dt - e4.cooling*dt));
@@ -2583,11 +2589,13 @@
       for(const d of doms){ const k=d.k; share[k]=(S.alloc[k]||0)/tw;
         const ln=$('feed-'+k); if(ln && ln.setAttribute){ ln.setAttribute('x2',(hx.x*100).toFixed(1)); ln.setAttribute('y2',(hx.y*100).toFixed(1)); if(ln.style) ln.style.strokeOpacity=(0.1+0.9*share[k]).toFixed(2); }
         setText('pct-'+k, Math.round(share[k]*100)+'%');
-        const headwind=e4.driftBase*(0.5+0.5*Math.sin(t*e4.driftFreq+PH[k]));
+        const wind=0.5+0.5*Math.sin(t*e4.driftFreq+PH[k]);
+        const shortfall=Math.max(0, e4.driftDemand*wind - share[k]);
+        const erodeRate=e4.driftBite*shortfall*(0.3+0.7*S[k])*computeRate; // per second
         const res=e4.feedstock[k], need=share[k]*computeRate*e4.feedPerShare, blocked=need>0 && S[res] < need*0.6, thinning=need>0 && !blocked && S[res] < need*3;
         const evBreak=!!(S.event&&S.event.type==='breakthrough'&&S.event.run===k), evShift=!!(S.event&&S.event.type==='shift'&&S.event.run===k);
         const gainRate=e4.capGain*share[k]*computeRate*(1-S[k])*(blocked?0.3:1)*(evBreak?e4.breakthroughMult:1);
-        info[k]={ headwind, blocked, thinning, evBreak, evShift, res, net:gainRate-headwind };
+        info[k]={ headwind:erodeRate, wind, shortfall, blocked, thinning, evBreak, evShift, res, net:gainRate-erodeRate };
       }
       const FEEDERA={ data:'Statistical', insight:'Statistical', knowledge:'Origins' };
       // heat = secondary safety gauge + header LED
@@ -2606,7 +2614,7 @@
         if(i.net<0) return ['drifting down · steer here','rc-low',''];
         return ['holding','','']; };
       const rs=$('runStrip'); if(rs){ const h=doms.map(d=>{ const k=d.k, st=rstat(k), i=info[k];
-        const windPct=Math.min(100, i.headwind/e4.driftBase*100), trend=i.net>=0?'▲':'▼';
+        const windPct=Math.min(100, i.wind*100), trend=i.net>=0?'▲':'▼';
         const badge = st[2]?'<b class="'+(st[2]==='BREAKTHROUGH'?'rb-front':'rb-low')+'">'+st[2]+'</b>':'';
         return '<div class="run-cell '+st[1]+'" style="--rc:'+LOSS_COLS[k]+'"><div class="run-top"><span class="run-nm">'+d.label+'</span>'+badge+'</div>'+
           '<div class="run-lv">'+(S[k]*100).toFixed(0)+'<small>% cap</small> <span class="run-trend '+(i.net>=0?'up':'dn')+'">'+trend+'</span></div>'+

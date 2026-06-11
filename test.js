@@ -407,24 +407,42 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
   const { S, BUYS } = EM;
   if(S.maxEra < 4) return;
   // Reach-back: each run draws a specific feedstock — Vision←Data, Reasoning←Insight, Language←Knowledge.
-  // Keep the whole stack producing them, scaling whichever is running low (the 'go back to unblock' loop).
-  // Knowledge feeds BOTH the Language run AND Silicon production (Foundries/Smelters burn it), so keep its supply well ahead
-  if(S.scriptorium < 140 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium'); // → Knowledge (Language)
-  if(S.smelter < 50 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
-  // Foundries burn Knowledge to make Silicon — hold off when Knowledge is low so they don't starve the Language run
-  if(S.foundry < 70 && S.knowledge > 400 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
-  if(S.scribe < 120 && S.marks >= EM.totalCost(BUYS.scribe,1)) EM.buy('scribe');
-  if(S.miner < 50 && S.ore >= EM.totalCost(BUYS.miner,1)) EM.buy('miner');
-  if(S.dataset < 60 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset'); // → Data (Vision)
-  if(S.model < 40 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');             // → Insight (Reasoning)
-  // grow Compute — but bound it so total feedstock draw can't outrun what the Origins economy supplies (esp. Knowledge)
-  if(S.node < 55 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
-  // STEER feedstock-aware: push the laggard, but never dump compute on a run whose feedstock is dry (that pours compute
-  // into a blocked run and deadlocks — Language←Knowledge especially). A starved run gets near-zero share until its
-  // supplier catches up, so the others keep progress and the breadth gate stays reachable.
+  // Knowledge is the scarce one: it feeds the Language run AND is BURNED by Smelters (upkeep) and Foundries (1:1 → Silicon),
+  // and its source (scriptoria: Marks→Knowledge) is gated by Marks (scribes). So the late-Deep job is to flood the
+  // Knowledge pipeline and stop the sinks from eating it out from under the Language run.
+  S.paused = S.paused || {};
+  const os = EM.oStats();
+  const marksIn = S.scribe*os.scribeY, scrDraw = S.scriptorium*os.scrR; // scriptoria eat Marks faster than scribes make them → deadlock
+  // Phase the Knowledge engine: grow a big SCRIBE base first. While scriptoria out-draw scribes, pause scriptoria so
+  // Marks can bank to afford the next scribe — otherwise scriptoria pin Marks at 0 and the scribe base can never grow.
+  const scribeCost = EM.totalCost(BUYS.scribe,1);
+  const marksStarved = marksIn < scrDraw*1.05;
+  S.paused.scriptorium = S.scribe < 220 && marksStarved && S.marks < scribeCost;
+  if(S.scribe < 220 && S.marks >= scribeCost) EM.buy('scribe');
+  if(S.scriptorium < 80 && marksIn > scrDraw + os.scrR*1.4 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium');
+  if(S.miner < 90 && S.ore >= EM.totalCost(BUYS.miner,1)) EM.buy('miner'); // Ore for scriptorium tablets
+  const enoughCompute = S.node >= 26; // Vision/Reasoning already overflow (Data/Insight huge); compute is never the constraint — Knowledge is
+  // pause the Knowledge sinks (smelter upkeep + foundry 1:1) whenever Knowledge is tight so the Language run gets fed
+  S.paused.smelter = enoughCompute && S.knowledge < 1500;
+  S.paused.foundry = enoughCompute && S.knowledge < 2500;
+  if(!enoughCompute){
+    if(S.smelter < 50 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
+    if(S.foundry < 70 && S.knowledge > 1200 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
+    if(S.node < 26 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
+  }
+  if(S.dataset < 50 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset'); // → Data (Vision)
+  if(S.model < 36 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');             // → Insight (Reasoning)
+  // STEER against the drift (R3.1 drift teeth): each run's wind oscillates out of phase and a run under the wind
+  // it isn't fed bleeds capability. Chase the wind — give the high-wind run the most share — plus a laggard nudge.
+  // A starved run (dry feedstock) gets near-zero share so we don't pour compute into a blocked run.
+  const e4 = EM.CFG.e4, t = S.t || 0, PH = { vision:0, language:2.094, reasoning:4.189 };
   const feed = { vision: S.data, language: S.knowledge, reasoning: S.insight };
   S.alloc = {};
-  for(const k of ['vision','language','reasoning']) S.alloc[k] = (feed[k] < 150) ? 0.03 : (0.12 + (1-S[k])*1.4);
+  for(const k of ['vision','language','reasoning']){
+    if(feed[k] < 120){ S.alloc[k] = 0.03; continue; } // feedstock dry → don't dump compute into a blocked run
+    const wind = 0.5 + 0.5*Math.sin(t*e4.driftFreq + PH[k]);
+    S.alloc[k] = 0.1 + e4.driftDemand*wind*1.8 + (1-S[k])*0.6; // chase the wind + push the laggard
+  }
 }
 function foundationStep(EM){ // ERA 5 — climb the recursion ladder to emergence, then manage the aftermath to an ending
   const { S, CAPS } = EM; const e5 = EM.CFG.e5;
@@ -460,7 +478,7 @@ function testProgression(){
   if(statAt !== undefined) console.log('  Era 3 (Statistical) generalized → Deep at ' + mm(statAt));
   else console.log('  Era 3 STALLED: acc='+(S.accuracy*100).toFixed(0)+'% gap='+(S.gap*100).toFixed(0)+'% eff='+(EM.effAccuracy()*100).toFixed(0)+'% data='+Math.round(S.data)+' dataset='+S.dataset+' model='+S.model);
   if(deepAt !== undefined) console.log('  Era 4 (Deep) reached breadth → Foundation at ' + mm(deepAt) + (statAt?('  (Deep took '+((deepAt-statAt)/60).toFixed(1)+'m)'):''));
-  else console.log('  Era 4 STALLED: breadth='+(EM.deepBreadth()*100).toFixed(0)+'% V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+'% node='+S.node+' silicon='+Math.round(S.silicon)+' knowledge='+Math.round(S.knowledge)+' scriptorium='+S.scriptorium+' data='+Math.round(S.data)+' insight='+Math.round(S.insight));
+  else console.log('  Era 4 STALLED: breadth='+(EM.deepBreadth()*100).toFixed(0)+'% V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+'% node='+S.node+' silicon='+Math.round(S.silicon)+' knowledge='+Math.round(S.knowledge)+' scriptorium='+S.scriptorium+' scribe='+S.scribe+' marks='+Math.round(S.marks)+' data='+Math.round(S.data)+' insight='+Math.round(S.insight));
   if(emergeAt !== undefined) console.log('  Era 5 (Foundation) → EMERGENCE at ' + mm(emergeAt) + '  (recursion Lv'+S.recursion+', '+Object.keys(S.caps).length+' capabilities)');
   else console.log('  Era 5 STALLED: agency='+(S.agency||0).toFixed(0)+'/'+EM.CFG.e5.controlBase+' scale='+Math.round(S.scale)+' recursion='+S.recursion+' capability='+Math.round(S.capability));
   if(endAt !== undefined) console.log('  Era 5 aftermath resolved → '+(S.ending||'?').toUpperCase()+' ending at ' + mm(endAt) + (emergeAt?('  (aftermath took '+((endAt-emergeAt)/60).toFixed(1)+'m)'):''));

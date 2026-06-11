@@ -5,7 +5,7 @@ The throughline: Origins/Symbolic became good via legibility; the back half is l
 > Note: D4/D6 rebalance locked eras (4 & 5) — approved as *completing* the existing design (steer-against-drift / unexpected-emergence), not changing it. Watch for test-autoplayer coupling (like the Statistical slowdown) and fix robustly. Pause only on a genuinely new design fork.
 
 ## D4 — Deep: give the drift teeth + make heat matter (the highest-value item)
-- [ ] R3.1 **Drift teeth:** a drifting run that you don't steer toward actively **loses** capability (its % drops, visibly), not just slows. Tune so ignoring drift clearly hurts and steering is an *immediate need* (Zach: "I want it to be much easier to lose things if it's drifting"). Update `deepStep` autoplayer to steer in response.
+- [x] R3.1 **Drift teeth:** a drifting run that you don't steer toward actively **loses** capability (its % drops, visibly), not just slows. Tune so ignoring drift clearly hurts and steering is an *immediate need* (Zach: "I want it to be much easier to lose things if it's drifting"). Update `deepStep` autoplayer to steer in response.
 - [ ] R3.2 **Heat as the cost of the fix:** concentrating compute to fight drift builds Heat; high Heat throttles output. Creates the rhythm (concentrate → heat up → ease off → cool). Make the heat gauge/LED legible + meaningful (Zach: "heat is stable, I don't know what it is"). Resolves the dead-heat question.
 
 ## D8 — Substrate → end-run scorecard (gives the game a point)
