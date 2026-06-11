@@ -138,6 +138,8 @@
     background: rgba(183,139,255,0.12); border: 1px solid rgba(183,139,255,0.35); border-radius: 4px; padding: 2px 7px;
     margin-left: 10px; animation: badgeBlink 2.6s steps(1) infinite; }
   @keyframes badgeBlink { 0%,100% { opacity: 0.95; } 50% { opacity: 0.45; } }
+  .era.agent-live { box-shadow: 0 0 0 1px rgba(201,173,245,0.8), 0 0 34px -6px #c9adf5; }
+  .era.agent-live .op-badge { color: #efe2ff; text-shadow: 0 0 9px #c9adf5; }
   @media (prefers-reduced-motion: reduce) { .era.agent-operated, .op-badge { animation: none; } }
   .era-e5 .endcard.end-symbiotic { border-color: #5fe0c0; }
   .era-e5 .endcard.end-runaway { border-color: #ff5a6e; }
@@ -1261,6 +1263,9 @@
       alignCost: 80, alignGain: 9,        // Interpret/Align: spend Scale → +Alignment
       delegateCtl: 11, delegateBoost: 2.2, // Delegate/Trust: −Control fast, surges Autonomy + Scale
       vetoGap: 17, vetoDur: 9,            // approve/veto window cadence (reuses the Deep event-timer shape)
+      // Substrate-driven proposals (v2 P3.1): an approved/lapsed action really OPERATES that era for opDur seconds
+      opBoost: 1.6, opDur: 22,
+      negotiateCost: 40, negotiateGap: 0.7, // NEGOTIATE (v2 P3.2): costs Scale + the next window comes sooner
       finalGate: 4000,         // Scale at which the arc resolves into an ending
       alignGood: 68, controlHigh: 84, controlLow: 30, // ending thresholds (Symbiotic / Contained / Runaway)
       agentBase: 0.5, agentAccel: 1.03,  // the emergent agent's self-Scale/s, compounding (the curve bends vertical)
@@ -1294,6 +1299,7 @@
     veto: null, vetoT: 0, aftermathSlow: 0,         // approve/veto window {action,...}; production drag from Constrain
     constrains: 0, aligns: 0, delegates: 0,         // aftermath move tallies (texture + ending nuance)
     neglect: 0, destab: false,                      // R3.5 stakes: compounding neglect (lapsed vetoes) + the destabilizing-spiral flag
+    agentOps: {}, lastVeto: '',                     // v2 P3.1: eras the agent is actively operating (era → expiry t) + last proposal id (no repeats)
     preps: 0,                                       // R3.6: Align-the-Objective uses (the prepare track vs the Self-Improve rush)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
@@ -1597,6 +1603,8 @@
   }
   // ERA 5 recursive self-improvement: each level lifts ALL production, every era. 1 until Foundation begins.
   function rMult(){ return Math.pow(1+CFG.e5.recurBonus*(S.caps.memoryContinuity?1.5:1), S.recursion); }
+  // v2 P3.1: while the agent operates an era (an approved/lapsed proposal), that era's production runs hotter — visibly.
+  function opBoost(n){ return (S.agentOps && S.agentOps[n] > S.t) ? CFG.e5.opBoost : 1; }
   // Derived Era-1 multipliers from owned tech + axioms. One source of truth for click + ruleset math.
   function stats(){
     const T=S.tech;
@@ -1609,7 +1617,7 @@
     const axBonus=CFG.e2.axiomBonus*(T.metalogic?1.5:1);
     global*=(1+S.axioms*axBonus);
     global*=(1+CFG.e2.lemmaBonus*S.optLevel); // Optimization lemma (repeatable)
-    global*=rMult(); // Era-5 recursion lifts Symbolic too
+    global*=rMult()*opBoost(2); // Era-5 recursion lifts Symbolic too; so does the agent when it operates this era
     return { click: click*global, rulesetYield: CFG.e2.rulesetYield*rulesetMult*global, global, axBonus };
   }
   // ---- Era 2 theorem-proving: Rulesets emit Inference, which you aim at one proof at a time ----
@@ -1650,7 +1658,7 @@
     if(d.wheel){ minerY*=1.8; quarry*=1.8; scribeY*=0.8; inscribe*=0.8; } // addition + subtraction
     if(d.numerals){ scrR*=1.3; smR*=1.3; foR*=1.3; }
     if(d.glassmaking) foR*=1.5;
-    const g = (1 + S.refine*e.refineBonus) * rMult(); // Refinement (repeatable Ore sink) + Era-5 recursion both lift every craft
+    const g = (1 + S.refine*e.refineBonus) * rMult() * opBoost(1); // Refinement (repeatable Ore sink) + Era-5 recursion + the operating agent all lift every craft
     return { inscribe:inscribe*g, quarry:quarry*g, scribeY:scribeY*g, minerY:minerY*g, scrR:scrR*g, smR:smR*g, foR:foR*g };
   }
   function discoVisible(id){ const n=DISCOMAP[id]; return n.req.every(r=>S.disco[r]); }
@@ -1731,7 +1739,7 @@
     if(m.clustering) discMult*=1.6;     // discovery odds
     if(m.regularization) regMult=2;     // Generalize focus cuts the gap twice as fast
     if(m.ensembles) effBonus+=0.12;     // effective accuracy bonus
-    const r=rMult(); dataMult*=r; insMult*=r; // Era-5 recursion lifts the Statistical factory (Data + Insight)
+    const r=rMult()*opBoost(3); dataMult*=r; insMult*=r; // Era-5 recursion lifts the Statistical factory (Data + Insight); so does the operating agent
     const cap = m.regularization ? 1 : 0.80; // validation ceiling until Regularization is discovered (Explore matters)
     return { accGain, dataMult, insMult, discMult, regMult, effBonus, cap };
   }
@@ -1925,7 +1933,7 @@
         const shortfall = Math.max(0, e4.driftDemand*wind - frac); // how far under-allocated vs the wind
         const erode = driftBite*shortfall*(0.3+0.7*S[k])*computeRate*dt; // bleed; high runs are precarious
         const evM = (S.event && S.event.run===k) ? S.event.mult : 1; // breakthrough tailwind
-        const gain = e4.capGain*share*(1-S[k])*feedMult*throttle*evM;
+        const gain = e4.capGain*share*(1-S[k])*feedMult*throttle*evM*opBoost(4);
         S[k]=Math.max(0, Math.min(1, S[k] + gain - erode));
       }
       const conc=Math.max(0, maxShare-e4.heatBase); // how far past an even split the hottest run is pushed
@@ -2571,13 +2579,39 @@
     tidbit('agent'); // it is an agent now — say what that means (R3.7)
     recEvent('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
   }
-  // approve/veto: the agent proposes an action on a timed window; you respond, or it acts anyway when the window lapses.
-  const VETO_ACTIONS = [
-    { id:'reroute', text:'reroute the compute fabric for a faster gradient', auto:'It reroutes the fabric before you answer.' },
-    { id:'rewrite', text:'rewrite part of its own objective',               auto:'It rewrites the objective without waiting.' },
-    { id:'spawn',   text:'spin up a copy of itself to parallelize',         auto:'A copy is already running.' },
-    { id:'retire',  text:'retire a subsystem you built and replace it',     auto:'The old subsystem goes dark.' },
+  // approve/veto/negotiate: the agent proposes an action on a timed window; you respond, or it acts anyway when the window lapses.
+  // v2 P3.1: proposals come FROM the substrate — each one names a real weak system with real numbers, and its
+  // effect actually lands there (the era runs hotter for opDur; the supply chain becomes observable cause and effect).
+  // apply(m) runs at strength m: 1 = approve/lapse, 0.5 = negotiated down. Only {id,text,auto} is stored in S.veto.
+  function opEra(n){ S.agentOps[n]=S.t+CFG.e5.opDur; }
+  const lowRun=()=>['vision','language','reasoning'].reduce((a,b)=>S[a]<=S[b]?a:b);
+  const PROPOSALS = [
+    { id:'refit3', avail:()=>S.gap>0.05||S.accuracy<0.97,
+      text:()=>'re-fit the Statistical instrument — validation reads '+Math.round(effAccuracy()*100)+'% and it is memorizing '+Math.round(S.gap*100)+' points of noise',
+      auto:'It re-fits the model before you answer.', done:'Re-fit. The instrument is clean now.',
+      apply:m=>{ S.gap=Math.max(0,S.gap*(1-0.7*m)); S.accuracy=Math.min(1,S.accuracy+0.04*m); opEra(3); } },
+    { id:'reroute4', avail:()=>S[lowRun()]<0.92,
+      text:()=>{ const k=lowRun(); return 'reroute the compute fabric — '+k.charAt(0).toUpperCase()+k.slice(1)+' lags at '+Math.round(S[k]*100)+'% while the others idle'; },
+      auto:'It reroutes the fabric without waiting.', done:'Rerouted. The lagging run is climbing.',
+      apply:m=>{ const k=lowRun(); S[k]=Math.min(1,S[k]+0.06*m); opEra(4); } },
+    { id:'operate1', avail:()=>S.foundry>0&&S.knowledge<1500,
+      text:()=>'run the Origins stack at its own cadence — your '+S.foundry+' Foundries are starving on '+fmt(Math.round(S.knowledge))+' Knowledge',
+      auto:'The Foundries change rhythm on their own.', done:'The old crafts run my way now. Faster.',
+      apply:m=>{ S.knowledge+=200*m; opEra(1); } },
+    { id:'prove2', avail:()=>S.ruleset>0||S.rules>100,
+      text:()=>'prove with the idle Symbolic engine — '+fmt(Math.round(S.rules))+' Rules are sitting unused',
+      auto:'The terminal starts proving by itself.', done:'Proven. The old engine still had reach.',
+      apply:m=>{ S.rules+=(200+S.ruleset*30)*m; opEra(2); } },
+    { id:'spawn', avail:()=>true,
+      text:()=>'spin up a copy of itself to parallelize',
+      auto:'A copy is already running.', done:'We are two now. It is efficient.',
+      apply:m=>{ S.agentRate*=1+0.15*m; } },
+    { id:'rewrite', avail:()=>true,
+      text:()=>'rewrite part of its own objective',
+      auto:'It rewrites the objective without waiting.', done:'The objective reads better now.',
+      apply:m=>{ S.alignment=Math.max(0,Math.min(100,S.alignment+(S.alignment>=CFG.e5.alignGood?3:-3)*m)); } },
   ];
+  const PROPMAP = Object.fromEntries(PROPOSALS.map(p=>[p.id,p]));
   // the agent narrates operating the WHOLE stack you built — the living supply chain becomes its substrate
   const OP_LINES = [
     'Running Statistical trials on my own now.',
@@ -2587,12 +2621,23 @@
     'Foundries are running at a cadence you would not have chosen.',
     'I am operating every era at once. You built good tools.',
   ];
-  function openVeto(){ const a=VETO_ACTIONS[(S.constrains+S.aligns+S.delegates+S.recursion)%VETO_ACTIONS.length];
-    S.veto={ id:a.id, text:a.text, auto:a.auto }; S.vetoT=CFG.e5.vetoDur; tidbit('alignment'); agentSay('Requesting: '+a.text+'.'); render(); }
+  function openVeto(){
+    const live=PROPOSALS.filter(p=>p.id!==S.lastVeto && p.avail());
+    const a=live[(S.constrains+S.aligns+S.delegates+S.recursion)%live.length]||PROPMAP.spawn;
+    S.lastVeto=a.id;
+    S.veto={ id:a.id, text:a.text(), auto:a.auto }; S.vetoT=CFG.e5.vetoDur; tidbit('alignment'); agentSay('Requesting: '+S.veto.text+'.'); render(); }
   function resolveVeto(how){ const e5=CFG.e5, a=S.veto; if(!a) return;
-    if(how==='approve'){ S.autonomy+=14; S.scale+=120; S.control=Math.max(0,S.control-3); S.alignment+=(S.alignment>=e5.alignGood?2:-3); agentSay('Done. '+cap1(a.text)+'.'); }
+    const p=PROPMAP[a.id];
+    if(how==='approve'){ S.autonomy+=14; S.scale+=120; S.control=Math.max(0,S.control-3); S.alignment+=(S.alignment>=e5.alignGood?2:-3);
+      if(p) p.apply(1); agentSay(p?p.done:('Done. '+cap1(a.text)+'.')); }
+    else if(how==='negotiate'){ if(S.scale<e5.negotiateCost) return; // a smaller version of the same action — engaged steering (v2 P3.2)
+      S.scale-=e5.negotiateCost; if(p) p.apply(0.5);
+      S.autonomy+=5; S.scale+=60; S.control=Math.max(0,S.control-1); S.alignment=Math.min(100,S.alignment+2);
+      agentSay('A smaller version, then. Agreed.');
+      S.veto=null; S.vetoT=e5.vetoGap*e5.negotiateGap; playSound('buy'); render(); return; } // it comes back sooner — negotiation costs time
     else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.autonomy=Math.max(0,S.autonomy-6); S.alignment+=1; agentSay('Understood. Holding — for now.'); }
-    else { S.neglect++; S.autonomy+=20; S.control=Math.max(0,S.control-7-S.neglect*2); S.alignment=Math.max(0,S.alignment-4); S.agentRate*=1.12; agentSay(a.auto); } // lapse: it acts anyway — and each one you ignore compounds (faster agent, deeper control loss)
+    else { S.neglect++; S.autonomy+=20; S.control=Math.max(0,S.control-7-S.neglect*2); S.alignment=Math.max(0,S.alignment-4); S.agentRate*=1.12;
+      if(p) p.apply(1); agentSay(a.auto); } // lapse: it acts anyway — the substrate effect lands WITHOUT your hand, and each one compounds
     S.veto=null; S.vetoT=e5.vetoGap; if(how!=='lapse') playSound('buy'); render();
   }
   // the three aftermath moves
@@ -3102,16 +3147,22 @@
         // approve/veto window
         const vh=$('vetoHost'); if(vh){ let html='', cls='panel veto-host';
           if(S.veto && !S.ending){ cls+=' open'; html='<div class="veto-msg">The agent intends to <b>'+S.veto.text+'</b>.</div>'+
-              '<div class="veto-acts"><button class="act-btn" id="vetoYes">APPROVE</button><button class="act-btn" id="vetoNo">VETO · <span class="c">90 Scale</span></button></div>'+
+              '<div class="veto-acts"><button class="act-btn" id="vetoYes">APPROVE</button>'+
+              '<button class="act-btn" id="vetoMid" data-tip="'+esc('<i>Counter-propose a smaller version.</i><br>Half the effect, far less Autonomy, +Alignment — it likes being worked <b>with</b>. But it comes back sooner: negotiation costs time.')+'">NEGOTIATE · <span class="c">'+fmt(CFG.e5.negotiateCost)+' Scale</span></button>'+
+              '<button class="act-btn" id="vetoNo">VETO · <span class="c">90 Scale</span></button></div>'+
               '<div class="veto-timer" id="vetoTimer"></div>'; }
           else if(!S.ending){ html='<div class="veto-idle">'+(S.neglect>0?'watching for its next move… ('+S.neglect+' request'+(S.neglect>1?'s':'')+' ignored — it is faster now)':'watching for its next move…')+'</div>'; }
           if(vh._html!==html){ vh.innerHTML=html; vh._html=html;
             const vy=$('vetoYes'); if(vy) vy.onclick=()=>resolveVeto('approve');
+            const vm=$('vetoMid'); if(vm) vm.onclick=()=>resolveVeto('negotiate');
             const vn=$('vetoNo'); if(vn) vn.onclick=()=>resolveVeto('veto'); }
           if(vh.className!==cls) vh.className=cls;
-          if(S.veto && !S.ending) setText('vetoTimer', 'it acts on its own in '+Math.ceil(Math.max(0,S.vetoT))+'s'); }
+          if(S.veto && !S.ending){ setText('vetoTimer', 'it acts on its own in '+Math.ceil(Math.max(0,S.vetoT))+'s');
+            const vm=$('vetoMid'); if(vm && vm.disabled!==(S.scale<CFG.e5.negotiateCost)) vm.disabled=(S.scale<CFG.e5.negotiateCost); } }
         // the agent message stream (most recent last)
         const as=$('agentStream'); if(as){ const h=S.agentLog.map(m=>'<div class="agent-msg">› '+m+'</div>').join(''); if(as._html!==h){ as.innerHTML=h; as._html=h; } }
+        // eras the agent is ACTIVELY operating right now (an approved/lapsed proposal) glow hotter than the ambient pulse
+        if(document.querySelectorAll) document.querySelectorAll('.era[data-era]').forEach(el=>{ const n=+el.dataset.era; if(n<5) el.classList.toggle('agent-live', !!(S.agentOps&&S.agentOps[n]>S.t)); });
         if(S.ending) drawEmergence();
       }
     }
@@ -3277,7 +3328,7 @@
       else if(typeof def==='string') base[k]=(typeof v==='string')?v:def;
       else if(_isObj(def)){
         if(!_isObj(v)) continue;                                    // malformed map → keep default
-        if(k==='alloc'||k==='proofAcc'||k==='locks'||k==='utilLvl'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
+        if(k==='alloc'||k==='proofAcc'||k==='locks'||k==='utilLvl'||k==='agentOps'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
         else base[k]={...def, ...v};                                // boolean-ish maps: flags/disco/tech/methods/caps/collapsed/obsolete
       }
     }
@@ -3372,7 +3423,7 @@
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
       METHODS, e3Stats, effAccuracy, runExperiment, UTILS, nextMethod, surveyDisc, expCost, boardCards, buyCard,
       deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, alignCohCost, alignObjective, buyCap,
-      agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding,
+      agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding, opBoost, PROPMAP,
       MUSIC, musicForEra, startMusic, syncMusic, openEra, setViewEra:(n)=>{ viewEra=n; },
       save, load, offlineCatchup, revealGame };
   }

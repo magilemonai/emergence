@@ -715,6 +715,34 @@ function testFoundation(){
   const c1=S.control; EM.resolveVeto('veto'); ok(S.control>c1 && !S.veto, 'Veto blocks the action and raises Control');
   EM.openVeto(); const au=S.autonomy; EM.resolveVeto('approve'); ok(S.autonomy>au, 'Approve lets it act, raising Autonomy');
 
+  // v2 P3.1 — proposals come from the substrate and land back in it
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000;
+  S.gap=0.2; S.accuracy=0.8; S.lastVeto='';
+  S.constrains=S.aligns=S.delegates=0; S.recursion=0;
+  EM.openVeto();
+  ok(S.veto.id==='refit3', 'a high overfit gap draws a re-fit proposal');
+  ok(S.veto.text.indexOf('%')>=0, 'the proposal names real numbers from the substrate');
+  const gapB=S.gap; EM.resolveVeto('approve');
+  ok(S.gap<gapB, 'approving actually re-fits the instrument (gap falls)');
+  ok(S.agentOps[3]>S.t, 'the agent is now operating Era 3');
+  ok(EM.opBoost(3)>1 && EM.opBoost(1)===1, 'an operated era runs hotter; others do not');
+  S.t = S.agentOps[3]+1; ok(EM.opBoost(3)===1, 'the operation expires');
+  ok(S.lastVeto==='refit3', 'the same proposal does not repeat back-to-back');
+  // a lapse lands the effect WITHOUT you
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000; S.gap=0.2; S.lastVeto='';
+  EM.openVeto(); const gapL=S.gap; EM.resolveVeto('lapse');
+  ok(S.gap<gapL && S.neglect===1, 'a lapsed window still fires the action — without your hand');
+  const gapAfterLapse=S.gap;
+
+  // v2 P3.2 — NEGOTIATE: half the effect, gentler meters, but the next window comes sooner
+  EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.scale=1000; S.gap=0.2; S.lastVeto='';
+  EM.openVeto(); const gapN=S.gap, auN=S.autonomy, scN=S.scale;
+  EM.resolveVeto('negotiate');
+  ok(S.gap<gapN && S.gap>gapAfterLapse, 'negotiated effect lands at half strength (between untouched and full)');
+  ok(S.autonomy-auN < 14 && S.autonomy>auN, 'negotiating concedes less Autonomy than approving');
+  ok(S.vetoT < EM.CFG.e5.vetoGap, 'negotiation costs time — the next window comes sooner');
+  ok(S.scale > scN, 'the negotiated action still pays Scale (net of the negotiation cost)');
+
   // endings resolve from the final mix (flavor, never a fail-state)
   EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.alignment=90; S.control=50; EM.resolveEnding();
   ok(S.ending==='symbiotic', 'high Alignment → Symbiotic ending');
