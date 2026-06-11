@@ -441,6 +441,18 @@
   .era.collapsed { cursor: pointer; padding: 8px 18px; opacity: 0.5; transition: border-color 0.2s, background 0.2s, opacity 0.2s; }
   .era.collapsed:hover { border-color: var(--ec); background: var(--panel-2); opacity: 1; }
   .era:not(.collapsed) { box-shadow: inset 0 2px 0 rgba(255,255,255,0.03), 0 0 0 1px var(--ec); } /* the active/open era reads as "you are here" */
+  /* Era TABS (D2): one era at a time; clicking a tab switches era + reskins the page */
+  body.tabs .era { display: none; }
+  body.tabs .era.tab-active { display: block; }
+  body.tabs main { scroll-snap-type: none; }
+  .era-tabs { display: flex; gap: 7px; flex-wrap: wrap; margin: 0 0 14px; }
+  .era-tab { display: flex; align-items: center; gap: 8px; padding: 9px 15px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--panel); color: var(--dim); cursor: pointer; font-family: var(--era-display, inherit); font-size: 13px; letter-spacing: 0.04em;
+    transition: color 0.15s, border-color 0.15s, background 0.15s; }
+  .era-tab img { width: 22px; height: 22px; object-fit: contain; opacity: 0.65; }
+  .era-tab:hover { color: var(--text); border-color: var(--ec); }
+  .era-tab.on { color: var(--text); border-color: var(--ec); background: var(--panel-2); box-shadow: inset 0 -2px 0 var(--ec); }
+  .era-tab.on img { opacity: 1; }
   .era-expand-btn { margin-left: 14px; border: 1px solid var(--ec); color: var(--ec); font-size: 11px; font-weight: 700;
     letter-spacing: 1.5px; padding: 8px 18px; border-radius: 9px; white-space: nowrap; }
   .era.collapsed:hover .era-expand-btn { background: var(--ec); color: #0a0d14; }
@@ -1119,8 +1131,10 @@
   const FLOW = { marks:{in:0,out:0}, ore:{in:0,out:0}, knowledge:{in:0,out:0}, metal:{in:0,out:0}, silicon:{in:0,out:0} };
   function fIn(k,a){ if(FLOW[k]) FLOW[k].in+=a; }
   function fOut(k,a){ if(FLOW[k]) FLOW[k].out+=a; }
-  let viewEra = 1; // the era currently most in view (drives the contextual top bar); follows scroll
+  let viewEra = 1; // the era currently most in view (drives the contextual top bar)
   let _lastAge = null; // tracks Origins age (stone/bronze/silicon) to fire a felt "age-up" flash on change
+  const TABS = true; // era navigation: tabs (one era at a time, theme switches on click) instead of scroll. Flip to false for the old scroll model.
+  let activeTab = 1; // the era currently shown when in TABS mode
   // Progressive UI: each section animates in only the first time it appears (survives re-renders).
   const _seen = new Set();
   function intro(key){ if(_seen.has(key)) return ''; _seen.add(key); return ' intro'; }
@@ -1537,7 +1551,7 @@
     $('eras').classList.add('rising');
     setTimeout(()=>{ co.style.display='none'; }, 300);
   }
-  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; viewEra=n;
+  function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; viewEra=n; activeTab=n; // switch the tab to the newly-opened era
     for(let k=1;k<n;k++) S.collapsed[k]=true;  // fold completed eras away so the new one takes the stage
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
     setTheme(n); render(); syncMusic(); } // openEra moves viewEra itself, so the observer's change-guard won't fire — sync the bed here
@@ -1741,13 +1755,15 @@
     const done = n < S.maxEra; // a completed era can be folded
     const op = (S.emerged && n<5) ? ' agent-operated' : ''; // after emergence the agent runs the prior-era stack — it pulses on its own
     const nameBlock = sig+'<span class="era-tag">'+e.tag+'</span><span class="era-name">'+e.name+'<small>'+e.sub+'</small></span>';
-    if(S.collapsed[n]) // whole bar is the expand target
+    if(!TABS && S.collapsed[n]) // (scroll mode) whole bar is the expand target
       return '<div class="era collapsed era-e'+n+op+'" data-era="'+n+'" style="--ec:'+e.color+'" data-toggle="'+n+'"><div class="era-header">'+nameBlock+
         (op?'<span class="op-badge">⟳ agent</span>':'')+'<span class="era-status legacy">complete</span><span class="era-expand-btn">▸ EXPAND</span></div></div>';
-    const right = done
+    // In tab mode every era renders full; only the active one is shown (CSS). The objective + status always show; no collapse toggle.
+    const right = (done && !TABS)
       ? '<span class="era-status legacy">complete</span><button class="era-toggle" data-toggle="'+n+'">▾ COLLAPSE</button>'
       : '<span class="era-objective" id="obj-'+n+'"></span><span class="era-status" id="status-'+n+'"></span>';
-    return '<div class="era era-e'+n+op+' '+(obsolete?'obsolete':'')+'" data-era="'+n+'" style="--ec:'+e.color+'"><div class="era-screen"><div class="era-header">'+nameBlock+(op?'<span class="op-badge">⟳ agent</span>':'')+right+'</div><div class="era-body">'+body+'</div></div></div>';
+    const active = (TABS && n===activeTab) ? ' tab-active' : '';
+    return '<div class="era era-e'+n+op+active+' '+(obsolete?'obsolete':'')+'" data-era="'+n+'" style="--ec:'+e.color+'"><div class="era-screen"><div class="era-header">'+nameBlock+(op?'<span class="op-badge">⟳ agent</span>':'')+right+'</div><div class="era-body">'+body+'</div></div></div>';
   }
   function buildCompile(){
     return '<div class="compile-wrap">'+
@@ -2293,8 +2309,18 @@
     if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(183,139,255,0.6)'; ctx.shadowBlur=8; }
     ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0;
   }
+  function eraTabs(){ // horizontal era tabs (Origins · Symbolic · …) — click switches era AND reskins the page
+    if(activeTab>S.maxEra) activeTab=S.maxEra;
+    let t='';
+    for(let n=1;n<=S.maxEra;n++){ const e=ERAS[n];
+      t += '<button class="era-tab'+(n===activeTab?' on':'')+'" data-tab="'+n+'" style="--ec:'+e.color+'">'+
+        (e.sigil?'<img src="'+e.sigil+'" alt="">':'')+'<span>'+e.tag+'</span></button>';
+    }
+    return '<div class="era-tabs">'+t+'</div>';
+  }
   function buildEras(){
-    let html = buildOrigins();
+    let html = TABS ? eraTabs() : '';
+    html += buildOrigins();
     if(S.maxEra>=2) html += buildSymbolic();
     if(S.maxEra>=3) html += buildStatistical();
     if(S.maxEra>=4) html += buildDeep();
@@ -2322,6 +2348,7 @@
     document.querySelectorAll('[data-tech]').forEach(b=> b.onclick=e=>buyTech(e.currentTarget.dataset.tech));
     document.querySelectorAll('[data-proof]').forEach(b=> b.onclick=e=>selectProof(e.currentTarget.dataset.proof));
     document.querySelectorAll('[data-toggle]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const n=+e.currentTarget.dataset.toggle; S.collapsed[n]=!S.collapsed[n]; render(); });
+    document.querySelectorAll('[data-tab]').forEach(b=> b.onclick=e=>{ const n=+e.currentTarget.dataset.tab; if(n===activeTab) return; activeTab=n; viewEra=n; setTheme(n); playSound('click'); render(); syncMusic(); const er=$('eras'); if(er) er.scrollTop=0; }); // era tabs: switch era + reskin + music
     const tm=$('triMixer'); if(tm){ let drag=false;
       const upd=e=>{ const r=tm.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left, cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
         setAllocFromXY(Math.max(0,Math.min(1,cx/r.width)), Math.max(0,Math.min(1,cy/r.height))); refresh(); };
@@ -2652,9 +2679,11 @@
   function toggleDrawer(open){ uiDrawer = open!==undefined?open:!uiDrawer; $('drawer').classList.toggle('show',uiDrawer);
     if(document.body&&document.body.classList) document.body.classList.toggle('drawer-open',uiDrawer); } // push the era content right
   // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).
-  function setTheme(n){ if(typeof document==='undefined'||!document.body) return; const c='theme-'+n; if(document.body.className!==c) document.body.className=c; }
+  function setTheme(n){ if(typeof document==='undefined'||!document.body) return; const b=document.body;
+    for(let k=1;k<=5;k++) b.classList.remove('theme-'+k); b.classList.add('theme-'+n); if(TABS) b.classList.add('tabs'); } // classList (not className) so 'tabs'/'rupturing' survive
   let _eraIO=null;
   function watchEraThemes(){
+    if(TABS) return; // tab mode: theme + viewEra are set on tab click, not scroll
     if(typeof IntersectionObserver==='undefined') return;
     if(_eraIO) _eraIO.disconnect();
     _eraIO=new IntersectionObserver(()=>{
@@ -2812,7 +2841,7 @@
   }
   let offline=null;
   if(lastSave && S.flags.firstAuto){ offline=offlineCatchup((Date.now()-lastSave)/1000); }
-  setTheme(S.maxEra); renderCold(); if(S.flags.firstAuto) render();
+  activeTab=S.maxEra; viewEra=S.maxEra; setTheme(S.maxEra); renderCold(); if(S.flags.firstAuto) render();
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
   $('coBtn').onclick=inscribe;
