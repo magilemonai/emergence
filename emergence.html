@@ -898,7 +898,8 @@
   @keyframes coreSpin { to { transform: rotate(360deg); } }
   @keyframes corePulse { 0%,100% { opacity: 0.5; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.06); } }
   @keyframes panelIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  .panel.intro { animation: panelIn 0.55s ease-out; }
+  .panel.intro { animation: panelIn 0.55s ease-out, freshGlow 9s ease-out; } /* new sections announce themselves, then settle (Zach D) */
+  @keyframes freshGlow { 0%, 55% { box-shadow: 0 0 0 1px var(--ec), 0 0 28px -4px var(--ec); border-color: var(--ec); } 100% { box-shadow: none; } }
   .core-side { flex: 0 1 460px; min-width: 260px; }
   .core-verbs { display: flex; gap: 10px; }
   .core-verbs .act-btn { flex: 1; }
