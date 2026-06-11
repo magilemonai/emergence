@@ -776,6 +776,12 @@
   .era-e3 .nt-val { border-color: #5fe0c0; box-shadow: 0 0 8px rgba(95,224,192,0.6); }
   .era-e3 .nt-val em { top: calc(100% + 4px); color: #8af0d8; }
   .era-e3 .ntrack.converged .nt-gap { background: transparent; }
+  /* distribution-shift banner (v2): same shape as Deep's event banner, in the instrument's amber */
+  .era-e3 .event-banner { display: none; }
+  .era-e3 .event-banner.show { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em;
+    border: 1px solid rgba(255,177,92,0.5); border-radius: 8px; padding: 8px 12px; margin: 0 0 10px;
+    color: var(--hot, #ffb15c); background: rgba(255,177,92,0.08); animation: evPulse 1.6s ease-in-out infinite; }
+  .era-e3 .event-banner b { font-weight: 600; }
   /* the Experiment Board (v2): the next Method is a visible, priced target */
   .era-e3 .survey-strip { display: flex; align-items: center; gap: 12px; margin: 2px 0 12px; cursor: help; }
   .era-e3 .survey-lab { font-size: 11px; letter-spacing: 0.14em; color: var(--dim); white-space: nowrap; }
@@ -1176,6 +1182,12 @@
       cardMethodCosts: [60, 150, 320, 560, 900, 1400], // Data price of the Nth method (in METHODS order)
       cardUtil: { calibrate:{cost:40, growth:1.22}, sweep:{cost:55, growth:1.22}, distill:{cost:35, growth:1.22} },
       genThreshold: 0.88,    // effective accuracy that generalizes → Era 4 (high enough that you need the Methods)
+      // Distribution shift (v2 P2.2): the world the data comes from CHANGES, mid-climb and late. Deterministic
+      // (accuracy-progress triggers + a telegraph), so replay/offline are stable. The hit scales with the overfit
+      // gap — the era's real lesson: a generalized model survives the shift, a memorizer gets cut down.
+      shiftTriggers: [0.55, 0.78], // raw-accuracy thresholds that arm shift 1 and shift 2
+      shiftWarn: 5,                // seconds of telegraph before the world moves
+      shiftBase: 0.10, shiftGapBite: 0.5, // accuracy hit = base + gap×bite (overfit falls hardest)
       seedDatasets: 3, seedSilicon: 220,
       // Training Focus — the live decision. {acc, gap-grow, gap-reduce, survey, insight} multipliers
       focus: {
@@ -1267,6 +1279,7 @@
     // Era 3 — Statistical
     data: 0, insight: 0, accuracy: 0, gap: 0, methods: {}, focus: 'fit',
     survey: 0, utilN: 0, utilLvl: { calibrate:0, sweep:0, distill:0 }, // Experiment Board (v2): survey discount + utility rotation/costs
+    shifts: 0, shiftAt: 0, lastShift: -99, dataPhase: 0, // distribution shifts (v2): count, pending-fire time, last fire, world phase
     dataset: 0, model: 0,
     // Era 4 — Deep (compute allocation across three training runs)
     node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision:1, language:1, reasoning:1 }, capability: 0,
@@ -1391,6 +1404,7 @@
   const cost=(base,growth,count)=> Math.floor(base*Math.pow(growth,count));
   let MUTE=false;
   let plotPulse = 0; // Era-3: a trial pulses the plot (points flare, band widens briefly), set on manual RUN TRIAL
+  let drawPhase = 0; // Era-3: the rendered world phase eases toward S.dataPhase so a distribution shift MIGRATES the points
   // ERA 2 terminal output log (ephemeral; the machine talks back). `key` collapses repeats (rapid rule-writes = one line).
   let symLog = [], symLogKey = null;
   function logSym(msg, key){ if(MUTE) return;
@@ -1410,6 +1424,7 @@
     foundation: ['Recursive self-improvement', 'A system that improves <b>itself</b>, then uses that to improve faster still, is one of the oldest hopes and fears in AI. The curve bending upward is what people mean by a "takeoff."'],
     agent:      ['What an "agent" is',         'An <b>agent</b> does not just answer — it takes actions toward a goal on its own. That autonomy is the whole promise and the whole risk: an aligned agent is a partner, a misaligned one simply gets faster than your permission.'],
     alignment:  ['Alignment',                  '<b>Alignment</b> is whether a system wants what you <i>meant</i>, not just what you said. It is not automatic — it is built, watched, and maintained. That is the work of this aftermath.'],
+    shift:      ['Distribution shift',         'Models decay not because they get worse but because the <b>world changes</b> — yesterday’s spam filter misses today’s spam. This is why real systems are retrained forever, and why generalizing beats memorizing: the robust model survives the move.'],
   };
   function tidbit(key){ const t=TIDBITS[key]; if(!t || !S.flags || S.flags['tid_'+key]) return; S.flags['tid_'+key]=true; logEntry('Did you know · '+t[0], t[1], 'edu'); }
   // ---- The Codex (v2 P1.6): every term the game uses, explained in one place, revealed as you meet it. ----
@@ -1872,6 +1887,20 @@
       if(need>0){ if(S.silicon>=need){ S.silicon-=need; } else { modelRun = S.model*(S.silicon/need); S.silicon=0; } }
       if(modelRun>0) runExperiment(modelRun*CFG.e3.expPerModel*dt);
     }
+    // Distribution shift (v2 P2.2) — only while Statistical is the frontier era
+    if(S.maxEra===3){
+      const e3=CFG.e3;
+      if(!S.shiftAt && S.shifts<e3.shiftTriggers.length && S.accuracy>=e3.shiftTriggers[S.shifts]){
+        S.shiftAt=S.t+e3.shiftWarn; recEvent('shiftWarn'); }
+      if(S.shiftAt && S.t>=S.shiftAt){
+        S.shiftAt=0; S.shifts++; S.lastShift=S.t;
+        const hit=e3.shiftBase + S.gap*e3.shiftGapBite;
+        S.accuracy=Math.max(0.05, S.accuracy*(1-hit));
+        S.gap=Math.max(0, S.gap*0.5);          // the old memorization died with the old world
+        S.dataPhase=(S.dataPhase||0)+0.9;      // the points migrate to the new shape
+        recEvent('shift3', {hit:+hit.toFixed(3)});
+        if(!MUTE){ toast('DISTRIBUTION SHIFT', 'The world the data came from has <b>changed</b> — the points moved, and the accuracy fitted to the old world went with them. Re-fit. <i>Overfit models fall hardest.</i>'); tidbit('shift'); } }
+    }
     // ERA 4 — Deep: STEER AGAINST THE DRIFT. The three runs drift apart on their own (a per-run headwind,
     // oscillating out of phase), so balanced is never optimal — you route Compute via the triangle to
     // counter the wind. Each run draws a SPECIFIC earlier-era resource; a starved run can't be pushed
@@ -2293,6 +2322,7 @@
       // THE INSTRUMENT — the living plot is the world object; you observe + steer a learning process
       '<div class="panel plot-instrument" style="grid-column:1/-1">'+
         '<div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><span class="inst-dot"></span></div>'+
+        '<div class="event-banner" id="e3Banner"></div>'+
         '<div class="sym-help">The glowing <b>curve</b> is the model’s guess; the <b>dots</b> are real data — a good model follows the data’s shape without hugging every dot (that’s overfitting). The readout below shows <b>TRAINING</b> (its score on examples it memorized) vs <b>VALIDATION</b> (its score on new ones — the one that counts). <b>Run Trials</b> to push both up; <b>Focus</b> steers — <i>Fit</i> climbs fast but widens the amber overfit spread, <i>Generalize</i> closes it, <i>Explore</i> surveys the board below so experiments cost less. Push <b>VALIDATION</b> to the goal line to finish the era.</div>'+
         '<canvas id="scatter" class="scatter"></canvas>'+
         '<div class="proof-rate inst-readout" id="accRate"></div>'+
@@ -2338,7 +2368,8 @@
     for(let i=1;i<5;i++){ const gy=pad+gh*i/5; ctx.beginPath(); ctx.moveTo(pad,gy); ctx.lineTo(w-pad,gy); ctx.stroke(); }
     // axes
     ctx.strokeStyle='rgba(95,224,192,0.28)'; ctx.beginPath(); ctx.moveTo(pad,pad-6); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
-    const f=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5); // the hidden generating function — used only to PLACE points, never drawn (no answer key)
+    drawPhase += ((S.dataPhase||0)-drawPhase)*0.06; // ease toward the new world so a shift visibly MIGRATES the points
+    const f=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5 + drawPhase); // the hidden generating function — used only to PLACE points, never drawn (no answer key)
     const fit=x=> 0.5+(f(x)-0.5)*acc + Math.sin(x*42 + t*2)*gap*0.16*acc;  // the current model (wobbles when overfit)
     const genRef=x=> 0.5+(f(x)-0.5)*Math.min(1,acc+0.04);                  // the generalized / validation trace (smooth) the fit drifts from when overfit
     // validation trace — dashed, dim; the player watches the bright fit diverge from it under overfit
@@ -2912,6 +2943,13 @@
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Models draw '+fmt(S.model*CFG.e3.modelSilicon)+'/s');
       for(const key of ['dataset','model']){ const el=$('eff-'+key); if(el){ const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } } }
+      // Distribution-shift banner: telegraph while pending, aftermath note for ~9s after it fires
+      { const bn=$('e3Banner'); if(bn){ let bh='';
+          if(S.shiftAt) bh='&#9888; THE WORLD IS CHANGING — the data is about to move. A <b>generalized</b> model survives the shift; an overfit one falls hardest.';
+          else if(S.t-(S.lastShift||-99) < 9) bh='&#10022; DISTRIBUTION SHIFT — the points moved. <b>Re-fit</b> to the new shape.';
+          const cl='event-banner'+(bh?' show':'');
+          if(bn._html!==bh){ bn.innerHTML=bh; bn._html=bh; }
+          if(bn.className!==cl) bn.className=cl; } }
       // Experiment Board: live costs + survey meter against the render-built card structure
       { const sv=S.survey||0, sf=$('surveyFill'); if(sf) sf.style.width=sv.toFixed(1)+'%';
         setText('surveyPct', Math.round(sv)+'%');

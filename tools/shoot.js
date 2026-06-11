@@ -39,6 +39,9 @@ const SETUP = {
     S.gap=E.CFG.e3.gapMax*0.6; S.data=500; E.runExperiment(0.01); // trip the overfitting tidbit
     E.setViewEra(3); for(let i=0;i<4;i++) E.tick();
     const gb=document.getElementById('goalsBtn'); if(gb) gb.click();`,
+  shift: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=true;S.flags.symbolicDone=true; E.checkMiles();
+    S.silicon=5000;S.data=800;S.insight=2000;S.dataset=18;S.model=12;S.foundry=14;S.accuracy=0.56;S.gap=0.18;
+    E.checkMiles(); E.setViewEra(3); E.produce(0.1); for(let i=0;i<4;i++) E.tick();`,
   codex: `const E=window.EMERGENCE,S=E.S; E.revealGame();
     S.marks=4000;S.ore=3000;S.knowledge=1500;S.metal=800;S.silicon=40;
     for(let r=0;r<6;r++) for(const n of E.DISCO){ if(E.canBuyDisco(n.id)) E.buyDisco(n.id); }

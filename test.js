@@ -226,6 +226,20 @@ function testStatistical(){
   else { EM.buyCard(cards0[1]); }
   ok(EM.boardCards()[1] !== cards0[1] || EM.boardCards()[2] !== cards0[2], 'buying a utility rotates the board');
   ok(EM.expCost(cards0[1]) > c0 * 0.99, 'utility price grows with each purchase');
+  // Distribution shifts (v2): deterministic triggers, telegraphed, overfit falls hardest
+  EM = freshGame(); S = EM.S; S.maxEra = 3; S.accuracy = 0.56; S.gap = 0;
+  EM.produce(0.1);
+  ok(S.shiftAt > 0 && S.shifts === 0, 'crossing the trigger arms a telegraphed shift');
+  S.t = S.shiftAt + 0.1; EM.produce(0.1);
+  ok(S.shifts === 1 && S.shiftAt === 0, 'the shift fires after the telegraph');
+  ok(S.accuracy < 0.56 && S.dataPhase > 0, 'the shift cuts accuracy and moves the world');
+  const accLean = S.accuracy;
+  EM = freshGame(); S = EM.S; S.maxEra = 3; S.accuracy = 0.56; S.gap = 0.3;
+  EM.produce(0.1); S.t = S.shiftAt + 0.1; EM.produce(0.1);
+  ok(S.accuracy < accLean, 'an overfit model falls harder in a shift');
+  ok(S.gap < 0.3, 'the shift also invalidates old memorization (gap cut)');
+  EM = freshGame(); S = EM.S; S.maxEra = 4; S.accuracy = 0.95; EM.produce(0.1);
+  ok(!S.shiftAt && S.shifts === 0, 'shifts only fire while Statistical is the frontier era');
   // Regularization strengthens the gap cure (generalize ×2)
   EM = freshGame(); S = EM.S; const r0 = EM.e3Stats().regMult; S.methods.regularization = true;
   ok(EM.e3Stats().regMult > r0, 'Regularization strengthens the Generalize cure');
@@ -445,14 +459,16 @@ function deepStep(EM){ // ERA 4 — STEER against the drift + keep all three fee
   if(S.scriptorium < 80 && marksIn > scrDraw + os.scrR*1.4 && S.marks >= EM.totalCost(BUYS.scriptorium,1)) EM.buy('scriptorium');
   if(S.miner < 90 && S.ore >= EM.totalCost(BUYS.miner,1)) EM.buy('miner'); // Ore for scriptorium tablets
   const enoughCompute = S.node >= 26; // Vision/Reasoning already overflow (Data/Insight huge); compute is never the constraint — Knowledge is
-  // pause the Knowledge sinks (smelter upkeep + foundry 1:1) whenever Knowledge is tight so the Language run gets fed
-  S.paused.smelter = enoughCompute && S.knowledge < 1500;
-  S.paused.foundry = enoughCompute && S.knowledge < 2500;
+  // Pause the Knowledge sinks (smelter upkeep + foundry 1:1) whenever Knowledge is tight — REGARDLESS of node count.
+  // (Gating this on node>=26 deadlocked: knowledge-starved foundries can't make the silicon the nodes need, so the
+  // bot sat at L=0% for 30+ minutes. Protecting the stock un-deadlocks both sides; the pause band self-oscillates.)
+  S.paused.smelter = S.knowledge < 1500;
+  S.paused.foundry = S.node >= 12 && S.knowledge < 2500;
   if(!enoughCompute){
     if(S.smelter < 50 && S.ore >= EM.totalCost(BUYS.smelter,1)) EM.buy('smelter');
     if(S.foundry < 70 && S.knowledge > 1200 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
-    if(S.node < 26 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
   }
+  if(S.node < 26 && S.silicon >= EM.totalCost(BUYS.node,1)) EM.buy('node');
   if(S.dataset < 50 && S.silicon >= EM.totalCost(BUYS.dataset,1)*3) EM.buy('dataset'); // → Data (Vision)
   if(S.model < 36 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');             // → Insight (Reasoning)
   // STEER against the drift (R3.1) while playing the HEAT rhythm (R3.2). Passive balanced play now stalls below the gate:
@@ -492,6 +508,7 @@ function foundationStep(EM){ // ERA 5 — climb the recursion ladder to emergenc
 function testProgression(){
   section('Progression — autoplay Origins → Symbolic → Statistical → Deep → Foundation → Emergence');
   const EM = freshGame(); const { S } = EM;
+  if(process.env.NOSHIFT) EM.CFG.e3.shiftTriggers = [9,9]; // A/B diagnostic: shifts disabled
   const MAX = 600000;
   let tick = 0, origAt, symAt, statAt, deepAt, foundAt, emergeAt, endAt;
   for(; tick < MAX; tick++){
@@ -503,6 +520,10 @@ function testProgression(){
     if(origAt === undefined && S.flags.origindone) origAt = S.t;
     if(symAt === undefined && S.flags.symbolicDone) symAt = S.t;
     if(statAt === undefined && S.maxEra >= 4) statAt = S.t;
+    if(process.env.DIAG){
+      if(statAt!==undefined && !global.__snap1){ global.__snap1=1; console.log('  [deep-entry] data='+Math.round(S.data)+' insight='+Math.round(S.insight)+' knowledge='+Math.round(S.knowledge)+' silicon='+Math.round(S.silicon)+' dataset='+S.dataset+' model='+S.model+' foundry='+S.foundry+' scriptorium='+S.scriptorium+' scribe='+S.scribe+' shifts='+S.shifts); }
+      if(statAt!==undefined && deepAt===undefined && tick%6000===0) console.log('  [deep@'+(S.t/60).toFixed(1)+'m] V/L/R='+(S.vision*100|0)+'/'+(S.language*100|0)+'/'+(S.reasoning*100|0)+' node='+S.node+' data='+Math.round(S.data)+' insight='+Math.round(S.insight)+' knowledge='+Math.round(S.knowledge)+' heat='+Math.round(S.heat||0)+' cap='+Math.round(S.capability));
+    }
     if(deepAt === undefined && S.maxEra >= 5) deepAt = S.t;
     if(emergeAt === undefined && S.emerged) emergeAt = S.t;
     if(S.ending){ endAt = S.t; break; } // play THROUGH the aftermath to a resolved ending
