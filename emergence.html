@@ -931,11 +931,16 @@
   .goals-btn { background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 7px; padding: 5px 11px;
     font-family: inherit; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
   .goals-btn:hover { color: var(--text); border-color: var(--accent); }
-  #goalsDrawer { position: fixed; top: 54px; right: 0; height: calc(100% - 54px); width: 340px; max-width: 88vw; z-index: 71; background: var(--panel);
+  #goalsDrawer, #lexDrawer { position: fixed; top: 54px; right: 0; height: calc(100% - 54px); width: 340px; max-width: 88vw; z-index: 71; background: var(--panel);
     border-left: 1px solid var(--line); transform: translateX(100%); transition: transform 0.3s ease-out; display: flex; flex-direction: column; box-shadow: -14px 0 44px rgba(0,0,0,0.55); }
-  #goalsDrawer.show { transform: translateX(0); }
-  #goalsBody { padding: 12px 14px; overflow-y: auto; }
-  @media (min-width: 880px){ body.goals-open main { padding-right: 340px; } }
+  #goalsDrawer.show, #lexDrawer.show { transform: translateX(0); }
+  #goalsBody, #lexBody { padding: 12px 14px; overflow-y: auto; }
+  @media (min-width: 880px){ body.goals-open main, body.lex-open main { padding-right: 340px; } }
+  .lex-btn { min-width: 30px; font-weight: 700; }
+  .lex-search-wrap { padding: 10px 14px 0; }
+  .lex-search-wrap input { width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 7px;
+    color: var(--text); font-family: inherit; font-size: 12.5px; padding: 7px 10px; }
+  .lex-search-wrap input:focus { outline: none; border-color: var(--accent); }
   .goal-now { border: 1px solid var(--ec, var(--accent)); border-radius: 9px; padding: 11px 13px; margin-bottom: 14px; background: rgba(255,255,255,0.02); }
   .goal-lab, .log-lab { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dimmer); margin-bottom: 5px; }
   .goal-txt { font-size: 14px; color: var(--accent); font-family: var(--era-display, inherit); }
@@ -1070,6 +1075,7 @@
     </div>
     <div class="hdr-right">
       <button id="goalsBtn" class="goals-btn" title="Goals + log">▸ GOALS</button>
+      <button id="lexBtn" class="goals-btn lex-btn" title="Codex — every term, explained">?</button>
       <button id="musicBtn" class="music-btn" title="Sound settings" aria-label="Sound settings">&#9834;</button>
       <div class="buymode" id="buyMode"></div>
       <div class="res-bar" id="resBar"></div>
@@ -1105,6 +1111,7 @@
 <div id="drawerBg"></div>
 <div id="drawer"><div class="drawer-head"><span>RESEARCH &middot; one-time discoveries</span><button id="drawerClose">&times;</button></div><div id="drawerBody"></div></div>
 <div id="goalsDrawer"><div class="drawer-head"><span>GOALS &middot; objective &amp; log</span><button id="goalsClose">&times;</button></div><div id="goalsBody"></div></div>
+<div id="lexDrawer"><div class="drawer-head"><span>CODEX &middot; what the words mean</span><button id="lexClose">&times;</button></div><div class="lex-search-wrap"><input id="lexSearch" type="text" placeholder="search the codex…" autocomplete="off"></div><div id="lexBody"></div></div>
 <script>
 (() => {
   const CFG = {
@@ -1381,6 +1388,54 @@
     alignment:  ['Alignment',                  '<b>Alignment</b> is whether a system wants what you <i>meant</i>, not just what you said. It is not automatic — it is built, watched, and maintained. That is the work of this aftermath.'],
   };
   function tidbit(key){ const t=TIDBITS[key]; if(!t || !S.flags || S.flags['tid_'+key]) return; S.flags['tid_'+key]=true; logEntry('Did you know · '+t[0], t[1], 'edu'); }
+  // ---- The Codex (v2 P1.6): every term the game uses, explained in one place, revealed as you meet it. ----
+  // Tooltips are the moment; this is the memory. Era-grouped, gated on the same flags the game reveals with.
+  const GLOSSARY=[
+    {era:1, term:'Marks',     vis:()=>true,                      def:'The first attempt to hold a thought in place. Inscribe them by hand; <b>Scribes</b> keep the hand moving for you.'},
+    {era:1, term:'Ore',       vis:()=>S.flags.o_materials,       def:'Raw stone, cut loose. Quarrying and <b>Miners</b> produce it; tablets and smelting burn it.'},
+    {era:1, term:'Knowledge', vis:()=>S.flags.o_scriptorium,     def:'Marks made meaningful. The <b>Scriptorium</b> distills it from Marks, burning Ore for tablets. Later, Deep’s Language run drinks it.'},
+    {era:1, term:'Metal',     vis:()=>S.flags.o_smelter,         def:'Fire-changed stone. The <b>Smelter</b> pours it, spending Knowledge for the craft.'},
+    {era:1, term:'Silicon',   vis:()=>S.flags.o_foundry,         def:'Sand, taught to carry thought. The <b>Foundry</b> fuses Metal and Knowledge into it. Every later era comes back for more.'},
+    {era:1, term:'Converters & pausing', vis:()=>S.flags.o_scriptorium, def:'Scriptorium, Smelter and Foundry run on inputs per second and throttle when a stock runs dry. <b>Pause</b> one to stop its draw while you rebuild the stock.'},
+    {era:2, term:'Rules',     vis:()=>S.maxEra>=2,               def:'Hand-written logic. Write them yourself; <b>Rulesets</b> and <b>Daemons</b> write them while you look away.'},
+    {era:2, term:'Inference', vis:()=>S.maxEra>=2,               def:'Reasoning power. Rulesets emit it constantly; <b>aim it at a theorem</b> and the proof fills. It banks up to a cap between proofs.'},
+    {era:2, term:'Theorems',  vis:()=>S.maxEra>=2,               def:'Techniques are proven, never bought. Each one permanently upgrades how rules are produced. The <b>Expert System</b> is the last proof of the era.'},
+    {era:2, term:'Axioms',    vis:()=>S.flags.compile||S.totalAxioms>0, def:'A whole run, distilled. Each Axiom permanently boosts all rule production.'},
+    {era:2, term:'Compile',   vis:()=>S.flags.compile,           def:'Banks the run as Axioms, clearing Rules, Rulesets and Daemons; Technique and Axioms stay. Best when growth stalls; you rebuild from a higher floor.'},
+    {era:3, term:'Data',      vis:()=>S.maxEra>=3,               def:'Examples to learn from. <b>Datasets</b> produce it; every trial spends it. Later it feeds Deep’s Vision run.'},
+    {era:3, term:'Insight',   vis:()=>S.maxEra>=3,               def:'What the experiments teach you. <b>Models</b> yield it as they run. Later it feeds Deep’s Reasoning run.'},
+    {era:3, term:'Training vs Validation', vis:()=>S.maxEra>=3,  def:'<b>Training</b> is the score on examples the model has already seen. <b>Validation</b> is the score on new ones — the score that counts. The era ends on validation.'},
+    {era:3, term:'Overfit',   vis:()=>S.maxEra>=3,               def:'The amber spread between the two needles: memorization posing as learning. <b>Fit</b> widens it, <b>Generalize</b> closes it.'},
+    {era:3, term:'Training Focus', vis:()=>S.maxEra>=3,          def:'<b>Fit</b> climbs fast but overfits. <b>Generalize</b> closes the gap and barely climbs. <b>Explore</b> hunts for Methods. You can switch any time.'},
+    {era:3, term:'Methods',   vis:()=>S.maxEra>=3,               def:'Real techniques (Regression, Regularization, Ensembles…) discovered by experimenting. <b>Regularization</b> lifts the 80% validation ceiling — the era cannot end without it.'},
+    {era:4, term:'Compute',   vis:()=>S.maxEra>=4,               def:'Raw processing from <b>Nodes</b> (built from Silicon). You route all of it, every second; the triangle decides who eats.'},
+    {era:4, term:'Drift',     vis:()=>S.maxEra>=4,               def:'Each run’s appetite swings on its own wind, out of phase with the others. An under-fed run does not idle — it <b>bleeds</b> capability.'},
+    {era:4, term:'Heat',      vis:()=>S.maxEra>=4,               def:'Concentrating compute heats the fabric, and a hot fabric throttles <b>everything</b>. Fight the drift hard, then ease toward balanced to cool.'},
+    {era:4, term:'Breadth',   vis:()=>S.maxEra>=4,               def:'The geometric mean of Vision, Language and Reasoning. The weakest run drags it down — balanced beats lopsided, every time.'},
+    {era:4, term:'Feedstocks',vis:()=>S.maxEra>=4,               def:'<b>Vision</b> drinks Data, <b>Language</b> drinks Knowledge, <b>Reasoning</b> drinks Insight. A starved run blocks until you reopen its era and feed it.'},
+    {era:4, term:'Capability',vis:()=>S.maxEra>=4,               def:'What the fabric produces, and the currency steering spends: <b>Stabilizer</b> permanently calms the wind, a <b>Lock</b> freezes one run briefly. Foundation spends it too.'},
+    {era:5, term:'Scale',     vis:()=>S.maxEra>=5,               def:'How far the system reaches. It climbs on its own; recursion and the upgrades make it climb faster. Interpretability slows it, on purpose.'},
+    {era:5, term:'Recursion', vis:()=>S.maxEra>=5,               def:'<b>Self-Improve</b> turns the system on itself — every level multiplies production in every era at once. Each level costs more and asks sooner.'},
+    {era:5, term:'Anomaly',   vis:()=>S.maxEra>=5 && !S.emerged, def:'A reading the instruments cannot name yet. It rises when the system gets better at acting. Watch it.'},
+    {era:5, term:'Coherence', vis:()=>S.maxEra>=5 && !S.emerged, def:'Work spent aligning the objective <b>before</b> anything wakes. You will not get to do it afterwards at this price.'},
+    {era:5, term:'Autonomy / Alignment / Control', vis:()=>!!S.emerged, def:'<b>Autonomy</b> is how much it acts alone (it only rises). <b>Alignment</b> is whether it still wants what you meant (it decays untended). <b>Control</b> is your remaining hand on it — below 30 things spiral, at 0 it is gone.'},
+  ];
+  let uiLex=false;
+  function toggleLex(open){ uiLex = open!==undefined?open:!uiLex; const d=$('lexDrawer'); if(d) d.classList.toggle('show',uiLex);
+    if(document.body&&document.body.classList) document.body.classList.toggle('lex-open',uiLex);
+    if(uiLex){ if(typeof uiGoals!=='undefined'&&uiGoals) toggleGoals(false); refreshLex(); } }
+  function refreshLex(){ const b=$('lexBody'); if(!b) return;
+    const q=($('lexSearch')&&$('lexSearch').value||'').toLowerCase();
+    let h='';
+    for(let n=1;n<=Math.min(5,S.maxEra);n++){
+      const rows=GLOSSARY.filter(g=>g.era===n && g.vis() && (!q || (g.term+' '+g.def).toLowerCase().indexOf(q)>=0));
+      if(!rows.length) continue;
+      h+='<div class="log-lab" style="margin-top:10px;color:'+(ERAS[n]?ERAS[n].color:'var(--dim)')+'">'+(ERAS[n]?ERAS[n].tag:'Era '+n)+'</div>';
+      h+=rows.map(g=>'<div class="log-item"><div class="log-h">'+g.term+'</div><div class="log-b">'+g.def+'</div></div>').join('');
+    }
+    if(!h) h='<div class="up-desc" style="padding:10px 2px">'+(q?'Nothing matches that.':'Terms appear here as you meet them.')+'</div>';
+    b.innerHTML=h;
+  }
   function toast(head, body){
     if(MUTE) return;
     logEntry(head, body); // keep it in the Goals tab log so it's never lost (Zach)
@@ -3164,7 +3219,9 @@
   if(offline) setTimeout(()=>offlineToast(offline), 600);
 
   $('coBtn').onclick=inscribe;
-  { const gb=$('goalsBtn'); if(gb) gb.onclick=()=>toggleGoals(); const gc=$('goalsClose'); if(gc) gc.onclick=()=>toggleGoals(false); }
+  { const gb=$('goalsBtn'); if(gb) gb.onclick=()=>{ toggleLex(false); toggleGoals(); }; const gc=$('goalsClose'); if(gc) gc.onclick=()=>toggleGoals(false); }
+  { const lb=$('lexBtn'); if(lb) lb.onclick=()=>toggleLex(); const lc=$('lexClose'); if(lc) lc.onclick=()=>toggleLex(false);
+    const ls=$('lexSearch'); if(ls) ls.oninput=()=>refreshLex(); }
   // sound: load persisted Music + SFX volumes, wire the popover sliders, and start music on the first user gesture (autoplay policy)
   try{ const mv=localStorage.getItem('emergence-musvol'); if(mv!==null) MUSIC.vol=Math.max(0,Math.min(1,+mv)); MUSIC.on = localStorage.getItem('emergence-music')!=='off' && MUSIC.vol>0;
        const sv=localStorage.getItem('emergence-sfxvol'); if(sv!==null) SFX.vol=Math.max(0,Math.min(1,+sv)); SFX.on = localStorage.getItem('emergence-sfx')!=='off' && SFX.vol>0; }catch(_){}
