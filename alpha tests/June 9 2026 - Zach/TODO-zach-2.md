@@ -28,7 +28,7 @@ His new verdict: Origins + Symbolic are good now; **"statistical, deep, and foun
 - [x] R2.3 New unlocks surface at the TOP of the era, not the bottom: Origins (Refinement, Fabricate-the-Logic-Machine) + Symbolic (Compile) (D-ask).
 - [x] R2.4 Make the pause control more discoverable + a zero-Marks prompt ("out of Marks — click here to pause your scriptoria") (F3).
 - [x] R2.5 Make the Origins Research button bigger/more prominent (use the empty space by the core/age icon) (F4).
-- [ ] R2.6 Symbolic: make the Axiom production-bonus effect more visible/felt when writing rules post-compile (G4).
+- [x] R2.6 Symbolic: make the Axiom production-bonus effect more visible/felt when writing rules post-compile (G4).
 
 ### Color-as-signal (his #2 cross-cutting ask, the non-controversial parts)
 - [ ] R2.7 **Deep: color-code Vision / Language / Reasoning** — matching loss-line colors, three colored triangle corners, gradient-blended center as you drag (C / I-color). *(Color/teaching only — no balance change.)*

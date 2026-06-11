@@ -2447,7 +2447,9 @@
     }
     if($('inscribeYield')){ const o=oStats(); setText('inscribeYield','+'+fmt(o.inscribe)); if($('quarryYield')) setText('quarryYield','+'+fmt(o.quarry)); } // live per-click yield, so click-upgrades are felt
     const st=stats();
-    setText('manualSub', '+'+fmt(st.click)+' rules · the original verb');
+    // surface the Axiom multiplier at the point of action so its effect is felt (Zach: "hard to see that effect")
+    const axMult = 1 + S.axioms*st.axBonus;
+    setText('manualSub', '+'+fmt(st.click)+' rules per click'+(S.axioms>0 ? '  ·  ×'+axMult.toFixed(2)+' from '+S.axioms+' Axioms' : ''));
     setStatus(1,S.scribe>0||S.miner>0); setStatus(2,S.ruleset>0||S.daemon>0); setStatus(3,S.model>0); setStatus(4,S.node>0); setStatus(5,S.recursion>0||S.emerged);
     for(let n=1;n<=5;n++){ const o=$('obj-'+n); if(o){ const t=objectiveText(n), h=t?'&#9656; '+t:''; if(o._html!==h){ o.innerHTML=h; o._html=h; } } } // per-era objective line
     // Era 1 — Origins live values
