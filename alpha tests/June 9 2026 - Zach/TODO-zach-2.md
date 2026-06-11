@@ -37,7 +37,7 @@ His new verdict: Origins + Symbolic are good now; **"statistical, deep, and foun
 ### Teaching / copy clarity (extend the legibility pass — copy only, no mechanic change)
 - [x] R2.9 Statistical teaching: explain the fundamentals — what a "trial" is, what "accuracy" means, and **why 88%** (an AI-specific target) — and clarify the scatter goal ("are points matching the line or the line the points?") (H1, H2).
 - [x] R2.10 Deep teaching: an explicit, interactive explanation of the triangle (it's draggable; breakthrough/drift = steer compute there), and **explain the 78% breadth goal** (why not 100; it's an AI thing) (I1, I2).
-- [ ] R2.11 Foundation: explain the Self-Improve **disabled state** (what it needs and how close you are) (J3); and **name the agent plainly** at emergence — "symbiotic agent" + a description of the qualities you gave it (J5).
+- [x] R2.11 Foundation: explain the Self-Improve **disabled state** (what it needs and how close you are) (J3); and **name the agent plainly** at emergence — "symbiotic agent" + a description of the qualities you gave it (J5).
 
 ### Finale balance
 - [ ] R2.12 Fix the recursion burst: steepen the Self-Improve ladder so it isn't 5 levels in ~1.3s against the Deep Capability stockpile (J2). *(Balance/test only.)*
