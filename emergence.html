@@ -888,6 +888,7 @@
   .era-e2 .teach-crt { font-family: var(--mono, monospace); background: linear-gradient(180deg, rgba(8,22,12,0.6), rgba(5,14,8,0.7)); box-shadow: inset 0 0 30px rgba(40,140,70,0.08); }
   .era-e2 .teach-crt .teach-title { text-shadow: 0 0 8px var(--phosphor, rgba(125,255,176,0.5)); }
   .era-e3 .teach-inst { background: linear-gradient(180deg, rgba(8,28,34,0.5), rgba(4,16,20,0.6)); }
+  .era-e4 .teach-deep { background: linear-gradient(180deg, rgba(10,28,52,0.55), rgba(4,12,24,0.65)); font-family: var(--mono, monospace); }
   .conv-toggle { float: right; background: rgba(0,0,0,0.18); border: 1px solid var(--line); color: var(--dim); border-radius: 5px;
     width: 26px; height: 22px; font-size: 12px; line-height: 1; cursor: pointer; padding: 0; transition: color 0.15s, border-color 0.15s, background 0.15s; }
   .conv-toggle:hover { color: var(--text); border-color: var(--ec, var(--accent)); background: rgba(0,0,0,0.3); }
@@ -1825,6 +1826,10 @@
       steps:['A <b>Trial</b> is one round of training on examples; each raises <b>Accuracy</b> (how often the model is right).',
         'Memorizing isn’t learning — the <b>overfit gap</b> is how much it’s just memorizing. <b>Effective = accuracy − overfit.</b>',
         'Steer your <b>Focus</b>: Fit climbs fast (but overfits), Generalize shrinks the gap, Explore finds Methods. Reach <b>88% effective</b> — the bar where it works on data it has never seen.'] },
+    4: { cls:'teach-deep', title:'COMPUTE&nbsp;FABRIC&nbsp;ONLINE', lead:'One model, three skills at once — <span style="color:#54d2ff">Vision</span>, <span style="color:#b58cff">Language</span>, <span style="color:#6fe6a8">Reasoning</span>.',
+      steps:['<b>Drag the triangle</b> to split your finite Compute between the three runs.',
+        'They <b>drift</b> apart on their own — when one goes stale (or gets a breakthrough), steer Compute toward it to recover or push it.',
+        'Your goal is <b>breadth</b>: a model is only as capable as its weakest skill, so balanced beats lopsided. Reach <b>78% breadth</b> — generally capable across all three — to advance.'] },
   };
   function teachBeat(n){ const b=TEACH[n]; if(!b || S.flags['taught'+n]) return '';
     return '<div class="panel teach-beat '+b.cls+'" style="grid-column:1/-1">'+
@@ -2119,7 +2124,7 @@
   }
   function gaugeRow(lab,id,unit){ return '<div class="gauge-row"><span class="gauge-lab">'+lab+'</span><div class="gauge-bar"><i id="'+id+'"></i></div><span class="gauge-num" id="'+id+'-v"></span></div>'; }
   function buildDeep(){
-    let body =
+    let body = teachBeat(4) +
       // THE FABRIC — the 3-lane loss chamber + the compute mixer (the world object)
       '<div class="panel fabric-hero" style="grid-column:1/-1">'+
         '<div class="inst-head"><span class="inst-title">THE&nbsp;FABRIC</span><span class="inst-sub">three runs drift &middot; steer compute against the wind</span><span class="heat-led" id="heatLed"></span></div>'+
