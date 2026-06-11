@@ -9,7 +9,7 @@ The throughline: Origins/Symbolic became good via legibility; the back half is l
 - [x] R3.2 **Heat as the cost of the fix:** concentrating compute to fight drift builds Heat; high Heat throttles output. Creates the rhythm (concentrate → heat up → ease off → cool). Make the heat gauge/LED legible + meaningful (Zach: "heat is stable, I don't know what it is"). Resolves the dead-heat question.
 
 ## D8 — Substrate → end-run scorecard (gives the game a point)
-- [ ] R3.3 At the ending, repurpose the Substrate into a **timestamped recap + emergence quality grade**: time-to-emergence, the agent's Alignment/Autonomy/Control, which ending. Something to optimize/replay. (Uses REC timestamps we already log.)
+- [x] R3.3 At the ending, repurpose the Substrate into a **timestamped recap + emergence quality grade**: time-to-emergence, the agent's Alignment/Autonomy/Control, which ending. Something to optimize/replay. (Uses REC timestamps we already log.)
 
 ## D5 — Deep: steering upgrades + a lock tool (pairs with D4)
 - [ ] R3.4 Connect the build-buttons to the steering: a **stabilizer** upgrade (reduces drift), and a spendable **"lock a run"** tool (freeze a run ~30s so it can't drift). Make Compute Nodes feel like they feed the mechanic (Zach: "the buttons need to affect the main mechanic").

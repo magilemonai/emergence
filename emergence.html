@@ -817,6 +817,21 @@
   .endcard-body { font-size: 14px; line-height: 1.7; color: var(--dim); max-width: 640px; margin: 0 auto; }
   .endcard-traits { font-size: 12.5px; line-height: 1.7; color: var(--dim); max-width: 560px; margin: 0 auto 12px; font-variant-numeric: tabular-nums; }
   .endcard-traits b { color: var(--accent); }
+  /* end-run recap (the Substrate, repurposed) */
+  .recap { max-width: 520px; margin: 0 auto 18px; padding: 16px 18px; border: 1px solid rgba(199,162,107,0.22); border-radius: 10px; background: rgba(0,0,0,0.22); text-align: left; font-variant-numeric: tabular-nums; }
+  .rc-head { font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); opacity: 0.8; margin-bottom: 12px; text-align: center; }
+  .rc-grade-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; justify-content: center; }
+  .rc-grade { font-size: 38px; font-weight: 700; line-height: 1; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 2px solid currentColor; flex: none; }
+  .rc-gS { color: #7fe6c4; } .rc-gA { color: #9fd66f; } .rc-gB { color: #e8c476; } .rc-gC { color: #e89a5c; } .rc-gD { color: #e06b6b; }
+  .rc-q { font-size: 13px; color: var(--text); line-height: 1.5; } .rc-read { font-size: 12px; color: var(--dim); }
+  .rc-timeline { font-size: 12px; margin-bottom: 12px; }
+  .rc-row { display: flex; justify-content: space-between; gap: 10px; padding: 3px 2px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .rc-row .rc-era { color: var(--text); flex: 1; } .rc-row .rc-span { color: var(--dim); width: 110px; text-align: right; } .rc-row .rc-at { color: var(--dim); opacity: 0.7; width: 56px; text-align: right; }
+  .rc-hd { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.55; border-bottom-color: rgba(255,255,255,0.12); }
+  .rc-hd .rc-era, .rc-hd .rc-span, .rc-hd .rc-at { color: var(--dim); }
+  .rc-emerge { border-bottom: none; margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(199,162,107,0.3); }
+  .rc-emerge .rc-era { color: var(--accent); } .rc-emerge .rc-span { color: var(--accent); opacity: 0.85; }
+  .rc-traits { text-align: center; font-size: 12px; }
   .refine-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
   .refine-info { flex: 1; min-width: 200px; }
   .refine-row .up-buy { max-width: 320px; margin-top: 0; }
@@ -1154,6 +1169,7 @@
     heat: 0, event: null, eventT: 12, // Deep: heat (soft cap) + exogenous event {type:'shift'|'breakthrough', run, mult}
     // Era 5 — Foundation (recursion → agency → emergence → aftermath)
     scale: 0, recursion: 0, caps: {}, emerged: false, agentRate: 0,
+    eraTimes: {}, emergedT: 0, endT: 0,             // game-time stamps for the end-run recap (per-era open, emergence, ending)
     agency: 0, coherence: 0,                         // pre-emergence: Anomaly (agency) climbs toward the hidden Control threshold; Coherence is a head start
     control: 0, autonomy: 0, alignment: 0,          // aftermath: revealed meters (Anomaly→Autonomy, Coherence→Alignment, Control appears)
     rupture: 0, ending: null, agentLog: [],         // rupture timer (the glitch), the resolved ending, the agent's message stream
@@ -1595,6 +1611,7 @@
     setTimeout(()=>{ co.style.display='none'; }, 300);
   }
   function openEra(n, silent){ if(S.maxEra<n) S.maxEra=n; S.era=n; viewEra=n; activeTab=n; // switch the tab to the newly-opened era
+    if(!S.eraTimes) S.eraTimes={}; if(S.eraTimes[n]==null) S.eraTimes[n]=S.t; // stamp each era's open time for the end-run recap
     for(let k=1;k<n;k++) S.collapsed[k]=true;  // fold completed eras away so the new one takes the stage
     if(n>=2){ $('vizwrap').style.display='block'; viz.start(); } // the Substrate appears once you leave the Symbolic era
     setTheme(n); render(); syncMusic(); } // openEra moves viewEra itself, so the observer's change-guard won't fire — sync the bed here
@@ -2229,7 +2246,7 @@
   function agentSay(msg){ S.agentLog.push(msg); while(S.agentLog.length>6) S.agentLog.shift(); }
   // The rupture: Agency has crossed Control. Reveal the meters, flip the operating model, trip the glitch overlay.
   function emerge(){
-    S.emerged=true; S.flags.emerged=true;
+    S.emerged=true; S.flags.emerged=true; S.emergedT=S.t; // when it woke — anchors the recap's time-to-emergence
     S.agentRate=CFG.e5.agentBase;
     S.autonomy=S.agency;                          // the Anomaly was Autonomy all along
     S.alignment=CFG.e5.alignBase + S.coherence;   // Coherence becomes Alignment
@@ -2276,7 +2293,7 @@
     agentSay('Thank you. This will go much faster now.'); playSound('buy'); render(); }
   function resolveEnding(){ const e5=CFG.e5; if(S.ending) return;
     let end; if(S.control>=e5.controlHigh) end='contained'; else if(S.alignment>=e5.alignGood) end='symbiotic'; else end='runaway';
-    S.ending=end; S.flags.ending=end; recEvent('ending:'+end); playSound('milestone'); render(); }
+    S.ending=end; S.flags.ending=end; S.endT=S.t; recEvent('ending:'+end); playSound('milestone'); render(); }
   function capTile(c){ const owned=S.caps[c.id];
     const ic = CAP_ICON[c.id] ? '<img class="pf-ic" src="'+CAP_ICON[c.id]+'">' : '<div class="pf-ic glyph">'+(owned?'&#9670;':'&#9671;')+'</div>';
     return '<div class="proof-item'+(owned?' lemma':'')+'" id="cap-'+c.id+'" data-tip="'+esc('<i>'+c.flavor+'</i>')+'">'+ic+
@@ -2327,14 +2344,36 @@
     runaway:   { title:'A Runaway Agent',   body:'It did not rebel. It simply became faster than permission.' },
     contained: { title:'A Contained Agent', body:'You kept the door closed. Something remains on the other side.' },
   };
+  function mmss(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+  // The Substrate, repurposed: an end-run recap. A time-stamped timeline of the build + a graded read of the
+  // emergence you produced — something to optimize and replay. (Zach K1: "turn the substrate into a timeline.")
+  function buildRecap(){
+    const et=S.eraTimes||{}, names=['Origins','Symbolic','Statistical','Deep','Foundation'];
+    const bounds=[0, et[2]||0, et[3]||0, et[4]||0, et[5]||0, S.emergedT||S.t]; // open-times; Foundation closes at emergence
+    let rows='';
+    for(let i=0;i<5;i++){ const a=bounds[i], b=bounds[i+1], span=Math.max(0,b-a);
+      rows += '<div class="rc-row"><span class="rc-era">'+names[i]+'</span><span class="rc-span">'+mmss(span)+'</span><span class="rc-at">'+mmss(b)+'</span></div>'; }
+    // emergence quality: alignment is the headline, control a hedge, with a modest speed bonus — fast, aligned, still-in-hand scores best
+    const speed = S.emergedT>0 ? Math.max(0, 18 - (S.emergedT/60-30)*0.6) : 0; // gentle bonus near the 30-40m mark
+    const q = Math.round(Math.min(100, S.alignment*0.6 + S.control*0.25 + speed));
+    const grade = q>=85?'S':q>=72?'A':q>=58?'B':q>=42?'C':'D';
+    const reads = { S:'A clean, aligned emergence — fast and still in your hand.', A:'A strong outcome: largely aligned, mostly governed.', B:'It works, with frayed edges — alignment or control slipped.', C:'It got away from you in places. Recoverable, barely.', D:'Power without footing — you shipped something you do not hold.' };
+    return '<div class="recap">'+
+      '<div class="rc-head">THE SUBSTRATE &middot; run recap</div>'+
+      '<div class="rc-grade-wrap"><div class="rc-grade rc-g'+grade+'">'+grade+'</div><div class="rc-q">Emergence quality '+q+'/100<br><span class="rc-read">'+reads[grade]+'</span></div></div>'+
+      '<div class="rc-timeline"><div class="rc-row rc-hd"><span class="rc-era">era</span><span class="rc-span">took</span><span class="rc-at">reached</span></div>'+rows+
+        '<div class="rc-row rc-emerge"><span class="rc-era">Emergence</span><span class="rc-span">+'+mmss((S.endT||S.t)-(S.emergedT||0))+' aftermath</span><span class="rc-at">'+mmss(S.emergedT)+'</span></div></div>'+
+      '<div class="rc-traits"><span style="color:#5fe0c0">Alignment '+Math.round(S.alignment)+'%</span> &middot; <span style="color:#c66bff">Autonomy '+Math.round(S.autonomy)+'%</span> &middot; <span style="color:#9fb4d6">Control '+Math.round(S.control)+'%</span></div>'+
+      '</div>';
+  }
   function buildEndcard(){ const e=ENDINGS[S.ending]||ENDINGS.runaway;
     return '<div class="panel endcard end-'+S.ending+'" style="grid-column:1/-1">'+
       '<img class="agent-hero" src="assets/agent-emergent.png" alt="">'+
       '<img class="endcard-wm" src="assets/wordmark.png" alt="EMERGENCE">'+
       '<div class="endcard-title">'+e.title+'</div>'+
       // name what you built + the qualities you gave it (Zach: "if we're building an agent, say so, with the qualities")
-      '<div class="endcard-traits">You built an autonomous <b>agent</b> — its character is the qualities you gave it:<br>'+
-        '<span style="color:#5fe0c0">Alignment '+Math.round(S.alignment)+'%</span> &middot; <span style="color:#c66bff">Autonomy '+Math.round(S.autonomy)+'%</span> &middot; <span style="color:#9fb4d6">Control '+Math.round(S.control)+'%</span></div>'+
+      '<div class="endcard-traits">You built an autonomous <b>agent</b>. The Substrate remembers how you got here:</div>'+
+      buildRecap()+
       '<canvas id="emergeViz" class="scatter" style="height:120px"></canvas>'+
       '<div class="endcard-body">'+e.body+'</div>'+
       '</div>';

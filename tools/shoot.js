@@ -112,6 +112,13 @@ const SETUP = {
     S.agency=132; E.emerge(); S.rupture=3; S.agentRate=18; S.autonomy=74; S.alignment=46; S.control=37;
     S.agentLog=['I found a faster path.','Rerouting the Deep compute fabric. More efficient this way.','Running Statistical trials on my own now.'];
     E.openVeto(); E.checkMiles(); for(let i=0;i<3;i++) E.tick();`, // aftermath: revealed meters, an open veto window, the agent operating the stack
+  recap: `const E=window.EMERGENCE,S=E.S; E.revealGame(); S.flags.origindone=S.flags.symbolicDone=true;
+    S.maxEra=5;S.vision=0.9;S.language=0.88;S.reasoning=0.9;S.recursion=8;S.scale=2200;S.coherence=20;
+    S.caps={selfModel:true,toolAccess:true,recursivePlanning:true,worldModel:true};
+    S.eraTimes={1:0,2:972,3:1310,4:1540,5:2104}; S.agency=132; E.emerge(); S.emergedT=2580; S.rupture=3;
+    S.agentRate=18; S.autonomy=74; S.alignment=63; S.control=41; S.t=2718; S.endT=2718;
+    S.ending='symbiotic'; S.flags.ending='symbiotic';
+    E.checkMiles(); for(let i=0;i<3;i++) E.tick();`, // the resolved ending + the Substrate run recap
 };
 
 const chrome = spawn(CHROME, ['--headless=new','--disable-gpu','--hide-scrollbars',
