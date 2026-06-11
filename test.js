@@ -203,10 +203,29 @@ function testStatistical(){
   ok(S.gap > 0, 'Fit grows the overfit gap');
   S.focus = 'generalize'; const g0 = S.gap; EM.runExperiment(20);
   ok(S.gap < g0, 'Generalize shrinks the overfit gap');
-  // Explore discovers methods
+  // The Experiment Board (v2): methods are funded deterministically; Explore fills the survey, discounting cards
   EM = freshGame(); S = EM.S; S.maxEra = 3; S.focus = 'explore';
-  let guard = 0; while(Object.keys(S.methods).length < 2 && guard++ < 2000){ S.data += 3000; EM.runExperiment(20); }
-  ok(Object.keys(S.methods).length >= 2, 'Explore discovers methods');
+  ok(EM.boardCards()[0] === 'method' && EM.nextMethod().id === 'regression', 'the next method sits face-up on the board');
+  const full0 = EM.expCost('method');
+  S.data = 3000; EM.runExperiment(40);
+  ok(S.survey > 0, 'Explore trials fill the survey');
+  ok(EM.expCost('method') < full0, 'survey discounts the method card');
+  S.survey = 100; near(EM.expCost('method'), Math.ceil(EM.CFG.e3.cardMethodCosts[0]*0.5), 1.01, 'a full survey halves the price');
+  S.data = 3000; ok(EM.buyCard('method'), 'funding the card buys the method');
+  ok(S.methods.regression === true, 'the method is owned');
+  ok(S.survey === 0, 'funding consumes the survey');
+  ok(EM.nextMethod().id === 'features', 'the next method takes the slot');
+  // fit barely surveys
+  EM = freshGame(); S = EM.S; S.maxEra = 3; S.focus = 'fit'; S.data = 3000; EM.runExperiment(40);
+  ok(S.survey < 20, 'Fit trials barely survey');
+  // utilities: real effects, rotating slots, growing costs, survey consumed
+  EM = freshGame(); S = EM.S; S.maxEra = 3; S.data = 5000; S.gap = 0.3;
+  const cards0 = EM.boardCards(); ok(cards0.length === 3 && cards0[1] !== cards0[2], 'three face-up cards, distinct utilities');
+  const c0 = EM.expCost(cards0[1]); const gap0 = S.gap;
+  if(cards0[1] === 'calibrate'){ EM.buyCard('calibrate'); ok(S.gap < gap0, 'Holdout Study cuts the gap'); }
+  else { EM.buyCard(cards0[1]); }
+  ok(EM.boardCards()[1] !== cards0[1] || EM.boardCards()[2] !== cards0[2], 'buying a utility rotates the board');
+  ok(EM.expCost(cards0[1]) > c0 * 0.99, 'utility price grows with each purchase');
   // Regularization strengthens the gap cure (generalize ×2)
   EM = freshGame(); S = EM.S; const r0 = EM.e3Stats().regMult; S.methods.regularization = true;
   ok(EM.e3Stats().regMult > r0, 'Regularization strengthens the Generalize cure');
@@ -397,9 +416,13 @@ function statisticalStep(EM){
   if(S.silicon < 80 && S.metal >= EM.totalCost(BUYS.foundry,1)) EM.buy('foundry');
   if(S.dataset < 22 && S.silicon >= EM.totalCost(BUYS.dataset,1)) EM.buy('dataset');
   if(S.model < 16 && S.data >= EM.totalCost(BUYS.model,1)) EM.buy('model');
-  // steer Training Focus: Explore for methods early, Generalize when the gap is high, else Fit
+  // The Experiment Board (v2): fund the next Method when it's affordable with a trial buffer left over.
+  // Survey first (Explore) so the card is cheaper; methods carry the era (Regularization lifts the ceiling).
+  const next = EM.nextMethod && EM.nextMethod();
+  if(next && S.data - EM.expCost('method') > 120) EM.buyCard('method');
+  // steer Training Focus: Explore while a needed method is unaffordable (survey = discount), Generalize when the gap is high, else Fit
   const nM = Object.keys(S.methods).length;
-  if(nM < 3 && S.accuracy < 0.75) S.focus = 'explore';
+  if(next && nM < 4 && S.survey < 95 && EM.expCost('method') > S.data - 120) S.focus = 'explore';
   else if(S.gap > 0.18) S.focus = 'generalize';
   else S.focus = 'fit';
 }

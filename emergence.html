@@ -776,6 +776,21 @@
   .era-e3 .nt-val { border-color: #5fe0c0; box-shadow: 0 0 8px rgba(95,224,192,0.6); }
   .era-e3 .nt-val em { top: calc(100% + 4px); color: #8af0d8; }
   .era-e3 .ntrack.converged .nt-gap { background: transparent; }
+  /* the Experiment Board (v2): the next Method is a visible, priced target */
+  .era-e3 .survey-strip { display: flex; align-items: center; gap: 12px; margin: 2px 0 12px; cursor: help; }
+  .era-e3 .survey-lab { font-size: 11px; letter-spacing: 0.14em; color: var(--dim); white-space: nowrap; }
+  .era-e3 .survey-lab b { color: #6ea8ff; font-variant-numeric: tabular-nums; }
+  .era-e3 .survey-meter { flex: 1; height: 8px; margin-top: 0; background: rgba(2,9,12,0.7); border: 1px solid rgba(110,168,255,0.25); border-radius: 4px; }
+  .era-e3 .survey-meter > i { background: #6ea8ff; box-shadow: 0 0 8px rgba(110,168,255,0.5); }
+  .era-e3 .survey-eff { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .era-e3 .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .era-e3 .exp-card { display: flex; flex-direction: column; gap: 6px; border: 1px solid rgba(95,224,192,0.18); border-radius: 10px; padding: 12px 13px; background: rgba(2,9,12,0.45); transition: border-color 0.15s; }
+  .era-e3 .exp-card:hover { border-color: rgba(95,224,192,0.4); }
+  .era-e3 .exp-card.xc-method { border-color: rgba(95,224,192,0.45); background: rgba(95,224,192,0.06); box-shadow: 0 0 16px -6px rgba(95,224,192,0.5); }
+  .era-e3 .xc-tag { font-size: 9.5px; letter-spacing: 0.16em; color: var(--good); border: 1px solid rgba(95,224,192,0.4); border-radius: 4px; padding: 1px 6px; margin-right: 7px; vertical-align: 2px; }
+  .era-e3 .xc-name { font-size: 13.5px; color: var(--text); }
+  .era-e3 .xc-desc { font-size: 11.5px; color: var(--dim); line-height: 1.5; flex: 1; }
+  .era-e3 .xc-ic { width: 40px; height: 40px; object-fit: contain; align-self: flex-end; margin: -4px 0 -8px; opacity: 0.9; }
   /* control deck: training-focus selector + the trial lever */
   .era-e3 .inst-controls { display: flex; gap: 16px; align-items: flex-end; margin-top: 16px; }
   .era-e3 .focus-dial { flex: 1; }
@@ -1152,14 +1167,19 @@
       gapGrow: 0.0023,       // overfit gap growth per experiment (Fit) — kept below Fit's accuracy gain so Fit still nets forward (scaled with accGain)
       gapReduce: 0.0046,     // gap reduction per experiment (Generalize); ×2 with Regularization — so Regularization really matters
       gapMax: 0.6,
-      discoverBase: 0.012, dataDiscover: 0.00002, // method-discovery odds per experiment (rise with Data; Explore focus)
+      // The Experiment Board (v2 P2.1): methods are funded, never rolled. Explore trials fill the SURVEY,
+      // and survey discounts every card; funding any card consumes the survey. disc multipliers now feed survey rate.
+      surveyPerExp: 1.1,     // survey points per experiment × focus.disc × Clustering
+      surveyDiscount: 0.5,   // a full survey halves card costs
+      cardMethodCosts: [60, 150, 320, 560, 900, 1400], // Data price of the Nth method (in METHODS order)
+      cardUtil: { calibrate:{cost:40, growth:1.22}, sweep:{cost:55, growth:1.22}, distill:{cost:35, growth:1.22} },
       genThreshold: 0.88,    // effective accuracy that generalizes → Era 4 (high enough that you need the Methods)
       seedDatasets: 3, seedSilicon: 220,
-      // Training Focus — the live decision. {acc, gap-grow, gap-reduce, discovery, insight} multipliers
+      // Training Focus — the live decision. {acc, gap-grow, gap-reduce, survey, insight} multipliers
       focus: {
         fit:        { acc:1.7, gap:1.5, red:0,   disc:0.3, ins:1.0, label:'Fit',        desc:'Accuracy climbs fast — but the overfit gap grows.' },
         generalize: { acc:0.3, gap:0,   red:1.0, disc:0.3, ins:1.2, label:'Generalize', desc:'Shrinks the overfit gap. Accuracy only creeps.' },
-        explore:    { acc:0.4, gap:0.5, red:0,   disc:2.6, ins:0.8, label:'Explore',    desc:'Hunts for new Methods. Accuracy holds.' },
+        explore:    { acc:0.4, gap:0.5, red:0,   disc:2.6, ins:0.8, label:'Explore',    desc:'Surveys the board — experiments get cheaper. Accuracy holds.' },
       },
     },
     e4: { // ERA 4 — Deep (compute allocation across parallel training runs; breadth, not specialization, wins)
@@ -1244,6 +1264,7 @@
     inference: 0, activeProof: null, proofAcc: {}, optLevel: 0, infCapLevel: 0, // theorem-proving research
     // Era 3 — Statistical
     data: 0, insight: 0, accuracy: 0, gap: 0, methods: {}, focus: 'fit',
+    survey: 0, utilN: 0, utilLvl: { calibrate:0, sweep:0, distill:0 }, // Experiment Board (v2): survey discount + utility rotation/costs
     dataset: 0, model: 0,
     // Era 4 — Deep (compute allocation across three training runs)
     node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision:1, language:1, reasoning:1 }, capability: 0,
@@ -1407,8 +1428,9 @@
     {era:3, term:'Insight',   vis:()=>S.maxEra>=3,               def:'What the experiments teach you. <b>Models</b> yield it as they run. Later it feeds Deep’s Reasoning run.'},
     {era:3, term:'Training vs Validation', vis:()=>S.maxEra>=3,  def:'<b>Training</b> is the score on examples the model has already seen. <b>Validation</b> is the score on new ones — the score that counts. The era ends on validation.'},
     {era:3, term:'Overfit',   vis:()=>S.maxEra>=3,               def:'The amber spread between the two needles: memorization posing as learning. <b>Fit</b> widens it, <b>Generalize</b> closes it.'},
-    {era:3, term:'Training Focus', vis:()=>S.maxEra>=3,          def:'<b>Fit</b> climbs fast but overfits. <b>Generalize</b> closes the gap and barely climbs. <b>Explore</b> hunts for Methods. You can switch any time.'},
-    {era:3, term:'Methods',   vis:()=>S.maxEra>=3,               def:'Real techniques (Regression, Regularization, Ensembles…) discovered by experimenting. <b>Regularization</b> lifts the 80% validation ceiling — the era cannot end without it.'},
+    {era:3, term:'Training Focus', vis:()=>S.maxEra>=3,          def:'<b>Fit</b> climbs fast but overfits. <b>Generalize</b> closes the gap and barely climbs. <b>Explore</b> fills the survey, cutting experiment costs. You can switch any time.'},
+    {era:3, term:'Experiment Board', vis:()=>S.maxEra>=3,        def:'Methods are <b>funded</b>, never rolled: the next Method sits face-up with a price. Explore trials fill the <b>survey</b>, discounting every card; funding any card consumes it.'},
+    {era:3, term:'Methods',   vis:()=>S.maxEra>=3,               def:'Real techniques (Regression, Regularization, Ensembles…) you fund on the Experiment Board. <b>Regularization</b> lifts the 80% validation ceiling — the era cannot end without it.'},
     {era:4, term:'Compute',   vis:()=>S.maxEra>=4,               def:'Raw processing from <b>Nodes</b> (built from Silicon). You route all of it, every second; the triangle decides who eats.'},
     {era:4, term:'Drift',     vis:()=>S.maxEra>=4,               def:'Each run’s appetite swings on its own wind, out of phase with the others. An under-fed run does not idle — it <b>bleeds</b> capability.'},
     {era:4, term:'Heat',      vis:()=>S.maxEra>=4,               def:'Concentrating compute heats the fabric, and a hot fabric throttles <b>everything</b>. Fight the drift hard, then ease toward balanced to cool.'},
@@ -1679,7 +1701,7 @@
     { id:'regression',     name:'Regression',         flavor:'A line drawn through the noise.',          desc:'Experiments raise accuracy 40% faster.' },
     { id:'features',       name:'Feature Engineering', flavor:'Asking the data better questions.',        desc:'Datasets yield 50% more Data.' },
     { id:'regularization', name:'Regularization',      flavor:'Prefer the simpler explanation.',          desc:'Cuts the overfitting gap by 80% — the cure for poor generalization.' },
-    { id:'clustering',     name:'Clustering',          flavor:'Like finds like.',                         desc:'Discoveries surface 60% more readily.' },
+    { id:'clustering',     name:'Clustering',          flavor:'Like finds like.',                         desc:'The survey fills 60% faster.' },
     { id:'bayesian',       name:'Bayesian Inference',  flavor:'Belief, updated by evidence.',             desc:'Each experiment yields 80% more Insight.' },
     { id:'ensembles',      name:'Ensembles',           flavor:'A crowd of guesses, wiser than any one.',  desc:'+12% effective accuracy (many weak models, one strong vote).' },
   ];
@@ -1708,11 +1730,49 @@
     S.gap = Math.max(0, Math.min(e.gapMax, S.gap + (e.gapGrow*f.gap - e.gapReduce*f.red*st.regMult)*amount));
     if(S.gap >= e.gapMax*0.5 && !MUTE) tidbit('overfit'); // first time the gap grows noticeably, explain overfitting (R3.7)
     S.insight += e.insightPerExp*f.ins*effAccuracy()*st.insMult*amount;
-    // discovery only rolls during live play — never during offline replay (MUTE), so catch-up is deterministic and doesn't churn render()
-    const next = METHODS.find(mm=>!S.methods[mm.id]);
-    if(next && !MUTE){ const p=(e.discoverBase + S.data*e.dataDiscover)*f.disc*st.discMult*amount;
-      if(Math.random() < p){ S.methods[next.id]=true; recEvent('method:'+next.id);
-        toast('METHOD DISCOVERED · '+next.name, next.desc+'<br><i>Kept in Methods, below.</i>'); render(); } }
+    // Experiment Board (v2): trials SURVEY the space instead of rolling dice — survey discounts every card on
+    // the board (Explore fills it ~9× faster). Deterministic: same play, same outcome, offline-safe.
+    S.survey = Math.min(100, (S.survey||0) + e.surveyPerExp*f.disc*st.discMult*amount);
+  }
+  // ---- The Experiment Board: methods + utility studies are FUNDED with Data, never rolled. ----
+  const UTILS = {
+    calibrate: { name:'Holdout Study',    flavor:'Set some truth aside, and check against it.', desc:'Cuts the current overfit gap by 30%.' },
+    sweep:     { name:'Parameter Sweep',  flavor:'Try every dial, keep the best.',              desc:'A one-time push of raw accuracy.' },
+    distill:   { name:'Ablation Study',   flavor:'Remove a piece; see what mattered.',          desc:'A grant of Insight, scaled by your Methods.' },
+  };
+  function nextMethod(){ return METHODS.find(mm=>!S.methods[mm.id])||null; }
+  function surveyDisc(){ return 1 - CFG.e3.surveyDiscount*(S.survey||0)/100; }
+  function expCost(kind){ const e=CFG.e3;
+    if(kind==='method'){ const i=METHODS.findIndex(mm=>!S.methods[mm.id]); return i<0?Infinity:Math.ceil(e.cardMethodCosts[i]*surveyDisc()); }
+    const u=e.cardUtil[kind]; if(!u) return Infinity;
+    return Math.ceil(u.cost*Math.pow(u.growth,(S.utilLvl&&S.utilLvl[kind])||0)*surveyDisc()); }
+  function boardCards(){ // the 3 face-up cards: the next method (the target, always visible) + 2 rotating utilities
+    const keys=Object.keys(UTILS), n=S.utilN||0, m=nextMethod();
+    const utils=[keys[n%3], keys[(n+1)%3]];
+    return m ? ['method', utils[0], utils[1]] : [utils[0], utils[1], keys[(n+2)%3]];
+  }
+  function buyCard(kind){ const c=expCost(kind); if(!(S.data>=c)) return false; const st=e3Stats();
+    if(kind==='method'){ const m=nextMethod(); if(!m) return false;
+      S.data-=c; S.methods[m.id]=true; S.survey=0; recEvent('method:'+m.id);
+      if(!MUTE){ toast('METHOD · '+m.name, m.desc+'<br><i>Pinned in Methods, below.</i>'); render(); }
+      return true; }
+    if(!UTILS[kind]) return false;
+    S.data-=c; S.utilLvl[kind]=(S.utilLvl[kind]||0)+1; S.utilN=(S.utilN||0)+1; S.survey=0;
+    if(kind==='calibrate') S.gap=Math.max(0, S.gap*0.7);
+    if(kind==='sweep')     S.accuracy=Math.min(1, S.accuracy+0.025*(1-S.accuracy));
+    if(kind==='distill')   S.insight+=25*st.insMult;
+    if(!MUTE){ playSound('buy'); render(); } // rotation changes the cards → structural rebuild
+    return true; }
+  function boardHTML(){ // card structure is render-built; refresh() only touches costs/disabled (build-once rule)
+    return boardCards().map(kind=>{ const isM=kind==='method', m=isM?nextMethod():null, u=isM?null:UTILS[kind];
+      if(isM && !m) return '';
+      const name=isM?m.name:u.name, flavor=isM?m.flavor:u.flavor, desc=isM?m.desc:u.desc;
+      const lvl=(!isM && S.utilLvl[kind])?' <span class="up-count">Lv '+S.utilLvl[kind]+'</span>':'';
+      const ic=(isM && METHOD_ICON[m.id])?'<img class="xc-ic" src="'+METHOD_ICON[m.id]+'">':'';
+      return '<div class="exp-card'+(isM?' xc-method':'')+'" data-tip="'+esc('<i>'+flavor+'</i><br>'+desc+(isM?'':'<br>Repeatable; the price grows each time.'))+'">'+ic+
+        '<div class="xc-name">'+(isM?'<span class="xc-tag">METHOD</span>':'')+name+lvl+'</div><div class="xc-desc">'+desc+'</div>'+
+        '<button class="up-buy" data-card="'+kind+'" id="xc-buy-'+kind+'"'+(isM?' data-mid="'+m.id+'"':'')+'>FUND &middot; <span class="c" id="xc-c-'+kind+'"></span></button></div>';
+    }).join('');
   }
   const BUYS = {
     scribe:      { res:'marks', key:'scribe',      base:CFG.e1.scribeCost,      growth:CFG.e1.scribeGrowth },
@@ -2018,7 +2078,7 @@
     3: { cls:'teach-inst', title:'INSTRUMENT&nbsp;CALIBRATION', lead:'You are training a model to find the pattern in data — without just memorizing it.',
       steps:['A <b>Trial</b> is one round of training on examples; each raises <b>Accuracy</b> (how often the model is right).',
         'Memorizing isn’t learning — the <b>overfit gap</b> is how much it’s just memorizing. <b>Effective = accuracy − overfit.</b>',
-        'Steer your <b>Focus</b>: Fit climbs fast (but overfits), Generalize shrinks the gap, Explore finds Methods. Reach <b>88% effective</b> — the bar where it works on data it has never seen.'] },
+        'Steer your <b>Focus</b>: Fit climbs fast (but overfits), Generalize shrinks the gap, Explore surveys the Experiment Board so funding Methods costs less. Reach <b>88% effective</b> — the bar where it works on data it has never seen.'] },
     4: { cls:'teach-deep', title:'COMPUTE&nbsp;FABRIC&nbsp;ONLINE', lead:'One model, three skills at once — <span style="color:#54d2ff">Vision</span>, <span style="color:#b58cff">Language</span>, <span style="color:#6fe6a8">Reasoning</span>.',
       steps:['<b>Drag the triangle</b> to split your finite Compute between the three runs.',
         'They <b>drift</b> apart on their own — when one goes stale (or gets a breakthrough), steer Compute toward it to recover or push it.',
@@ -2212,7 +2272,7 @@
     for(const m of METHODS){
       if(S.methods[m.id]) pins += '<div class="method-pin found" data-tip="'+esc('<i>'+m.flavor+'</i><br>'+m.desc)+'">'+
         (METHOD_ICON[m.id]?'<img src="'+METHOD_ICON[m.id]+'">':'<span class="mp-glyph">&#9670;</span>')+'<div class="mp-txt"><b>'+m.name+'</b><span>'+m.desc+'</span></div></div>';
-      else if(!shownUnknown){ shownUnknown=true; pins += '<div class="method-pin scanning"><span class="mp-glyph">?</span><div class="mp-txt"><b>scanning for methods…</b><span id="disc-feed">odds rise with Data and the Explore focus.</span></div></div>'; }
+      else if(!shownUnknown){ shownUnknown=true; pins += '<div class="method-pin scanning"><span class="mp-glyph">?</span><div class="mp-txt"><b>'+(Object.keys(S.methods).length?'next method':'no methods yet')+'</b><span>fund it on the Experiment Board above.</span></div></div>'; }
     }
     return '<div class="method-pins">'+pins+'</div>';
   }
@@ -2226,7 +2286,7 @@
       // THE INSTRUMENT — the living plot is the world object; you observe + steer a learning process
       '<div class="panel plot-instrument" style="grid-column:1/-1">'+
         '<div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><span class="inst-dot"></span></div>'+
-        '<div class="sym-help">The glowing <b>curve</b> is the model’s guess; the <b>dots</b> are real data — a good model follows the data’s shape without hugging every dot (that’s overfitting). The readout below shows <b>TRAINING</b> (its score on examples it memorized) vs <b>VALIDATION</b> (its score on new ones — the one that counts). <b>Run Trials</b> to push both up; <b>Focus</b> steers — <i>Fit</i> climbs fast but widens the amber overfit spread, <i>Generalize</i> closes it, <i>Explore</i> finds Methods. Push <b>VALIDATION</b> to the goal line to finish the era.</div>'+
+        '<div class="sym-help">The glowing <b>curve</b> is the model’s guess; the <b>dots</b> are real data — a good model follows the data’s shape without hugging every dot (that’s overfitting). The readout below shows <b>TRAINING</b> (its score on examples it memorized) vs <b>VALIDATION</b> (its score on new ones — the one that counts). <b>Run Trials</b> to push both up; <b>Focus</b> steers — <i>Fit</i> climbs fast but widens the amber overfit spread, <i>Generalize</i> closes it, <i>Explore</i> surveys the board below so experiments cost less. Push <b>VALIDATION</b> to the goal line to finish the era.</div>'+
         '<canvas id="scatter" class="scatter"></canvas>'+
         '<div class="proof-rate inst-readout" id="accRate"></div>'+
         // Two-needle readout (v2 P1.4): VALIDATION is the real score (filled), TRAINING runs ahead (needle);
@@ -2244,12 +2304,18 @@
           '<button class="act-btn inst-lever" id="expBtn">RUN TRIAL</button>'+ // label tracks the active Focus (R3.8): RUN FIT/GENERALIZE/EXPLORE TRIAL
         '</div>'+
       '</div>'+
+      // The Experiment Board (v2): the next Method is a visible, priced target — never a dice roll.
+      '<div class="panel exp-board'+intro('expboard')+'" style="grid-column:1/-1"><div class="panel-label">Experiments &middot; choose what to fund <span class="lbl-plain">(spending Data here competes with running trials)</span></div>'+
+        '<div class="survey-strip" data-tip="'+esc('<i>Explore trials map the search space.</i><br>Survey discounts every card below (up to half price). <b>Funding any card consumes the survey.</b>')+'">'+
+          '<span class="survey-lab">SURVEYED <b id="surveyPct"></b></span><div class="meter survey-meter"><i id="surveyFill"></i></div><span class="survey-eff" id="surveyDiscLab"></span></div>'+
+        '<div class="card-row" id="expCards">'+boardHTML()+'</div>'+
+      '</div>'+
       '<div class="panel feed-module">'+eraUpgrade('dataset','Dataset Feed','Feeds the instrument with observations. Built from Silicon.')+'</div>'+
       '<div class="panel feed-module">'+eraUpgrade('model','Fit Engine','Auto-runs trials, spending Data.')+'</div>'+
       '<div class="panel supply-bus" style="grid-column:1/-1"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; reopen the Foundry to scale</div>'+
         '<div class="sup-row">'+supplyBtn('foundry','Foundry')+supplyBtn('smelter','Smelter')+supplyBtn('scriptorium','Scriptorium')+'</div>'+
         '<div class="sup-rate" id="supSi"></div></div>'+
-      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods <span class="lbl-plain">(techniques you discover by experimenting)</span></div>'+buildMethods()+'</div>';
+      '<div class="panel" style="grid-column:1/-1"><div class="panel-label">Methods <span class="lbl-plain">(techniques you funded, working for you)</span></div>'+buildMethods()+'</div>';
     return eraShell(3, false, body);
   }
   function drawScatter(){ // Era 3 signature viz: a living fit — points, the true-function ghost, a confidence band, and the model curve learning the shape (wobbling when overfit)
@@ -2655,6 +2721,7 @@
     const eb=$('expBtn'); if(eb) eb.onclick=()=>{ runExperiment(1); plotPulse=1; playSound('click'); refresh(); };
     document.querySelectorAll('[data-focus]').forEach(b=>{ b.onclick=()=>{ S.focus=b.getAttribute('data-focus'); playSound('click'); render(); }; });
     document.querySelectorAll('[data-supbuy]').forEach(b=>{ b.onclick=()=>{ buy(b.getAttribute('data-supbuy')); }; });
+    { const xc=$('expCards'); if(xc) xc.onclick=e=>{ const b=e.target.closest && e.target.closest('[data-card]'); if(b && !b.disabled) buyCard(b.dataset.card); }; } // Experiment Board (delegated — cards rebuild on purchase)
     document.querySelectorAll('button[data-buy]').forEach(b=> b.onclick=e=>buy(e.currentTarget.dataset.buy));
     document.querySelectorAll('[data-pause]').forEach(b=> b.onclick=e=>{ e.stopPropagation(); const k=e.currentTarget.dataset.pause; S.paused[k]=!S.paused[k]; playSound('click'); render(); });
     document.querySelectorAll('[data-teach]').forEach(b=> b.onclick=e=>{ const n=e.currentTarget.dataset.teach; const tb=TEACH[n];
@@ -2838,10 +2905,15 @@
       for(const key of ['foundry','smelter','scriptorium']){ const sb=$('sup-'+key); if(sb){ const c=totalCost(BUYS[key],1); setText('supc-'+key,'×'+S[key]); setText('supx-'+key, fmt(c)+' '+BUYS[key].res); sb.disabled = S[BUYS[key].res] < c; } }
       setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries  ·  Models draw '+fmt(S.model*CFG.e3.modelSilicon)+'/s');
       for(const key of ['dataset','model']){ const el=$('eff-'+key); if(el){ const h=buildEffect(key); if(el._html!==h){ el.innerHTML=h; el._html=h; } } }
-      const df=$('disc-feed'); if(df){ const f=curFocus(), st=e3Stats(), exps=S.model*CFG.e3.expPerModel;
-        const pSec=Math.min(0.95, (CFG.e3.discoverBase + S.data*CFG.e3.dataDiscover)*f.disc*st.discMult*Math.max(exps,0));
-        const h='~'+(pSec*100).toFixed(0)+'%/s chance to discover the next Method'+(S.focus==='explore'?' · <b>Explore is boosting this</b>':' · switch to <b>Explore</b> to boost it');
-        if(df._html!==h){ df.innerHTML=h; df._html=h; } }
+      // Experiment Board: live costs + survey meter against the render-built card structure
+      { const sv=S.survey||0, sf=$('surveyFill'); if(sf) sf.style.width=sv.toFixed(1)+'%';
+        setText('surveyPct', Math.round(sv)+'%');
+        setText('surveyDiscLab', sv>=1 ? ('cards −'+Math.round((1-surveyDisc())*100)+'%') : (S.focus==='explore'?'surveying…':'Explore fills this'));
+        const mtd=nextMethod(), mbtn=$('xc-buy-method');
+        const stale = mbtn && mbtn.dataset && typeof mbtn.dataset.mid==='string' && (!mtd || mbtn.dataset.mid!==mtd.id);
+        if(stale) render(); // board structure out of sync with state (e.g. a loaded save mutated methods) → self-heal once
+        else for(const kind of boardCards()){ if(kind==='method'&&!mtd) continue; const bb=$('xc-buy-'+kind); if(bb){ const c=expCost(kind);
+          setText('xc-c-'+kind, fmt(c)+' Data'); if(bb.disabled!==(S.data<c)) bb.disabled=(S.data<c); } } }
       drawScatter(); }
     // ERA 4 — Deep (the compute fabric)
     const mb=$('meter-breadth');
@@ -3160,7 +3232,7 @@
       else if(typeof def==='string') base[k]=(typeof v==='string')?v:def;
       else if(_isObj(def)){
         if(!_isObj(v)) continue;                                    // malformed map → keep default
-        if(k==='alloc'||k==='proofAcc'||k==='locks'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
+        if(k==='alloc'||k==='proofAcc'||k==='locks'||k==='utilLvl'){ const m={...def}; for(const kk in v) m[kk]=_numOr(v[kk], def[kk]!==undefined?def[kk]:0); base[k]=m; }
         else base[k]={...def, ...v};                                // boolean-ish maps: flags/disco/tech/methods/caps/collapsed/obsolete
       }
     }
@@ -3253,7 +3325,7 @@
       unitCost, totalCost, buyQty, buy, writeRule, inscribe, quarry, fabricate, produce, checkMiles, tick,
       oStats, discoVisible, canBuyDisco, buyDisco, stats, canBuyTech, buyTech, axiomGain, compile,
       symInfRate, infCap, proofCost, canProve, selectProof, completeProof,
-      METHODS, e3Stats, effAccuracy, runExperiment,
+      METHODS, e3Stats, effAccuracy, runExperiment, UTILS, nextMethod, surveyDisc, expCost, boardCards, buyCard,
       deepBreadth, setAllocFromXY, mixerHandleXY, stabilizerCost, lockCost, buyStabilizer, lockRun, rMult, CAPS, CAPMAP, improveCost, selfImprove, alignCohCost, alignObjective, buyCap,
       agenticCapCount, emerge, openVeto, resolveVeto, constrainAct, alignAct, delegateAct, resolveEnding,
       MUSIC, musicForEra, startMusic, syncMusic, openEra, setViewEra:(n)=>{ viewEra=n; },
