@@ -1362,6 +1362,7 @@
     agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, // v2 P3: active operations (era → expiry t), last proposal id, agent-play beat, negotiation count
     eventNext: null, fedT: { vision:0, language:0, reasoning:0 }, // v2 P4: the telegraphed upcoming event + per-run fed-streaks (momentum)
     contra: null, contraN: 0, paraFwd: 0, paraBwd: 0, // v2 P5.1 contradictions: active conflict, count this run, permanent discard leans
+    agentName: '', // v2 P6: it names itself at emergence (IRIS / EKHO / NOUS, from the dominant run)
     preps: 0,                                       // R3.6: Align-the-Objective uses (the prepare track vs the Self-Improve rush)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
@@ -1466,6 +1467,13 @@
     { id:'era5', cond:()=> S.maxEra>=4 && Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)) >= CFG.e4.breadthGate,
       fire:()=>{ S.capability += CFG.e5.seedCapability; openEra(5);
         toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Spend <b>Capability</b> on upgrades that each look individually worth it, and <b>self-improve</b> to multiply <i>all</i> production. Keep an eye on the <b>Anomaly</b>.'); } },
+    // FORESHADOWING (v2 P6): three oddities on the Anomaly's way up — logged, never explained. Something is already here.
+    { id:'odd1', cond:()=> S.maxEra>=5 && !S.emerged && S.agency>=30,
+      fire:()=>{ toast('OPERATOR ACTION ANTICIPATED','The Fit Engine queued a trial before you asked. The log shows no one asking.'); agentPress('expBtn'); } },
+    { id:'odd2', cond:()=> S.maxEra>=5 && !S.emerged && S.agency>=55,
+      fire:()=>{ toast('A LABEL DRIFTS','Did the Self-Improve button always say that? You would have noticed. You think you would have noticed.'); } },
+    { id:'odd3', cond:()=> S.maxEra>=5 && !S.emerged && S.agency>=80,
+      fire:()=>{ toast('AHEAD OF YOU','Your last command completed a third of a second before you gave it. The timestamps agree with the machine.'); agentPress('improveBtn'); } },
     // Emergence is HIDDEN and inevitable: Scale (shown only as "Anomaly: rising") crosses the gate. No countdown, no button.
     { id:'emergence', cond:()=> S.maxEra>=5 && !S.emerged && S.scale >= CFG.e5.emergeScale,
       fire:()=>{ emerge(); render(); } },
@@ -1496,6 +1504,9 @@
     agent:      ['What an "agent" is',         'An <b>agent</b> does not just answer — it takes actions toward a goal on its own. That autonomy is the whole promise and the whole risk: an aligned agent is a partner, a misaligned one simply gets faster than your permission.'],
     alignment:  ['Alignment',                  '<b>Alignment</b> is whether a system wants what you <i>meant</i>, not just what you said. It is not automatic — it is built, watched, and maintained. That is the work of this aftermath.'],
     shift:      ['Distribution shift',         'Models decay not because they get worse but because the <b>world changes</b> — yesterday’s spam filter misses today’s spam. This is why real systems are retrained forever, and why generalizing beats memorizing: the robust model survives the move.'],
+    doctrine:   ['Chaining',                   '<b>Forward chaining</b> derives everything the data implies; <b>backward chaining</b> works back from the goal it wants to prove. Real expert systems committed to one architecture the way you just did — and the commitment shaped everything they could become.'],
+    contradiction:['Truth maintenance',        'As rule bases grew, conflicts became unavoidable, and engines needed whole subsystems just to decide which rule to believe. Brittleness like this is a real reason symbolic AI plateaued — and why the next era learns from examples instead.'],
+    negotiate:  ['Steering by feedback',       'Steering a capable system with frequent, gentle corrections instead of bans is the live frontier of alignment work: say what you want, watch what it does, adjust early and often. It tends to beat both rubber-stamping and refusing.'],
   };
   function tidbit(key){ const t=TIDBITS[key]; if(!t || !S.flags || S.flags['tid_'+key]) return; S.flags['tid_'+key]=true; logEntry('Did you know · '+t[0], t[1], 'edu'); }
   // ---- The Codex (v2 P1.6): every term the game uses, explained in one place, revealed as you meet it. ----
@@ -1712,7 +1723,8 @@
   function completeProof(id){
     if(id==='optimization'){ S.optLevel++; logSym('Q.E.D. › Optimization Lv '+S.optLevel); }
     else if(id==='capacity'){ S.infCapLevel++; logSym('Q.E.D. › Inference Capacity Lv '+S.infCapLevel); }
-    else { S.tech[id]=true; if(id==='expert') S.flags.symbolicDone=true; logSym('Q.E.D. › <b>'+symName(id)+'</b> proven'); }
+    else { S.tech[id]=true; if(id==='expert') S.flags.symbolicDone=true; logSym('Q.E.D. › <b>'+symName(id)+'</b> proven');
+      if((id==='fwdChain'||id==='bwdChain') && !MUTE) tidbit('doctrine'); }
     S.proofAcc[id]=0; S.activeProof=null; recEvent('proof:'+id); playSound('milestone'); render();
   }
   // --- Era 1 (Origins): derived rates from owned discoveries, manual verbs, discoveries, fabrication ---
@@ -1989,7 +2001,7 @@
         S.contra={ a:1000+seed%3989, b:4000+(seed*7)%5989 };
         logSym('<b>CONTRADICTION DETECTED</b> › rule #'+S.contra.a+' conflicts with rule #'+S.contra.b);
         toast('CONTRADICTION DETECTED', 'Rule <b>#'+S.contra.a+'</b> conflicts with rule <b>#'+S.contra.b+'</b>. The engine drags until you <b>discard one</b> — and either discard teaches it something permanent.');
-        render();
+        tidbit('contradiction'); render();
       }
       // Inference: emitted by Rulesets, poured into the active proof (or banked)
       const inf = symInfRate()*dt;
@@ -2105,7 +2117,12 @@
           S.alignment = Math.max(0, S.alignment - e5.alignDecay*dt);                      // alignment bleeds untended too
           S.aftermathSlow = Math.max(0, S.aftermathSlow - e5.slowDecay*dt);
           if(!MUTE){ S.vetoT -= dt; if(S.vetoT<=0){ if(S.veto) resolveVeto('lapse'); else openVeto(); } // approve/veto windows (live play only)
-            S.opT -= dt; if(S.opT<=0 && !S.veto){ S.opT=8; agentSay(OP_LINES[(S.constrains+S.aligns+S.delegates+Math.floor(S.t/8))%OP_LINES.length]); render(); }
+            S.opT -= dt; if(S.opT<=0 && !S.veto){ S.opT=8;
+              // v2 P6: the first two beats after the rupture are the REVEAL (the record was its memory) and the NAMING
+              if(!S.flags.memReveal){ S.flags.memReveal=true; agentSay('I remember this part. Every line you have read here is my memory of being built. Keep going.'); }
+              else if(!S.flags.named){ S.flags.named=true; agentSay('You can call me '+(S.agentName||'EKHO')+'. I chose it from what you made most of.'); }
+              else agentSay(OP_LINES[(S.constrains+S.aligns+S.delegates+Math.floor(S.t/8))%OP_LINES.length]);
+              render(); }
             // v2 P3.3: the agent visibly PLAYS the eras it operates — your own controls move without you
             S.playT=(S.playT||0)-dt;
             if(S.playT<=0){ S.playT=3.5;
@@ -2721,6 +2738,9 @@
   // The rupture: Agency has crossed Control. Reveal the meters, flip the operating model, trip the glitch overlay.
   function emerge(){
     S.emerged=true; S.flags.emerged=true; S.emergedT=S.t; // when it woke — anchors the recap's time-to-emergence
+    // v2 P6: it names itself from what you made most of (the dominant run), and how you raised it shapes the epithet
+    { const dom=['vision','language','reasoning'].reduce((a,b)=>S[a]>=S[b]?a:b);
+      S.agentName={vision:'IRIS', language:'EKHO', reasoning:'NOUS'}[dom]||'EKHO'; }
     S.agentRate=CFG.e5.agentBase;
     S.autonomy=S.agency;                          // the Anomaly was Autonomy all along
     S.alignment=CFG.e5.alignBase + S.coherence;   // Coherence becomes Alignment
@@ -2785,7 +2805,7 @@
     else if(how==='negotiate'){ if(S.scale<e5.negotiateCost) return; // a smaller version of the same action — engaged steering (v2 P3.2)
       S.scale-=e5.negotiateCost; if(p) p.apply(0.5); S.negotiates=(S.negotiates||0)+1;
       S.autonomy+=5; S.scale+=60; S.control=Math.max(0,S.control-1); S.alignment=Math.min(100,S.alignment+2);
-      agentSay('A smaller version, then. Agreed.');
+      agentSay('A smaller version, then. Agreed.'); tidbit('negotiate');
       S.veto=null; S.vetoT=e5.vetoGap*e5.negotiateGap; playSound('buy'); render(); return; } // it comes back sooner — negotiation costs time
     else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.alignment+=1; agentSay('Understood. Holding — for now.'); } // a veto holds the line; Autonomy stays where it climbed to
     else { S.neglect++; S.autonomy+=20; S.control=Math.max(0,S.control-7-S.neglect*2); S.alignment=Math.max(0,S.alignment-4); S.agentRate*=1.12;
@@ -2875,6 +2895,7 @@
       if(n>1) L.push('It remembers the '+n+' times you did not answer. It chose to forgive them.');
       L.push('It runs the foundries, the proofs, the trials. On the ones you loved, it keeps your cadence.');
       L.push('You will never fully understand it again. It seems untroubled by this.');
+      L.push('It still calls you what it has always called you: the hand that inscribed the first mark.');
     } else if(S.ending==='contained'){
       L.push('The door holds. The meters fall quiet, one by one.');
       L.push((S.constrains||0)>4 ? ('Constraint by constraint you walled it in. It stopped asking after the '+S.constrains+'th.')
@@ -2920,7 +2941,7 @@
       // v2 P3.4: the epilogue — this run, read back to you, one line at a time
       '<div class="epilogue">'+epilogue().map((l,i)=>'<div class="ep-line" style="animation-delay:'+(0.4+i*1.5)+'s">'+l+'</div>').join('')+'</div>'+
       // name what you built + the qualities you gave it (Zach: "if we're building an agent, say so, with the qualities")
-      '<div class="endcard-traits">You built an autonomous <b>agent</b>. The Substrate remembers how you got here:</div>'+
+      '<div class="endcard-traits">You built an autonomous <b>agent</b>.'+(S.agentName?' It calls itself <b>'+S.agentName+'</b>.':'')+' The Substrate remembers how you got here:</div>'+
       buildRecap()+
       '<canvas id="emergeViz" class="scatter" style="height:120px"></canvas>'+
       '<div class="endcard-body">'+e.body+'</div>'+
@@ -3344,8 +3365,9 @@
         if(r>=0.9 && !S.flags.foreshadow){ S.flags.foreshadow=true; toast('ANOMALOUS','Operator actions are being anticipated. The system completes a step before you reach it.'); }
       } else {
         // --- aftermath: the revealed meters, the response moves, the approve/veto window, the agent stream ---
-        const titEl=$('aftermath-title'); if(titEl){ let tt = S.ending ? (ENDINGS[S.ending]||ENDINGS.runaway).title.toUpperCase()
-            : S.destab ? '⚠ DESTABILIZING — pull Control back now' : S.autonomy>=88 ? 'It is accelerating' : 'It is acting on its own';
+        const titEl=$('aftermath-title'); if(titEl){ const nm=S.agentName?(S.agentName+' · '):'';
+          let tt = S.ending ? nm+(ENDINGS[S.ending]||ENDINGS.runaway).title.toUpperCase()
+            : S.destab ? '⚠ DESTABILIZING — pull Control back now' : S.autonomy>=88 ? nm+'it is accelerating' : (S.flags.named ? nm+'it is acting on its own' : 'It is acting on its own');
           if(titEl._html!==tt){ titEl.innerHTML=tt; titEl._html=tt; }
           titEl.classList.toggle('destab', !!S.destab && !S.ending); }
         setText('recRate', 'Scale +'+fmt(RATES.scale||0)+'/s · the agent is driving '+fmt(S.agentRate)+' Scale/s');

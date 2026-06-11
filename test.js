@@ -833,6 +833,20 @@ function testFoundation(){
   ep = EM.epilogue();
   ok(ep.some(l=>l.indexOf('handed it speed')>=0), 'the runaway epilogue knows you delegated');
 
+  // v2 P6 — the story pass: naming, the memory reveal, foreshadowing oddities
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.vision=0.9; S.language=0.4; S.reasoning=0.5; EM.emerge();
+  ok(S.agentName==='IRIS', 'a vision-dominant build wakes as IRIS');
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.vision=0.4; S.language=0.5; S.reasoning=0.9; EM.emerge();
+  ok(S.agentName==='NOUS', 'a reasoning-dominant build wakes as NOUS');
+  S.scale=1000; for(let i=0;i<200 && !S.flags.named;i++) EM.produce(0.1);
+  ok(S.flags.memReveal && S.agentLog.some(m=>m.indexOf('memory of being built')>=0), 'the first beat after the rupture reveals the record was its memory');
+  ok(S.flags.named && S.agentLog.some(m=>m.indexOf('NOUS')>=0), 'the second beat is the naming');
+  EM = freshGame(); S = EM.S; S.maxEra=5; S.scale=EM.CFG.e5.emergeScale*0.35; EM.produce(0.1); EM.checkMiles();
+  ok(S.flags.odd1 && !S.flags.odd2, 'the first foreshadowing oddity fires on the Anomaly band');
+  EM = freshGame(); S = EM.S; S.maxEra=2; S.flags.tree=true; S.tech.formalLogic=true;
+  EM.completeProof('fwdChain');
+  ok(S.flags.tid_doctrine, 'committing to a doctrine logs the chaining tidbit');
+
   // endings resolve from the final mix (flavor, never a fail-state)
   EM = freshGame(); S = EM.S; S.maxEra=5; EM.emerge(); S.alignment=90; S.control=50; EM.resolveEnding();
   ok(S.ending==='symbiotic', 'high Alignment → Symbiotic ending');
