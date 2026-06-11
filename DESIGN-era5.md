@@ -7,6 +7,17 @@
 > an aftermath ending, not a pre-emergence escape); (4) Era 4 locked first. Now: ChatGPT critique +
 > live cadence tuning. See CLAUDE.md "Era 5 — Foundation FINALE BUILT".
 
+> **STAKES ADDED (2026-06-11, Zach round 3).** The original build resolved without real failure
+> pressure ("time-critical, but nothing bad happened"). Now: **pre-emergence is a rush-vs-prepare
+> decision (R3.6)** — Self-Improve (emerge sooner, less aligned) vs Align the Objective (spend
+> Capability → Coherence → wakes aligned), same pool + clock. **Aftermath has teeth (R3.5)** —
+> Control drifts + Alignment decays untended; below `controlLow` it DESTABILIZES (spiral), each
+> lapsed veto compounds (a permanent neglect multiplier), and Control→0 is an instant Runaway.
+> Passive play loses fast; active play earns Symbiotic. **The ending is a scorecard (R3.3)** —
+> the Substrate becomes a timestamped per-era recap + an Emergence Quality grade (S–D). The
+> "3 endings are flavor, never a punishing fail" line below is now superseded: Runaway IS a real
+> fail you can be dragged into. Tunables: `CFG.e5.coherMax/alignActIncr/destabMult/neglectAccel/alignDecay`.
+
 > The FINALE. Theme: violet/cosmic, the de-materialization endpoint. Agency arc capstone:
 > author → operate → observe/steer → orchestrate → **witness emergence**.
 > Present-tense framing: the *arriving, contested* AI frontier — recursive self-improvement,
