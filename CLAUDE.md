@@ -1,35 +1,33 @@
-# EMERGENCE v2 — Project State (CLAUDE.md)
+# EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-06-11.
+> keep it current as the game evolves. Last updated 2026-06-16.
 
-## ⚠ THIS IS THE v2 REPO (EmergenceFable) — DO NOT PUSH TO GITHUB
+## v2 is now the shipped main
 
-This directory (`~/Desktop/EmergenceFable`) is a deliberate fork of the original
-`~/Desktop/Emergence_Fable` repo, cloned 2026-06-11 with **no git remote** (verified:
-`git remote -v` is empty — keep it that way). Everything here is the **v2 overhaul**
-(Cody: "clear separation between this session's work and previous sessions"; nothing
-from here may reach the original GitHub repo `magilemonai/emergence` or its Pages site).
-The original repo stays untouched as the shipped v1.
+The **v2 overhaul** (built 2026-06-11 on a clean fork, merged to `main` 2026-06-16) is now
+the canonical game. The plan and full per-phase record live in `DESIGN-v2.md`. Summary of
+what v2 added on top of the Zach-round-3 build:
+- **Phase 1 — legibility frame:** sigil-tab nav polish, meter/font floor, resource hues,
+  the Codex glossary drawer, the Era-3 two-needle TRAINING/VALIDATION readout, Era-4 tri-color.
+- **Phase 2 — Era 3 rebuild:** the Experiment Board (methods funded, never rolled),
+  distribution shifts, focus effect chips. Offline catch-up has zero RNG left.
+- **Phase 3 — Era 5 aftermath:** substrate-driven proposals + NEGOTIATE + the agent visibly
+  playing your controls + asymmetric meters + run-data epilogues.
+- **Phase 4 — Era 4 weather:** 12s wind-forecast sparklines, named 3s telegraphs, shift
+  squalls vs breakthrough bursts, momentum, linear stabilizer.
+- **Phase 5 — Era 1+2 loops:** the Hands lever + Commissions (Origins); the doctrine fork +
+  contradictions + streaming proofs (Symbolic).
+- **Phase 6 — story pass:** the memory reveal, agent self-naming (IRIS/EKHO/NOUS),
+  foreshadowing oddities, concept tidbits.
+- **Phase 7 — meta:** Continuity (one carried memory), the RUSH/STILLNESS/FAMINE challenge
+  board, scorecard concept tips.
+- Tests grew 129 → **200 green.**
 
-- **The plan:** `DESIGN-v2.md` — full-game overhaul (story spine, per-era core-loop
-  redesigns, UI system, educational layer, NG+ meta). Build order in §10.
-- **v2 progress:** Phase 1 (legibility frame) ✅ + Phase 2 (Era 3 rebuild: Experiment
-  Board replaces RNG discovery, distribution shifts, focus effect chips) ✅ — 147 tests
-  green. Era 3 economy note: Data now buys trials AND experiment cards (a real tension);
-  methods are deterministic purchases, never rolls; offline catch-up has zero RNG left.
-  Phase 3 (Era 5 aftermath: substrate proposals + NEGOTIATE + agent-plays-your-controls +
-  asymmetric meters + run-data epilogues) ✅ — 167 tests green.
-  Phase 4 (Era 4 weather: 12s wind-forecast sparklines, named 3s telegraphs, shift
-  squalls vs breakthrough bursts, momentum, linear stabilizer) ✅ — 173 tests green.
-  Phase 5 (Era 1 Hands lever + Commissions; Era 2 doctrine fork + contradictions +
-  streaming proofs) ✅ — 191 tests green; full arc 26.3m, Deep autoplay 8.4m.
-  Phase 6 (story pass: memory reveal, agent self-naming IRIS/EKHO/NOUS, foreshadowing
-  oddities, doctrine/contradiction/negotiation tidbits) ✅ + Phase 7 (Continuity NG+,
-  RUSH/STILLNESS/FAMINE challenge board, scorecard concept tips) ✅ — 200 tests green.
-  Phase 8: bot-side pacing read done (arc 26.3m optimal; per-era read in DESIGN-v2 §10.8);
-  REMAINING: Cody's no-dev run + Run Recorder export → hand-tune → Zach round 4.
-  ALL v2 BUILD PHASES (1-7) COMPLETE; 33 commits on this fork, zero pushes anywhere.
+**OPEN (the one deliberate deferral):** the by-hand pacing tune. Bot-side read is done
+(full arc ~26.3m played optimally; per-era splits in `DESIGN-v2.md` §10.8), but the bot
+plays 2-4× faster than a real player. NEXT: Cody's no-dev run → Run Recorder export →
+hand-tune `accGain`/`emergeScale`/commission cadence against 7-9 min/era → Zach round 4.
 
 ## What this is
 
@@ -38,7 +36,8 @@ first inscribed mark, through materials and computation, toward emergent general
 single self-contained `emergence.html` (inline CSS + vanilla JS, no build step, no deps). Open
 the file in a browser to play.
 
-- **Repo:** local only (no remote). v1 lives at `~/Desktop/Emergence_Fable` → `magilemonai/emergence`.
+- **Live (GitHub Pages, auto-deploys on push to `main`):** https://magilemonai.github.io/emergence/
+- **Repo:** `magilemonai/emergence` (public). Source images in `images/`, wired assets in `assets/`.
 - **Tests:** `node test.js` (or `npm test`) — no deps. Must be green before committing.
 
 ## The five-era spine
