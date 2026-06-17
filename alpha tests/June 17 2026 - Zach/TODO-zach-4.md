@@ -141,6 +141,13 @@ Foundation doesn't make sense to me."*
   implementing the tab-flow display.
 - [ ] **R4.33 — Codex → visual tech-tree tab.** "Take the Codex and add a visual component… its
   own tab… a tech tree where you can see how things relate." Bigger build; scope separately.
+- [ ] **R4.34 — Protect the emergence surprise (discuss with Zach).** Cody's question: are we
+  giving the twist away? Audit: the per-era OBJECTIVE is already safe (Foundation reads "Improve
+  the system" with a "don't spoil the hidden threshold" comment). The exposure is the
+  Deep→Foundation handoff toast ("the model is general enough to turn on itself") + the Anomaly
+  dose. The real tension to test with a fresh Zach run: with the ending hidden, is the rising
+  Anomaly breadcrumb enough, or does Foundation feel rudderless? Cure his "doesn't make sense" by
+  legibility of the MEANS (R4.5), not by naming the ENDING. Surprise only lives on run 1 by design.
 
 ## Tier 8 — Nice-to-haves / notes
 
