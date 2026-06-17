@@ -59,7 +59,10 @@ Foundation doesn't make sense to me."*
 - [ ] **R4.6 — Audit every resource/building/upgrade for the two-line standard** (flavor +
   literal mechanic + effect). His general note: "the wording of everything needs the lore side,
   the flavor side, and then also the plain English 'this is the mechanic, this is the effect.'"
-- [ ] **R4.7 — Statistical intro text is too wordy.** Tighten the top-of-era instruction block.
+- [x] **R4.7 — Statistical intro text is too wordy.** DONE. Tightened the Era-3 teaching beat:
+  step 3 went from a two-clause cram to one clean sentence, dropped the redundant "data it has
+  never seen" tail (the VALIDATION needle shows that), removed three em-dashes. Lead/steps now
+  scan in a glance.
 - [ ] **R4.8 — Declining a commission should have flavor, not feel bad.** "Declining feels
   weird… say 'okay, they go on their way,' some lore flavor."
 
