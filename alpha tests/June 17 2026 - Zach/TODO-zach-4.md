@@ -105,8 +105,9 @@ Foundation doesn't make sense to me."*
   only Numerals (its 230-metal requirement keeps the Knowledge+Materials cross-gate), and
   Glassmaking now requires the Foundry — so the upgrade appears after the thing it upgrades, as
   Zach asked. Discovery-web + full progression tests stay green.
-- [ ] **R4.20 — Stale objective.** "Fabricate the Logic Machine" stays pinned at the top of
-  Origins after you've already fabricated it. Clear it on completion.
+- [x] **R4.20 — Stale objective.** DONE. `objectiveText(1)` never checked the completion flag;
+  added `if(S.flags.origindone) return ''` so the Origins objective clears once the Logic Machine
+  is fabricated (mirrors how Symbolic clears on `symbolicDone`).
 - [ ] **R4.21 — NG+ "Begin again" doesn't restart.** "I began again but it didn't begin again."
   Continuity restart path (`location.reload()` at the picker) likely resumes the finished save
   instead of booting fresh. Needs a code triage. **[verify in code]**

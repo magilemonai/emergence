@@ -3109,6 +3109,7 @@
   // frames the NEXT age as the goal (Zach: "Stone Age" read as the title; he wanted to know the thing he was chasing).
   function objectiveText(n){
     if(n===1){
+      if(S.flags.origindone) return ''; // Origins is done once the Logic Machine is fabricated (Zach r4: stop pinning "Fabricate…" forever)
       if(S.flags.canFabricate || S.flags.o_foundry) return 'Fabricate the Logic Machine &middot; '+fmt(S.silicon)+'/'+CFG.e1.siliconGate+' Silicon';
       if(S.flags.o_smelter) return 'Reach the Silicon Age &middot; unlock the Foundry';
       if(S.flags.o_scriptorium) return 'Reach the Bronze Age &middot; unlock the Kiln';
