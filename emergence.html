@@ -1496,6 +1496,7 @@
   function fmt(n){ if(n<1000) return n.toFixed(n<10&&n%1!==0?1:0); const u=['','K','M','B','T','Qa']; let i=0; while(n>=1000&&i<u.length-1){n/=1000;i++;} return n.toFixed(2)+u[i]; }
   const cost=(base,growth,count)=> Math.floor(base*Math.pow(growth,count));
   let MUTE=false;
+  let RESETTING=false; // set true just before a deliberate wipe-and-reload so the beforeunload autosave can't re-persist the old run (Zach r4: "began again but it didn't begin again")
   let plotPulse = 0; // Era-3: a trial pulses the plot (points flare, band widens briefly), set on manual RUN TRIAL
   let drawPhase = 0; // Era-3: the rendered world phase eases toward S.dataPhase so a distribution shift MIGRATES the points
   // ERA 2 terminal output log (ephemeral; the machine talks back). `key` collapses repeats (rapid rule-writes = one line).
@@ -3079,7 +3080,7 @@
     document.querySelectorAll('[data-chal]').forEach(b=> b.onclick=()=>{ CONT.challenge = b.dataset.chal==='none' ? null : b.dataset.chal; saveCont(); playSound('click'); render(); });
     const ba=$('beginAgain'); if(ba) ba.onclick=()=>{ CONT.runs=(CONT.runs||0)+1; saveCont(); playSound('milestone');
       try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
-      if(typeof location!=='undefined' && location.reload) location.reload(); else softReset(); }; // a clean boot applies challenge overrides
+      if(typeof location!=='undefined' && location.reload){ RESETTING=true; location.reload(); } else softReset(); }; // a clean boot applies challenge overrides; RESETTING blocks the unload autosave from restoring the finished run
     const anb=$('alignBtn'); if(anb) anb.onclick=alignAct;
     const dgb=$('delegateBtn'); if(dgb) dgb.onclick=delegateAct;
     const cb=$('compileBtn'); if(cb) cb.onclick=compile;
@@ -3481,7 +3482,7 @@
     $('dev').querySelector('[data-grant]').onclick=grant;
     $('dev').querySelector('[data-export]').onclick=exportRun;
     $('dev').querySelector('[data-soft]').onclick=softReset;
-    $('dev').querySelector('[data-reset]').onclick=()=>{ if(confirm('Wipe all progress and reload?')){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); } };
+    $('dev').querySelector('[data-reset]').onclick=()=>{ if(confirm('Wipe all progress and reload?')){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} RESETTING=true; location.reload(); } };
   }
   function toggleDev(on){ S.dev = on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); if(S.dev) renderDev(); }
   let uiDrawer=false;
@@ -3592,6 +3593,7 @@
   const SAVE_KEY='emergence-save';
   const OFFLINE_CAP=8*3600; // seconds of offline progress credited at most
   function save(){
+    if(RESETTING) return; // a wipe-and-reload is in flight; do not rewrite the save we just cleared
     try{ const out={...S}; delete out.dev; delete out.speed;
       if(REC.snaps.length>5000) REC.snaps=REC.snaps.slice(-5000); // cap telemetry growth
       localStorage.setItem(SAVE_KEY, JSON.stringify({S:out, REC, lastSave:Date.now(), v:1})); }catch(e){}

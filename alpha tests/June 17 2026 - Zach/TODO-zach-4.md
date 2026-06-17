@@ -108,9 +108,12 @@ Foundation doesn't make sense to me."*
 - [x] **R4.20 — Stale objective.** DONE. `objectiveText(1)` never checked the completion flag;
   added `if(S.flags.origindone) return ''` so the Origins objective clears once the Logic Machine
   is fabricated (mirrors how Symbolic clears on `symbolicDone`).
-- [ ] **R4.21 — NG+ "Begin again" doesn't restart.** "I began again but it didn't begin again."
-  Continuity restart path (`location.reload()` at the picker) likely resumes the finished save
-  instead of booting fresh. Needs a code triage. **[verify in code]**
+- [x] **R4.21 — NG+ "Begin again" doesn't restart.** DONE, and the diagnosis was subtler than
+  expected: the handler already cleared the save, but the `beforeunload → save` listener re-wrote
+  the finished run during `location.reload()`, so the reload booted the ended game. Added a
+  `RESETTING` guard that `save()` honors, set just before the deliberate reload (in both Begin
+  Again and the dev hard-reset). Now the reload boots a fresh game; Continuity (separate key)
+  still carries the memory. Tests green.
 
 ## Tier 5 — Pacing (AFTER the UX pass, on a readable build)
 
