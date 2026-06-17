@@ -22,6 +22,7 @@
     --e0: #c9925f; --e1: #c9a26b; --e2: #6ec6a8; --e3: #6ea8ff; --e4: #b78bff;
     --accent: #ffcd6b; --good: #5ee07f; --danger: #ff6b8b;
     --era-font: "SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+    --ui-scale: 1.1; /* R4.1/R4.2 (Zach r4): global UI text+layout scale, adjustable in Settings, persisted. Lifts the small-text floor everyone reads at. */
   }
   /* ERA 1 — Origins: warm, earthen, ancient. Serif. */
   .theme-1, .era-e1 {
@@ -307,7 +308,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text);
     font-family: var(--era-font); overflow: hidden; transition: background 0.9s ease, color 0.7s ease; }
-  body { background: var(--bg); }
+  body { background: var(--bg); zoom: var(--ui-scale); } /* R4.2: one knob scales the whole UI; default 1.1 raises the legibility floor Zach kept hitting */
   body.theme-1 { background:
       radial-gradient(1100px 680px at 78% -12%, rgba(224,168,106,0.09), transparent 60%),
       radial-gradient(820px 520px at 4% 112%, rgba(150,100,55,0.06), transparent 60%),
@@ -996,7 +997,7 @@
   .lex-btn { min-width: 30px; font-weight: 700; }
   .lex-search-wrap { padding: 10px 14px 0; }
   .lex-search-wrap input { width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 7px;
-    color: var(--text); font-family: inherit; font-size: 12.5px; padding: 7px 10px; }
+    color: var(--text); font-family: inherit; font-size: 14px; padding: 8px 11px; }
   .lex-search-wrap input:focus { outline: none; border-color: var(--accent); }
   .goal-now { border: 1px solid var(--ec, var(--accent)); border-radius: 9px; padding: 11px 13px; margin-bottom: 14px; background: rgba(255,255,255,0.02); }
   .goal-lab, .log-lab { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dimmer); margin-bottom: 5px; }
@@ -1168,6 +1169,7 @@
 <div id="tip"></div>
 <div id="rupture" class="rupture"></div>
 <div id="soundPanel" class="sound-panel">
+  <div class="snd-row"><span>Text size</span><input type="range" id="uiScale" min="90" max="150" step="5" aria-label="Text size"></div>
   <div class="snd-row"><span>Music</span><input type="range" id="musVol" min="0" max="100" aria-label="Music volume"></div>
   <div class="snd-row"><span>Sound FX</span><input type="range" id="sfxVol" min="0" max="100" aria-label="Sound FX volume"></div>
 </div>
@@ -3676,6 +3678,7 @@
   if(CONT.runs && !S.started && $('coHint')) $('coHint').textContent+=' (Somewhere, a memory: this has happened before.)'; // Continuity pre-echo (v2 P7)
   try{ const mv=localStorage.getItem('emergence-musvol'); if(mv!==null) MUSIC.vol=Math.max(0,Math.min(1,+mv)); MUSIC.on = localStorage.getItem('emergence-music')!=='off' && MUSIC.vol>0;
        const sv=localStorage.getItem('emergence-sfxvol'); if(sv!==null) SFX.vol=Math.max(0,Math.min(1,+sv)); SFX.on = localStorage.getItem('emergence-sfx')!=='off' && SFX.vol>0; }catch(_){}
+  try{ const us=localStorage.getItem('emergence-uiscale'); if(us!==null && document.documentElement) document.documentElement.style.setProperty('--ui-scale', Math.max(0.9,Math.min(1.5,+us))); }catch(_){} // R4.2: apply the saved text scale on boot
   updateMusicBtn();
   { const mb=$('musicBtn'); if(mb) mb.onclick=()=>{ const p=$('soundPanel'); if(!p) return;
       if(!p.classList.contains('show') && mb.getBoundingClientRect){ const r=mb.getBoundingClientRect(); // anchor under the button (fixed + computed = on top AND aligned)
@@ -3688,7 +3691,10 @@
         if(MUSIC.on && !MUSIC.started) startMusic(); updateMusicBtn(); }; }
     const svEl=$('sfxVol'); if(svEl){ svEl.value=Math.round(SFX.vol*100);
       svEl.oninput=()=>{ SFX.vol=svEl.value/100; SFX.on=SFX.vol>0;
-        try{ localStorage.setItem('emergence-sfxvol',SFX.vol); localStorage.setItem('emergence-sfx',SFX.on?'on':'off'); }catch(_){} }; } }
+        try{ localStorage.setItem('emergence-sfxvol',SFX.vol); localStorage.setItem('emergence-sfx',SFX.on?'on':'off'); }catch(_){} }; }
+    const usEl=$('uiScale'); if(usEl){ let curScale=1.1; try{ const s=localStorage.getItem('emergence-uiscale'); if(s!==null) curScale=Math.max(0.9,Math.min(1.5,+s)); }catch(_){}
+      usEl.value=Math.round(curScale*100); // R4.2: text-size slider (90–150% → --ui-scale 0.9–1.5)
+      usEl.oninput=()=>{ const v=Math.max(0.9,Math.min(1.5,usEl.value/100)); if(document.documentElement) document.documentElement.style.setProperty('--ui-scale', v); try{ localStorage.setItem('emergence-uiscale', v); }catch(_){} }; } }
   window.addEventListener('pointerdown', startMusic);
   window.addEventListener('keydown', startMusic);
   document.addEventListener('pointerdown', e=>{ const p=$('soundPanel'); if(p && p.classList.contains('show') && e.target.closest && !e.target.closest('#soundPanel') && e.target.id!=='musicBtn') p.classList.remove('show'); });
