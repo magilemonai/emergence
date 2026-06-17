@@ -88,8 +88,8 @@ Foundation doesn't make sense to me."*
   of that era and the logs from that era."
 - [ ] **R4.12 — Bring color back to the Log.** It went monochrome and unreadable in the later
   eras; restore per-event-type color cues.
-- [ ] **R4.13 — Codex: newest era on top.** As you reach each era, flip the order so the newest
-  is first (currently fixed Origins→Foundation).
+- [x] **R4.13 — Codex: newest era on top.** DONE. `refreshLex` now loops eras high→low, so the
+  era you're in sits at the top of the Codex and Origins drops to the bottom as you progress.
 - [ ] **R4.14 — Per-building production shown inside the building box.** "Nowhere in the Scribe
   box does it show me the total the scribe is making" — he wants the /s flow on the tile, not
   only in the top bar.

@@ -1572,7 +1572,7 @@
   function refreshLex(){ const b=$('lexBody'); if(!b) return;
     const q=($('lexSearch')&&$('lexSearch').value||'').toLowerCase();
     let h='';
-    for(let n=1;n<=Math.min(5,S.maxEra);n++){
+    for(let n=Math.min(5,S.maxEra);n>=1;n--){ // R4.13 (Zach r4): newest era on top — flip the order as you progress
       const rows=GLOSSARY.filter(g=>g.era===n && g.vis() && (!q || (g.term+' '+g.def).toLowerCase().indexOf(q)>=0));
       if(!rows.length) continue;
       h+='<div class="log-lab" style="margin-top:10px;color:'+(ERAS[n]?ERAS[n].color:'var(--dim)')+'">'+(ERAS[n]?ERAS[n].tag:'Era '+n)+'</div>';
