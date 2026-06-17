@@ -56,9 +56,15 @@ Foundation doesn't make sense to me."*
   Coherence meter relabeled "how aligned it will wake" (was the misleading "how well you
   understand it"). Anomaly left intentionally mysterious — that's the emergence twist. Fixed two
   em-dashes in the touched strings.
-- [ ] **R4.6 — Audit every resource/building/upgrade for the two-line standard** (flavor +
-  literal mechanic + effect). His general note: "the wording of everything needs the lore side,
-  the flavor side, and then also the plain English 'this is the mechanic, this is the effect.'"
+- [~] **R4.6 — Audit every resource/building/upgrade for the two-line standard** (flavor +
+  literal mechanic + effect). PARTIAL. Did the safe, clearly-prose slice: stripped all 16
+  em-dashes from the TIDBITS (educational notes) and Codex definitions. **Flagged for your
+  deliberate pass:** (a) the building/upgrade labels still carry em-dashes (~130 more across the
+  file, many borderline-stylistic — you said "occasional em-dashes are fine," so a blind strip
+  would over-correct); (b) the teaching prose contains pedagogical "X, not Y" contrasts
+  ("memorized the noise, not the pattern", "balanced beats lopsided") that need your keep-or-reword
+  call since they carry the concept; (c) the "is every tooltip clear" audit is best done with your
+  eyes on a real playthrough. Not a blind-loop item.
 - [x] **R4.7 — Statistical intro text is too wordy.** DONE. Tightened the Era-3 teaching beat:
   step 3 went from a two-clause cram to one clean sentence, dropped the redundant "data it has
   never seen" tail (the VALIDATION needle shows that), removed three em-dashes. Lead/steps now
