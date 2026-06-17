@@ -96,7 +96,9 @@ Foundation doesn't make sense to me."*
   only in the top bar.
 - [ ] **R4.15 — Put the flows readout back at the top.** Moving it down left "empty space"; he
   wants it up top where it was.
-- [ ] **R4.16 — Reposition the log pop-up** so it doesn't cover the top UI when it appears.
+- [x] **R4.16 — Reposition the log pop-up.** DONE. Toasts moved from `top: 60px` (under the
+  header, over the top UI) to bottom-right; slide-in and the longer dwell Zach liked are kept.
+  **EYEBALL:** confirm bottom-right doesn't clash with the era's reach-back strip / substrate.
 - [ ] **R4.17 — Post-era simplification.** Once an era is done, collapse it to one compact box
   (current phase / key resources / flows) "with just what we want to mess with."
 - [ ] **R4.18 — A different sound for event/commission pop-ups** (vs the discovery ding).
