@@ -442,6 +442,12 @@
   .sound-panel.show { display: flex; }
   .snd-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; letter-spacing: 0.04em; color: var(--dim); }
   .snd-row input[type=range] { width: 96px; accent-color: var(--accent); cursor: pointer; }
+  .snd-head { font-family: var(--era-font, monospace); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); padding-bottom: 7px; }
+  .snd-acts { gap: 8px; }
+  .snd-btn { flex: 1; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); border-radius: 6px; padding: 6px 8px; font-family: inherit; font-size: 11.5px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+  .snd-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .snd-btn.on { border-color: var(--accent); color: var(--accent); }
+  body.ui-paused::before { content: '\275A\275A  PAUSED'; position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 9500; background: var(--panel); color: var(--accent); border: 1px solid var(--accent); border-radius: 20px; padding: 4px 16px; font-size: 12px; letter-spacing: 0.12em; font-family: var(--era-font, monospace); pointer-events: none; }
   .logo b { color: var(--e3); }
   .era-indicator { font-size: 11px; color: var(--dim); letter-spacing: 1px; }
   .hdr-right { margin-left: auto; display: flex; gap: 22px; align-items: center; }
@@ -1147,7 +1153,7 @@
     <div class="hdr-right">
       <button id="goalsBtn" class="goals-btn" title="Goals + log">▸ GOALS</button>
       <button id="lexBtn" class="goals-btn lex-btn" title="Codex — every term, explained">?</button>
-      <button id="musicBtn" class="music-btn" title="Sound settings" aria-label="Sound settings">&#9834;</button>
+      <button id="musicBtn" class="music-btn" title="Settings: music, text size, restart (Esc)" aria-label="Settings">&#9834;</button>
       <div class="buymode" id="buyMode"></div>
       <div class="res-bar" id="resBar"></div>
     </div>
@@ -1169,9 +1175,11 @@
 <div id="tip"></div>
 <div id="rupture" class="rupture"></div>
 <div id="soundPanel" class="sound-panel">
+  <div class="snd-head">Settings</div>
   <div class="snd-row"><span>Text size</span><input type="range" id="uiScale" min="90" max="150" step="5" aria-label="Text size"></div>
   <div class="snd-row"><span>Music</span><input type="range" id="musVol" min="0" max="100" aria-label="Music volume"></div>
   <div class="snd-row"><span>Sound FX</span><input type="range" id="sfxVol" min="0" max="100" aria-label="Sound FX volume"></div>
+  <div class="snd-row snd-acts"><button id="pauseBtn" class="snd-btn">Pause</button><button id="restartBtn" class="snd-btn">Restart run</button></div>
 </div>
 <audio id="musBoneLoam" src="assets/music-bone-loam.mp3" loop preload="none"></audio>
 <audio id="musPhosphor" src="assets/music-phosphor-logic.mp3" loop preload="none"></audio>
@@ -1380,7 +1388,7 @@
     preps: 0,                                       // R3.6: Align-the-Objective uses (the prepare track vs the Self-Improve rush)
     opT: 0,                                         // ambient-narration timer: the agent narrates operating the prior-era stack
     improveCd: 0,                                   // Self-Improve cooldown timer (anti-burst)
-    tech: {}, obsolete: {}, collapsed: {}, flags: {}, paused: {}, clicks: 0, // paused: converters the player has switched off (anti-soft-lock)
+    tech: {}, obsolete: {}, collapsed: {}, flags: {}, paused: {}, uiPaused: false, clicks: 0, // paused: converters switched off (anti-soft-lock); uiPaused: whole-game pause (Settings)
     log: [], // every popup (toast / discovery / teaching beat) kept here so nothing vanishes unrecoverably (Zach) — shown in the Goals tab
   }; }
   const S = freshState();
@@ -2164,6 +2172,7 @@
     if(fired && S.flags.firstAuto) render(); // a milestone changed structure (unlock / new era / legacy)
   }
   function tick(){
+    if(S.uiPaused){ if(S.flags.firstAuto) refresh(); else renderCold(); return; } // R4.9: pause halts production + time but keeps the UI live
     const dt=CFG.tickMs/1000*S.speed; if(S.started) S.t+=dt;
     produce(dt); checkMiles();
     if(S.started) recSnap();
@@ -3594,7 +3603,7 @@
   const OFFLINE_CAP=8*3600; // seconds of offline progress credited at most
   function save(){
     if(RESETTING) return; // a wipe-and-reload is in flight; do not rewrite the save we just cleared
-    try{ const out={...S}; delete out.dev; delete out.speed;
+    try{ const out={...S}; delete out.dev; delete out.speed; delete out.uiPaused; // uiPaused is session-only (avoid crediting offline time while "paused")
       if(REC.snaps.length>5000) REC.snaps=REC.snaps.slice(-5000); // cap telemetry growth
       localStorage.setItem(SAVE_KEY, JSON.stringify({S:out, REC, lastSave:Date.now(), v:1})); }catch(e){}
   }
@@ -3699,6 +3708,10 @@
     const usEl=$('uiScale'); if(usEl){ let curScale=1.1; try{ const s=localStorage.getItem('emergence-uiscale'); if(s!==null) curScale=Math.max(0.9,Math.min(1.5,+s)); }catch(_){}
       usEl.value=Math.round(curScale*100); // R4.2: text-size slider (90–150% → --ui-scale 0.9–1.5)
       usEl.oninput=()=>{ const v=Math.max(0.9,Math.min(1.5,usEl.value/100)); if(document.documentElement) document.documentElement.style.setProperty('--ui-scale', v); try{ localStorage.setItem('emergence-uiscale', v); }catch(_){} }; } }
+  // R4.9 (Zach r4): Settings extras — Pause halts the economy; Restart returns to the cold open; Escape toggles the panel.
+  { const pb=$('pauseBtn'); if(pb) pb.onclick=()=>{ S.uiPaused=!S.uiPaused; if(document.body && document.body.classList) document.body.classList.toggle('ui-paused', S.uiPaused); pb.textContent=S.uiPaused?'Resume':'Pause'; if(pb.classList) pb.classList.toggle('on', S.uiPaused); playSound('click'); };
+    const rb=$('restartBtn'); if(rb) rb.onclick=()=>{ if(typeof confirm==='function' && !confirm('Restart this run? Your carried memory stays.')) return; const p=$('soundPanel'); if(p && p.classList) p.classList.remove('show'); S.uiPaused=false; if(document.body && document.body.classList) document.body.classList.remove('ui-paused'); const pbtn=$('pauseBtn'); if(pbtn){ pbtn.textContent='Pause'; if(pbtn.classList) pbtn.classList.remove('on'); } softReset(); };
+    window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const p=$('soundPanel'); if(p && p.classList) p.classList.toggle('show'); } }); }
   window.addEventListener('pointerdown', startMusic);
   window.addEventListener('keydown', startMusic);
   document.addEventListener('pointerdown', e=>{ const p=$('soundPanel'); if(p && p.classList.contains('show') && e.target.closest && !e.target.closest('#soundPanel') && e.target.id!=='musicBtn') p.classList.remove('show'); });

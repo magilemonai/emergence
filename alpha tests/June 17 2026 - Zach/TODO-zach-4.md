@@ -76,9 +76,11 @@ Foundation doesn't make sense to me."*
 
 ## Tier 3 — UI structure
 
-- [ ] **R4.9 — Settings panel, opens on Escape.** Music, SFX, text size (R4.2), pause,
-  reset/hard-reset, restart. Consolidates the existing sound panel + dev-ish controls into one
-  player-facing place.
+- [x] **R4.9 — Settings panel, opens on Escape.** DONE. The ♪ panel is now a "Settings" panel
+  (header + Esc toggles it) holding Text size, Music, SFX, plus a **Pause** toggle (halts the
+  economy + shows a "❚❚ PAUSED" pill, session-only so offline time isn't credited) and a
+  **Restart run** button (softReset to the cold open, keeps the carried memory). Tests green.
+  **EYEBALL:** confirm Esc opens/closes it, the pause pill reads right, and Restart behaves.
 - [ ] **R4.10 — Split Goals / Codex / Log into clear tabs.** Today GOALS merges objective + log
   and feels "overwhelming, everything's the same color." Separate them; he wants a real
   "Message Log / Milestones" surface.
