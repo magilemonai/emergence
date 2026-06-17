@@ -3508,7 +3508,10 @@
     let h = '<div class="goal-now"><div class="goal-lab">Objective &middot; '+(ERAS[viewEra]?ERAS[viewEra].tag:'')+'</div><div class="goal-txt">'+(obj?('&#9656; '+obj):'—')+'</div></div>'+
       '<div class="log-lab">Log &middot; everything that has happened</div>';
     if(!S.log || !S.log.length) h += '<div class="up-desc" style="padding:10px 2px">Nothing logged yet. Discoveries, milestones, and tips will collect here.</div>';
-    else h += '<div class="log-list">'+S.log.slice().reverse().map(e=>'<div class="log-item'+(e.kind==='edu'?' log-edu':'')+'"><div class="log-h">'+e.h+'</div><div class="log-b">'+e.b+'</div></div>').join('')+'</div>';
+    else h += '<div class="log-list">'+S.log.slice().reverse().map(e=>{ // R4.12 (Zach r4): tint each entry by its era so the log isn't one flat color; tidbits keep their teal 'edu' styling
+        const edu=e.kind==='edu', ec=(ERAS[e.era]&&ERAS[e.era].color)||'var(--dim)';
+        const st=edu?'':' style="border-left-color:'+ec+'"', hst=edu?'':' style="color:'+ec+'"';
+        return '<div class="log-item'+(edu?' log-edu':'')+'"'+st+'><div class="log-h"'+hst+'>'+e.h+'</div><div class="log-b">'+e.b+'</div></div>'; }).join('')+'</div>';
     b.innerHTML = h;
   }
   // The whole page re-skins to whichever era you're looking at (scroll-driven, like Inscryption's acts).

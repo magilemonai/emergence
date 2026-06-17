@@ -86,8 +86,9 @@ Foundation doesn't make sense to me."*
   "Message Log / Milestones" surface.
 - [ ] **R4.11 — Filter Goals + Log to the current era.** "Make it so you can only see the goals
   of that era and the logs from that era."
-- [ ] **R4.12 — Bring color back to the Log.** It went monochrome and unreadable in the later
-  eras; restore per-event-type color cues.
+- [x] **R4.12 — Bring color back to the Log.** DONE. Each entry already stored its era; now the
+  log-item border + header are tinted by that era's hue (Origins ochre → Foundation violet), so a
+  scrolling multi-era log reads at a glance. Tidbits keep their teal `edu` styling.
 - [x] **R4.13 — Codex: newest era on top.** DONE. `refreshLex` now loops eras high→low, so the
   era you're in sits at the top of the Codex and Origins drops to the bottom as you progress.
 - [ ] **R4.14 — Per-building production shown inside the building box.** "Nowhere in the Scribe
