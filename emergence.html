@@ -1749,7 +1749,8 @@
     else if(def.reward==='forge'){ S.commForge++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Forge side gains <b>+'+Math.round(CFG.e1.commBonus*100)+'%</b> production, permanently.'); }
     else { S.scribe+=2; S.miner+=2; toast('COMMISSION FULFILLED', def.flavor+'<br>They send <b>hands</b>: +2 Scribes, +2 Miners.'); }
     recEvent('comm:'+def.id); playSound('milestone'); render(); }
-  function declineComm(){ if(!S.comm) return; S.comm=null; S.commCool=CFG.e1.commCool; playSound('click'); render(); }
+  function declineComm(){ if(!S.comm) return; S.comm=null; S.commCool=CFG.e1.commCool; playSound('click');
+    toast('YOU WAVE THEM ON', 'The caravan gathers its tablets and takes another road. No slight taken; another will come.'); render(); }
   function oStats(){
     const d=S.disco, e=CFG.e1;
     let inscribe=e.inscribeBase, quarry=e.quarryBase, scrR=e.scriptoriumRate, smR=e.smelterRate, foR=e.foundryRate;

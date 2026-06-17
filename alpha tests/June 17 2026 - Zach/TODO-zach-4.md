@@ -63,8 +63,10 @@ Foundation doesn't make sense to me."*
   step 3 went from a two-clause cram to one clean sentence, dropped the redundant "data it has
   never seen" tail (the VALIDATION needle shows that), removed three em-dashes. Lead/steps now
   scan in a glance.
-- [ ] **R4.8 — Declining a commission should have flavor, not feel bad.** "Declining feels
-  weird… say 'okay, they go on their way,' some lore flavor."
+- [x] **R4.8 — Declining a commission should have flavor, not feel bad.** DONE. Decline was
+  firing silently; now it toasts "YOU WAVE THEM ON — The caravan gathers its tablets and takes
+  another road. No slight taken; another will come." Reassures it's a free choice (his exact ask:
+  "say 'okay, they go on their way'").
 
 ## Tier 3 — UI structure
 
