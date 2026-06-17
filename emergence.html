@@ -1581,12 +1581,12 @@
     if(!h) h='<div class="up-desc" style="padding:10px 2px">'+(q?'Nothing matches that.':'Terms appear here as you meet them.')+'</div>';
     b.innerHTML=h;
   }
-  function toast(head, body){
+  function toast(head, body, sound){
     if(MUTE) return;
     logEntry(head, body); // keep it in the Goals tab log so it's never lost (Zach)
     const el=document.createElement('div'); el.className='toast';
     el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>';
-    const box=$('toasts'); box.appendChild(el); playSound('milestone');
+    const box=$('toasts'); box.appendChild(el); playSound(sound||'milestone'); // R4.18: pop-up events can request a distinct cue
     while(box.children && box.children.length>3 && box.firstChild) box.removeChild(box.firstChild); // cap the stack — never bury the era
     setTimeout(()=>{ el.style.animation='toastOut 0.4s forwards'; setTimeout(()=>el.remove(),400); }, 4200);
     if(uiGoals) refreshGoals(); // live-update the log if the tab is open
@@ -1667,6 +1667,10 @@
     if(type==='click'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type='triangle'; o.frequency.setValueAtTime(330,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(520,ctx.currentTime+0.05); g.gain.setValueAtTime(0.1,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09); o.start();o.stop(ctx.currentTime+0.09); }
     else if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type='sine'; o.frequency.setValueAtTime(440,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.1); g.gain.setValueAtTime(0.13,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15); o.start();o.stop(ctx.currentTime+0.15); }
     else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type='sine'; o.frequency.setValueAtTime(f,ctx.currentTime+i*0.07); g.gain.setValueAtTime(0.0001,ctx.currentTime+i*0.07); g.gain.linearRampToValueAtTime(0.11,ctx.currentTime+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.07+0.35); o.start(ctx.currentTime+i*0.07);o.stop(ctx.currentTime+i*0.07+0.35); }); }
+    else if(type==='event'){ const t=ctx.currentTime; // R4.18: a distinct two-tone alert for pop-up events (commission arrives, distribution shift), separate from the milestone fanfare
+      [[1175,0],[784,0.11]].forEach(p=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type='triangle';
+        o.frequency.setValueAtTime(p[0],t+p[1]); g.gain.setValueAtTime(0.0001,t+p[1]); g.gain.linearRampToValueAtTime(0.1,t+p[1]+0.015); g.gain.exponentialRampToValueAtTime(0.001,t+p[1]+0.2); o.start(t+p[1]); o.stop(t+p[1]+0.22); });
+      noiseBurst(ctx, 0.02, 3000, 0.05); }
     else if(type==='glitch'){ const t=ctx.currentTime; // the rupture: a detuned cluster sliding downward + noise tearing — the interface stops being yours
       [180,191,267,440,463].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(sfxOut()); o.type=i%2?'square':'sawtooth';
         o.frequency.setValueAtTime(f,t); o.frequency.linearRampToValueAtTime(f*0.5,t+1.7);
@@ -2013,7 +2017,7 @@
           const capacity = { marks:S.scribe*os.scribeY, ore:S.miner*os.minerY, metal:S.smelter*os.smR*0.5, knowledge:S.scriptorium*os.scrR*0.5 };
           const need = Math.ceil(Math.max(c.base, (capacity[c.res]||0)*45));
           S.comm={ i:e1.comms.indexOf(c), res:c.res, need, t:e1.commDur };
-          toast('A COMMISSION ARRIVES', c.name+': <b>'+fmt(need)+' '+c.res+'</b>. Fulfilling an order boosts a craft permanently.'); render(); } }
+          toast('A COMMISSION ARRIVES', c.name+': <b>'+fmt(need)+' '+c.res+'</b>. Fulfilling an order boosts a craft permanently.', 'event'); render(); } }
     }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
@@ -2058,7 +2062,7 @@
         S.gap=Math.max(0, S.gap*0.5);          // the old memorization died with the old world
         S.dataPhase=(S.dataPhase||0)+0.9;      // the points migrate to the new shape
         recEvent('shift3', {hit:+hit.toFixed(3)});
-        if(!MUTE){ toast('DISTRIBUTION SHIFT', 'The world the data came from has <b>changed</b> — the points moved, and the accuracy fitted to the old world went with them. Re-fit. <i>Overfit models fall hardest.</i>'); tidbit('shift'); } }
+        if(!MUTE){ toast('DISTRIBUTION SHIFT', 'The world the data came from has <b>changed</b> — the points moved, and the accuracy fitted to the old world went with them. Re-fit. <i>Overfit models fall hardest.</i>', 'event'); tidbit('shift'); } }
     }
     // ERA 4 — Deep: STEER AGAINST THE DRIFT. The three runs drift apart on their own (a per-run headwind,
     // oscillating out of phase), so balanced is never optimal — you route Compute via the triangle to

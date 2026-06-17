@@ -101,7 +101,10 @@ Foundation doesn't make sense to me."*
   **EYEBALL:** confirm bottom-right doesn't clash with the era's reach-back strip / substrate.
 - [ ] **R4.17 — Post-era simplification.** Once an era is done, collapse it to one compact box
   (current phase / key resources / flows) "with just what we want to mess with."
-- [ ] **R4.18 — A different sound for event/commission pop-ups** (vs the discovery ding).
+- [x] **R4.18 — A different sound for event/commission pop-ups.** DONE. Added an `event` cue (a
+  two-tone triangle alert, distinct timbre/contour/length from the `milestone` fanfare); `toast()`
+  takes an optional sound arg, and commission arrivals + distribution shifts now use it. Discovery
+  and achievement toasts keep the milestone ding.
 
 ## Tier 4 — Bugs (confirmed in the run; fold into the UX pass)
 
