@@ -1480,7 +1480,7 @@
     // ERA 5 — Foundation: a broadly capable model can begin to improve itself.
     { id:'era5', cond:()=> S.maxEra>=4 && Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)) >= CFG.e4.breadthGate,
       fire:()=>{ S.capability += CFG.e5.seedCapability; openEra(5);
-        toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Spend <b>Capability</b> on upgrades that each look individually worth it, and <b>self-improve</b> to multiply <i>all</i> production. Keep an eye on the <b>Anomaly</b>.'); } },
+        toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Your Deep runs keep producing <b>Capability</b>: spend it on upgrades that each look individually worth it, and <b>Self-Improve</b> to multiply <i>all</i> production. Keep an eye on the <b>Anomaly</b>.'); } },
     // FORESHADOWING (v2 P6): three oddities on the Anomaly's way up — logged, never explained. Something is already here.
     { id:'odd1', cond:()=> S.maxEra>=5 && !S.emerged && S.agency>=30,
       fire:()=>{ toast('OPERATOR ACTION ANTICIPATED','The Fit Engine queued a trial before you asked. The log shows no one asking.'); agentPress('expBtn'); } },
@@ -1549,11 +1549,11 @@
     {era:4, term:'Heat',      vis:()=>S.maxEra>=4,               def:'Concentrating compute heats the fabric, and a hot fabric throttles <b>everything</b>. Fight the drift hard, then ease toward balanced to cool.'},
     {era:4, term:'Breadth',   vis:()=>S.maxEra>=4,               def:'The geometric mean of Vision, Language and Reasoning. The weakest run drags it down — balanced beats lopsided, every time.'},
     {era:4, term:'Feedstocks',vis:()=>S.maxEra>=4,               def:'<b>Vision</b> drinks Data, <b>Language</b> drinks Knowledge, <b>Reasoning</b> drinks Insight. A starved run blocks until you reopen its era and feed it.'},
-    {era:4, term:'Capability',vis:()=>S.maxEra>=4,               def:'What the fabric produces, and the currency steering spends: <b>Stabilizer</b> permanently calms the wind, a <b>Lock</b> freezes one run briefly. Foundation spends it too.'},
+    {era:4, term:'Capability',vis:()=>S.maxEra>=4,               def:'What the Deep fabric produces while your runs have compute, and the currency steering spends: <b>Stabilizer</b> permanently calms the wind, a <b>Lock</b> freezes one run briefly. In Foundation it keeps flowing, and you spend it on upgrades, Self-Improve, and aligning.'},
     {era:5, term:'Scale',     vis:()=>S.maxEra>=5,               def:'How far the system reaches. It climbs on its own; recursion and the upgrades make it climb faster. Interpretability slows it, on purpose.'},
     {era:5, term:'Recursion', vis:()=>S.maxEra>=5,               def:'<b>Self-Improve</b> turns the system on itself — every level multiplies production in every era at once. Each level costs more and asks sooner.'},
     {era:5, term:'Anomaly',   vis:()=>S.maxEra>=5 && !S.emerged, def:'A reading the instruments cannot name yet. It rises when the system gets better at acting. Watch it.'},
-    {era:5, term:'Coherence', vis:()=>S.maxEra>=5 && !S.emerged, def:'Work spent aligning the objective <b>before</b> anything wakes. You will not get to do it afterwards at this price.'},
+    {era:5, term:'Coherence', vis:()=>S.maxEra>=5 && !S.emerged, def:'How closely the agent’s goal will match what you meant. You raise it before emergence with <b>Align the Objective</b> (it spends Capability); whatever you bank becomes its starting <b>Alignment</b> when it wakes. You will not get it this cheaply once it is awake.'},
     {era:5, term:'Autonomy / Alignment / Control', vis:()=>!!S.emerged, def:'<b>Autonomy</b> is how much it acts alone (it only rises). <b>Alignment</b> is whether it still wants what you meant (it decays untended). <b>Control</b> is your remaining hand on it — below 30 things spiral, at 0 it is gone.'},
   ];
   let uiLex=false;
@@ -2870,7 +2870,7 @@
       // the two tension meters: Coherence is something you build; the Anomaly is something you watch.
       '<div class="panel" style="grid-column:1/-1">'+
         '<div class="meter e5-coher"><i id="meter-coher"></i></div>'+
-        '<div class="meter-label"><span>Coherence — how well you understand it</span><span id="coher-read"></span></div>'+
+        '<div class="meter-label"><span>Coherence: how aligned it will wake</span><span id="coher-read"></span></div>'+
         '<div class="meter e5-anom"><i id="meter-anomaly"></i></div>'+
         '<div class="meter-label"><span id="anom-label">Anomaly</span><span id="anom-read"></span></div>'+
       '</div>'+

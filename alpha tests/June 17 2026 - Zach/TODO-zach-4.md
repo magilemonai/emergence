@@ -49,9 +49,13 @@ Foundation doesn't make sense to me."*
   gain +X% forever"; the Hands sublabel is "split between the crafts"; the Deep shift says "pour
   compute in." All player-facing "lean" gone (only code comments keep it). Also fixed an em-dash
   in the Deep shift banner while there.
-- [ ] **R4.5 — Rewrite Foundation/Era-5 mechanic text in plain English.** "Coherence… that
-  isn't English." He couldn't tell what gives Capability in Foundation, or what Coherence does.
-  Every Era-5 term needs the flavor line + a literal "what it does" line.
+- [x] **R4.5 — Rewrite Foundation/Era-5 mechanic text in plain English.** DONE. Coherence Codex
+  entry rewritten literally ("how closely the agent's goal will match what you meant… becomes its
+  starting Alignment when it wakes"); Capability entry now says where it comes from in Foundation
+  ("the Deep fabric keeps producing it"); the intro toast names the Capability source; the
+  Coherence meter relabeled "how aligned it will wake" (was the misleading "how well you
+  understand it"). Anomaly left intentionally mysterious — that's the emergence twist. Fixed two
+  em-dashes in the touched strings.
 - [ ] **R4.6 — Audit every resource/building/upgrade for the two-line standard** (flavor +
   literal mechanic + effect). His general note: "the wording of everything needs the lore side,
   the flavor side, and then also the plain English 'this is the mechanic, this is the effect.'"
