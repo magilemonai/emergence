@@ -100,10 +100,11 @@ Foundation doesn't make sense to me."*
 
 ## Tier 4 — Bugs (confirmed in the run; fold into the UX pass)
 
-- [ ] **R4.19 — Discovery ordering: Glassmaking gates the Foundry.** `glassmaking` (mech:
-  "Foundries run 50% faster") is a `req` of `theFoundry`, so a Foundry upgrade always appears
-  before the Foundry exists. Confirmed in the event log (glassmaking 598s, foundry built 676s).
-  Fix the gate or reframe so upgrades follow the thing they upgrade.
+- [x] **R4.19 — Discovery ordering: Glassmaking gates the Foundry.** DONE. Glassmaking was both a
+  prereq of the Foundry and framed as a Foundry speed upgrade. Flipped it: the Foundry now needs
+  only Numerals (its 230-metal requirement keeps the Knowledge+Materials cross-gate), and
+  Glassmaking now requires the Foundry — so the upgrade appears after the thing it upgrades, as
+  Zach asked. Discovery-web + full progression tests stay green.
 - [ ] **R4.20 — Stale objective.** "Fabricate the Logic Machine" stays pinned at the top of
   Origins after you've already fabricated it. Clear it on completion.
 - [ ] **R4.21 — NG+ "Begin again" doesn't restart.** "I began again but it didn't begin again."

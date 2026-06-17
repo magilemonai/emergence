@@ -1445,8 +1445,8 @@
     { id:'bronzeCasting',name:'Bronze Casting', res:'metal',     cost:90,  req:['kiln'],                   flavor:'Pour the metal; let the mold decide its shape.',    mech:'Smelters work 60% faster.' },
     { id:'wheel',        name:'The Wheel',      res:'ore',       cost:130, req:['kiln'],                   flavor:'The load that once broke backs now simply rolls.',  mech:'Miners haul 80% more Ore — but Scribes, pulled to the carts, work 20% slower.' },
     { id:'numerals',     name:'Numerals',       res:'knowledge', cost:520, req:['alphabet'],               flavor:'Number slips free of the things it counts.',        mech:'Every converter works 30% faster.' },
-    { id:'glassmaking',  name:'Glassmaking',    res:'metal',     cost:430, req:['bronzeCasting'],          flavor:'Sand, melted, taught to hold the light.',           mech:'Foundries run 50% faster.' },
-    { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:780, req:['numerals','glassmaking'], reqRes:{metal:230}, target:300, flavor:'Knowledge and matter, fused on purpose.',          mech:'Unlocks the Foundry — Metal + Knowledge become Silicon. (Silicon Age)', effect(){ S.flags.o_foundry=true; S.age=3; } },
+    { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:780, req:['numerals'],              reqRes:{metal:230}, target:300, flavor:'Knowledge and matter, fused on purpose.',          mech:'Unlocks the Foundry — Metal + Knowledge become Silicon. (Silicon Age)', effect(){ S.flags.o_foundry=true; S.age=3; } },
+    { id:'glassmaking',  name:'Glassmaking',    res:'metal',     cost:430, req:['theFoundry'],             flavor:'Sand, melted, taught to hold the light.',           mech:'Foundries run 50% faster.' },
   ];
   const DISCOMAP = Object.fromEntries(DISCO.map(n=>[n.id,n]));
   const BUILD_UNLOCK = { scribe:()=>S.flags.canScribe, miner:()=>S.flags.o_materials, scriptorium:()=>S.flags.o_scriptorium, smelter:()=>S.flags.o_smelter, foundry:()=>S.flags.o_foundry };
