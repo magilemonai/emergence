@@ -44,9 +44,11 @@ Foundation doesn't make sense to me."*
 
 ## Tier 2 — Wording: lore line + plain-English mechanic, everywhere
 
-- [ ] **R4.4 — Kill the verb "lean" in player-facing text.** It read as nonsense to him, in
-  both Commissions and Contradictions. Replace with "tilts toward / +% forever / permanent
-  boost." (Code comments can keep "lean.")
+- [x] **R4.4 — Kill the verb "lean" in player-facing text.** DONE. Commissions now say "The
+  Record/Forge side gains +X% production"; contradictions say "Rulesets gain / manual writes
+  gain +X% forever"; the Hands sublabel is "split between the crafts"; the Deep shift says "pour
+  compute in." All player-facing "lean" gone (only code comments keep it). Also fixed an em-dash
+  in the Deep shift banner while there.
 - [ ] **R4.5 — Rewrite Foundation/Era-5 mechanic text in plain English.** "Coherence… that
   isn't English." He couldn't tell what gives Capability in Foundation, or what Coherence does.
   Every Era-5 term needs the flavor line + a literal "what it does" line.

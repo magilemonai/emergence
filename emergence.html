@@ -1745,8 +1745,8 @@
   // v2 P5.2 — Commissions: fulfill (pay the order, take the lean) or decline (the caravan leaves now)
   function fulfillComm(){ const c=S.comm; if(!c || S[c.res]<c.need) return;
     const def=CFG.e1.comms[c.i]; S[c.res]-=c.need; S.comm=null; S.commCool=CFG.e1.commCool; S.commDone++;
-    if(def.reward==='rec'){ S.commRec++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Record leans <b>+'+Math.round(CFG.e1.commBonus*100)+'%</b>, permanently.'); }
-    else if(def.reward==='forge'){ S.commForge++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Forge leans <b>+'+Math.round(CFG.e1.commBonus*100)+'%</b>, permanently.'); }
+    if(def.reward==='rec'){ S.commRec++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Record side gains <b>+'+Math.round(CFG.e1.commBonus*100)+'%</b> production, permanently.'); }
+    else if(def.reward==='forge'){ S.commForge++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Forge side gains <b>+'+Math.round(CFG.e1.commBonus*100)+'%</b> production, permanently.'); }
     else { S.scribe+=2; S.miner+=2; toast('COMMISSION FULFILLED', def.flavor+'<br>They send <b>hands</b>: +2 Scribes, +2 Miners.'); }
     recEvent('comm:'+def.id); playSound('milestone'); render(); }
   function declineComm(){ if(!S.comm) return; S.comm=null; S.commCool=CFG.e1.commCool; playSound('click'); render(); }
@@ -1837,7 +1837,7 @@
   function resolveContra(side){ if(!S.contra) return;
     if(side==='fwd') S.paraFwd=(S.paraFwd||0)+1; else S.paraBwd=(S.paraBwd||0)+1;
     S.contraN=(S.contraN||0)+1; S.contra=null;
-    logSym('contradiction resolved › '+(side==='fwd'?'specific rule discarded · Rulesets lean +'+Math.round(CFG.e2.contraBonus*100)+'%':'general rule discarded · your hand leans +'+Math.round(CFG.e2.contraBonus*100)+'%'));
+    logSym('contradiction resolved › '+(side==='fwd'?'specific rule discarded · Rulesets gain +'+Math.round(CFG.e2.contraBonus*100)+'%':'general rule discarded · manual writes gain +'+Math.round(CFG.e2.contraBonus*100)+'%'));
     playSound('buy'); render();
   }
   // ---- Era 3 (Statistical): experiments push Accuracy up a curve; Methods are discovered by chance ----
@@ -2003,7 +2003,7 @@
           const capacity = { marks:S.scribe*os.scribeY, ore:S.miner*os.minerY, metal:S.smelter*os.smR*0.5, knowledge:S.scriptorium*os.scrR*0.5 };
           const need = Math.ceil(Math.max(c.base, (capacity[c.res]||0)*45));
           S.comm={ i:e1.comms.indexOf(c), res:c.res, need, t:e1.commDur };
-          toast('A COMMISSION ARRIVES', c.name+' — <b>'+fmt(need)+' '+c.res+'</b>. Fulfilled orders lean your crafts permanently.'); render(); } }
+          toast('A COMMISSION ARRIVES', c.name+': <b>'+fmt(need)+' '+c.res+'</b>. Fulfilling an order boosts a craft permanently.'); render(); } }
     }
     // ERA 2 — Symbolic
     if(S.ruleset>0 || S.daemon>0){
@@ -2474,13 +2474,13 @@
     // COMMISSIONS (v2 P5.2): the world asks — the back-half near-win engine
     if(S.flags.o_smelter && S.flags.o_scriptorium && !S.flags.origindone && S.comm){ const c=CFG.e1.comms[S.comm.i];
       body += '<div class="panel comm-panel'+intro('comm-'+S.commN)+'" style="grid-column:1/-1"><div class="panel-label">Commission &middot; the world asks</div>'+
-        '<div class="comm-row" data-tip="'+esc('<i>'+c.flavor+'</i><br>Fulfilled commissions permanently lean a craft (or send hands). Declined ones just leave.')+'">'+
+        '<div class="comm-row" data-tip="'+esc('<i>'+c.flavor+'</i><br>Fulfilled commissions permanently boost a craft (or add hands). Declined ones just leave.')+'">'+
           '<div class="comm-info"><div class="up-name">'+c.name+'</div><div class="up-desc">'+fmt(S.comm.need)+' '+S.comm.res+' &middot; <span id="commT"></span></div>'+
             '<div class="meter comm-meter"><i id="commTimer"></i></div></div>'+
           '<div class="comm-acts"><button class="up-buy" id="commYes">FULFILL &middot; <span class="c">'+fmt(S.comm.need)+' '+S.comm.res+'</span></button>'+
           '<button class="up-buy comm-no" id="commNo">DECLINE</button></div></div></div>'; }
     // THE HANDS LEVER (v2 P5.2): one workforce, two crafts — the game's first allocation surface
-    if(S.flags.o_materials) body += '<div class="panel lever-panel" style="grid-column:1/-1"><div class="panel-label">The Hands <span class="lbl-plain">(one workforce, leaned between the crafts)</span></div>'+
+    if(S.flags.o_materials) body += '<div class="panel lever-panel" style="grid-column:1/-1"><div class="panel-label">The Hands <span class="lbl-plain">(one workforce, split between the crafts)</span></div>'+
       '<div class="lever-row" data-tip="'+esc('<i>Every hand you have, somewhere on this line.</i><br>Lean toward the craft that is starving; the other slows. Centered is even.')+'">'+
         '<span class="lever-side" id="levRec">THE RECORD</span>'+
         '<input type="range" id="handsLever" min="0" max="100" value="'+Math.round((1-(typeof S.lever==='number'?S.lever:0.5))*100)+'">'+
@@ -3204,8 +3204,8 @@
       // contradiction halt (v2 P5.1) — the terminal stops until you discard a rule
       { const ch=$('contraHost'); if(ch){ let h='';
           if(S.contra && !S.flags.symbolicDone) h='<div class="contra-msg">&#9888; CONTRADICTION DETECTED &middot; rule <b>#'+S.contra.a+'</b> conflicts with rule <b>#'+S.contra.b+'</b> &middot; engine dragging at '+Math.round(CFG.e2.contraSlow*100)+'%</div>'+
-            '<div class="contra-acts"><button id="contraFwd">&gt; DISCARD #'+S.contra.a+' <small>the specific rule &middot; Rulesets lean +'+Math.round(CFG.e2.contraBonus*100)+'% forever</small></button>'+
-            '<button id="contraBwd">&gt; DISCARD #'+S.contra.b+' <small>the general rule &middot; your hand leans +'+Math.round(CFG.e2.contraBonus*100)+'% forever</small></button></div>';
+            '<div class="contra-acts"><button id="contraFwd">&gt; DISCARD #'+S.contra.a+' <small>the specific rule &middot; Rulesets gain +'+Math.round(CFG.e2.contraBonus*100)+'% forever</small></button>'+
+            '<button id="contraBwd">&gt; DISCARD #'+S.contra.b+' <small>the general rule &middot; manual writes gain +'+Math.round(CFG.e2.contraBonus*100)+'% forever</small></button></div>';
           if(ch._html!==h){ ch.innerHTML=h; ch._html=h;
             const cf=$('contraFwd'); if(cf) cf.onclick=()=>resolveContra('fwd');
             const cb2=$('contraBwd'); if(cb2) cb2.onclick=()=>resolveContra('bwd'); }
@@ -3370,7 +3370,7 @@
       setText('supSi4', 'Silicon '+fmt(S.silicon)+'  ·  Data '+fmt(S.data)+'  ·  Insight '+fmt(S.insight)+'  ·  Knowledge '+fmt(S.knowledge));
       // event banner — telegraph + announce (the wind shifting)
       const eb=$('eventBanner'); if(eb){ let eh='', ec='';
-        if(S.event && S.event.type==='shift'){ ec='ev-shift'; eh='&#9888; SHIFT SQUALL &middot; <b>'+dl(S.event.run)+'</b> demands far more while this lasts — lean compute in until it passes ('+Math.ceil(S.eventT)+'s)'; }
+        if(S.event && S.event.type==='shift'){ ec='ev-shift'; eh='&#9888; SHIFT SQUALL &middot; <b>'+dl(S.event.run)+'</b> demands far more while this lasts: pour compute in until it passes ('+Math.ceil(S.eventT)+'s)'; }
         else if(S.event && S.event.type==='breakthrough'){ ec='ev-break'; eh='&#10022; BREAKTHROUGH &middot; <b>'+dl(S.event.run)+'</b> has clean gradient — concentrate hard, eat the heat, ease off after ('+Math.ceil(S.eventT)+'s)'; }
         else if(S.eventNext){ ec='ev-warn'; eh='&#9650; '+(S.eventNext.type==='shift'?'SHIFT FORMING':'BREAKTHROUGH FORMING')+' on <b>'+dl(S.eventNext.run)+'</b> — '+(S.eventNext.type==='shift'?'pre-position compute there':'ready a concentration burst')+' ('+Math.ceil(Math.max(0,S.eventT))+'s)'; }
         const cls='event-banner'+(ec?' '+ec+' show':''); if(eb.className!==cls) eb.className=cls; if(eb._html!==eh){ eb.innerHTML=eh; eb._html=eh; } }
