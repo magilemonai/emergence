@@ -41,6 +41,10 @@ Foundation doesn't make sense to me."*
   **EYEBALL NEEDED:** confirm the 1.1 default feels right (and that zoom doesn't break any
   era's one-screen layout). Dial it in the ♪ panel → "Text size".
 - [x] **R4.3 — Codex search field text bigger** (12.5px → 14px).
+- [x] **R4.35 — Per-requirement affordability on discoveries (from Jordan, 2026-06-18).** DONE.
+  When an unlock needs more than one resource, each is its own chip now: lit with a check once you
+  have enough of THAT one, grey while you're short (e.g. the Kiln shows "✓110 ore + 30 knowledge").
+  No red, per the Zach "red feels bad" rule. Discoveries only for now (buildings are single-resource).
 
 ## Tier 2 — Wording: lore line + plain-English mechanic, everywhere
 

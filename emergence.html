@@ -709,6 +709,8 @@
   .up-buy:disabled { opacity: 0.4; cursor: not-allowed; }
   .up-buy .c { color: var(--ec); }
   .up-buy:disabled .c { color: inherit; } /* unaffordable = uniformly greyed (with the 0.4-opacity button), never red — red-in-anticipation "feels bad" (Zach) */
+  .cost-res { color: var(--dim); white-space: nowrap; } /* R4.35 (Jordan): per-requirement affordability */
+  .cost-res.ok { color: var(--good); } /* a resource you already have enough of lights up; the ones you still need stay grey (never red) */
   /* Per-era DISPLAY font routes through headers + primary actions; eras without --era-display keep body font. */
   .era-name, .era-tag, .panel-label, .act-btn, .up-name, .tile-name, .era-indicator, .core-age { font-family: var(--era-display, inherit); }
   .meter { height: 10px; background: var(--panel); border-radius: 5px; overflow: hidden; margin-top: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); }
@@ -3201,9 +3203,11 @@
       for(const n of DISCO){ const btn=$('dsc-'+n.id); if(!btn) continue; const tile=$('dtile-'+n.id);
         if(S.disco[n.id]){ setClass(tile,'tile disco owned'); const dh='<img class="disco-seal" src="assets/seal-discovered.png">DISCOVERED'; if(btn._html!==dh){ btn.innerHTML=dh; btn._html=dh; } if(!btn.disabled) btn.disabled=true; }
         else { const can=canBuyDisco(n.id);
-          let req=''; if(n.reqRes){ for(const k in n.reqRes){ if(S[k]<n.reqRes[k]) req+=' · needs '+n.reqRes[k]+' '+k; } }
-          const costTxt = n.costs ? Object.keys(n.costs).map(k=>fmt(n.costs[k])+' '+k).join(' + ') : fmt(n.cost)+' '+n.res;
-          const h='DISCOVER · <span class="c">'+costTxt+'</span>'+req;
+          // R4.35 (Jordan): show every required resource as its own chip — lit with a check once you have enough of THAT one, grey while short (never red, per Zach)
+          const reqs = n.costs ? Object.keys(n.costs).map(k=>[k,n.costs[k]]) : [[n.res,n.cost]];
+          if(n.reqRes){ for(const k in n.reqRes) reqs.push([k,n.reqRes[k]]); }
+          const costTxt = reqs.map(p=>{ const ok=S[p[0]]>=p[1]; return '<span class="cost-res'+(ok?' ok':'')+'">'+(ok?'&#10003; ':'')+fmt(p[1])+' '+p[0]+'</span>'; }).join(' + ');
+          const h='DISCOVER · '+costTxt;
           if(btn._html!==h){ btn.innerHTML=h; btn._html=h; }
           if(btn.disabled!==!can) btn.disabled=!can;
           setClass(tile,'tile disco'+(can?' can':''));
