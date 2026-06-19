@@ -27,12 +27,19 @@ Loop order: RR1 → RR5 → RR6 → RR2/RR3/RR4 → PAUSE for RR7 → RR8/RR9/RR
   worth extending to a Data→Deep / Silicon→Statistical coupling once the feel is confirmed.
 
 ## Structural — back-half engagement (Finding 1)
-- [ ] **RR6 [design] Back-half audit per era.** v2 already added Commissions / contradictions /
-  Experiment Board / events, so this is gap-filling where an era still decays into spam. Per era:
-  - RR6a Origins — Refinement spam vs the Commissions/Hands engine: is there still a dead stretch?
-  - RR6b Symbolic — lemma spam vs contradictions: do contradictions stay live late?
-  - RR6c Statistical — the set-once Focus dial: make distribution-shifts change the OPTIMAL focus so you must re-engage.
-  - RR6d Deep — already reactive: ensure shift vs breakthrough demand genuinely different shapes.
+- [~] **RR6 [design] Back-half audit per era.** AUDITED — v2 already covers most of this (the research
+  confirmed the v2 direction). Verdicts:
+  - RR6a Origins — **OK.** Refinement is demoted to a small Ore sink; Commissions + the Hands lever
+    carry the back half (Zach loved Origins). The real late-Origins issue is the converter
+    sawtooth/pausing (R4.25) — a pacing/balance item for playtest, not a missing system.
+  - RR6b Symbolic — **OK.** Contradictions fire at runRules [3000/12000/30000] and **re-arm on Compile**
+    (the late-game loop), so the pressure recurs across the era. Minor gap: a no-compile stretch before
+    the 30k capstone can go quiet; low priority.
+  - RR6c Statistical — **SURFACED for Cody, not blind-changed.** The real fix is a distribution shift
+    that changes WHICH Focus is optimal (forcing re-engagement of the set-once dial), but that alters
+    the core of the era testers already find most confusing — needs your design call + a playtest.
+  - RR6d Deep — **OK.** Shift (sustained 1.8× squall) vs breakthrough (2.2× burst colliding with heat)
+    already demand genuinely different shapes (v2 P4.2).
 
 ## Foundation cluster — gated on the emergence decision
 - [ ] **RR7 [decision] Emergence reframe.** Capability climb becomes visible + smooth; "emergence" =
