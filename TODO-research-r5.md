@@ -42,10 +42,12 @@ Loop order: RR1 → RR5 → RR6 → RR2/RR3/RR4 → PAUSE for RR7 → RR8/RR9/RR
     already demand genuinely different shapes (v2 P4.2).
 
 ## Foundation cluster — gated on the emergence decision
-- [ ] **RR7 [decision] Emergence reframe.** Capability climb becomes visible + smooth; "emergence" =
-  a discontinuous READOUT crossing a threshold. Protects the surprise (Finding 6), cures "Foundation
-  doesn't make sense," teaches the truer lesson that the jump is partly in how we measure (Finding 10).
-  **NEEDS CODY'S GO — everything below depends on it.**
+- [x] **RR7 [decision] Emergence reframe — LIGHT version (Cody chose, 2026-06-18).** DONE. Rupture
+  mechanic untouched. Added: a `scaling` lesson tidbit fired at emergence ("the jump was the measure
+  catching up to a smooth climb"), a post-emergence Codex "Emergence" entry that persists the lesson,
+  and a pre-emergence framing tooltip on the Scale meter ("climbing smoothly"). Banks the real AI
+  insight + comprehension with no risk to the moment Zach loved. **Full benchmark-readout version
+  deferred** — decide after Cody's eyeball + Zach's run says whether Foundation still confuses.
 - [ ] **RR8 [design] Alignment vs Control distinct** (Finding 11). Alignment = how often its proposals
   are good; Control = whether your veto still binds. A high-Alignment agent can still go uncontrollable.
 - [ ] **RR9 [design] Aftermath plateau/breakthrough gates** (Finding 2) so it can't collapse in ~57s

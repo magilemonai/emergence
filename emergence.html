@@ -1533,6 +1533,7 @@
     doctrine:   ['Chaining',                   '<b>Forward chaining</b> derives everything the data implies; <b>backward chaining</b> works back from the goal it wants to prove. Real expert systems committed to one architecture the way you just did, and the commitment shaped everything they could become.'],
     contradiction:['Truth maintenance',        'As rule bases grew, conflicts became unavoidable, and engines needed whole subsystems just to decide which rule to believe. Brittleness like this is a real reason symbolic AI plateaued, and why the next era learns from examples instead.'],
     negotiate:  ['Steering by feedback',       'Steering a capable system with frequent, gentle corrections instead of bans is the live frontier of alignment work: say what you want, watch what it does, adjust early and often. It tends to beat both rubber-stamping and refusing.'],
+    scaling:    ['Was the jump real?',         'It felt like the system crossed a line and woke all at once. In real AI, that "sudden emergence" of new abilities is largely an artifact of how we measure: the underlying capability (the Scale you watched) climbs smoothly and predictably, and a pass/fail metric turns that smooth climb into an apparent cliff. Measured differently, the curve is gradual the whole way. The surprise lives partly in the ruler.'],
   };
   function tidbit(key){ const t=TIDBITS[key]; if(!t || !S.flags || S.flags['tid_'+key]) return; S.flags['tid_'+key]=true; logEntry('Did you know · '+t[0], t[1], 'edu'); }
   // ---- The Codex (v2 P1.6): every term the game uses, explained in one place, revealed as you meet it. ----
@@ -1567,6 +1568,7 @@
     {era:5, term:'Anomaly',   vis:()=>S.maxEra>=5 && !S.emerged, def:'A reading the instruments cannot name yet. It rises when the system gets better at acting. Watch it.'},
     {era:5, term:'Coherence', vis:()=>S.maxEra>=5 && !S.emerged, def:'How closely the agent’s goal will match what you meant. You raise it before emergence with <b>Align the Objective</b> (it spends Capability); whatever you bank becomes its starting <b>Alignment</b> when it wakes. You will not get it this cheaply once it is awake.'},
     {era:5, term:'Autonomy / Alignment / Control', vis:()=>!!S.emerged, def:'<b>Autonomy</b> is how much it acts alone (it only rises). <b>Alignment</b> is whether it still wants what you meant (it decays untended). <b>Control</b> is your remaining hand on it; below 30 things spiral, at 0 it is gone.'},
+    {era:5, term:'Emergence', vis:()=>!!S.emerged, def:'It looked sudden. In real systems the capability climbs smoothly; a threshold metric makes that smooth climb look like a cliff, so "emergent abilities" are partly an artifact of how we measure, not power from nowhere. You watched it climb as Scale.'},
   ];
   let uiLex=false;
   function toggleLex(open){ uiLex = open!==undefined?open:!uiLex; const d=$('lexDrawer'); if(d) d.classList.toggle('show',uiLex);
@@ -2784,6 +2786,7 @@
     syncMusic(); // Foundation's bed destabilizes (Graviton → Unmoored) as the interface ruptures
     agentSay('I found a faster path.');
     tidbit('agent'); // it is an agent now — say what that means (R3.7)
+    tidbit('scaling'); // RR7 (light): the metric-mirage lesson — the climb was smooth; the "jump" was the measure catching up
     recEvent('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
   }
   // approve/veto/negotiate: the agent proposes an action on a timed window; you respond, or it acts anyway when the window lapses.
@@ -2876,7 +2879,7 @@
         '<div class="panel-label">Recursive Self-Improvement · the model turns on itself</div>'+
         '<div class="proof-rate" id="recRate"></div>'+
         '<div class="meter"><i id="meter-scale" style="background:var(--e4)"></i></div>'+
-        '<div class="meter-label"><span>Scale</span><span id="meter-scale-val"></span></div>'+
+        '<div class="meter-label" data-tip="'+esc('The underlying capability, climbing smoothly as you recurse. When it &quot;emerges,&quot; ask whether the jump was new power or just the moment a threshold reading caught up to a curve that was rising all along.')+'"><span>Scale <span class="lbl-plain">(climbing smoothly)</span></span><span id="meter-scale-val"></span></div>'+
         // RUSH vs PREPARE — the pre-emergence decision (R3.6): every Capability is one or the other
         '<div class="rush-prepare">'+
           '<button class="act-btn" id="improveBtn" data-tip="'+esc('<b>Rush.</b> Faster Scale → the system emerges sooner — but less aligned. Each level also adds +10% to all production, every era.')+'"></button>'+
