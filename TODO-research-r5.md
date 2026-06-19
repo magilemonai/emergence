@@ -8,8 +8,10 @@ Loop order: RR1 → RR5 → RR6 → RR2/RR3/RR4 → PAUSE for RR7 → RR8/RR9/RR
 `node test.js` green + a commit per item. Nothing pushed.
 
 ## Teaching — bake the lesson into the mechanic, cut decoupled prose (Findings 7, 8)
-- [ ] **RR1 [safe] Statistical just-in-time.** Make the overfit gap / TRAINING-vs-VALIDATION / Effective
-  land at the moment they first appear (name the felt thing); trim any prose the plot already shows.
+- [x] **RR1 [safe] Statistical just-in-time.** DONE. Found four foundational tidbits defined but
+  NEVER fired (`symbolic`/`statistical`/`deep`/`foundation` — dead educational content). Wired each to
+  fire on entry to its paradigm, so the "what this really is" note lands at the felt moment (the
+  overfit/shift tidbits already fire just-in-time). Also covers part of RR4 for the other three eras.
 - [ ] **RR2 [safe] Foundation just-in-time.** Scale / Anomaly / Coherence explained as you feel them,
   not front-loaded (builds on R4.5); trim.
 - [ ] **RR3 [safe] Teach-beat audit (all eras).** Cut each upfront beat to the one-line "what you're

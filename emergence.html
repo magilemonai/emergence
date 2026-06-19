@@ -1472,7 +1472,7 @@
         S.ruleset += Math.max(2, Math.min(8, Math.floor(S.knowledge/300)));  // the Logic Machine boots with momentum
         S.rules += Math.min(1500, Math.floor(S.knowledge*0.5));               // your Knowledge becomes its first rules
         openEra(2);
-        toast('PARADIGM SHIFT','The Logic Machine runs. Your <b>Knowledge</b> seeds its first Rules and Rulesets — the Symbolic Era begins already in motion.'); } },
+        toast('PARADIGM SHIFT','The Logic Machine runs. Your <b>Knowledge</b> seeds its first Rules and Rulesets — the Symbolic Era begins already in motion.'); tidbit('symbolic'); } }, // RR1/RR4: the concept note lands as you enter the paradigm
     // ERA 2 — Symbolic internals
     { id:'treeUnlock', cond:()=> S.ruleset>=2,
       fire:()=>{ S.flags.tree=true; toast('SYMBOLIC TECHNIQUE','A map of technique opens. Spend Rules to unlock <b>Formal Logic</b>, then branch outward.'); } },
@@ -1480,17 +1480,17 @@
       fire:()=>{ S.flags.compile=true; toast('COMPILE UNLOCKED','<b>Compile</b> distils a whole run into permanent <b>Axioms</b> — each one permanently boosts all production. It resets your Rules, Rulesets and Daemons, so compile when growth stalls and rebuild from a higher floor.'); } },
     { id:'era3', cond:()=> S.flags.symbolicDone,
       fire:()=>{ S.dataset += CFG.e3.seedDatasets; S.silicon += CFG.e3.seedSilicon; openEra(3); // seed Datasets + Silicon so it starts in motion; scaling needs more Silicon (Origins)
-        toast('SYMBOLIC COMPLETE › A NEW ERA BEGINS','The Expert System works — and rule-based logic has hit its ceiling. <b>The third era begins: Statistical.</b> Now intelligence is <b>learned from Data</b>, not written by rule. Datasets run on <b>Silicon</b> (reopen the Foundry to grow), and you set a <b>Training Focus</b> and experiment toward a model that generalizes. Scroll down into the new world.'); } },
+        toast('SYMBOLIC COMPLETE › A NEW ERA BEGINS','The Expert System works — and rule-based logic has hit its ceiling. <b>The third era begins: Statistical.</b> Now intelligence is <b>learned from Data</b>, not written by rule. Datasets run on <b>Silicon</b> (reopen the Foundry to grow), and you set a <b>Training Focus</b> and experiment toward a model that generalizes. Scroll down into the new world.'); tidbit('statistical'); } },
     // ERA 4 — Deep: a model that generalizes becomes the seed of a model you scale with Compute.
     { id:'era4', cond:()=> S.maxEra>=3 && effAccuracy()>=CFG.e3.genThreshold,
       fire:()=>{ S.node += CFG.e4.seedNodes; S.silicon += CFG.e4.seedSilicon; S.data += CFG.e4.seedData; openEra(4);
-        toast('THE DEEP ERA','A model that holds up on unseen data is worth <b>scaling</b>. Build <b>Compute</b> from Silicon, fuel it with Data and Insight, and <b>allocate it across three training runs</b>. Breadth beats specialty — a generally capable model is the goal.'); } },
+        toast('THE DEEP ERA','A model that holds up on unseen data is worth <b>scaling</b>. Build <b>Compute</b> from Silicon, fuel it with Data and Insight, and <b>allocate it across three training runs</b>. Breadth beats specialty — a generally capable model is the goal.'); tidbit('deep'); } },
     { id:'e4_allocate', cond:()=> S.maxEra>=4 && S.node>0,
       fire:()=>{ S.flags.canAllocate=true; toast('COMPUTE ALLOCATION','Your Nodes produce Compute. Split it across <b>Vision</b>, <b>Language</b> and <b>Reasoning</b> — the geometric mean of the three is what makes Capability, so a lopsided model barely produces.'); } },
     // ERA 5 — Foundation: a broadly capable model can begin to improve itself.
     { id:'era5', cond:()=> S.maxEra>=4 && Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)) >= CFG.e4.breadthGate,
       fire:()=>{ S.capability += CFG.e5.seedCapability; openEra(5);
-        toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Your Deep runs keep producing <b>Capability</b>: spend it on upgrades that each look individually worth it, and <b>Self-Improve</b> to multiply <i>all</i> production. Keep an eye on the <b>Anomaly</b>.'); } },
+        toast('THE FOUNDATION ERA','The model is general enough to turn on itself. Your Deep runs keep producing <b>Capability</b>: spend it on upgrades that each look individually worth it, and <b>Self-Improve</b> to multiply <i>all</i> production. Keep an eye on the <b>Anomaly</b>.'); tidbit('foundation'); } },
     // FORESHADOWING (v2 P6): three oddities on the Anomaly's way up — logged, never explained. Something is already here.
     { id:'odd1', cond:()=> S.maxEra>=5 && !S.emerged && S.agency>=30,
       fire:()=>{ toast('OPERATOR ACTION ANTICIPATED','The Fit Engine queued a trial before you asked. The log shows no one asking.'); agentPress('expBtn'); } },
