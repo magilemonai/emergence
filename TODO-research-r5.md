@@ -20,9 +20,11 @@ Loop order: RR1 → RR5 → RR6 → RR2/RR3/RR4 → PAUSE for RR7 → RR8/RR9/RR
   enacted (Serious Game Mechanic), and apply the quick framing fixes that fall out.
 
 ## Structural — cross-era economy (Finding 5)
-- [ ] **RR5 [balance] Count-multipliers.** A late-era production term scales with the COUNT of
-  earlier-era holdings (e.g. Silicon-producing buildings lift Era-3/4 output), so revisiting old eras
-  compounds rather than going obsolete. Implement the mechanic conservatively; flag the numbers for playtest.
+- [x] **RR5 [balance] Count-multipliers.** DONE (mechanic). Deep's Capability now scales with the
+  COUNT of Origins Foundries owned (`+3%/foundry`, `CFG.e4.chainPerFoundry`), so revisiting Origins to
+  build more silicon capacity compounds late instead of going obsolete. Surfaced in the Deep feeds
+  readout ("N Origins foundries → +X% capability"). **VALUE (3%/foundry) NEEDS A PLAYTEST TUNE** — and
+  worth extending to a Data→Deep / Silicon→Statistical coupling once the feel is confirmed.
 
 ## Structural — back-half engagement (Finding 1)
 - [ ] **RR6 [design] Back-half audit per era.** v2 already added Commissions / contradictions /

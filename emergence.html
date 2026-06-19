@@ -1275,6 +1275,7 @@
       runInsight: 0.05,     // Insight/s drawn per unit of allocated Compute (training ideas)
       capGain: 0.0011,      // domain capability per allocated Compute × (1 − level)  [diminishing climb]
       capRate: 0.9,         // Capability accrued = geometric-mean breadth × Compute × this (balance pays)
+      chainPerFoundry: 0.03, // RR5 (research Finding 5): each Origins Foundry OWNED lifts Capability, so revisiting Origins compounds late instead of going obsolete. [VALUE NEEDS A PLAYTEST TUNE]
       seedNodes: 4, seedSilicon: 260, seedData: 140, // openEra(4) seed so Deep starts in motion
       breadthGate: 0.78,    // geometric-mean breadth across all three domains → Era 5 (forces generality)
       // "steer against the drift": the three runs drift apart on their own, so balanced is never optimal —
@@ -2103,7 +2104,7 @@
       const conc=Math.max(0, maxShare-e4.heatBase); // how far past an even split the hottest run is pushed
       S.heat=Math.max(0,Math.min(110, S.heat + (e4.heatRise*conc - e4.cooling)*dt)); // concentrate → heats; balanced → cools
       const breadth=Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
-      S.capability += breadth*compute*e4.capRate*throttle*(S.caps&&S.caps.toolAccess?1.6:1); // Tool Access (Era 5) lifts Capability throughput
+      S.capability += breadth*compute*e4.capRate*throttle*(S.caps&&S.caps.toolAccess?1.6:1)*(1+e4.chainPerFoundry*(S.foundry||0)); // Tool Access (Era 5) lifts throughput; RR5: Origins Foundry COUNT compounds the supply chain
       // exogenous events (live play only — deterministic, no RNG churn offline)
       if(S.maxEra>=4 && !MUTE){ S.eventT-=dt;
         // TELEGRAPH (v2 P4.2): 3s before an event lands, name its type and run so skilled players pre-position
@@ -3364,7 +3365,7 @@
       if(driftC.length) parts.push(driftC.join(' &amp; ')+(driftC.length>1?' are':' is')+' drifting — steer there');
       if(!parts.length) parts.push('holding course — watch the wind shift');
       const ol=$('orchLine'); const orch=parts.join(' · '); if(ol && ol._html!==orch){ ol.innerHTML=orch; ol._html=orch; }
-      setText('deepRate', fmt(computeRate)+' compute/s  ·  '+S.node+' nodes  ·  feeds: V←Data L←Knowledge R←Insight');
+      setText('deepRate', fmt(computeRate)+' compute/s  ·  '+S.node+' nodes  ·  feeds: V←Data L←Knowledge R←Insight'+(S.foundry>0?'  ·  '+S.foundry+' Origins foundries → +'+Math.round(e4.chainPerFoundry*S.foundry*100)+'% capability':'')); // RR5: surface the cross-era compounding
       // Run Status — situational PLAIN text (no markup; setText uses textContent)
       let ds;
       if(breakR) ds = dl(breakR.k)+' breakthrough active — route more compute there before the window closes.';
