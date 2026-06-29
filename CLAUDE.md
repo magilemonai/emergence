@@ -1,7 +1,7 @@
 # EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-06-16.
+> keep it current as the game evolves. Last updated 2026-06-29.
 
 ## v2 is now the shipped main
 
@@ -24,10 +24,55 @@ what v2 added on top of the Zach-round-3 build:
   board, scorecard concept tips.
 - Tests grew 129 → **200 green.**
 
-**OPEN (the one deliberate deferral):** the by-hand pacing tune. Bot-side read is done
-(full arc ~26.3m played optimally; per-era splits in `DESIGN-v2.md` §10.8), but the bot
-plays 2-4× faster than a real player. NEXT: Cody's no-dev run → Run Recorder export →
-hand-tune `accGain`/`emergeScale`/commission cadence against 7-9 min/era → Zach round 4.
+## Zach alpha round 4 + Jordan + research-driven round 5 (2026-06-17/18)
+
+Zach played the full v2 arc to a Contained/S ending (`alpha tests/June 17 2026 - Zach/`:
+`zach_feedback_transcript.md` + the Run Recorder export; round-4 TODO in `TODO-zach-4.md`).
+**Headline:** his feedback was dominated by **legibility + wording**, not pacing (he never
+said an era felt long/short; he said "text is too small" 6+ times). Decision: UX-first.
+
+**Round 4 — shipped (all `node test.js` green, NOT pushed):**
+- **Legibility:** one `--ui-scale` knob (default 1.1) scales the whole UI via `body{zoom}`,
+  persisted, with a **Text size** slider; Codex search bigger. (R4.1-4.3)
+- **Wording:** killed player-facing "lean" → plain English; Foundation Capability/Coherence
+  made literal; tightened the Statistical intro; commission-decline flavor; em-dashes stripped
+  from the teaching prose (TIDBITS + Codex). (R4.4-4.8)
+- **UI structure:** **Settings panel on Escape** (text size + music + SFX + **Pause** + **Restart**);
+  Codex lists newest era on top; **Log entries tinted by era**; toasts moved bottom-right;
+  distinct **event** sound for commission/shift pop-ups. (R4.9, R4.12, R4.13, R4.16, R4.18)
+- **Bugs:** Glassmaking no longer gates the Foundry (upgrade followed the thing it upgrades);
+  Origins objective clears after fabrication; **NG+ "Begin again" actually restarts** (the
+  `beforeunload` autosave was re-writing the finished run during reload — `RESETTING` guard). (R4.19-4.21)
+- **Jordan's note (R4.35):** multi-resource discovery costs now light each requirement
+  independently (✓ green when you have enough, grey while short; never red).
+
+**Round 5 — research-driven (from `DESIGN-research-2026-06.md`, a verified deep-research pass;
+checklist in `TODO-research-r5.md`):**
+- **RR1:** four foundational educational tidbits (`symbolic/statistical/deep/foundation`) were
+  defined but NEVER fired — now they land at era entry (teach at the felt moment).
+- **RR5:** cross-era count-multiplier — Origins Foundry **count** compounds Deep Capability
+  (`CFG.e4.chainPerFoundry`, default 3%/foundry, **value needs a playtest tune**). Surfaced in the
+  Deep feeds readout. (research's "keep earlier layers relevant via ownership bonuses" pattern.)
+- **RR6:** back-half audit — v2 already covers it (Origins/Symbolic/Deep OK); the one real
+  remaining twist (a distribution shift that changes the OPTIMAL Focus) is **surfaced, not
+  blind-changed** since Statistical is the most-confusing era.
+- **RR7 (light, Cody's choice):** emergence now teaches the **metric-mirage** lesson (a `scaling`
+  tidbit at the rupture + a Codex "Emergence" entry + a "climbing smoothly" Scale tooltip).
+  Rupture mechanic untouched. The **full benchmark-readout reframe is deferred** pending eyeball + Zach.
+
+**OPEN — next session, gated on real playtest data:**
+1. **Cody's eyeball pass** on round-4/5 (built blind): text-scale default, Settings/Esc + pause pill,
+   bottom-right toasts, era-tinted log, Jordan's cost chips, the RR7 emergence lesson.
+2. **Zach round 5 run** → Run Recorder export. Unblocks BOTH remaining threads:
+   - **Pacing redistribution** (Origins ~11.6m / Deep ~13.7m long; Statistical ~5m / aftermath
+     ~57s short) — always a playtest job; tune `accGain`/`emergeScale`/`chainPerFoundry`/commission cadence.
+   - **Foundation aftermath rework (RR8/RR9/RR10):** Alignment-vs-Control made mechanically
+     distinct; **aftermath plateau/breakthrough gates so it can't collapse in ~57s** when the
+     player prepped; sharpen rush-vs-prepare complicity. Deliberately held for Zach's data.
+3. Open design calls still Cody's: **RR6c** (shift changes optimal Focus), the **full RR7**
+   benchmark readout, **R4.32** backbone-resource-per-era (Symbolic/Statistical through-line).
+4. **22 commits ahead of `origin/main`, unpushed** — push when Cody says (auto-deploys live site).
+5. Texts drafted for Zach (round-5 ask) + the emergence-surprise question (R4.34) to discuss with him.
 
 ## What this is
 
@@ -222,4 +267,6 @@ Per-era times were Origins **5.5m ✅**, Symbolic **6.0m ✅**, Statistical **2.
 **All five eras are wired.** Eras 1-3: all icons, sigils, evolving Origins core, wordmark, title card. **Era 4** (blue): sigil, Compute Node, three run glyphs. **Era 5** (violet): sigil, the Emergent Agent hero, and Self-Modeling + World Model capability icons. **NEW Era-5 caps need art** (glyph fallbacks live now): **Tool Access, Recursive Planning, Memory Continuity, Interpretability** — add prompts to `ART-PROMPTS.md` (violet hue, line-art, same key process). Keyed from ChatGPT exports (white-bg → 255−min(rgb) alpha; black-bg → max(rgb) alpha) into `assets/`.
 
 ## Docs
-- `CLAUDE.md` (this file) — current state. `DESIGN.md` — the living-supply-chain redesign. `DESIGN-era5.md` — the Foundation finale spec (now BUILT). `TESTING.md` — the suite (**129 tests**). `ART-PROMPTS.md` — icon prompts (ChatGPT → key → wire). `alpha tests/June 9 2026 - Zach/` — the three Zach alpha parses + round TODOs (round 3 = `TODO-zach-3.md`, all R3.1–R3.9 complete).
+- `CLAUDE.md` (this file) — current state. `DESIGN.md` — the living-supply-chain redesign. `DESIGN-v2.md` — the v2 overhaul plan + per-phase record. `DESIGN-era5.md` — the Foundation finale spec (now BUILT). `TESTING.md` — the suite (**200 tests**). `ART-PROMPTS.md` — icon prompts (ChatGPT → key → wire).
+- `DESIGN-research-2026-06.md` — verified deep-research pass (incremental craft + teaching-through-mechanics + AI-concept accuracy), with a per-finding application to EMERGENCE and a structural-vs-teaching shortlist. `TODO-research-r5.md` — the round-5 implementation checklist derived from it.
+- `alpha tests/June 9 2026 - Zach/` — Zach rounds 1-3 parses (round 3 = `TODO-zach-3.md`, R3.1–R3.9 complete). `alpha tests/June 17 2026 - Zach/` — round 4 (`zach_feedback_transcript.md` + Run Recorder export + `TODO-zach-4.md`).
