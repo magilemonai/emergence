@@ -44,6 +44,19 @@ square, generous transparent margin, ~1024px, no text, no checkerboard if you ca
    - `cap-worldModel` — **World Model**: a compressed globe / a dense knot of connections
      forming a sphere.
 
+5b. **Three MORE Foundation capability icons** (violet line-art, single object each) — the
+    v3 build ships these on glyph fallbacks; art wanted. Same treatment as #5, keyed to
+    `assets/cap-<id>.png` (`CAP_ICON` in `v3-kit/era-foundation.js` reads that name):
+    - `cap-toolAccess` — **Tool Access**: a hand or robotic actuator reaching out to grip /
+      operate a small external instrument (a dial, a lever, a machine port); reach + control
+      of the systems below it. "It can operate the stack you built."
+    - `cap-recursivePlanning` — **Recursive Planning**: a chain of forward-pointing steps where
+      each step spawns the next (branching arrows, a nested look-ahead tree); planning the next
+      improvement, then the one after that. Depth/forward motion is the read.
+    - `cap-interpret` — **Interpretability** (the counter-lever — cooler/observational tone,
+      still violet): a lens or eye examining an inner lattice / a magnifier over a dense knot of
+      connections, lines resolving into legibility under it. "Instruments to watch what it does."
+
 6. *(optional)* **The Emergent Agent** — a hero glyph for the finale: a form that clearly
    was *not* placed by a designer, coalescing out of the lattice. Violet→white core, the
    brightest asset in the game. Used at the emergence moment.

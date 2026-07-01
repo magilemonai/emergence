@@ -83,8 +83,8 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 - [x] Picked the better pass per pair (see `images/keyed-2026-07-01/MAPPING.md`) + installed (512px) over the
       10 assets: era4-sigil, icon-node, e4-vision/language/reasoning, era5-sigil, cap-selfModel, cap-transfer,
       cap-worldModel, agent-emergent. Wired cap-transfer art → Memory Continuity cap. Verified Deep + Foundation.
-- Still glyph-fallback (no art generated): Foundation caps toolAccess, recursivePlanning, interpret.
+- Still glyph-fallback (art pending): Foundation caps toolAccess, recursivePlanning, interpret — **prompts now written** in ART-PROMPTS.md item 5b (violet line-art, key to `assets/cap-<id>.png`). (2026-07-01)
 
 ## Assets needed from ChatGPT → track in ART-PROMPTS.md
-- Foundation caps still on glyphs: **Tool Access, Recursive Planning, Interpretability** (no prompt/art yet).
+- Foundation caps still on glyphs: **Tool Access, Recursive Planning, Interpretability** — prompts READY (ART-PROMPTS.md 5b); just needs Cody to generate + drop the 3 images in `images/`, I key + wire to `CAP_ICON`.
 - End-of-era cinematic art/motion (if we go beyond CSS) — P4 item above.
