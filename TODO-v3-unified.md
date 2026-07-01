@@ -46,8 +46,8 @@
 - [~] Revert 3 economy stand-ins → real cross-era reach-back (supply was doubled):
   - [x] **Statistical** — removed fake Foundry (Data→Silicon valve); Silicon now from the real Origins pool; supply bus = "Silicon from Origins →" reach-back nav. (2026-07-01)
   - [x] **Deep** — removed 4 stand-in producers; supply-bus buttons now BUILD the real Origins/Statistical producers (paid in Silicon, Cody's "build-here" choice); chainPerFoundry reads real S.e1.foundry. Verified feedstocks flow. (2026-07-01)
-  - [ ] **Foundation** — capIncome/seedBreadth + prior-era stubs → real Deep→Foundation handoff.
-  - Seams in `v3-kit/KIT.md`. Needs a Cody playtest after all 3 to confirm no starvation + tune.
+  - [x] **Foundation** — removed capIncome/seedBreadth + stubs; Scale climbs on real Deep breadth (S.e4), Capability from Deep's real production (Tool Access = +60% Deep-coupled bonus), proposals read real S.e3/e1/e2/S.knowledge/S.rules. Verified Scale climbs + Capability flows. (2026-07-01)
+  - ✅ ALL 3 reverts done. Seams in `v3-kit/KIT.md`. **NEEDS a Cody playtest to confirm no starvation + tune** the real supply chain (earlier eras must sustain later ones).
 - [ ] Rebuild the test suite for the merged v3 (`node test.js`; keep the no-idle-rebuild guard + cross-era reach-back).
 - [ ] Inline kit.css/kit.js + era modules into the single file (single-file constraint) — final packaging.
 - [ ] Then: Cody records → iterate → swap v3 → `emergence.html`, push (auto-deploys). DO NOT push until Cody says.

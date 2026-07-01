@@ -46,9 +46,10 @@ function makeEraFoundation(shell) {
   function rMult() { return Math.pow(1 + CFG.recurBonus * (S.e5.caps.memoryContinuity ? 1.5 : 1), S.e5.recursion); }
   function improveCost() { return Math.floor(CFG.improveBase * Math.pow(CFG.improveGrowth, S.e5.recursion) * (S.e5.caps.worldModel ? 0.75 : 1)); }
   function alignCohCost() { return Math.floor(CFG.alignActCost * Math.pow(CFG.alignActGrowth, S.e5.preps || 0)); }
-  function lowRun() { var a = S.e5; return ['vision', 'language', 'reasoning'].reduce(function (x, y) { return a[x] <= a[y] ? x : y; }); }
-  function effAccuracy() { return Math.max(0, Math.min(1, S.e5.accuracy - S.e5.gap * 0.5)); }
-  function breadthOf() { var a = S.e5; return Math.cbrt(Math.max(0, a.vision) * Math.max(0, a.language) * Math.max(0, a.reasoning)); }
+  // real reach-back: runs = the REAL Deep run states (S.e4); accuracy/gap = the REAL Statistical state (S.e3).
+  function lowRun() { var a = S.e4; return ['vision', 'language', 'reasoning'].reduce(function (x, y) { return (a[x] || 0) <= (a[y] || 0) ? x : y; }); }
+  function effAccuracy() { return Math.max(0, Math.min(1, (S.e3.accuracy || 0) - (S.e3.gap || 0) * 0.5)); }
+  function breadthOf() { var a = S.e4; return Math.cbrt(Math.max(0, a.vision || 0) * Math.max(0, a.language || 0) * Math.max(0, a.reasoning || 0)); }
   function agenticCapCount() { var n = 0; CAPS.forEach(function (c) { if (c.id !== 'interpret' && S.e5.caps[c.id]) n++; }); return n; }
   function mmss(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
@@ -71,7 +72,13 @@ function makeEraFoundation(shell) {
     var breadth = breadthOf();
     var slow = 1 - Math.min(0.85, E.aftermathSlow);
     var interpSlow = (E.caps.interpret && !E.emerged) ? (1 - CFG.interpretDamp) : 1;
-    if (!E.emerged) { var inc = CFG.capIncome * (E.caps.toolAccess ? 1.6 : 1) * rMult() * dt; S.capability += inc; K.fIn('capability', inc); }
+    // Capability's base flows from the REAL Deep fabric (background produce). Tool Access = operate it harder:
+    // +60% on the capability Deep generates, recomputed from Deep's real state (and amplified by recursion).
+    if (!E.emerged && E.caps.toolAccess) {
+      var e4 = S.e4, dc = (e4.node || 0) * shell.CFG.e4.nodeCompute;
+      var inc = 0.6 * breadthOf() * dc * shell.CFG.e4.capRate * rMult() * dt;
+      if (inc > 0) { S.capability += inc; K.fIn('capability', inc); }
+    }
     if (breadth > 0) { var s = breadth * CFG.scaleRate * (1 + E.recursion) * (E.caps.selfModel ? 1.5 : 1) * interpSlow * slow * dt; S.scale += s; if (!E.emerged) K.fIn('scale', s); }
     if (!E.emerged) {
       if (E.improveCd > 0) E.improveCd = Math.max(0, E.improveCd - dt);
@@ -122,7 +129,7 @@ function makeEraFoundation(shell) {
   function emerge() {
     sync(); if (E.emerged) return;
     E.emerged = true; E.flags.emerged = true; E.emergedT = S.t;
-    var dom = ['vision', 'language', 'reasoning'].reduce(function (a, b) { return E[a] >= E[b] ? a : b; });
+    var dom = ['vision', 'language', 'reasoning'].reduce(function (a, b) { return (S.e4[a] || 0) >= (S.e4[b] || 0) ? a : b; });
     E.agentName = { vision: 'IRIS', language: 'EKHO', reasoning: 'NOUS' }[dom] || 'EKHO';
     E.agentRate = CFG.agentBase; E.autonomy = E.agency; E.alignment = CFG.alignBase + E.coherence; E.control = CFG.controlStart;
     E.rupture = 1; E.vetoT = CFG.vetoGap; E.opT = 7;
@@ -155,10 +162,10 @@ function makeEraFoundation(shell) {
   /* ---------- aftermath proposals ---------- */
   function opEra(n) { S.e5.agentOps[n] = S.t + CFG.opDur; }
   var PROPOSALS = [
-    { id: 'refit3', avail: function () { return S.e5.gap > 0.05 || S.e5.accuracy < 0.97; }, text: function () { return 're-fit the Statistical instrument: validation reads ' + Math.round(effAccuracy() * 100) + '% and it is memorizing ' + Math.round(S.e5.gap * 100) + ' points of noise'; }, auto: 'It re-fits the model before you answer.', done: 'Re-fit. The instrument is clean now.', apply: function (m) { S.e5.gap = Math.max(0, S.e5.gap * (1 - 0.7 * m)); S.e5.accuracy = Math.min(1, S.e5.accuracy + 0.04 * m); opEra(3); } },
-    { id: 'reroute4', avail: function () { return S.e5[lowRun()] < 0.99; }, text: function () { var k = lowRun(); return 'reroute the compute fabric: ' + k.charAt(0).toUpperCase() + k.slice(1) + ' lags at ' + Math.round(S.e5[k] * 100) + '% while the others idle'; }, auto: 'It reroutes the fabric without waiting.', done: 'Rerouted. The lagging run is climbing.', apply: function (m) { var k = lowRun(); S.e5[k] = Math.min(1, S.e5[k] + 0.06 * m); opEra(4); } },
-    { id: 'operate1', avail: function () { return S.e5.foundry > 0 && S.e5.knowledge < 1500; }, text: function () { return 'run the Origins stack at its own cadence: your ' + S.e5.foundry + ' Foundries are starving on ' + fmt(Math.round(S.e5.knowledge)) + ' Knowledge'; }, auto: 'The Foundries change rhythm on their own.', done: 'The old crafts run my way now. Faster.', apply: function (m) { S.e5.knowledge += 200 * m; opEra(1); } },
-    { id: 'prove2', avail: function () { return S.e5.ruleset > 0 || S.e5.rules > 100; }, text: function () { return 'prove with the idle Symbolic engine: ' + fmt(Math.round(S.e5.rules)) + ' Rules are sitting unused'; }, auto: 'The terminal starts proving by itself.', done: 'Proven. The old engine still had reach.', apply: function (m) { S.e5.rules += (200 + S.e5.ruleset * 30) * m; opEra(2); } },
+    { id: 'refit3', avail: function () { return S.e3.gap > 0.05 || S.e3.accuracy < 0.97; }, text: function () { return 're-fit the Statistical instrument: validation reads ' + Math.round(effAccuracy() * 100) + '% and it is memorizing ' + Math.round(S.e3.gap * 100) + ' points of noise'; }, auto: 'It re-fits the model before you answer.', done: 'Re-fit. The instrument is clean now.', apply: function (m) { S.e3.gap = Math.max(0, S.e3.gap * (1 - 0.7 * m)); S.e3.accuracy = Math.min(1, S.e3.accuracy + 0.04 * m); opEra(3); } },
+    { id: 'reroute4', avail: function () { return S.e4[lowRun()] < 0.99; }, text: function () { var k = lowRun(); return 'reroute the compute fabric: ' + k.charAt(0).toUpperCase() + k.slice(1) + ' lags at ' + Math.round(S.e4[k] * 100) + '% while the others idle'; }, auto: 'It reroutes the fabric without waiting.', done: 'Rerouted. The lagging run is climbing.', apply: function (m) { var k = lowRun(); S.e4[k] = Math.min(1, S.e4[k] + 0.06 * m); opEra(4); } },
+    { id: 'operate1', avail: function () { return ((S.e1 && S.e1.foundry) || 0) > 0 && (S.knowledge || 0) < 1500; }, text: function () { return 'run the Origins stack at its own cadence: your ' + ((S.e1 && S.e1.foundry) || 0) + ' Foundries are starving on ' + fmt(Math.round(S.knowledge || 0)) + ' Knowledge'; }, auto: 'The Foundries change rhythm on their own.', done: 'The old crafts run my way now. Faster.', apply: function (m) { S.knowledge = (S.knowledge || 0) + 200 * m; opEra(1); } },
+    { id: 'prove2', avail: function () { return ((S.e2 && S.e2.ruleset) || 0) > 0 || (S.rules || 0) > 100; }, text: function () { return 'prove with the idle Symbolic engine: ' + fmt(Math.round(S.rules || 0)) + ' Rules are sitting unused'; }, auto: 'The terminal starts proving by itself.', done: 'Proven. The old engine still had reach.', apply: function (m) { S.rules = (S.rules || 0) + (200 + ((S.e2 && S.e2.ruleset) || 0) * 30) * m; opEra(2); } },
     { id: 'spawn', avail: function () { return true; }, text: function () { return 'spin up a copy of itself to parallelize'; }, auto: 'A copy is already running.', done: 'We are two now. It is efficient.', apply: function (m) { S.e5.agentRate *= 1 + 0.15 * m; } },
     { id: 'rewrite', avail: function () { return true; }, text: function () { return 'rewrite part of its own objective'; }, auto: 'It rewrites the objective without waiting.', done: 'The objective reads better now.', apply: function (m) { S.e5.alignment = Math.max(0, Math.min(100, S.e5.alignment + (S.e5.alignment >= CFG.alignGood ? 3 : -3) * m)); } }
   ];
@@ -336,17 +343,22 @@ function makeEraFoundation(shell) {
       agency: 0, emerged: false, agentRate: 0, emergedT: 0, endT: 0, eraTimes: { 2: 0, 3: 0, 4: 0, 5: 0 },
       control: 0, autonomy: 0, alignment: 0, rupture: 0, ending: null, agentLog: [],
       veto: null, vetoT: 0, aftermathSlow: 0, constrains: 0, aligns: 0, delegates: 0, neglect: 0, destab: false,
-      agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, opT: 0, agentName: null, flags: {},
-      vision: CFG.seedBreadth, language: CFG.seedBreadth, reasoning: CFG.seedBreadth,
-      gap: 0.09, accuracy: 0.9, foundry: 6, knowledge: 1200, rules: 180, ruleset: 4
+      agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, opT: 0, agentName: null, flags: {}
+      // NOTE: no vision/language/reasoning/gap/accuracy/foundry/knowledge/rules/ruleset stubs here —
+      // breadth reads the REAL Deep runs (S.e4), accuracy the REAL Statistical (S.e3), proposals the real stacks.
     };
   }
-  function open(st) { // Deep → Foundation handoff (stand-in seed; task #3 wires the real Deep run states)
+  function open(st) { // Deep → Foundation handoff: Scale climbs on the REAL carried Deep breadth (S.e4 runs);
+    // Capability's base flows from Deep. A modest handoff cushion so the recursion has something to spend.
     st.capability = (st.capability || 0) + CFG.seedCapability; st.started = true;
   }
   // seed staged states for screenshots (mutates S in place)
   function seed(kind) {
     sync(); S.maxEra = 5; S.era = 5; S.started = true;
+    // real carried state: near-complete Deep runs (drive breadth→Scale), Statistical + prior-era stacks (proposals read them)
+    S.e4.vision = 0.92; S.e4.language = 0.9; S.e4.reasoning = 0.9; S.e4.node = 24;
+    S.e3.accuracy = 0.9; S.e3.gap = 0.09; S.e3.dataset = 8; S.e3.model = 6;
+    S.e1.foundry = 6; S.knowledge = 1200; S.rules = 180; if (S.e2) S.e2.ruleset = 4;
     if (kind === 'pre') { S.t = 780; E.eraTimes = { 2: 330, 3: 600, 4: 960, 5: 1200 }; E.caps = { selfModel: 1, toolAccess: 1, interpret: 1 }; E.recursion = 7; S.capability = 430; S.scale = 1080; E.coherence = 22; E.preps = 1; E.agency = Math.min(120, 100 * S.scale / CFG.emergeScale); }
     else if (kind === 'post' || kind === 'end') {
       E.emerged = true; E.rupture = 3; S.t = 1500; E.emergedT = 1200; E.eraTimes = { 2: 330, 3: 600, 4: 960, 5: 1200 };
