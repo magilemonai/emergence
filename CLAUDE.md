@@ -45,13 +45,20 @@ call `refresh()`, never a full rebuild. (Origins dead-clicks 18→1 after this f
   catch-up + MUTE gating, shell persistence contract, full-arc progression). `node test.js` (shipped)
   still **200 green**.
 - ✅ **Progression autoplayer (2026-07-01 PM):** plays the whole arc through a real action seam
-  (`era.acts` on every module — the same functions the buttons call): Origins 1.9m → Symbolic 6.1m →
-  Statistical 12.4m → Deep breadth 24.4m → EMERGENCE 29.1m → **SYMBIOTIC** 31.6m, **0% feedstock
-  starvation** — the real supply chain is PROVEN completable (the tune/feel half still needs Cody).
-  Two playtest flags: (a) Deep's Knowledge pipeline REQUIRES sink-pausing play (without pausing
-  Smelters/Foundries the Language run starves ~100% and Deep deadlocks — if Cody starves there, the
-  pause affordance needs surfacing); (b) Deep is the longest era even at bot speed (12.1m vs Origins
-  1.9m) — matches the old "Deep long" pacing signal.
+  (`era.acts` on every module — the same functions the buttons call). Current: Origins 1.9m → Symbolic
+  6.1m → Statistical 12.4m → Deep breadth 18.4m → EMERGENCE 23.0m → **SYMBIOTIC** 25.4m, **0% feedstock
+  starvation** — the real supply chain is PROVEN completable (the feel half still needs Cody).
+- ✅ **Both Deep findings the bot surfaced were ADDRESSED same day (Cody: "those are real issues"):**
+  (a) **Knowledge starvation** → the supply-bus **Scriptorium buy is STAFFED** (scribes+miners come along
+  — it used to build Marks-starved dead scriptoria, a lying button) + a **Hold lever** on the bus that
+  pauses/releases both Knowledge-burning crafts (Smelter+Foundry, the real Origins pause flags), shows
+  the live burn, and pulses amber when Language starves while they run. PROOF: the bot completes Deep
+  using ONLY board-visible levers, 0% starvation. New shell seam `shell.era(n)` for the cross-module
+  rate math. (b) **Deep too long** → `CFG.e4.capGain` 0.0011→0.00125, bot 12.1m→6.0m (human est. ~8-9m);
+  guard test pins steering as mandatory (passive balanced = 53% breadth in 9m vs gate 78%). Deep overflow
+  +176→**+192** (side-btn compaction absorbed most of the lever). Verified by `tools/deep-lever-smoke.js`
+  (8 live checks). FOR CODY'S EYE: lever sits last in the bus + straddles the fold when built out —
+  ordering call; and confirm the capGain feel on a real run.
 - ✅ **Phase 6 packaging is now a build script:** `node tools/build-single.js` inlines kit.css/kit.js/
   era modules + embeds all fonts (base64 woff2; Inter fetched to complete the set) into
   `emergence-v3-single.html` (475 KB, gitignored artifact). Headless probes byte-identical to the

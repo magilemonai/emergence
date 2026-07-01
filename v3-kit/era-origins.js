@@ -51,6 +51,7 @@ function makeEraOrigins(shell) {
 
   /* ---------- derived rates (ported oStats) ---------- */
   function oStats() {
+    sync(); // entry point for other eras too (Deep's build-here staffing/burn math) — never assume E is set
     var d = E.disco;
     var inscribe = CFG.inscribeBase, quarry = CFG.quarryBase, scrR = CFG.scriptoriumRate, smR = CFG.smelterRate, foR = CFG.foundryRate;
     var scribeY = CFG.scribeYield, minerY = CFG.minerYield;

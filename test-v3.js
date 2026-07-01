@@ -40,6 +40,7 @@ const shell = {
   KIT: KIT, S: S, CFG: CFG, RATES: RATES,
   openEra: function (n) { S.maxEra = Math.max(S.maxEra, n); if (ERAS[n] && ERAS[n].open) ERAS[n].open(S); S.era = n; },
   save: function () {}, navTo: function (n) { S.era = n; },
+  era: function (n) { return ERAS[n]; },
   refresh: function () {}, requestRender: function () { renderCount++; }
 };
 const ORDER = [1, 2, 3, 4, 5];
@@ -227,6 +228,38 @@ ok(/offlineCatchup\(/.test(html) && /WHILE YOU WERE AWAY/.test(html), 'shell boo
 ok(/musicPlayEra\(ERAS\[S\.era\]\.bedKey/.test(html), 'shell sets the music bed at boot (♪ no longer dead until first nav)');
 ok(/uiPaused \? 0/.test(html), 'shell tick() honors pause');
 
+// ============================================================================ 10b) Deep guards — steering stays mandatory; the staffed/hold affordances work
+// Passive balanced play (never touch the mixer, infinite feedstocks) must NOT reach the breadth gate
+// in 9 minutes — otherwise a pacing tune has defanged the drift and Deep is idle-watching again.
+freshAll(); S.maxEra = 4; ERAS[4].open(S);
+S.e4.node = 16; S.data = 1e9; S.insight = 1e9; S.knowledge = 1e9; S.silicon = 1e9;
+S.e4.alloc = { vision: 1, language: 1, reasoning: 1 };
+ticks(5400); // 9 minutes, no steering
+console.log('  Deep guard: passive balanced breadth after 9m = ' + (ERAS[4].acts.breadth() * 100).toFixed(1) + '% (gate ' + Math.round(CFG.e4.breadthGate * 100) + '%)');
+ok(ERAS[4].acts.breadth() < CFG.e4.breadthGate, 'Deep guard: passive balanced play does NOT reach the gate in 9m — steering stays mandatory');
+
+// staffed scriptorium: the build-here buy delivers the Knowledge/s it advertises (scribes+miners come along)
+freshAll(); S.maxEra = 4; ERAS[4].open(S);
+S.e1.scribe = 0; S.e1.miner = 0; S.marks = 0; S.ore = 0; // worst case: no Marks engine at all
+S.silicon = 1e6;
+for (let i = 0; i < 4; i++) ERAS[4].acts.buySup('scriptorium');
+ok(S.e1.scribe > 0 && S.e1.miner > 0, 'staffed build: buying a Scriptorium grants the scribes + miners to feed it');
+const kn0 = S.knowledge; ticks(300);
+ok(S.knowledge > kn0 + 5, 'staffed build: Knowledge actually flows after the buy (no dead Marks-starved scriptoria)');
+
+// the Hold lever pauses/releases BOTH Knowledge-burning crafts and frees the burn
+freshAll(); S.maxEra = 4; ERAS[4].open(S);
+S.e1.smelter = 6; S.e1.foundry = 4; S.ore = 1e6; S.metal = 1e6; S.knowledge = 1e6; S.marks = 1e6;
+ok(ERAS[4].acts.sinkBurnRate() > 0, 'hold lever: reports a live Knowledge burn while the crafts run');
+ERAS[4].acts.setSinkHold(true);
+ok(S.e1.paused.smelter === true && S.e1.paused.foundry === true, 'hold lever: HOLD pauses both crafts (the real Origins pause flags)');
+ok(ERAS[4].acts.sinkBurnRate() === 0, 'hold lever: held crafts burn nothing');
+const si0 = S.silicon, kn1 = S.knowledge; ticks(50);
+ok(S.silicon <= si0, 'hold lever: no Silicon MADE while held (drains may continue — the honest cost of holding)');
+ok(S.knowledge >= kn1, 'hold lever: Knowledge stops draining while held');
+ERAS[4].acts.setSinkHold(false);
+ok(!S.e1.paused.smelter && !S.e1.paused.foundry, 'hold lever: release restarts both crafts');
+
 // ============================================================================ 11) PROGRESSION — autoplay the full arc through the real action seam
 // Proves the merged build is COMPLETABLE and the real cross-era supply chain does not starve/deadlock
 // (the bot proves completable, not fun — feel still needs Cody's hands). Mirrors the shipped
@@ -286,21 +319,14 @@ function statisticalStep(tk) {
 let _deepCooling = false;
 function deepStep() {
   if (S.maxEra < 4) return;
-  const A = ERAS[4].acts, A1 = ERAS[1].acts, E = S.e4, C = CFG.e4, E1 = S.e1;
-  // build-here supply bus: grow the REAL upstream producers, keeping a Silicon buffer for nodes
+  const A = ERAS[4].acts, E = S.e4, C = CFG.e4;
+  // ONLY the levers visible on the Deep board (no Origins micromanagement): the staffed build-here
+  // supply bus, the Hold lever on the Knowledge-burning crafts, nodes, stabilizer, and the mixer.
   A.SUPPLY.forEach(function (s) { if (S.silicon >= A.supCost(s) + 400) A.buySup(s.key); });
   if (E.node < 26 && S.silicon >= A.nodeCost()) A.buyNode();
-  // Knowledge pipeline (the scarce Language feedstock, same as the shipped game): phase the scribe base up
-  // with SINK-PAUSING — the pause buttons every player has. Scriptoria out-draw scribes → pause them to bank
-  // Marks for the next scribe; Smelters/Foundries BURN Knowledge → pause them while the stock is tight.
-  const os = A1.oStats();
-  const scribeCost = A1.unitCost('scribe');
-  const marksStarved = E1.scribe * os.scribeY < E1.scriptorium * os.scrR * 1.05;
-  E1.paused.scriptorium = E1.scribe < 240 && marksStarved && S.marks < scribeCost;
-  E1.paused.smelter = S.knowledge < 1500;
-  E1.paused.foundry = E.node >= 12 && S.knowledge < 2500;
-  if (E1.scribe < 240 && S.marks >= scribeCost) A1.buy('scribe');
-  if (E1.miner < 90 && A1.canBuy('miner')) A1.buy('miner');
+  // the Hold lever, played the way its glow teaches: hold when Knowledge runs dry, release when fat
+  if (!A.sinksHeld() && S.knowledge < 1500) A.setSinkHold(true);
+  else if (A.sinksHeld() && S.knowledge > 2500) A.setSinkHold(false);
   if (E.stabilizer < 1 && S.capability > 400) A.buyStabilizer();
   // steer: bang-bang the heat (cool balanced ↔ hammer the high-wind run), starve-avoid on dry feedstocks
   const t = S.t, PH = { vision: 0, language: 2.094, reasoning: 4.189 };

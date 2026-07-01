@@ -30,7 +30,7 @@ function makeEraDeep(shell) {
     { key: 'foundry', name: 'Foundry', out: 'silicon', era: 1, field: 'foundry', cost: CFG.foundryCost, growth: CFG.foundryGrowth, icon: ICON.foundry, tip: '<b>Foundry</b> — builds a real Origins Foundry, from here.<br><i>Metal and knowledge, fused into Silicon.</i><br>+Silicon/s · each also lifts Capability +3% (RR5). Paid in Silicon.' },
     { key: 'dataset', name: 'Dataset', out: 'data', era: 3, field: 'dataset', cost: CFG.datasetCost, growth: CFG.datasetGrowth, icon: ICON.data, tip: '<b>Dataset</b> — builds a real Statistical Dataset.<br><i>Observations, curated.</i><br>+Data/s — feeds the <b>Vision</b> run. Paid in Silicon.' },
     { key: 'model', name: 'Fit Engine', out: 'insight', era: 3, field: 'model', cost: CFG.modelCost, growth: CFG.modelGrowth, glyph: GLYPH.model, tip: '<b>Fit Engine</b> — builds a real Statistical Fit Engine.<br><i>Experiments distilled into ideas.</i><br>+Insight/s — feeds the <b>Reasoning</b> run. Paid in Silicon.' },
-    { key: 'scriptorium', name: 'Scriptorium', out: 'knowledge', era: 1, field: 'scriptorium', cost: CFG.scriptoriumCost, growth: CFG.scriptoriumGrowth, icon: ICON.scriptorium, tip: '<b>Scriptorium</b> — builds a real Origins Scriptorium.<br><i>Marks made meaningful.</i><br>+Knowledge/s — feeds the <b>Language</b> run. Paid in Silicon.' }
+    { key: 'scriptorium', name: 'Scriptorium', out: 'knowledge', era: 1, field: 'scriptorium', cost: CFG.scriptoriumCost, growth: CFG.scriptoriumGrowth, icon: ICON.scriptorium, tip: '<b>Scriptorium (staffed)</b> — builds a real Origins Scriptorium, and the scribes and miners to feed it come along.<br><i>Marks made meaningful.</i><br>+Knowledge/s — feeds the <b>Language</b> run. Paid in Silicon.' }
   ];
   var SUPMAP = {}; SUPPLY.forEach(function (s) { SUPMAP[s.key] = s; });
   function producerCount(s) { return (S['e' + s.era] || {})[s.field] || 0; }
@@ -104,7 +104,34 @@ function makeEraDeep(shell) {
   function buyNode() { sync(); if (!canNode()) return; S.silicon -= nodeCost(); E.node++; K.rec('buy:node'); K.playSound('buy'); shell.refresh(); }
   var supCost = function (s) { return unitCost(s.cost, s.growth, producerCount(s)); };
   var canSup = function (s) { return S.silicon >= supCost(s); };
-  function buySup(key) { sync(); var s = SUPMAP[key]; if (!canSup(s)) return; S.silicon -= supCost(s); var st = S['e' + s.era]; if (st) st[s.field] = (st[s.field] || 0) + 1; K.rec('buy:' + key); K.playSound('buy'); shell.refresh(); }
+  // A Scriptorium without scribes converts nothing (Marks pin at 0) — the build-here buy must deliver the
+  // +Knowledge/s it advertises, so the staff (scribes for Marks, miners for the Ore upkeep) comes with it.
+  function staffKnowledgeLine() {
+    var e1 = S.e1; if (!e1) return;
+    var A1 = shell.era && shell.era(1) && shell.era(1).acts; if (!A1) return;
+    var os = A1.oStats(), C1 = shell.CFG.e1;
+    var draw = e1.scriptorium * os.scrR;
+    var needScribes = Math.ceil(Math.max(0, draw * 1.1 - e1.scribe * os.scribeY) / Math.max(0.0001, os.scribeY));
+    if (needScribes > 0) e1.scribe += needScribes;
+    var oreDraw = draw * C1.scriptoriumUpkeep;
+    var needMiners = Math.ceil(Math.max(0, oreDraw * 1.1 - e1.miner * os.minerY) / Math.max(0.0001, os.minerY));
+    if (needMiners > 0) e1.miner += needMiners;
+    if (e1.paused) e1.paused.scriptorium = false; // it came staffed — make sure it runs
+  }
+  function buySup(key) { sync(); var s = SUPMAP[key]; if (!canSup(s)) return; S.silicon -= supCost(s); var st = S['e' + s.era]; if (st) st[s.field] = (st[s.field] || 0) + 1; if (key === 'scriptorium') staffKnowledgeLine(); K.rec('buy:' + key); K.playSound('buy'); shell.refresh(); }
+  // The other two Knowledge players: Smelters (upkeep) and Foundries (1:1) BURN it. Hold = pause both, from here.
+  var sinksHeld = function () { var p = S.e1 && S.e1.paused; return !!(p && p.smelter && p.foundry); };
+  function setSinkHold(held) {
+    sync(); var e1 = S.e1; if (!e1) return; e1.paused = e1.paused || {};
+    e1.paused.smelter = !!held; e1.paused.foundry = !!held;
+    K.rec(held ? 'sinkhold:on' : 'sinkhold:off'); K.playSound('buy'); shell.refresh();
+  }
+  function sinkBurnRate() { // potential Knowledge burn/s of the running crafts (what Hold would free up)
+    var e1 = S.e1, A1 = shell.era && shell.era(1) && shell.era(1).acts; if (!e1 || !A1) return 0;
+    var os = A1.oStats(), C1 = shell.CFG.e1;
+    return (e1.paused && e1.paused.smelter ? 0 : e1.smelter * os.smR * C1.smelterUpkeep) +
+           (e1.paused && e1.paused.foundry ? 0 : e1.foundry * os.foR);
+  }
   var stabilizerCost = function () { return Math.round(CFG.stabilizerCost + E.stabilizer * 60); };
   var lockCost = function () { return Math.round(CFG.lockCost * Math.pow(CFG.lockGrowth, E.locksBought || 0)); };
   function buyStabilizer() { sync(); var c = stabilizerCost(); if (E.stabilizer >= CFG.stabilizerMax || S.capability < c) return; S.capability -= c; E.stabilizer++; K.rec('stabilizer:' + E.stabilizer); K.playSound('buy'); K.toast('Stabilizer ↑', 'Drift reduced ' + Math.round(E.stabilizer * CFG.stabilizerCut * 100) + '% — the wind bites less.'); shell.refresh(); }
@@ -139,7 +166,7 @@ function makeEraDeep(shell) {
       '<div class="col-head">Supply bus — feed the runs</div><div id="supply"></div>' +
       '<div class="col-head">Steering</div>' +
       '<button class="steer-btn" id="stabBtn" data-tip="' + esc('<b>Stabilizer</b><br><i>A calmer optimization landscape.</i><br>Permanently reduces how hard the drift bites every run. Stacks up to 5.') + '"><span class="st-nm">STABILIZER</span><span class="st-lvl" id="stabLvl"></span><span class="st-eff" id="stabEff"></span><span class="st-cost" id="stabCost"></span></button>' +
-      '<div class="lc-note">Lock a run from the button on each run at right.</div></div>';
+      '</div>'; // (the old lock-note prose is gone — the LOCK button on each run carries its own cost label)
     // CENTER — the fabric: mixer + the 3 runs SIDE BY SIDE (steer + watch all three without scrolling), gauges as a strip
     h += '<div class="col-center"><div class="col-head">The Fabric — route the budget to counter the drift</div>' +
       '<div class="fabric"><div class="inst-head"><span class="inst-title">THE&nbsp;FABRIC</span><span class="inst-sub">balanced is never optimal — steer</span><span class="heat-led ok" id="heatLed"></span></div>' +
@@ -179,8 +206,14 @@ function makeEraDeep(shell) {
       var inner = s.icon ? '<img src="' + s.icon + '">' : '<span class="sglyph" style="color:' + HUE[s.out] + ';background:' + HUE[s.out] + '22;border:1px solid ' + HUE[s.out] + '55">' + (s.glyph || '') + '</span>';
       h += '<button class="side-btn" id="sup-' + s.key + '" data-supbuy="' + s.key + '" data-tip="' + esc(s.tip) + '">' + inner + '<span class="sb-nm">' + s.name + '</span><span class="sb-cnt" id="supc-' + s.key + '">0</span><span class="sb-out" id="supo-' + s.key + '"></span><span class="sb-cost" id="supx-' + s.key + '"></span></button>';
     });
+    // the Hold lever: the OTHER half of the Knowledge story — the crafts that BURN it, pausable from here
+    h += '<button class="side-btn sink-hold" id="sinkHold" data-tip="' + esc('<b>Hold the crafts</b><br><i>Smelters and Foundries BURN Knowledge — the same pool the Language run drinks from.</i><br>Hold pauses both (no Metal, no Silicon while held) so Knowledge flows to Language. Release any time — same as the pause buttons on the crafts in Origins.') + '">' +
+      '<span class="sglyph" id="sinkGlyph" style="color:' + HUE.knowledge + ';background:' + HUE.knowledge + '22;border:1px solid ' + HUE.knowledge + '55">⚒</span>' +
+      '<span class="sb-nm">Smelters + Foundries</span><span class="sb-cnt" id="sinkState"></span>' +
+      '<span class="sb-out" id="sinkBurn"></span></button>';
     $('supply').innerHTML = h;
     Array.prototype.forEach.call(document.querySelectorAll('[data-supbuy]'), function (b) { b.onclick = function () { buySup(b.getAttribute('data-supbuy')); }; });
+    var sh = $('sinkHold'); if (sh) sh.onclick = function () { setSinkHold(!sinksHeld()); };
   }
   function buildLanes() {
     var h = '';
@@ -255,6 +288,21 @@ function makeEraDeep(shell) {
       var locked = E.locks[k] > 0;
       info[k] = { wind: wind, shortfall: shortfall, erodeRate: erodeRate, blocked: blocked, thinning: thinning, evBreak: evBreak, evShift: evShift, res: res, need: need, net: locked ? 0 : (gainRate - erodeRate), locked: locked };
     });
+    // the Hold lever: live burn + state; glows amber when Language starves while the crafts eat its pool
+    var held = sinksHeld(), burn = sinkBurnRate();
+    setTxt($('sinkState'), held ? 'HELD' : 'RUN');
+    setTxt($('sinkGlyph'), held ? '⏸' : '⚒');
+    var sb = $('sinkBurn');
+    if (sb) {
+      setHTML(sb, held ? 'held — Metal &amp; Silicon paused' : (burn > 0 ? 'burning −<b>' + fmt(burn) + '</b> Knowledge/s' : 'idle — nothing burning'));
+      var scl = 'sb-out' + (!held && burn > 0 ? ' burn' : ''); if (sb.className !== scl) sb.className = scl;
+    }
+    var shb = $('sinkHold');
+    if (shb) {
+      var warn = !held && burn > 0 && (info.language.blocked || info.language.thinning);
+      shb.classList.toggle('hold-warn', warn);
+      shb.classList.toggle('held', held);
+    }
     // mixer
     var hx = mixerHandleXY(), th = $('triHandle');
     if (th) {
@@ -339,6 +387,7 @@ function makeEraDeep(shell) {
       // ensure the real upstream producers exist so the feedstocks flow (the build-here bus scales them up)
       if (st.e1) { st.e1.foundry = Math.max(st.e1.foundry || 0, 2); st.e1.scriptorium = Math.max(st.e1.scriptorium || 0, 2); }
       if (st.e3) { st.e3.dataset = Math.max(st.e3.dataset || 0, 3); st.e3.model = Math.max(st.e3.model || 0, 2); }
+      staffKnowledgeLine(); // the seeded scriptoria arrive staffed too — the Knowledge line starts alive
     }
     st.started = true;
   }
@@ -351,7 +400,7 @@ function makeEraDeep(shell) {
     phase: function () { return 'Compute Fabric'; },
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
     done: function () { sync(); return !!E.done; },
-    acts: { buyNode: buyNode, nodeCost: nodeCost, buySup: buySup, supCost: supCost, SUPMAP: SUPMAP, SUPPLY: SUPPLY, buyStabilizer: buyStabilizer, lockRun: lockRun, advance: advance, breadth: breadth }
+    acts: { buyNode: buyNode, nodeCost: nodeCost, buySup: buySup, supCost: supCost, SUPMAP: SUPMAP, SUPPLY: SUPPLY, buyStabilizer: buyStabilizer, lockRun: lockRun, advance: advance, breadth: breadth, setSinkHold: setSinkHold, sinksHeld: sinksHeld, sinkBurnRate: sinkBurnRate }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraDeep;

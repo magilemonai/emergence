@@ -34,6 +34,12 @@ build's playtest #2. Once addressed, these fold back into `TODO-v3-unified.md`.)
   without you reading text?
 - Is it obvious Build Compute Node is the main verb?
 - The orchestration line / event banner — too much text? What would you want as color instead?
+- NEW — **the Hold lever** (bottom of the supply bus, "Smelters + Foundries"): when Language runs
+  low on Knowledge it pulses amber. Did you notice it? Did holding/releasing the crafts feel like
+  a real decision (Metal+Silicon vs feeding Language)? It sits last in the bus — should the
+  Knowledge pair (Scriptorium + the lever) move up?
+- NEW — **era length**: Deep was retuned faster (the bot says ~6m at perfect play, you'll land
+  slower). Does it feel right now, or still the long era?
 
 ## Foundation
 - **Pre-emergence: once caps are bought, is there nothing to do? What decision would you want there?**

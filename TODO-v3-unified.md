@@ -32,7 +32,7 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 ## P0 — ONE SCREEN PER ERA (measured @1280×800, ~713px viewport)
 - [x] **Deep** (was game-breaking): triangle + 3 runs + gauges side-by-side (approved mock); overflow +569→**+176**. ([20:42],[23:14])
 - [x] **Statistical Focus dial** on-screen: compacted the pinned stage; primary loop (scatter+RUN TRIAL+dial+goal) fits. ([14:54])
-- [x] Global density pass (kit padding/margins) — shaved every era. Fresh sweep 2026-07-01 PM: Origins **+289**, Symbolic **+164**, Statistical **+515**, Deep **+176**, Foundation pre **+196**, aftermath (seedpost) **0**, ending recap (seedend) **+714**.
+- [x] Global density pass (kit padding/margins) — shaved every era. Fresh sweep 2026-07-01 PM: Origins **+289**, Symbolic **+164**, Statistical **+515**, Deep **+192** (was +176; the Hold lever costs +16 net after side-btn compaction), Foundation pre **+196**, aftermath (seedpost) **0**, ending recap (seedend) **+714**.
 - [ ] **Statistical true zero-scroll**: the Experiment Board + Methods (secondary) still push +515 — relocate/collapse them. (Tried a Methods relocation once, it backfired — wants Cody's eye on collapse-vs-move.)
 - [ ] **Origins** (+289): trim the second lane / standing row to fit.
 - [ ] **Ending recap (seedend) is +714** — probably fine to scroll a read-only scorecard, but flag it for Cody's call.
@@ -51,7 +51,9 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 - [x] Foundation: [x] deduped the repeated "wake/wakes aligned" copy (rush hint + coherence label) ([36:20]); [x] trimmed aftermath agent-stream density (agentSay log cap 6→4) ([38:00]). (2026-07-01)
 
 ## P3 — back-half agency (Deep + Foundation go passive)
-- [ ] Deep: more to do + make the steering loop reactable (partly solved by P0 one-screen) ([26:18],[26:39]).
+- [~] Deep: more to do + make the steering loop reactable (partly solved by P0 one-screen) ([26:18],[26:39]).
+      The Hold lever (2026-07-01 PM) adds one real recurring decision — Metal+Silicon vs feeding Language.
+      Whether Deep now has ENOUGH to do = playtest question.
 - [ ] Foundation: pre-emergence has nothing to do after caps are bought → add a decision/interaction ([36:33]).
 
 ## P4 — delight / story (Cody's ideas)
@@ -84,15 +86,23 @@ All engineering, ported from Cody-approved shipped features; `node test-v3.js` n
   - ✅ ALL 3 reverts done. Seams in `v3-kit/KIT.md`. Starvation half PRE-VERIFIED by the new progression
     bot (below); the **tune/feel half still needs Cody's playtest**.
 - [x] Rebuilt the test suite for merged v3 → `node test-v3.js` (**83 green**): per-era economy, cross-era reach-back (no fake foundry / chainPerFoundry reads real e1 / Scale from real e4 / no capIncome), full-chain no-NaN, build-once determinism, offline catch-up + MUTE gating, shell persistence contract, full-arc progression. `node test.js` (shipped emergence.html) still **200 green**. (2026-07-01)
-- [x] **Progression autoplayer** (2026-07-01 PM): plays the whole arc through a real action seam (`era.acts`)
-      — Origins 1.9m → Symbolic 6.1m → Statistical 12.4m → Deep breadth 24.4m → EMERGENCE 29.1m →
-      SYMBIOTIC 31.6m, 0% feedstock starvation. **Two findings for the playtest:**
-      - [ ] Deep's Knowledge pipeline REQUIRES sink-pausing play (pause Smelters/Foundries when Knowledge is
-            tight, bank Marks for scribes) — without it the Language run starves ~100% and Deep deadlocks.
-            A real player must DISCOVER the pause buttons → if Cody starves there, the affordance needs
-            surfacing (design, his eye).
-      - [ ] Deep is the longest era even at bot speed (12.1m vs Origins 1.9m) — pacing signal consistent
-            with the old "Deep long" finding; confirm on his real run before tuning.
+- [x] **Progression autoplayer** (2026-07-01 PM): plays the whole arc through a real action seam (`era.acts`).
+      Current run: Origins 1.9m → Symbolic 6.1m → Statistical 12.4m → Deep breadth 18.4m → EMERGENCE 23.0m →
+      SYMBIOTIC 25.4m, 0% starvation on all four feedstocks. **Both original findings ADDRESSED (same day, Cody's call):**
+      - [x] **Knowledge starvation** → two affordances at the point of pain (both = the validated "operate
+            upstream from here" pattern): (1) the supply-bus **Scriptorium buy is now STAFFED** — scribes +
+            miners come along, so the button delivers the +Knowledge/s it advertises (it used to build
+            Marks-starved dead scriptoria — a lying button); (2) a **Hold lever** on the bus pauses/releases
+            BOTH Knowledge-burning crafts (Smelter + Foundry, the real Origins pause flags), shows the live
+            burn, and pulses amber when Language starves while they run. PROOF: the bot now completes Deep
+            using ONLY board-visible levers (no Origins micromanagement) — 0% starvation.
+      - [x] **Deep too long** → `CFG.e4.capGain` 0.0011 → 0.00125: bot 12.1m → 6.0m (staffed knowledge line
+            contributed most of it). New guard test: passive balanced play = 53% breadth after 9m (gate 78%)
+            — steering stays mandatory. Human estimate ~8-9m (bot ≈ skill ceiling). CONFIRM on the real run.
+      - [ ] For Cody's eye on the next capture: the Hold lever sits LAST in the supply bus and straddles the
+            fold when everything's built (glow still reads at the edge) — worth an ordering call (knowledge
+            pair first?). Deep overflow +176 → **+192** after adding the lever (side-btn compaction paid for
+            most of it).
 - [x] Inline packaging is now a **repeatable build script** — `node tools/build-single.js` inlines kit.css/
       kit.js/era modules + embeds all fonts (base64 woff2, incl. newly fetched Inter) into
       `emergence-v3-single.html` (475 KB, gitignored). Verified headlessly: probes byte-identical to the
