@@ -1,0 +1,237 @@
+/* ============================================================================
+   ERA MODULE — Symbolic (era 2). Ported from emergence-v3-symbolic.html onto the
+   shared shell + KIT. Re-homed: resources rules/inference/axioms live in the shared
+   pool (S top-level); Symbolic mechanic state lives on S.e2; the Knowledge→Rules
+   handoff is wired in open(). Factory: makeEraSymbolic(shell).
+   ============================================================================ */
+function makeEraSymbolic(shell) {
+  var K = shell.KIT, $ = K.$, fmt = K.fmt, esc = K.esc, setTxt = K.setTxt, setHTML = K.setHTML, setDis = K.setDis;
+  var S = shell.S, CFG = shell.CFG.e2;
+
+  var RES = {
+    rules: { hue: '#8dffb7', glyph: '§', flavor: 'Reasoning, written as explicit rules.' },
+    inference: { hue: '#6fe6d8', glyph: '∴', flavor: 'Conclusions the rules can reach.' },
+    axioms: { hue: '#ffcd6b', glyph: '⊢', flavor: 'Truths banked forever, kept across runs.' }
+  };
+  var HUE = { rules: RES.rules.hue, inference: RES.inference.hue, axioms: RES.axioms.hue };
+
+  var TREE = [
+    { id: 'formalLogic', name: 'Formal Logic', cost: 650, req: [], desc: '+50% to all rule production.' },
+    { id: 'fwdChain', name: 'Forward Chaining', cost: 1400, req: ['formalLogic'], excl: 'bwdChain', desc: 'DOCTRINE · Rulesets +80%. Closes Backward Chaining.' },
+    { id: 'bwdChain', name: 'Backward Chaining', cost: 1400, req: ['formalLogic'], excl: 'fwdChain', desc: 'DOCTRINE · Each rule you write ×3. Closes Forward Chaining.' },
+    { id: 'rete', name: 'Rete Network', cost: 3200, req: ['fwdChain'], desc: 'Each Ruleset boosts every other (+3% each).' },
+    { id: 'inference', name: 'Inference Engine', cost: 4600, req: [], reqAny: ['fwdChain', 'bwdChain'], desc: 'Unlocks Daemons — automation that writes rules for you.' },
+    { id: 'heuristics', name: 'Heuristic Search', cost: 3200, req: ['bwdChain'], desc: 'Writing scales with Rulesets owned (+8% each).' },
+    { id: 'knowledge', name: 'Knowledge Base', cost: 8500, req: ['inference'], reqAny: ['rete', 'heuristics'], desc: 'Unlocks Compile — bank a run into permanent Axioms.' },
+    { id: 'metalogic', name: 'Meta-Logic', cost: 16000, req: ['knowledge'], desc: 'Every Axiom becomes 50% stronger.' },
+    { id: 'expert', name: 'Expert System', cost: 30000, req: ['metalogic'], reqAxioms: 5, desc: 'Complete the era. A system that reasons on its own.' }
+  ];
+  var TMAP = {}; TREE.forEach(function (n) { TMAP[n.id] = n; });
+  var symName = function (id) { return id === 'optimization' ? 'Optimization' : id === 'capacity' ? 'Inference Capacity' : (TMAP[id] && TMAP[id].name) || id; };
+
+  var E; function sync() { E = S.e2; }
+
+  /* ---------- derived ---------- */
+  function stats() {
+    var T = E.tech, click = CFG.clickBase, rm = 1, g = 1;
+    if (T.formalLogic) g *= 1.5; if (T.fwdChain) rm *= 1.8; if (T.bwdChain) click *= 3;
+    if (T.rete) rm *= (1 + 0.03 * E.ruleset); if (T.heuristics) click *= (1 + 0.08 * E.ruleset);
+    click *= (1 + CFG.contraBonus * (E.paraBwd || 0)); rm *= (1 + CFG.contraBonus * (E.paraFwd || 0));
+    if (E.contra) g *= CFG.contraSlow;
+    var axBonus = CFG.axiomBonus * (T.metalogic ? 1.5 : 1); g *= (1 + S.axioms * axBonus); g *= (1 + CFG.lemmaBonus * E.optLevel);
+    return { click: click * g, rulesetYield: CFG.rulesetYield * rm * g, axBonus: axBonus };
+  }
+  var symInfRate = function () { return E.ruleset * CFG.infPerRuleset; };
+  var infCap = function () { return CFG.infCapBase + E.infCapLevel * CFG.infCapStep; };
+  function proofCost(id) {
+    if (id === 'optimization') return Math.floor(CFG.lemmaBase * Math.pow(CFG.lemmaGrowth, E.optLevel));
+    if (id === 'capacity') return Math.floor(CFG.capLemmaBase * Math.pow(CFG.capLemmaGrowth, E.infCapLevel));
+    return Math.ceil(TMAP[id].cost * CFG.infScale);
+  }
+  function canProve(id) {
+    if (id === 'optimization' || id === 'capacity') return true; var n = TMAP[id]; if (!n || E.tech[id]) return false;
+    if (!n.req.every(function (r) { return E.tech[r]; })) return false;
+    if (n.reqAny && !n.reqAny.some(function (r) { return E.tech[r]; })) return false;
+    if (n.excl && E.tech[n.excl]) return false; if (n.reqAxioms && S.axioms < n.reqAxioms) return false; return true;
+  }
+  var treeVisible = function (n) { return !E.tech[n.id] && n.req.every(function (r) { return E.tech[r]; }) && (!n.reqAny || n.reqAny.some(function (r) { return E.tech[r]; })) && !(n.excl && E.tech[n.excl]); };
+
+  /* ---------- production ---------- */
+  function produce(dt) {
+    sync(); var st = stats();
+    var g = 0; if (E.ruleset > 0) g += E.ruleset * st.rulesetYield * dt; if (E.daemon > 0) g += E.daemon * CFG.daemonRate * st.click * dt;
+    if (g > 0) { S.rules += g; E.runRules += g; K.fIn('rules', g); }
+    if (!E.contra && E.contraN < CFG.contraAt.length && E.runRules >= CFG.contraAt[E.contraN] && !E.flags.symbolicDone) {
+      var seed = Math.floor(E.runRules); E.contra = { a: 1000 + seed % 3989, b: 4000 + (seed * 7) % 5989 };
+      K.toast('CONTRADICTION DETECTED', 'Rule #' + E.contra.a + ' conflicts with #' + E.contra.b + '. Discard one to clear the drag.', 'event'); shell.requestRender();
+    }
+    var inf = symInfRate() * dt;
+    if (inf > 0) {
+      K.fIn('inference', inf);
+      if (E.activeProof) {
+        E.proofAcc[E.activeProof] = (E.proofAcc[E.activeProof] || 0) + inf; K.fOut('inference', inf);
+        if (E.proofAcc[E.activeProof] >= proofCost(E.activeProof)) completeProof(E.activeProof);
+      } else S.inference = Math.min(infCap(), S.inference + inf);
+    }
+  }
+
+  /* ---------- actions ---------- */
+  var rulesetCost = function () { return Math.floor(CFG.rulesetCost * Math.pow(CFG.rulesetGrowth, E.ruleset)); };
+  var daemonCost = function () { return Math.floor(CFG.daemonCost * Math.pow(CFG.daemonGrowth, E.daemon)); };
+  function buyRuleset() { sync(); var c = rulesetCost(); if (S.rules < c) return; S.rules -= c; E.ruleset++; K.rec('buy:ruleset'); K.playSound('buy'); shell.refresh(); }
+  function buyDaemon() { sync(); if (!E.tech.inference) return; var c = daemonCost(); if (S.rules < c) return; S.rules -= c; E.daemon++; K.rec('buy:daemon'); K.playSound('buy'); shell.refresh(); }
+  function writeRule(ev) {
+    sync(); var g = stats().click; S.rules += g; E.runRules += g; S.started = true; K.playSound('buy');
+    if (ev && ev.currentTarget) { var r = ev.currentTarget.getBoundingClientRect(); K.floatNum('+' + fmt(g), HUE.rules, r.right - 40, r.top + 10); }
+    shell.refresh();
+  }
+  function selectProof(id) { sync(); if (!canProve(id) || E.activeProof === id) return; E.activeProof = id; E.proofAcc[id] = (E.proofAcc[id] || 0) + S.inference; S.inference = 0; K.rec('aim:' + id); K.playSound('buy'); shell.requestRender(); }
+  function completeProof(id) {
+    sync();
+    if (id === 'optimization') E.optLevel++;
+    else if (id === 'capacity') E.infCapLevel++;
+    else { E.tech[id] = true; if (id === 'knowledge') E.flags.compile = true; if (id === 'expert') E.flags.symbolicDone = true; }
+    E.proofAcc[id] = 0; E.activeProof = null; K.rec('proof:' + id);
+    K.toast('Q.E.D. · ' + symName(id), TMAP[id] ? TMAP[id].desc : 'lemma level up');
+    if (id === 'expert') { K.toast('THE EXPERT SYSTEM', 'It reasons on its own now. The Statistical era begins.'); shell.openEra(3); }
+    else shell.requestRender();
+  }
+  var axiomGain = function () { return Math.floor(Math.sqrt(E.runRules / CFG.axiomDivisor)); };
+  function compile() {
+    sync(); if (!E.flags.compile || E.flags.symbolicDone) return; var g = axiomGain(); if (g < 1) return;
+    S.axioms += g; E.totalAxioms += g; E.compiles++; S.rules = 0; E.runRules = 0; E.ruleset = 0; E.daemon = 0; E.contra = null; E.contraN = 0;
+    K.rec('compile'); K.toast('COMPILE · +' + g + ' axioms', 'Run banked. Rules, Rulesets and Daemons cleared; Axioms and Technique kept — rebuild from a higher floor.'); shell.requestRender();
+  }
+  function resolveContra(side) {
+    sync(); if (!E.contra) return; if (side === 'fwd') E.paraFwd = (E.paraFwd || 0) + 1; else E.paraBwd = (E.paraBwd || 0) + 1;
+    E.contraN = (E.contraN || 0) + 1; E.contra = null; K.rec('contra:' + side); K.playSound('buy');
+    K.toast('CONTRADICTION RESOLVED', side === 'fwd' ? 'Specific rule discarded · Rulesets +' + Math.round(CFG.contraBonus * 100) + '% forever' : 'General rule discarded · manual writes +' + Math.round(CFG.contraBonus * 100) + '% forever'); shell.requestRender();
+  }
+
+  /* ---------- board ---------- */
+  var stockCap = function (res, label) { return '<div class="stock" style="border-color:' + HUE[res] + '44"><span class="sglyph" style="color:' + HUE[res] + '">' + (RES[res].glyph || '') + '</span><div class="sv" id="stk-' + res + '" style="color:' + HUE[res] + '">0</div><div class="sl">' + label + '</div><div class="scap" id="stkcap-' + res + '"></div></div>'; };
+
+  function railDefs() { sync(); return [['rules', 'Rules', function () { return true; }], ['inference', 'Inference', function () { return true; }], ['axioms', 'Axioms', function () { return E.flags.compile || S.axioms > 0; }]]; }
+
+  function build() {
+    sync();
+    var h = '';
+    h += '<div class="tissue">You inscribed marks, then <b>Knowledge</b>. Now Knowledge becomes <b>Rules</b> — write them, let <b>Rulesets</b> reason (they emit <b>Inference</b>), and aim Inference at a <b>Theorem</b> to prove it. Prove the <b>Expert System</b> to finish the era.</div>';
+    h += '<div class="col-verbs"><div class="col-head">Your hand</div>' +
+      '<button class="verb" id="writeRule"><span class="vname">Write a rule</span><span class="vyield" id="writeY"></span><span class="vkey">click / ↵</span></button>' +
+      '<div class="side-btn" id="compileBtn" style="display:' + (E.flags.compile ? 'flex' : 'none') + '"><span>COMPILE</span><span class="badge" id="compileBadge">+0</span></div></div>';
+    h += '<div class="col-pipe"><div class="col-head">The engine — rules reason into inference, inference proves theorems</div>' +
+      '<div class="lane"><div class="lane-lab">Author · write rules, automate them<div class="ldash"></div></div><div class="pipe" id="authorPipe"></div></div>' +
+      '<div class="lane"><div class="lane-lab">Prove · aim inference at a theorem<div class="ldash"></div></div><div class="proof-active" id="proofActive"></div><div class="theorems" id="theorems"></div></div></div>';
+    h += '<div class="col-goal"><div class="col-head">The goal</div><div class="goal" id="goal">' +
+      '<div class="gname">Expert System</div><div class="gsub">a system that reasons on its own</div><div class="path" id="path"></div>' +
+      '<button class="fab" id="fabricate" disabled>PROVE IT</button></div></div>';
+    h += '<div class="contra" id="contra"><div class="cm-i"><div class="cm-name" id="contraName"></div><div class="cm-d">the engine drags until you discard one — either discard teaches it something permanent</div></div>' +
+      '<div class="cm-acts"><button class="buy" id="contraFwd"></button><button class="buy" id="contraBwd"></button></div></div>';
+    return h;
+  }
+  function buildAuthor() {
+    sync();
+    var h = K.stock('rules', 'Rules');
+    h += '<div class="seg">' + K.connector('rules') +
+      '<div class="node" id="node-ruleset" data-tip="' + esc('<i>Logic that begets more logic.</i><br>Writes Rules automatically and emits Inference (reasoning power).') + '"><div class="nname">Ruleset <span class="ncount" id="cnt-ruleset"></span></div><button class="buy nbuy" id="buy-ruleset"></button><div class="nrate" id="rate-ruleset"></div></div>' +
+      K.connector('inference') + stockCap('inference', 'Inference') + '</div>';
+    if (E.tech.inference) h += '<div class="seg" style="flex:1 1 100%"><div class="node" id="node-daemon" data-tip="' + esc('<i>A patient process that keeps working while you look away.</i><br>Fires the write action for you.') + '"><div class="nname">Daemon <span class="ncount" id="cnt-daemon"></span></div><button class="buy nbuy" id="buy-daemon"></button><div class="nrate" id="rate-daemon"></div></div></div>';
+    $('authorPipe').innerHTML = h;
+    var br = $('buy-ruleset'); if (br) br.onclick = buyRuleset; var bd = $('buy-daemon'); if (bd) bd.onclick = buyDaemon;
+  }
+  function buildTheorems() {
+    sync();
+    var items = ['optimization', 'capacity'].concat(TREE.filter(treeVisible).map(function (n) { return n.id; }));
+    var h = '';
+    items.forEach(function (id) {
+      var lem = id === 'optimization' || id === 'capacity';
+      var nm = id === 'optimization' ? ('Optimization Lv ' + (E.optLevel + 1)) : id === 'capacity' ? ('Inference Capacity Lv ' + (E.infCapLevel + 1)) : TMAP[id].name;
+      var d = id === 'optimization' ? ('+' + Math.round(CFG.lemmaBonus * 100) + '% all rule production — repeatable') : id === 'capacity' ? ('+' + CFG.infCapStep + ' max banked Inference — repeatable') : TMAP[id].desc;
+      h += '<div class="th' + (lem ? ' lemma' : '') + '" id="th-' + id + '" data-tip="' + esc(d) + '"><div class="thn">' + nm + '</div><div class="thd">' + d + '</div><button class="buy thaim" id="aim-' + id + '"></button></div>';
+    });
+    $('theorems').innerHTML = h;
+    items.forEach(function (id) { var b = $('aim-' + id); if (b) b.onclick = function () { selectProof(id); }; });
+  }
+  function pathHTML() {
+    var order = ['formalLogic', 'inference', 'knowledge', 'metalogic', 'expert'], h = '';
+    order.forEach(function (id) { var done = E.tech[id], now = !done && canProve(id); h += '<div class="pstep' + (done ? ' done' : now ? ' now' : '') + '"><span class="pmark">' + (done ? '✓' : now ? '▸' : '·') + '</span>' + symName(id) + (id === 'expert' && !done ? ' <span style="opacity:.6">(needs Meta-Logic + 5 Axioms)</span>' : '') + '</div>'; });
+    return h;
+  }
+
+  var _keyWired = false;
+  function wire() {
+    sync();
+    if ($('writeRule')) $('writeRule').onclick = writeRule;
+    buildAuthor(); buildTheorems();
+    if ($('path')) $('path').innerHTML = pathHTML();
+    var fb = $('fabricate'); if (fb && !fb._wired) { fb.onclick = function () { if (canProve('expert')) selectProof('expert'); }; fb._wired = 1; }
+    if (E.flags.compile) { var cb = $('compileBtn'); if (cb && !cb._wired) { cb.onclick = compile; cb._wired = 1; } }
+    if (!_keyWired) { _keyWired = true; addEventListener('keydown', function (e) { if (e.key === 'Enter' && shell.S.era === 2 && !/input|textarea/i.test((e.target && e.target.tagName) || '')) writeRule(); }); }
+  }
+
+  function refresh() {
+    sync(); var st = stats();
+    setHTML($('writeY'), '+' + fmt(st.click) + ' rules');
+    setTxt($('stk-rules'), fmt(S.rules)); setTxt($('stk-inference'), fmt(S.inference)); setTxt($('stkcap-inference'), 'cap ' + fmt(infCap()));
+    K.connGlow('rules', { norm: 0.5 }); K.connGlow('inference', { norm: 0.5 });
+    setTxt($('cnt-ruleset'), '×' + E.ruleset);
+    setHTML($('rate-ruleset'), E.ruleset > 0 ? '<span class="up">+' + fmt(E.ruleset * st.rulesetYield) + ' rules/s</span><span class="inf">+' + fmt(symInfRate()) + ' inference/s</span>' : '<span style="color:var(--dimmer)">writes rules + emits inference</span>');
+    var br = $('buy-ruleset'); if (br) { setHTML(br, 'Build · <span class="c">' + fmt(rulesetCost()) + ' rules</span>'); var canR = S.rules >= rulesetCost(); setDis(br, !canR); br.classList.toggle('ok', canR); }
+    if (E.tech.inference) {
+      setTxt($('cnt-daemon'), '×' + E.daemon);
+      setHTML($('rate-daemon'), E.daemon > 0 ? '<span class="up">+' + fmt(E.daemon * CFG.daemonRate * st.click) + ' rules/s</span>' : '<span style="color:var(--dimmer)">auto-writes rules</span>');
+      var bd = $('buy-daemon'); if (bd) { setHTML(bd, 'Build · <span class="c">' + fmt(daemonCost()) + ' rules</span>'); var canD = S.rules >= daemonCost(); setDis(bd, !canD); bd.classList.toggle('ok', canD); }
+    }
+    // active proof
+    var pa = $('proofActive');
+    if (pa) {
+      if (E.activeProof) {
+        pa.classList.remove('idle'); var id = E.activeProof, c = proofCost(id), acc = E.proofAcc[id] || 0, pct = Math.min(100, acc / c * 100), rate = symInfRate(), eta = rate > 0 ? Math.ceil((c - acc) / rate) : 0;
+        setHTML(pa, '<div class="pa-top"><span>Proving <b>' + symName(id) + '</b></span><span>' + fmt(acc) + ' / ' + fmt(c) + (eta ? ' · ~' + eta + 's' : '') + '</span></div><div class="meter"><i style="width:' + pct + '%"></i></div>');
+      } else { setHTML(pa, '<div class="pa-idle">▸ Pick a <b>Theorem</b> below to aim your Inference at it (otherwise Inference just banks, capped).</div>'); if (!pa.classList.contains('idle')) pa.classList.add('idle'); }
+    }
+    var items = ['optimization', 'capacity'].concat(TREE.filter(treeVisible).map(function (n) { return n.id; }));
+    items.forEach(function (id) {
+      var b = $('aim-' + id); if (!b) return; var active = E.activeProof === id, cost = proofCost(id);
+      setHTML(b, active ? 'PROVING…' : 'Aim · <span class="c" style="color:var(--inference)">' + fmt(cost) + ' inf</span>'); setDis(b, active);
+      var th = $('th-' + id); if (th) { var cl = 'th' + ((id === 'optimization' || id === 'capacity') ? ' lemma' : '') + (active ? ' active' : ''); if (th.className !== cl) th.className = cl; }
+    });
+    if (E.flags.compile) { setTxt($('compileBadge'), '+' + axiomGain()); }
+    if ($('path')) setHTML($('path'), pathHTML());
+    var ready = canProve('expert'), fb = $('fabricate'); if (fb) { setDis(fb, !ready && !E.flags.symbolicDone); setTxt(fb, E.flags.symbolicDone ? 'PROVEN ✓' : (E.activeProof === 'expert' ? 'PROVING…' : 'PROVE IT')); }
+    if ($('goal')) $('goal').classList.toggle('ready', ready || E.flags.symbolicDone);
+    // contradiction
+    var cc = $('contra');
+    if (cc) {
+      if (E.contra) {
+        if (!cc.classList.contains('show')) cc.classList.add('show');
+        setTxt($('contraName'), '⚠ Contradiction · #' + E.contra.a + ' vs #' + E.contra.b + ' — engine at ' + Math.round(CFG.contraSlow * 100) + '%');
+        setHTML($('contraFwd'), 'Discard #' + E.contra.a + ' <small>(specific → Rulesets +' + Math.round(CFG.contraBonus * 100) + '%)</small>');
+        setHTML($('contraBwd'), 'Discard #' + E.contra.b + ' <small>(general → writes +' + Math.round(CFG.contraBonus * 100) + '%)</small>');
+        if (!cc._wired) { $('contraFwd').onclick = function () { resolveContra('fwd'); }; $('contraBwd').onclick = function () { resolveContra('bwd'); }; cc._wired = 1; }
+      } else if (cc.classList.contains('show')) cc.classList.remove('show');
+    }
+  }
+
+  function fresh(st) {
+    st.rules = 0; st.inference = 0; st.axioms = 0;
+    st.e2 = { ruleset: 0, daemon: 0, runRules: 0, tech: {}, optLevel: 0, infCapLevel: 0, activeProof: null, proofAcc: {}, contra: null, contraN: 0, paraFwd: 0, paraBwd: 0, compiles: 0, totalAxioms: 0, flags: { compile: false, symbolicDone: false } };
+  }
+  function open(st) {
+    // Origins → Symbolic handoff: carried Knowledge seeds starting Rules (Knowledge→Rules).
+    st.rules += Math.round((st.knowledge || 0) * (CFG.seedFromKnowledge || 1));
+    st.started = true;
+  }
+
+  return {
+    id: 2, theme: 'theme-2', name: 'Symbolic', sub: 'reasoning written as explicit rules', sigil: '',
+    bed: 'assets/music-phosphor-logic.mp3', pool: ['rules', 'inference', 'axioms'],
+    sound: { buy: { osc: 'square', f0: 660, f1: 220, g: 0.05, dur: 0.09 }, event: { osc: 'square', f0: 330, f1: 180, g: 0.06, dur: 0.14 } },
+    res: RES,
+    phase: function () { sync(); return 'Expert System ' + TREE.filter(function (n) { return E.tech[n.id]; }).length + '/' + TREE.length; },
+    fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
+    done: function () { sync(); return !!E.flags.symbolicDone; }
+  };
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = makeEraSymbolic;
