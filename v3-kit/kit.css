@@ -29,7 +29,7 @@ h1,h2,h3,.disp{ font-family:var(--era-font,serif); letter-spacing:0.04em; }
 
 /* ---------- Resource rail (color-coded, persistent, condensable) ---------- */
 .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch;
-  padding:10px 8px; margin:0 -8px 12px; background:var(--rail-bg,rgba(10,8,6,0.84)); backdrop-filter:blur(6px);
+  padding:7px 8px; margin:0 -8px 8px; background:var(--rail-bg,rgba(10,8,6,0.84)); backdrop-filter:blur(6px);
   border-bottom:1px solid var(--line); }
 .chip{ display:flex; align-items:center; gap:9px; padding:7px 12px 7px 9px; border-radius:10px;
   border:1px solid var(--line); background:var(--panel); min-width:128px; position:relative; }
@@ -46,17 +46,17 @@ h1,h2,h3,.disp{ font-family:var(--era-font,serif); letter-spacing:0.04em; }
   border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; }
 .rail-btn:hover{ border-color:var(--accent); color:var(--text); }
 
-header.era{ display:flex; align-items:baseline; gap:14px; margin:4px 2px 14px; }
+header.era{ display:flex; align-items:baseline; gap:14px; margin:2px 2px 8px; }
 header.era .sig{ width:34px; height:34px; object-fit:contain; opacity:0.9; align-self:center; filter:drop-shadow(0 0 8px var(--accent)); }
 header.era h1{ font-size:26px; margin:0; color:var(--text); }
 header.era .sub{ color:var(--dim); font-style:italic; font-size:15px; }
 header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px; letter-spacing:0.16em; color:var(--accent); text-transform:uppercase; }
 
 /* ---------- The board: verbs | pipeline | goal (canonical 220/244) ---------- */
-.board{ display:grid; grid-template-columns: 220px 1fr 244px; gap:14px; align-items:start; }
+.board{ display:grid; grid-template-columns: 220px 1fr 244px; gap:12px; align-items:start; }
 .board > div{ min-width:0; }   /* let the center column shrink + WRAP the pipe (no "running off the side") */
 @media(max-width:940px){ .board{ grid-template-columns:1fr; } }
-.col-head{ font-family:var(--era-font); font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dimmer); margin:2px 0 8px; }
+.col-head{ font-family:var(--era-font); font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dimmer); margin:1px 0 5px; }
 
 /* ---------- verbs (big primary actions) ---------- */
 .verb{ width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left;
@@ -79,8 +79,8 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
 
 /* ---------- pipeline lanes: sources → converters → outputs ---------- */
 .lane{ background:linear-gradient(180deg,var(--lane-a,rgba(30,21,12,0.6)),var(--lane-b,rgba(18,12,7,0.7))); border:1px solid var(--line);
-  border-radius:14px; padding:12px 12px 14px; margin-bottom:14px; position:relative; }
-.lane-lab{ font-family:var(--era-font); font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; display:flex; gap:8px; align-items:center; }
+  border-radius:14px; padding:9px 11px 10px; margin-bottom:10px; position:relative; }
+.lane-lab{ font-family:var(--era-font); font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dim); margin-bottom:7px; display:flex; gap:8px; align-items:center; }
 .lane-lab .ldash{ flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
 .pipe{ display:flex; align-items:stretch; gap:6px; flex-wrap:wrap; }
 .seg{ display:flex; align-items:stretch; gap:6px; min-width:0; flex:1 1 300px; } /* converter + connectors wrap as one unit — no dangling connector */
@@ -104,7 +104,7 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
 
 /* converter node = per-row dashboard: icon, +out/s, owned, cost, BUY, pause */
 .node{ flex:1; min-width:160px; display:grid; grid-template-columns:auto 1fr auto; grid-template-rows:auto auto; gap:2px 10px;
-  padding:9px 11px; border-radius:12px; border:1px solid var(--line); background:var(--panel);
+  padding:7px 10px; border-radius:12px; border:1px solid var(--line); background:var(--panel);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); position:relative; }
 .node.can{ border-color:var(--accent); }
 .node.starved{ border-color:var(--danger); }
@@ -126,15 +126,18 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
 .pause{ display:inline-block; vertical-align:middle; width:18px; height:18px; border-radius:5px; border:1px solid var(--line);
   background:rgba(0,0,0,0.3); color:var(--dim); cursor:pointer; font-size:9px; line-height:15px; text-align:center; padding:0; margin-left:5px; }
 .pause.on{ color:var(--danger); border-color:var(--danger); }
-.auto{ display:flex; align-items:center; gap:8px; margin-top:8px; padding:7px 9px; border-radius:10px; background:rgba(0,0,0,0.18); border:1px solid var(--line); }
+.auto{ display:flex; align-items:center; gap:8px; margin-top:6px; padding:6px 9px; border-radius:10px; background:rgba(0,0,0,0.18); border:1px solid var(--line); }
 .auto img{ width:26px; height:26px; object-fit:contain; }
 .auto .an{ font-family:var(--era-font); font-size:12px; }
 .auto .ar{ font-size:12px; color:var(--good); font-variant-numeric:tabular-nums; }
 .auto .abuy{ margin-left:auto; }
 
 /* ---------- goal (always visible; WAKES to tease the next era) ---------- */
-.goal{ background:linear-gradient(180deg,var(--goal-a,rgba(40,28,15,0.7)),var(--goal-b,rgba(20,13,7,0.8))); border:1px solid var(--edge);
-  border-radius:14px; padding:14px; text-align:center; transition:border-color 0.4s, box-shadow 0.4s; }
+.goal{ background:linear-gradient(180deg,var(--goal-a,rgba(40,28,15,0.7)),var(--goal-b,rgba(20,13,7,0.8)));
+  border:1px solid color-mix(in srgb, var(--tease,#fff) calc(var(--wake,0) * 60%), var(--edge));
+  border-radius:14px; padding:12px; text-align:center; transition:border-color 0.4s, box-shadow 0.4s;
+  /* --wake (0..1, set per-era from goal progress) makes the goal glow BUILD as the bar fills, then .ready pulses */
+  box-shadow:0 0 calc(26px * var(--wake,0)) color-mix(in srgb, var(--tease,#7dffb7) calc(var(--wake,0) * 72%), transparent); }
 .goal img.lm{ width:96px; height:96px; object-fit:contain; filter:drop-shadow(0 0 12px var(--accent)); }
 .goal .gname{ font-family:var(--era-font); font-size:14px; letter-spacing:0.08em; margin:6px 0 2px; }
 .goal .gsub{ font-size:12px; color:var(--dim); font-style:italic; margin-bottom:10px; }
@@ -157,9 +160,9 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
 .locked{ color:var(--dimmer); font-style:italic; font-size:13px; padding:20px 6px; }
 
 /* ---------- standing decisions (levers / repeatable sinks) ---------- */
-.standing{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }
+.standing{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
 @media(max-width:940px){ .standing{ grid-template-columns:1fr; } }
-.ctrl{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:12px 14px; }
+.ctrl{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:9px 12px; }
 .ctrl-lab{ font-family:var(--era-font); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); margin-bottom:9px; }
 .lever{ display:flex; align-items:center; gap:10px; }
 .lever span{ font-family:var(--era-font); font-size:10px; letter-spacing:0.1em; color:var(--dim); }

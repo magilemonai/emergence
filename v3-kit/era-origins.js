@@ -291,7 +291,16 @@ function makeEraOrigins(shell) {
     if ($('siMeter')) $('siMeter').style.width = Math.min(100, (S.silicon / CFG.siliconGate) * 100) + '%';
     setTxt($('siLab'), E.flags.o_foundry ? fmt(S.silicon) + ' / ' + CFG.siliconGate + ' silicon' : 'unlock the Foundry to make Silicon');
     var fb = $('fabricate'), ready = S.silicon >= CFG.siliconGate && !E.done; setDis(fb, !ready); setTxt(fb, E.done ? 'FABRICATED ✓' : 'FABRICATE');
-    if ($('goal')) $('goal').classList.toggle('ready', ready);
+    var goalEl = $('goal');
+    if (goalEl) {
+      goalEl.classList.toggle('ready', ready);
+      // the goal glow BUILDS as Silicon fills (exponential — turns on toward the end), then .ready pulses
+      var prog = E.flags.o_foundry ? Math.min(1, S.silicon / CFG.siliconGate) : 0;
+      var wake = Math.pow(prog, 1.7);
+      if (goalEl._wake !== wake) { goalEl.style.setProperty('--wake', wake.toFixed(3)); goalEl._wake = wake; }
+    }
+    // when ready, the FABRICATE button morphs to the NEXT era's font (Symbolic VT323) — a taste of what's coming
+    if (fb) { var ff = ready ? "'VT323', monospace" : ''; if (fb._ff !== ff) { fb.style.fontFamily = ff; fb.style.fontSize = ready ? '20px' : ''; fb.style.letterSpacing = ready ? '0.08em' : ''; fb._ff = ff; } }
     if ($('goalSub')) $('goalSub').textContent = E.flags.o_foundry ? 'reach ' + CFG.siliconGate + ' Silicon' : (E.flags.o_smelter ? 'first, learn to make Silicon (build the Foundry)' : 'first, learn to work materials');
     var canN = DISCO.filter(canDisco).length; var bdg = $('researchBadge'); if (bdg) { setTxt(bdg, String(canN)); bdg.style.display = canN ? 'inline-block' : 'none'; }
     refreshResearch();

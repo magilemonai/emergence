@@ -10,13 +10,13 @@
 - Cody played the full arc [capture `20260701_005934`]. Direction VALIDATED ("chase the factory/flow-chart
   idea — satisfactory/factorio"); emergence rupture is "much fun". Three problems undercut it → below.
 
-## P0 — ONE SCREEN PER ERA (load-bearing; the Flow-Board law is broken)
-- [ ] **Deep** (game-breaking): triangle mixer + 3 run lanes + gauges must be visible TOGETHER — the
-      steering loop is un-reactable when you must scroll ([20:42],[23:14]). ← **resurfaced deferred item**
-      (CLAUDE.md flagged "Deep's 3rd run-lane below the fold at 1280").
-- [ ] **Statistical**: Focus dial on-screen without scrolling ([14:54]).
-- [ ] **Origins / Symbolic**: tighten to remove the mild scroll ([01:51],[12:23]).
-- [ ] Verify all eras at a REAL viewport (~1280×800), not the tall 1400 window that hid this.
+## P0 — ONE SCREEN PER ERA (measured @1280×800, ~713px viewport)
+- [x] **Deep** (was game-breaking): triangle + 3 runs + gauges side-by-side (approved mock); overflow +569→**+176**. ([20:42],[23:14])
+- [x] **Statistical Focus dial** on-screen: compacted the pinned stage; primary loop (scatter+RUN TRIAL+dial+goal) fits. ([14:54])
+- [x] Global density pass (kit padding/margins) — shaved every era. Current overflow: Symbolic **+183**, Deep **+176**, Foundation **+196**, Origins **+289**, Statistical **+589**.
+- [ ] **Statistical true zero-scroll**: the Experiment Board + Methods (secondary) still push +589 — relocate/collapse them.
+- [ ] **Origins** (+289): trim the second lane / standing row to fit.
+- [x] Verify at real 1280×800 (shoot-unified now uses it + reports overflowPx).
 
 ## P1 — must-fix UI bugs (quick, unambiguous)  ✅ DONE 2026-07-01
 - [x] Origins: pause button overlaps the Build button → now inline in the node name row ([04:09]).
@@ -48,8 +48,8 @@
   - [x] **Deep** — removed 4 stand-in producers; supply-bus buttons now BUILD the real Origins/Statistical producers (paid in Silicon, Cody's "build-here" choice); chainPerFoundry reads real S.e1.foundry. Verified feedstocks flow. (2026-07-01)
   - [x] **Foundation** — removed capIncome/seedBreadth + stubs; Scale climbs on real Deep breadth (S.e4), Capability from Deep's real production (Tool Access = +60% Deep-coupled bonus), proposals read real S.e3/e1/e2/S.knowledge/S.rules. Verified Scale climbs + Capability flows. (2026-07-01)
   - ✅ ALL 3 reverts done. Seams in `v3-kit/KIT.md`. **NEEDS a Cody playtest to confirm no starvation + tune** the real supply chain (earlier eras must sustain later ones).
-- [ ] Rebuild the test suite for the merged v3 (`node test.js`; keep the no-idle-rebuild guard + cross-era reach-back).
-- [ ] Inline kit.css/kit.js + era modules into the single file (single-file constraint) — final packaging.
+- [x] Rebuilt the test suite for merged v3 → `node test-v3.js` (**50 green**): per-era economy, cross-era reach-back (no fake foundry / chainPerFoundry reads real e1 / Scale from real e4 / no capIncome), full-chain no-NaN, build-once determinism. `node test.js` (shipped emergence.html) still **200 green**. (2026-07-01)
+- [ ] Inline kit.css/kit.js + era modules into the single file (single-file constraint) — final packaging. (fold `test-v3.js` into `test.js` when v3 swaps into emergence.html)
 - [ ] Then: Cody records → iterate → swap v3 → `emergence.html`, push (auto-deploys). DO NOT push until Cody says.
 
 ## Deferred from PRIOR sessions — still open (verify relevance before doing)
