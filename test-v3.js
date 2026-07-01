@@ -227,6 +227,154 @@ ok(/offlineCatchup\(/.test(html) && /WHILE YOU WERE AWAY/.test(html), 'shell boo
 ok(/musicPlayEra\(ERAS\[S\.era\]\.bedKey/.test(html), 'shell sets the music bed at boot (♪ no longer dead until first nav)');
 ok(/uiPaused \? 0/.test(html), 'shell tick() honors pause');
 
+// ============================================================================ 11) PROGRESSION — autoplay the full arc through the real action seam
+// Proves the merged build is COMPLETABLE and the real cross-era supply chain does not starve/deadlock
+// (the bot proves completable, not fun — feel still needs Cody's hands). Mirrors the shipped
+// testProgression strategies, adapted to the v3 mechanics (build-here supply bus, Experiment Board,
+// heat bang-bang, rush-vs-prepare, aftermath defense).
+function originsStep() {
+  const A = ERAS[1].acts, E = S.e1;
+  if (E.done) return;
+  for (let i = 0; i < 5; i++) A.inscribe();
+  if (E.flags.o_materials) for (let i = 0; i < 5; i++) A.quarry();
+  A.DISCO.forEach(function (n) { if (A.canDisco(n)) A.doDisco(n); });
+  if (E.flags.canScribe && E.scribe < 25) A.buy('scribe');
+  if (E.flags.o_materials && E.miner < 25) A.buy('miner');
+  if (E.flags.o_scriptorium && E.scriptorium < E.scribe && A.canBuy('scriptorium')) A.buy('scriptorium');
+  if (E.flags.o_smelter && E.smelter < E.miner && A.canBuy('smelter')) A.buy('smelter');
+  if (E.flags.o_foundry && E.foundry < Math.min(E.scriptorium, E.smelter) && A.canBuy('foundry')) A.buy('foundry');
+  if (E.comm && S[E.comm.res] >= E.comm.need * 1.5) A.fulfillComm(); // take commissions when comfortably affordable
+  A.fabricate(); // self-gated on the Silicon gate
+}
+function symbolicStep() {
+  const A = ERAS[2].acts, E = S.e2;
+  if (E.flags.symbolicDone) return;
+  if (E.contra) A.resolveContra(E.ruleset > 8 ? 'fwd' : 'bwd');
+  const clicks = (E.ruleset + E.daemon < 1) ? 8 : 1;
+  for (let i = 0; i < clicks; i++) A.writeRule();
+  if (E.ruleset < 30 && S.rules >= A.rulesetCost()) A.buyRuleset();
+  if (E.tech.inference && E.daemon < 20 && S.rules >= A.daemonCost() * 2) A.buyDaemon();
+  if (!E.activeProof) { // aim Inference: cheapest unproven theorem first, Expert when reachable, else bank Optimization
+    const t = A.TREE.find(n => n.id !== 'expert' && !E.tech[n.id] && A.canProve(n.id));
+    if (t) A.selectProof(t.id);
+    else if (A.canProve('expert')) A.selectProof('expert');
+    else A.selectProof('optimization');
+  }
+  const expReq = A.TREE.find(n => n.id === 'expert').reqAxioms || 0;
+  if (E.flags.compile && S.axioms < expReq && A.axiomGain() >= Math.max(2, Math.ceil(S.axioms * 0.5))) A.compile();
+}
+function statisticalStep(tk) {
+  const A3 = ERAS[3].acts, A1 = ERAS[1].acts, E = S.e3, E1 = S.e1;
+  if (E.done) return;
+  // real reach-back: low Silicon → go build Origins Foundries (+ their upstream), like the supply strip tells the player
+  if (S.silicon < 80) {
+    if (A1.canBuy('foundry')) A1.buy('foundry');
+    if (E1.smelter < E1.miner && A1.canBuy('smelter')) A1.buy('smelter');
+    if (E1.scriptorium < E1.scribe && A1.canBuy('scriptorium')) A1.buy('scriptorium');
+  }
+  if (E.dataset < 22 && A3.canBuy('dataset')) A3.buy('dataset');
+  if (E.model < 16 && A3.canBuy('model')) A3.buy('model');
+  if (tk % 5 === 0) A3.runExperiment(1); // RUN TRIAL at a fast-human 2/s
+  const next = A3.nextMethod();
+  if (next && S.data - A3.expCost('method') > 120) A3.buyCard('method');
+  const nM = Object.keys(E.methods).length;
+  if (next && nM < 4 && E.survey < 95 && A3.expCost('method') > S.data - 120) E.focus = 'explore';
+  else if (E.gap > 0.18) E.focus = 'generalize';
+  else E.focus = 'fit';
+  A3.fabricate(); // self-gated on the 88% validation goal
+}
+let _deepCooling = false;
+function deepStep() {
+  if (S.maxEra < 4) return;
+  const A = ERAS[4].acts, A1 = ERAS[1].acts, E = S.e4, C = CFG.e4, E1 = S.e1;
+  // build-here supply bus: grow the REAL upstream producers, keeping a Silicon buffer for nodes
+  A.SUPPLY.forEach(function (s) { if (S.silicon >= A.supCost(s) + 400) A.buySup(s.key); });
+  if (E.node < 26 && S.silicon >= A.nodeCost()) A.buyNode();
+  // Knowledge pipeline (the scarce Language feedstock, same as the shipped game): phase the scribe base up
+  // with SINK-PAUSING — the pause buttons every player has. Scriptoria out-draw scribes → pause them to bank
+  // Marks for the next scribe; Smelters/Foundries BURN Knowledge → pause them while the stock is tight.
+  const os = A1.oStats();
+  const scribeCost = A1.unitCost('scribe');
+  const marksStarved = E1.scribe * os.scribeY < E1.scriptorium * os.scrR * 1.05;
+  E1.paused.scriptorium = E1.scribe < 240 && marksStarved && S.marks < scribeCost;
+  E1.paused.smelter = S.knowledge < 1500;
+  E1.paused.foundry = E.node >= 12 && S.knowledge < 2500;
+  if (E1.scribe < 240 && S.marks >= scribeCost) A1.buy('scribe');
+  if (E1.miner < 90 && A1.canBuy('miner')) A1.buy('miner');
+  if (E.stabilizer < 1 && S.capability > 400) A.buyStabilizer();
+  // steer: bang-bang the heat (cool balanced ↔ hammer the high-wind run), starve-avoid on dry feedstocks
+  const t = S.t, PH = { vision: 0, language: 2.094, reasoning: 4.189 };
+  const feed = { vision: S.data, language: S.knowledge, reasoning: S.insight };
+  _deepCooling = E.heat >= C.heatThrottle - 6 ? true : (E.heat <= C.heatWarn - 10 ? false : _deepCooling);
+  const chase = _deepCooling ? 0.15 : 1;
+  const raw = {};
+  ['vision', 'language', 'reasoning'].forEach(function (k) {
+    raw[k] = (feed[k] < 120) ? 0.03 : (0.12 + C.driftDemand * (0.5 + 0.5 * Math.sin(t * C.driftFreq + PH[k])) * 2.0 + (1 - E[k]) * 0.5);
+  });
+  const mean = (raw.vision + raw.language + raw.reasoning) / 3;
+  ['vision', 'language', 'reasoning'].forEach(function (k) { E.alloc[k] = Math.max(0.02, mean + (raw[k] - mean) * chase); });
+  A.advance(); // self-gated on the breadth gate
+}
+function foundationStep() {
+  if (S.maxEra < 5) return;
+  const A = ERAS[5].acts, E = S.e5, C = CFG.e5;
+  if (!E.emerged) { // rush-vs-prepare: buy caps, prepare some Coherence, then rush the ladder
+    A.CAPS.forEach(function (c) { if (!E.caps[c.id] && S.capability >= c.cost) A.buyCap(c.id); });
+    if (E.caps.interpret && E.coherence < 36 && S.capability >= A.alignCohCost()) { A.alignObjective(); return; }
+    A.selfImprove();
+    return;
+  }
+  if (E.ending) return; // aftermath: defend Control + Alignment toward Symbiotic
+  if (E.veto) { A.resolveVeto(E.control < C.controlLow + 12 ? 'veto' : 'approve'); return; }
+  if (E.control < C.controlLow + 16 && S.scale >= C.constrainCost) { A.constrainAct(); return; }
+  if (E.alignment < C.alignGood + 6 && S.scale >= C.alignCost) A.alignAct();
+}
+
+(function testProgression() {
+  freshAll(); S.started = true;
+  const MAX = 700000; // 0.1s ticks ≈ 19h of game time — far beyond any sane run
+  let origAt, symAt, statAt, deepAt, emergeAt, endAt;
+  let deepTicks = 0; const starve = { data: 0, knowledge: 0, insight: 0, silicon: 0 };
+  for (let tk = 0; tk < MAX; tk++) {
+    if (S.maxEra === 1) originsStep();
+    else if (S.maxEra === 2) symbolicStep();
+    else if (S.maxEra === 3) statisticalStep(tk);
+    else { deepStep(); foundationStep(); }
+    tick(0.1);
+    if (origAt === undefined && S.e1.done) origAt = S.t;
+    if (symAt === undefined && S.e2.flags.symbolicDone) symAt = S.t;
+    if (statAt === undefined && S.maxEra >= 4) statAt = S.t;
+    if (S.maxEra >= 4 && deepAt === undefined) { // starvation audit while Deep is the active frontier
+      deepTicks++;
+      if (S.data < 1) starve.data++; if (S.knowledge < 1) starve.knowledge++;
+      if (S.insight < 1) starve.insight++; if (S.silicon < 1) starve.silicon++;
+    }
+    if (deepAt === undefined && S.maxEra >= 5) deepAt = S.t;
+    if (emergeAt === undefined && S.e5.emerged) emergeAt = S.t;
+    if (S.e5.ending) { endAt = S.t; break; }
+  }
+  const mm = s => s === undefined ? '—' : (s / 60).toFixed(1) + 'm';
+  console.log('\n  Progression (v3 unified, bot — proves completable, not fun):');
+  console.log('    Origins fabricated at ' + mm(origAt));
+  console.log('    Symbolic completed at ' + mm(symAt) + (origAt !== undefined && symAt !== undefined ? '  (took ' + ((symAt - origAt) / 60).toFixed(1) + 'm)' : ''));
+  console.log('    Statistical generalized at ' + mm(statAt) + (symAt !== undefined && statAt !== undefined ? '  (took ' + ((statAt - symAt) / 60).toFixed(1) + 'm)' : ''));
+  console.log('    Deep reached breadth at ' + mm(deepAt) + (statAt !== undefined && deepAt !== undefined ? '  (took ' + ((deepAt - statAt) / 60).toFixed(1) + 'm)' : ''));
+  console.log('    EMERGENCE at ' + mm(emergeAt) + (emergeAt !== undefined ? '  (recursion Lv' + S.e5.recursion + ', ' + ERAS[5].acts.agenticCapCount() + ' agentic caps, coherence ' + Math.round(S.e5.coherence) + ')' : ''));
+  console.log('    Aftermath → ' + (S.e5.ending || 'UNRESOLVED').toUpperCase() + ' at ' + mm(endAt) + (emergeAt !== undefined && endAt !== undefined ? '  (aftermath ' + ((endAt - emergeAt) / 60).toFixed(1) + 'm)' : ''));
+  if (deepTicks) {
+    const pc = k => (100 * starve[k] / deepTicks).toFixed(1) + '%';
+    console.log('    Deep feedstock starvation (time at ~0): data ' + pc('data') + ' · knowledge ' + pc('knowledge') + ' · insight ' + pc('insight') + ' · silicon ' + pc('silicon'));
+  }
+  ok(origAt !== undefined, 'progression: Origins completes (fabrication, no stall)');
+  ok(symAt !== undefined, 'progression: Symbolic completes (Expert System proven)');
+  ok(statAt !== undefined, 'progression: Statistical generalizes and opens Deep');
+  ok(deepAt !== undefined, 'progression: Deep reaches breadth on the REAL supply chain (no starvation deadlock)');
+  ok(emergeAt !== undefined, 'progression: Foundation reaches emergence');
+  ok(endAt !== undefined && !!S.e5.ending, 'progression: aftermath resolves to an ending (' + (S.e5.ending || '?') + ')');
+  ok(['marks', 'ore', 'knowledge', 'metal', 'silicon', 'rules', 'inference', 'axioms', 'data', 'insight', 'capability', 'scale'].every(k => isFinite(S[k])), 'progression: no NaN/Infinity at completion');
+  if (deepTicks) ok(starve.knowledge / deepTicks < 0.9, 'progression: Knowledge (the scarce Language feedstock) is not starved the whole era');
+})();
+
 // ============================================================================ summary
 console.log('\nv3 unified test suite');
 console.log('  ' + pass + ' passed, ' + fail + ' failed');

@@ -324,7 +324,9 @@ function makeEraOrigins(shell) {
     phase: function () { sync(); return ['', 'Stone Age', 'Bronze Age', 'Silicon Age'][E.age] || 'Stone Age'; },
     fresh: fresh, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
     hasDrawer: true, drawerTitle: 'RESEARCH · one-time discoveries',
-    done: function () { sync(); return !!E.done; }
+    done: function () { sync(); return !!E.done; },
+    // action seam — the same functions the wired buttons call (test autoplayer / dev tooling)
+    acts: { inscribe: inscribe, quarry: quarry, buy: buy, canBuy: canBuy, unitCost: unitCost, DISCO: DISCO, canDisco: canDisco, doDisco: doDisco, fulfillComm: fulfillComm, fabricate: fabricate, oStats: oStats }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraOrigins;

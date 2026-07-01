@@ -350,7 +350,8 @@ function makeEraDeep(shell) {
     res: RES,
     phase: function () { return 'Compute Fabric'; },
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
-    done: function () { sync(); return !!E.done; }
+    done: function () { sync(); return !!E.done; },
+    acts: { buyNode: buyNode, nodeCost: nodeCost, buySup: buySup, supCost: supCost, SUPMAP: SUPMAP, SUPPLY: SUPPLY, buyStabilizer: buyStabilizer, lockRun: lockRun, advance: advance, breadth: breadth }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraDeep;

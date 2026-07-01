@@ -6,3 +6,9 @@ images/*.heic
 fonts/*.woff2
 
 screenshots/
+
+# generated single-file build (tools/build-single.js) — never commit the artifact
+emergence-v3-single.html
+
+# playtest recordings (large videos) — never committed by policy
+KittyCapture/

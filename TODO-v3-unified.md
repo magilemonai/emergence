@@ -81,10 +81,24 @@ All engineering, ported from Cody-approved shipped features; `node test-v3.js` n
   - [x] **Statistical** — removed fake Foundry (Data→Silicon valve); Silicon now from the real Origins pool; supply bus = "Silicon from Origins →" reach-back nav. (2026-07-01)
   - [x] **Deep** — removed 4 stand-in producers; supply-bus buttons now BUILD the real Origins/Statistical producers (paid in Silicon, Cody's "build-here" choice); chainPerFoundry reads real S.e1.foundry. Verified feedstocks flow. (2026-07-01)
   - [x] **Foundation** — removed capIncome/seedBreadth + stubs; Scale climbs on real Deep breadth (S.e4), Capability from Deep's real production (Tool Access = +60% Deep-coupled bonus), proposals read real S.e3/e1/e2/S.knowledge/S.rules. Verified Scale climbs + Capability flows. (2026-07-01)
-  - ✅ ALL 3 reverts done. Seams in `v3-kit/KIT.md`. **NEEDS a Cody playtest to confirm no starvation + tune** the real supply chain (earlier eras must sustain later ones).
-- [x] Rebuilt the test suite for merged v3 → `node test-v3.js` (**50 green**): per-era economy, cross-era reach-back (no fake foundry / chainPerFoundry reads real e1 / Scale from real e4 / no capIncome), full-chain no-NaN, build-once determinism. `node test.js` (shipped emergence.html) still **200 green**. (2026-07-01)
-- [ ] Inline kit.css/kit.js + era modules into the single file (single-file constraint) — final packaging. (fold `test-v3.js` into `test.js` when v3 swaps into emergence.html)
-- [ ] Then: Cody records → iterate → swap v3 → `emergence.html`, push (auto-deploys). DO NOT push until Cody says.
+  - ✅ ALL 3 reverts done. Seams in `v3-kit/KIT.md`. Starvation half PRE-VERIFIED by the new progression
+    bot (below); the **tune/feel half still needs Cody's playtest**.
+- [x] Rebuilt the test suite for merged v3 → `node test-v3.js` (**83 green**): per-era economy, cross-era reach-back (no fake foundry / chainPerFoundry reads real e1 / Scale from real e4 / no capIncome), full-chain no-NaN, build-once determinism, offline catch-up + MUTE gating, shell persistence contract, full-arc progression. `node test.js` (shipped emergence.html) still **200 green**. (2026-07-01)
+- [x] **Progression autoplayer** (2026-07-01 PM): plays the whole arc through a real action seam (`era.acts`)
+      — Origins 1.9m → Symbolic 6.1m → Statistical 12.4m → Deep breadth 24.4m → EMERGENCE 29.1m →
+      SYMBIOTIC 31.6m, 0% feedstock starvation. **Two findings for the playtest:**
+      - [ ] Deep's Knowledge pipeline REQUIRES sink-pausing play (pause Smelters/Foundries when Knowledge is
+            tight, bank Marks for scribes) — without it the Language run starves ~100% and Deep deadlocks.
+            A real player must DISCOVER the pause buttons → if Cody starves there, the affordance needs
+            surfacing (design, his eye).
+      - [ ] Deep is the longest era even at bot speed (12.1m vs Origins 1.9m) — pacing signal consistent
+            with the old "Deep long" finding; confirm on his real run before tuning.
+- [x] Inline packaging is now a **repeatable build script** — `node tools/build-single.js` inlines kit.css/
+      kit.js/era modules + embeds all fonts (base64 woff2, incl. newly fetched Inter) into
+      `emergence-v3-single.html` (475 KB, gitignored). Verified headlessly: probes byte-identical to the
+      modular build, zero console errors. Iteration stays modular; Phase 6 = build → verify → swap → push.
+      (fold `test-v3.js` into `test.js` when v3 swaps into emergence.html)
+- [ ] Then: Cody records → iterate → build-single → swap v3 → `emergence.html`, push (auto-deploys). DO NOT push until Cody says.
 
 ## Deferred from PRIOR sessions — relevance AUDITED against v3 (2026-07-01 PM)
 - [ ] Pacing redistribution — still relevant but the old numbers are from the v2 build; v3 pacing is

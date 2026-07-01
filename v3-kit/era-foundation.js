@@ -383,7 +383,8 @@ function makeEraFoundation(shell) {
     res: RES,
     bedKey: function () { return (S.e5 && S.e5.rupture) ? 'rupture' : 5; }, // post-emergence the bed stays Unmoored (nav must not reset it)
     phase: phase, fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs, seed: seed,
-    done: function () { sync(); return !!E.ending; }
+    done: function () { sync(); return !!E.ending; },
+    acts: { CAPS: CAPS, buyCap: buyCap, improveCost: improveCost, alignCohCost: alignCohCost, selfImprove: selfImprove, alignObjective: alignObjective, constrainAct: constrainAct, alignAct: alignAct, delegateAct: delegateAct, resolveVeto: resolveVeto, agenticCapCount: agenticCapCount }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraFoundation;

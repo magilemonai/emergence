@@ -9,7 +9,7 @@ const path = require('path');
 
 const HASH = process.argv[2] ? ('#' + process.argv[2].replace(/^#/, '')) : '';
 const OUT = process.argv[3] || `/tmp/uni${HASH ? '-' + HASH.slice(1) : ''}.png`;
-const FILE = 'file://' + path.resolve(__dirname, '..', 'emergence-v3-unified.html') + HASH;
+const FILE = 'file://' + (process.env.SHOOT_FILE ? path.resolve(process.env.SHOOT_FILE) : path.resolve(__dirname, '..', 'emergence-v3-unified.html')) + HASH; // SHOOT_FILE overrides the target (e.g. the single-file build)
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9243;
 

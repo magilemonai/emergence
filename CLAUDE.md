@@ -40,9 +40,23 @@ call `refresh()`, never a full rebuild. (Origins dead-clicks 18→1 after this f
   Cody's "build-here" choice, he found it "kind of fun"); `chainPerFoundry` reads real `S.e1.foundry`;
   Foundation Scale climbs on real Deep breadth (`S.e4`), Capability from Deep's real production. Seams
   in `v3-kit/KIT.md`. **Still needs a Cody playtest to confirm no starvation + tune the supply chain.**
-- ✅ **Test suite rebuilt:** `node test-v3.js` = **75 green** (per-era economy, cross-era reach-back,
+- ✅ **Test suite rebuilt:** `node test-v3.js` = **83 green** (per-era economy, cross-era reach-back,
   no-fake-foundry, Scale-from-real-e4, full-chain no-NaN, build-once determinism, heat-bites, offline
-  catch-up + MUTE gating, shell persistence contract). `node test.js` (shipped) still **200 green**.
+  catch-up + MUTE gating, shell persistence contract, full-arc progression). `node test.js` (shipped)
+  still **200 green**.
+- ✅ **Progression autoplayer (2026-07-01 PM):** plays the whole arc through a real action seam
+  (`era.acts` on every module — the same functions the buttons call): Origins 1.9m → Symbolic 6.1m →
+  Statistical 12.4m → Deep breadth 24.4m → EMERGENCE 29.1m → **SYMBIOTIC** 31.6m, **0% feedstock
+  starvation** — the real supply chain is PROVEN completable (the tune/feel half still needs Cody).
+  Two playtest flags: (a) Deep's Knowledge pipeline REQUIRES sink-pausing play (without pausing
+  Smelters/Foundries the Language run starves ~100% and Deep deadlocks — if Cody starves there, the
+  pause affordance needs surfacing); (b) Deep is the longest era even at bot speed (12.1m vs Origins
+  1.9m) — matches the old "Deep long" pacing signal.
+- ✅ **Phase 6 packaging is now a build script:** `node tools/build-single.js` inlines kit.css/kit.js/
+  era modules + embeds all fonts (base64 woff2; Inter fetched to complete the set) into
+  `emergence-v3-single.html` (475 KB, gitignored artifact). Headless probes byte-identical to the
+  modular build, zero errors (`SHOOT_FILE=... node tools/shoot-unified.js`). Iteration stays modular;
+  the deferred "inlining would slow iteration" objection is gone — Phase 6 = build → verify → swap → push.
 - ✅ **Session-services parity pass (2026-07-01 PM, engineering only — zero layout changes):** the
   unified build now matches the shipped game around the game: **offline catch-up** (8h cap, muted
   deterministic replay + "WHILE YOU WERE AWAY" toast; live-only systems freeze under `KIT.MUTE` —
@@ -75,9 +89,9 @@ call `refresh()`, never a full rebuild. (Origins dead-clicks 18→1 after this f
 3. **Text → visual:** Symbolic tissue prose and Deep's orchestration line / event banner → color-driven
    visuals ("color not text" is his standing bar). Design calls.
 4. **Pacing tunes** (era lengths, RR5 `chainPerFoundry` 3%/foundry) — only a real run tells us.
-5. Then: Cody records → iterate → **Phase 6** inline the kit into the single file + swap v3 →
-   `emergence.html`, push (auto-deploys), Zach round. (Inline packaging is deferred until the layout
-   settles — doing it now would only slow iteration.)
+5. Then: Cody records → iterate → **Phase 6** `node tools/build-single.js` → verify → swap v3 →
+   `emergence.html`, push (auto-deploys), Zach round. (Packaging is scripted now — no hand-inlining,
+   no iteration cost.)
 
 **`PLAYTEST-PROMPTS.md` holds the per-era checklist** for his next capture (the one-screen scroll
 points, where it goes passive, the axiom hint, the heat rhythm, the Foundation pre-emergence gap).

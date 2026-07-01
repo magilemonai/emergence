@@ -237,7 +237,8 @@ function makeEraSymbolic(shell) {
     res: RES,
     phase: function () { sync(); return 'Expert System ' + TREE.filter(function (n) { return E.tech[n.id]; }).length + '/' + TREE.length; },
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
-    done: function () { sync(); return !!E.flags.symbolicDone; }
+    done: function () { sync(); return !!E.flags.symbolicDone; },
+    acts: { writeRule: writeRule, buyRuleset: buyRuleset, buyDaemon: buyDaemon, rulesetCost: rulesetCost, daemonCost: daemonCost, selectProof: selectProof, canProve: canProve, compile: compile, axiomGain: axiomGain, resolveContra: resolveContra, TREE: TREE }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraSymbolic;

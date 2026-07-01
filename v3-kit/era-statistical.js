@@ -197,8 +197,9 @@ function makeEraStatistical(shell) {
     $('pipe').innerHTML = h;
     ['dataset', 'model'].forEach(function (k) { var b = $('buy-' + k); if (b) b.onclick = function () { buy(k); }; });
   }
-  function renderCards() { $('expCards').innerHTML = boardHTML(); }
+  function renderCards() { var el = $('expCards'); if (el) el.innerHTML = boardHTML(); }
   function renderMethods() {
+    if (!$('methods')) return;
     var pins = '', shownUnknown = false;
     METHODS.forEach(function (m) {
       if (E.methods[m.id]) pins += '<div class="method-pin found" data-tip="' + esc('<i>' + m.flavor + '</i><br>' + m.desc) + '">' + (METHOD_ICON[m.id] ? '<img src="' + METHOD_ICON[m.id] + '">' : '<span class="mp-glyph">&#9670;</span>') + '<div class="mp-txt"><b>' + m.name + '</b><span>' + m.desc + '</span></div></div>';
@@ -340,7 +341,8 @@ function makeEraStatistical(shell) {
     res: RES,
     phase: function () { return 'TRAINING'; },
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
-    done: function () { sync(); return !!E.done; }
+    done: function () { sync(); return !!E.done; },
+    acts: { runExperiment: runExperiment, buy: buy, canBuy: canBuy, unitCost: unitCost, buyCard: buyCard, expCost: expCost, nextMethod: nextMethod, effAccuracy: effAccuracy, fabricate: fabricate }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraStatistical;

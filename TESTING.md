@@ -41,12 +41,16 @@ These are the regression net for tuning: change a number in `CFG`, re-run, read 
 ## The v3 unified build (active dev) has its own gate
 
 ```bash
-node test-v3.js                    # 75 green — per-era economy, cross-era reach-back, build-once,
-                                   # offline catch-up + MUTE gating, shell persistence contract
+node test-v3.js                    # 83 green — per-era economy, cross-era reach-back, build-once,
+                                   # offline catch-up + MUTE gating, shell persistence contract,
+                                   # full-arc progression autoplayer (first mark → SYMBIOTIC ending)
 node tools/nav-smoke.js            # headless Chrome: all 5 eras render + theme + rail on nav
 node tools/shoot-unified.js <seed> out.png   # per-era screenshot, reports overflowPx (1280×800)
+                                   # SHOOT_FILE=<file> overrides the target (e.g. the single-file build)
 node tools/settings-smoke.js       # live: boot music bed, Esc settings, pause, save-scrub,
                                    # "while you were away" catch-up toast on reload
+node tools/build-single.js         # Phase 6 packaging: inline kit + era modules + embed fonts →
+                                   # emergence-v3-single.html (gitignored); verify via SHOOT_FILE
 ```
 
 `test-v3.js` drives the real `v3-kit/era-*.js` factories through a mock shell (pure node) and
@@ -55,6 +59,12 @@ versioned load, offline catch-up wired at boot). The offline rule: `KIT.MUTE` re
 silently and freezes live-only systems — commissions, contradictions, Deep events, the emergence
 rupture (fires on the first LIVE tick instead) and the whole aftermath. When v3 swaps into
 `emergence.html` (Phase 6), fold `test-v3.js` into `test.js`.
+
+The progression bot acts through `era.acts` — the same functions the wired buttons call — so a
+green run proves the REAL cross-era supply chain completes without starvation. Like the shipped
+bot it must play sink-pausing in Deep (pause the Knowledge-burning Smelters/Foundries, bank Marks
+for scribes); that dependency is a design datapoint, not a bot quirk (see TODO-v3-unified.md).
+The bot proves *completable*, not *fun* — feel still needs hands on the build.
 
 ## Adding tests
 
