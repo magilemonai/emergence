@@ -116,7 +116,7 @@ function makeEraSymbolic(shell) {
   function build() {
     sync();
     var h = '';
-    h += '<div class="tissue">You inscribed marks, then <b>Knowledge</b>. Now Knowledge becomes <b>Rules</b> — write them, let <b>Rulesets</b> reason (they emit <b>Inference</b>), and aim Inference at a <b>Theorem</b> to prove it. Prove the <b>Expert System</b> to finish the era.</div>';
+    h += '<div class="tissue"><b>Knowledge</b> → <b>Rules</b> → <b>Rulesets</b> reason them into <b>Inference</b> → aim it at a <b>Theorem</b>.</div>';
     h += '<div class="col-verbs"><div class="col-head">Your hand</div>' +
       '<button class="verb" id="writeRule"><span class="vname">Write a rule</span><span class="vyield" id="writeY"></span><span class="vkey">click / ↵</span></button>' +
       '<div class="side-btn" id="compileBtn" style="display:' + (E.flags.compile ? 'flex' : 'none') + '"><span>COMPILE</span><span class="badge" id="compileBadge">+0</span></div></div>';
