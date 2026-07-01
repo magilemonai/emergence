@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMERGENCE v3 — Statistical (Flow Board prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Statistical palette — teal/cyan instrument (ported from .theme-3 in emergence.html) */
+    --bg:#040b0f; --panel:#06141a; --panel-2:#081c22; --line:#18443f; --edge:#1f5a52;
+    --text:#cdeee6; --dim:#6fa99c; --dimmer:#4f8579; --accent:#5fe0c0; --good:#a8ffea;
+    --silicon:#a9d8ce; --data:#54d2ff; --insight:#6fe6a8;
+    --curve:#d7fff6; --warn:#ffb86b; --err:#ff6f91; --stat-grid:rgba(95,224,192,0.14);
+    --danger:#d98a6a;
+    --mono:"IBM Plex Mono","SF Mono",Menlo,monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background:
+      radial-gradient(1100px 680px at 50% -10%, rgba(95,224,192,0.07), transparent 60%),
+      linear-gradient(rgba(4,11,15,0.92), rgba(3,9,12,0.95)),
+      repeating-linear-gradient(var(--stat-grid) 0 1px, transparent 1px 30px),
+      repeating-linear-gradient(90deg, var(--stat-grid) 0 1px, transparent 1px 30px), var(--bg);
+    color:var(--text); font-family:'Space Grotesk','Inter','Helvetica Neue',Arial,sans-serif; font-size:16px; line-height:1.4;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; padding:14px 18px 40px; }
+  h1,h2,h3,.disp{ font-family:'Space Grotesk',sans-serif; letter-spacing:0.03em; }
+
+  /* ---------- Resource rail (color-coded, persistent) ---------- */
+  .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch;
+    padding:10px 8px; margin:0 -8px 12px; background:rgba(4,11,15,0.86); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line); }
+  .chip{ display:flex; align-items:center; gap:9px; padding:7px 12px 7px 9px; border-radius:10px;
+    border:1px solid var(--line); background:var(--panel); min-width:130px; position:relative; }
+  .chip .cdot{ width:26px; height:26px; border-radius:7px; flex:none; display:grid; place-items:center; }
+  .chip .cdot img{ width:20px; height:20px; object-fit:contain; }
+  .chip .cglyph{ font-family:var(--mono); font-size:14px; font-weight:600; }
+  .chip .cbody{ display:flex; flex-direction:column; line-height:1.15; min-width:0; }
+  .chip .clab{ font-family:'Space Grotesk',sans-serif; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); }
+  .chip .cval{ font-size:19px; font-variant-numeric:tabular-nums; font-weight:600; }
+  .chip .cps{ font-size:11px; font-variant-numeric:tabular-nums; margin-left:auto; align-self:flex-start; opacity:0.9; }
+  .cps.pos{ color:var(--insight); } .cps.neg{ color:var(--danger); } .cps.zero{ color:var(--dimmer); }
+  .rail-right{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .rail-btn{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.1em; color:var(--dim); background:var(--panel);
+    border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; }
+  .rail-btn:hover{ border-color:var(--accent); color:var(--text); }
+
+  header.era{ display:flex; align-items:baseline; gap:14px; margin:4px 2px 14px; }
+  header.era .sig{ width:34px; height:34px; object-fit:contain; opacity:0.92; filter:drop-shadow(0 0 8px rgba(95,224,192,0.35)); align-self:center; }
+  header.era h1{ font-size:26px; margin:0; color:var(--good); text-shadow:0 0 11px rgba(95,224,192,0.35); }
+  header.era .sub{ color:var(--dim); font-style:italic; font-size:15px; }
+  header.era .phase{ margin-left:auto; font-family:var(--mono); font-size:11px; letter-spacing:0.14em; color:var(--accent); text-transform:uppercase; }
+
+  .col-head{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dimmer); margin:2px 0 8px; }
+
+  /* ---------- THE STAGE: the living scatter, pinned so it stays in view while you use the controls below ---------- */
+  .stage{ position:sticky; top:66px; z-index:20; margin-bottom:14px;
+    background:linear-gradient(180deg,rgba(7,22,27,0.94),rgba(4,12,16,0.96)); border:1px solid rgba(95,224,192,0.22);
+    border-radius:14px; padding:13px 14px 16px; box-shadow:0 8px 24px rgba(0,0,0,0.45); }
+  .inst-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:10px; padding-bottom:9px; border-bottom:1px solid rgba(95,224,192,0.16); }
+  .inst-title{ font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:600; letter-spacing:0.06em; color:var(--good); text-shadow:0 0 11px rgba(95,224,192,0.4); }
+  .inst-sub{ font-size:13px; color:var(--dim); font-style:italic; }
+  .inst-dot{ margin-left:auto; width:8px; height:8px; border-radius:50%; background:var(--data); box-shadow:0 0 9px var(--data); animation:blink 2.4s steps(1) infinite; }
+  @keyframes blink{ 0%,49%{opacity:1;} 50%,100%{opacity:0.2;} }
+  .scatter{ display:block; width:100%; height:250px; border:1px solid rgba(95,224,192,0.2); border-radius:10px;
+    background:radial-gradient(120% 120% at 50% 40%, rgba(10,40,46,0.5), rgba(2,9,12,0.85)); box-shadow:inset 0 0 40px rgba(0,0,0,0.6); margin:0 0 8px; }
+  .inst-readout{ font-family:var(--mono); font-size:12.5px; color:var(--dim); }
+  .event-banner{ display:none; }
+  .event-banner.show{ display:block; font-family:var(--mono); font-size:12px; letter-spacing:0.03em;
+    border:1px solid rgba(255,177,92,0.5); border-radius:8px; padding:8px 12px; margin:0 0 10px;
+    color:var(--warn); background:rgba(255,177,92,0.08); animation:evPulse 1.6s ease-in-out infinite; }
+  .event-banner b{ font-weight:600; }
+  @keyframes evPulse{ 0%,100%{ box-shadow:0 0 0 rgba(255,177,92,0); } 50%{ box-shadow:0 0 18px rgba(255,177,92,0.25); } }
+  /* Two-needle readout: VALIDATION = filled bar (the real score), TRAINING = needle ahead, amber spread = overfit */
+  .ntrack{ position:relative; height:18px; background:rgba(2,9,12,0.8); border:1px solid rgba(95,224,192,0.28); margin:30px 8px 34px; }
+  .nt-fill{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, rgba(95,224,192,0.22), rgba(95,224,192,0.72)); box-shadow:0 0 12px rgba(95,224,192,0.3); transition:width 0.2s; }
+  .nt-gap{ position:absolute; top:0; bottom:0; background:repeating-linear-gradient(45deg, rgba(255,184,107,0.55) 0 4px, rgba(255,184,107,0.16) 4px 8px); transition:left 0.2s, width 0.2s; }
+  .nt-tick{ position:absolute; top:-6px; bottom:-6px; width:0; }
+  .nt-goal{ border-left:1px dashed rgba(255,255,255,0.6); }
+  .nt-goal em{ position:absolute; left:3px; top:calc(100% + 18px); font-style:normal; font-size:10.5px; letter-spacing:0.1em; color:rgba(255,255,255,0.78); white-space:nowrap; font-family:var(--mono); }
+  .nt-cap{ border-left:1px dashed rgba(255,184,107,0.7); cursor:help; }
+  .nt-cap em{ position:absolute; right:3px; top:calc(100% + 18px); font-style:normal; font-size:10px; letter-spacing:0.12em; color:rgba(255,184,107,0.8); white-space:nowrap; font-family:var(--mono); }
+  .nt-pin{ position:absolute; top:0; bottom:0; width:0; border-left:2px solid; transition:left 0.2s; }
+  .nt-pin em{ position:absolute; transform:translateX(-50%); font-style:normal; font-size:11px; letter-spacing:0.08em; white-space:nowrap; font-family:var(--mono); }
+  .nt-pin em b{ font-variant-numeric:tabular-nums; }
+  .nt-train{ border-color:#ffb86b; box-shadow:0 0 8px rgba(255,184,107,0.5); }
+  .nt-train em{ bottom:calc(100% + 4px); color:#ffb86b; }
+  .nt-val{ border-color:#5fe0c0; box-shadow:0 0 8px rgba(95,224,192,0.6); }
+  .nt-val em{ top:calc(100% + 4px); color:#8af0d8; }
+  .ntrack.converged .nt-gap{ background:transparent; }
+
+  /* ---------- The board: verbs | pipeline | goal ---------- */
+  .board{ display:grid; grid-template-columns:230px 1fr 240px; gap:14px; align-items:start; }
+  .board > div{ min-width:0; }
+  @media(max-width:940px){ .board{ grid-template-columns:1fr; } .stage{ position:static; } }
+
+  /* verbs (left, reading start): RUN TRIAL is the star */
+  .verb-run{ width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;
+    padding:18px 16px; margin-bottom:12px; border-radius:13px; cursor:pointer;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:0.09em; font-size:18px; color:var(--good);
+    border:1px solid var(--accent); text-shadow:0 0 10px rgba(95,224,192,0.5);
+    background:linear-gradient(180deg, rgba(95,224,192,0.22), rgba(10,40,40,0.45));
+    box-shadow:inset 0 2px 0 rgba(168,255,234,0.14), 0 0 20px rgba(95,224,192,0.18), 0 5px 14px rgba(0,0,0,0.45); }
+  .verb-run:hover:not(:disabled){ box-shadow:inset 0 2px 0 rgba(168,255,234,0.2), 0 0 28px rgba(95,224,192,0.32), 0 5px 14px rgba(0,0,0,0.5); }
+  .verb-run:active:not(:disabled){ transform:translateY(2px); box-shadow:inset 0 3px 9px rgba(0,0,0,0.5); }
+  .verb-run:disabled{ opacity:0.45; cursor:not-allowed; filter:grayscale(0.3); }
+  .verb-run .vy{ font-size:12px; font-weight:400; letter-spacing:0.02em; color:var(--dim); font-family:var(--mono); text-shadow:none; }
+
+  /* Training Focus dial (segmented, consequence chips) — the standing decision, always on screen */
+  .focus-ctrl{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:12px 13px; }
+  .dial-lab{ font-size:11px; letter-spacing:0.16em; color:var(--dim); margin-bottom:8px; text-transform:uppercase; }
+  .focus-seg-row{ display:flex; flex-direction:column; gap:7px; }
+  .focus-seg{ display:flex; flex-direction:column; gap:3px; padding:10px 11px; border:1px solid var(--line); border-radius:9px;
+    background:rgba(2,9,12,0.5); cursor:pointer; text-align:left; transition:all 0.15s; font-family:inherit; color:var(--text); position:relative;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.04); }
+  .focus-seg:hover{ background:rgba(95,224,192,0.06); border-color:rgba(95,224,192,0.4); }
+  .focus-seg b{ font-size:14px; letter-spacing:0.03em; }
+  .focus-seg span{ font-size:10.5px; color:var(--dimmer); line-height:1.35; }
+  .focus-seg .foc-sig{ display:flex; gap:12px; margin-top:2px; font-family:var(--mono); font-size:10px; letter-spacing:0.04em; }
+  .focus-seg .foc-sig i{ font-style:normal; white-space:nowrap; }
+  #foc-fit{ border-left:3px solid rgba(255,154,107,0.5); }
+  #foc-generalize{ border-left:3px solid rgba(95,224,160,0.5); }
+  #foc-explore{ border-left:3px solid rgba(110,168,255,0.5); }
+  #foc-fit.active{ box-shadow:inset 0 -3px 0 #ff9a6b; background:rgba(255,154,107,0.12); } #foc-fit.active b{ color:#ff9a6b; text-shadow:0 0 8px rgba(255,154,107,0.45); }
+  #foc-generalize.active{ box-shadow:inset 0 -3px 0 #5fe0a0; background:rgba(95,224,160,0.12); } #foc-generalize.active b{ color:#5fe0a0; text-shadow:0 0 8px rgba(95,224,160,0.45); }
+  #foc-explore.active{ box-shadow:inset 0 -3px 0 #6ea8ff; background:rgba(110,168,255,0.12); } #foc-explore.active b{ color:#6ea8ff; text-shadow:0 0 8px rgba(110,168,255,0.45); }
+
+  /* pipeline lane (center) */
+  .lane{ background:linear-gradient(180deg,rgba(7,22,27,0.6),rgba(4,12,16,0.78)); border:1px solid var(--line);
+    border-radius:14px; padding:12px 12px 14px; margin-bottom:14px; position:relative; }
+  .lane-lab{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; display:flex; gap:8px; align-items:center; }
+  .lane-lab .ldash{ flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
+  .pipe{ display:flex; align-items:stretch; gap:6px; flex-wrap:wrap; }
+  .seg{ display:flex; align-items:stretch; gap:6px; min-width:0; flex:1 1 320px; }
+  .stock{ display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; min-width:82px;
+    padding:8px 6px; border-radius:11px; border:1px solid var(--line); background:rgba(0,0,0,0.22); }
+  .stock .sic{ width:26px; height:26px; object-fit:contain; }
+  .stock .sglyph{ font-family:var(--mono); font-size:17px; font-weight:600; }
+  .stock .sv{ font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .stock .sl{ font-family:'Space Grotesk',sans-serif; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); }
+  .flow{ align-self:center; width:38px; height:22px; position:relative; flex:none; }
+  .flow svg{ width:100%; height:100%; overflow:visible; }
+  .flow .track{ stroke:var(--fc,#8a7350); stroke-width:2; opacity:0.28; }
+  .flow .pulse{ stroke:var(--fc,#e6d2a4); stroke-width:2.4; stroke-dasharray:5 9; opacity:calc(0.25 + 0.75*var(--thru,0));
+    animation:flowmove 0.9s linear infinite; filter:drop-shadow(0 0 4px var(--fc)); }
+  .flow.idle .pulse{ animation:none; opacity:0.12; }
+  @keyframes flowmove{ to{ stroke-dashoffset:-14; } }
+
+  .node{ flex:1; min-width:170px; display:grid; grid-template-columns:auto 1fr auto; grid-template-rows:auto auto; gap:2px 10px;
+    padding:9px 11px; border-radius:12px; border:1px solid var(--line); background:var(--panel);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.05); position:relative; }
+  .node.can{ border-color:rgba(95,224,192,0.5); }
+  .node.starved{ border-color:rgba(217,138,106,0.55); }
+  .node .nic{ grid-row:1/3; width:40px; height:40px; object-fit:contain; align-self:center; }
+  .node .nname{ font-family:'Space Grotesk',sans-serif; font-size:14px; }
+  .node .ncount{ color:var(--accent); font-size:12px; font-variant-numeric:tabular-nums; }
+  .node .nrate{ grid-column:2/4; font-size:12px; font-variant-numeric:tabular-nums; color:var(--dim); display:flex; gap:10px; flex-wrap:wrap; }
+  .node .nrate .up{ color:var(--insight); } .node .nrate .dn{ color:var(--danger); }
+  .node .nbuy{ grid-row:1/3; grid-column:3; align-self:center; }
+  .buy{ font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:0.03em; padding:9px 12px; border-radius:9px; cursor:pointer;
+    background:var(--panel-2); border:1px solid var(--edge); color:var(--text); white-space:nowrap;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.07), 0 1px 2px rgba(0,0,0,0.3); }
+  .buy:hover:not(:disabled){ border-color:var(--accent); background:#0c2a2a; }
+  .buy:active:not(:disabled){ transform:translateY(1px); }
+  .buy:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .buy .c{ color:var(--accent); } .buy:disabled .c{ color:inherit; }
+  .buy.ok .c{ color:var(--good); }
+
+  /* Experiment Board — fund methods/utilities with Data (flow-board nodes) */
+  .exp-board .survey-strip{ display:flex; align-items:center; gap:12px; margin:2px 0 12px; cursor:help; }
+  .survey-lab{ font-size:11px; letter-spacing:0.14em; color:var(--dim); white-space:nowrap; }
+  .survey-lab b{ color:#6ea8ff; font-variant-numeric:tabular-nums; }
+  .survey-meter{ flex:1; height:8px; background:rgba(2,9,12,0.7); border:1px solid rgba(110,168,255,0.25); border-radius:4px; overflow:hidden; }
+  .survey-meter > i{ display:block; height:100%; width:0; background:#6ea8ff; box-shadow:0 0 8px rgba(110,168,255,0.5); transition:width 0.2s; }
+  .survey-eff{ font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .card-row{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; }
+  .exp-card{ display:flex; flex-direction:column; gap:6px; border:1px solid rgba(95,224,192,0.18); border-radius:10px; padding:12px 13px; background:rgba(2,9,12,0.45); transition:border-color 0.15s; position:relative; }
+  .exp-card:hover{ border-color:rgba(95,224,192,0.4); }
+  .exp-card.xc-method{ border-color:rgba(95,224,192,0.45); background:rgba(95,224,192,0.06); box-shadow:0 0 16px -6px rgba(95,224,192,0.5); }
+  .xc-ic{ width:38px; height:38px; object-fit:contain; align-self:flex-end; margin:-4px 0 -8px; opacity:0.9; }
+  .xc-tag{ font-size:9.5px; letter-spacing:0.16em; color:var(--good); border:1px solid rgba(95,224,192,0.4); border-radius:4px; padding:1px 6px; margin-right:7px; vertical-align:2px; }
+  .xc-name{ font-size:13.5px; color:var(--text); }
+  .xc-lv{ font-size:10px; color:var(--accent); margin-left:5px; }
+  .xc-desc{ font-size:11.5px; color:var(--dim); line-height:1.5; flex:1; }
+  .xc-buy{ font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:0.04em; padding:9px 12px; border-radius:8px; cursor:pointer;
+    background:var(--panel-2); border:1px solid var(--edge); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,0.07); }
+  .xc-buy:hover:not(:disabled){ border-color:var(--accent); background:#0c2a2a; }
+  .xc-buy:active:not(:disabled){ transform:translateY(1px); }
+  .xc-buy:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .xc-buy .c{ color:var(--accent); }
+
+  /* methods (funded techniques, working for you) */
+  .method-pins{ display:flex; flex-wrap:wrap; gap:10px; }
+  .method-pin{ display:flex; align-items:center; gap:11px; padding:9px 14px 9px 11px; border:1px solid rgba(95,224,192,0.28);
+    border-radius:22px; background:rgba(8,28,34,0.55); flex:1 1 240px; min-width:220px; }
+  .method-pin img{ width:30px; height:30px; object-fit:contain; flex:none; }
+  .method-pin .mp-glyph{ width:30px; flex:none; text-align:center; color:var(--dim); font-size:18px; }
+  .method-pin .mp-txt{ display:flex; flex-direction:column; min-width:0; }
+  .method-pin .mp-txt b{ font-size:13px; color:var(--good); font-weight:600; }
+  .method-pin .mp-txt span{ font-size:11px; color:var(--dim); line-height:1.35; }
+  .method-pin.found{ border-left:3px solid var(--accent); box-shadow:0 0 12px rgba(95,224,192,0.1); }
+  .method-pin.scanning{ border-style:dashed; animation:scanPulse 2.2s ease-in-out infinite; }
+  @keyframes scanPulse{ 0%,100%{ opacity:0.6; } 50%{ opacity:0.95; } }
+
+  .panel{ background:linear-gradient(180deg,rgba(7,22,27,0.6),rgba(4,12,16,0.78)); border:1px solid var(--line); border-radius:14px; padding:12px 13px; margin-bottom:14px; }
+  .panel-label{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; }
+  .panel-label .plain{ text-transform:none; letter-spacing:0; color:var(--dimmer); font-size:11px; }
+
+  /* supply bus — Origins reach-back, recessed & secondary */
+  .supply-bus{ background:rgba(2,9,12,0.6); border-color:rgba(95,224,192,0.12); }
+  .supply-bus .sup-lab{ color:var(--dimmer); font-size:11px; letter-spacing:0.06em; margin-bottom:8px; }
+  .sup-row{ display:flex; gap:0; border:1px solid rgba(95,224,192,0.14); border-radius:8px; overflow:hidden; background:rgba(2,9,12,0.55); }
+  .sup-btn{ flex:1; border:none; border-right:1px solid rgba(95,224,192,0.1); background:transparent; padding:9px 13px; opacity:0.9; cursor:pointer;
+    color:var(--text); font-family:inherit; text-align:left; display:flex; flex-direction:column; gap:2px; }
+  .sup-btn:last-child{ border-right:none; }
+  .sup-btn:hover:not(:disabled){ background:rgba(95,224,192,0.06); opacity:1; }
+  .sup-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .sup-nm{ font-size:12px; } .sup-nm b{ color:var(--accent); }
+  .sup-cost{ font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; }
+  .sup-rate{ font-family:var(--mono); font-size:11px; color:var(--dimmer); margin-top:8px; }
+
+  /* goal (right): validation toward the generalize gate */
+  .goal{ background:linear-gradient(180deg,rgba(9,30,34,0.7),rgba(4,14,18,0.82)); border:1px solid rgba(95,224,192,0.35);
+    border-radius:14px; padding:14px; text-align:center; transition:border-color 0.4s, box-shadow 0.4s; }
+  .goal .gname{ font-family:'Space Grotesk',sans-serif; font-size:14px; letter-spacing:0.06em; margin:2px 0 2px; color:var(--good); }
+  .goal .gsub{ font-size:12px; color:var(--dim); font-style:italic; margin-bottom:12px; }
+  .goal .gval{ font-size:40px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--good); line-height:1; text-shadow:0 0 16px rgba(95,224,192,0.4); }
+  .goal .gval small{ font-size:15px; color:var(--dim); font-weight:400; }
+  .meter{ height:12px; border-radius:6px; background:rgba(0,0,0,0.4); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5); margin:12px 0 4px; }
+  .meter i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--good)); transition:width 0.25s; }
+  .meter-lab{ font-size:11px; font-variant-numeric:tabular-nums; color:var(--dim); margin:5px 0 12px; }
+  .fab{ width:100%; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px; letter-spacing:0.05em; padding:14px; border-radius:11px; cursor:pointer;
+    color:#0e1513; border:1px solid var(--accent); background:linear-gradient(180deg,#bfeae0,#7fc9bb);
+    box-shadow:0 0 18px rgba(95,224,192,0.3); }
+  .fab:disabled{ opacity:0.35; cursor:not-allowed; box-shadow:none; filter:grayscale(0.4); }
+  /* the goal WAKES when you can generalize — a blue pulse teasing the Deep era's palette (era hand-off cutscene) */
+  .goal.ready{ border-color:#6ea8ff; box-shadow:0 0 28px rgba(110,168,255,0.35); }
+  .goal.ready .gname, .goal.ready .gval{ color:#bcd6ff; text-shadow:0 0 18px rgba(110,168,255,0.6); }
+  .goal.ready .fab{ animation:fabPulse 1.5s ease-in-out infinite; background:linear-gradient(180deg,#bcd6ff,#7fa8e6); border-color:#6ea8ff; }
+  @keyframes fabPulse{ 0%,100%{ box-shadow:0 0 14px rgba(110,168,255,0.4); } 50%{ box-shadow:0 0 32px rgba(110,168,255,0.9); } }
+  @media (prefers-reduced-motion: reduce){ .goal.ready .fab{ animation:none; } .flow .pulse{ animation:none; } .event-banner.show{ animation:none; } }
+
+  /* floating +N + tooltips + toasts */
+  #fx{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+  .float{ position:absolute; font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600; animation:floatUp 0.9s ease-out forwards; text-shadow:0 1px 3px #000; }
+  @keyframes floatUp{ to{ transform:translateY(-34px); opacity:0; } }
+  #tip{ position:fixed; z-index:70; max-width:300px; padding:10px 12px; border-radius:9px; background:rgba(4,12,16,0.98);
+    border:1px solid var(--edge); font-size:13px; line-height:1.45; color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.1s; }
+  #tip.show{ opacity:1; } #tip i{ color:var(--dim); }
+  #toasts{ position:fixed; right:16px; bottom:16px; z-index:65; display:flex; flex-direction:column; gap:8px; width:320px; max-width:80vw; }
+  .toast{ background:rgba(6,18,22,0.97); border:1px solid var(--accent); border-radius:11px; padding:11px 13px; animation:toastIn 0.35s ease; }
+  .toast.event{ border-color:var(--warn); }
+  .toast .th{ font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:0.06em; color:var(--accent); margin-bottom:3px; }
+  .toast.event .th{ color:var(--warn); }
+  .toast .tb{ font-size:13px; color:var(--text); }
+  @keyframes toastIn{ from{ transform:translateX(20px); opacity:0; } }
+
+  /* dev overlay */
+  #dev{ position:fixed; left:14px; bottom:14px; z-index:80; display:none; flex-direction:column; gap:7px;
+    background:rgba(3,8,10,0.92); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  #dev.show{ display:flex; } #dev .row{ display:flex; gap:6px; } #dev button{ font-family:inherit; font-size:12px; padding:5px 9px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--dim); cursor:pointer; }
+  #dev button.on{ color:var(--accent); border-color:var(--accent); }
+  #dbg{ position:fixed; left:14px; bottom:120px; z-index:79; display:none; font-family:var(--mono); font-size:11px; line-height:1.5;
+    color:#dff3ec; background:rgba(3,8,10,0.82); border:1px solid rgba(95,224,192,0.35); border-radius:8px; padding:8px 10px; white-space:pre; pointer-events:none; }
+  #dbg.show{ display:block; } #dbg b{ color:var(--accent); }
+  .note{ text-align:center; color:var(--dimmer); font-size:12px; margin-top:26px; font-style:italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="rail" id="rail"></div>
+  <header class="era">
+    <img class="sig" src="assets/sigil-statistical.png" alt="">
+    <h1>Statistical</h1><span class="sub">learning the shape of the data</span>
+    <span class="phase" id="phase">TRAINING</span>
+  </header>
+
+  <!-- THE STAGE: the living scatter, pinned -->
+  <div class="stage">
+    <div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><span class="inst-dot"></span></div>
+    <div class="event-banner" id="e3Banner"></div>
+    <canvas id="scatter" class="scatter"></canvas>
+    <div class="inst-readout" id="accRate"></div>
+    <div class="ntrack" id="ntrack" data-tip="<b>Training</b> is how well the model scores on examples it has already seen. <b>Validation</b> is how well it does on new ones — the score that counts. The amber spread between them is the <b>overfit</b>: memorization posing as learning.">
+      <div class="nt-fill" id="ntFill"></div>
+      <div class="nt-gap" id="ntGap"></div>
+      <div class="nt-tick nt-cap" id="ntCap" data-tip="The model <b>memorizes</b> past this ceiling — validation cannot rise above it. Fund <b>Regularization</b> to lift it."><em>CEILING</em></div>
+      <div class="nt-tick nt-goal" id="ntGoal"><em>GOAL 88%</em></div>
+      <div class="nt-pin nt-train" id="ntTrain"><em>TRAINING <b id="ntTrainV"></b></em></div>
+      <div class="nt-pin nt-val" id="ntVal"><em>VALIDATION <b id="ntValV"></b></em></div>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="col-verbs">
+      <div class="col-head">Your hands</div>
+      <button class="verb-run" id="expBtn"><span id="expLabel">RUN TRIAL</span><span class="vy" id="expY"></span></button>
+      <div class="focus-ctrl">
+        <div class="dial-lab">Training Focus</div>
+        <div class="focus-seg-row" id="focusRow"></div>
+      </div>
+    </div>
+
+    <div class="col-pipe">
+      <div class="col-head">The instrument — Silicon feeds Data, Data trains the model</div>
+      <div class="lane">
+        <div class="lane-lab">The factory · observations become a trained model<div class="ldash"></div></div>
+        <div class="pipe" id="pipe"></div>
+      </div>
+      <div class="panel exp-board">
+        <div class="panel-label">Experiments · choose what to fund <span class="plain">(spending Data here competes with running trials)</span></div>
+        <div class="survey-strip" data-tip="<i>Explore trials map the search space.</i><br>Survey discounts every card below (up to half price). <b>Funding any card consumes the survey.</b>">
+          <span class="survey-lab">SURVEYED <b id="surveyPct"></b></span><div class="survey-meter"><i id="surveyFill"></i></div><span class="survey-eff" id="surveyDiscLab"></span>
+        </div>
+        <div class="card-row" id="expCards"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label">Methods <span class="plain">(techniques you funded, working for you)</span></div>
+        <div id="methods"></div>
+      </div>
+    </div>
+
+    <div class="col-goal">
+      <div class="col-head">The goal</div>
+      <div class="goal" id="goal">
+        <div class="gname">Generalize</div>
+        <div class="gsub">push VALIDATION to the goal line</div>
+        <div class="gval"><span id="goalVal">0</span><small>%</small></div>
+        <div class="meter"><i id="genMeter"></i></div>
+        <div class="meter-lab" id="genLab"></div>
+        <button class="fab" id="fabricate" disabled>GENERALIZE</button>
+      </div>
+      <div class="panel supply-bus" style="margin-top:14px">
+        <div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; add Foundries to scale</div>
+        <div class="sup-row" id="supRow"></div>
+        <div class="sup-rate" id="supSi"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">EMERGENCE v3 — Statistical slice (Flow Board prototype). ` toggles dev. This is a paradigm test, not the final build.</div>
+</div>
+
+<div id="fx"></div>
+<div id="tip"></div>
+<div id="toasts"></div>
+<div id="dev"></div>
+<div id="dbg"></div>
+<audio id="music" src="assets/music-glass-algorithm.mp3" loop preload="none"></audio>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmt = n => { n=+n||0; const a=Math.abs(n);
+    if(a>=1e6) return (n/1e6).toFixed(2)+'M'; if(a>=1e3) return (n/1e3).toFixed(2)+'K';
+    if(a>=100) return n.toFixed(0); if(a>=10) return n.toFixed(1); if(a===0) return '0'; return n.toFixed(a<1?2:1); };
+  const esc = s => String(s).replace(/"/g,'&quot;');
+  // build-once / update-in-place: only touch the DOM when the value actually changed, so we never
+  // replace a button's children mid-click (that ate clicks = the "dead click" bug from the v3 playtest).
+  const setTxt = (el,t)=>{ if(el && el._t!==t){ el.textContent=t; el._t=t; } };
+  const setHTML= (el,h)=>{ if(el && el._h!==h){ el.innerHTML=h; el._h=h; } };
+  const setDis = (el,d)=>{ if(el && el.disabled!==d) el.disabled=d; };
+  const setText = (id,t)=> setTxt($(id),t);
+  const SAVE_KEY = 'emergence_v3_statistical';
+
+  // ---------- tunables (ported faithfully from CFG.e3 in emergence.html) ----------
+  const CFG = { tickMs:100,
+    datasetCost:30, datasetGrowth:1.16, datasetYield:1.2,   // Data/sec per Dataset (built with SILICON — reach-back to Origins)
+    modelCost:90, modelGrowth:1.2, expPerModel:0.3,         // experiments/sec per Model (built with Data)
+    modelSilicon:0.05,     // light upkeep: Silicon/sec drawn per Model (keeps Origins' Foundry relevant)
+    expDataCost:4,         // Data spent per experiment
+    accGain:0.0026,        // accuracy gained per experiment × (1 - accuracy)
+    insightPerExp:2,       // Insight per experiment × effective accuracy
+    gapGrow:0.0023,        // overfit gap growth per experiment (Fit)
+    gapReduce:0.0046,      // gap reduction per experiment (Generalize); ×2 with Regularization
+    gapMax:0.6,
+    surveyPerExp:1.1,      // survey points per experiment × focus.disc × Clustering
+    surveyDiscount:0.5,    // a full survey halves card costs
+    cardMethodCosts:[60,150,320,560,900,1400], // Data price of the Nth method (in METHODS order)
+    cardUtil:{ calibrate:{cost:40, growth:1.22}, sweep:{cost:55, growth:1.22}, distill:{cost:35, growth:1.22} },
+    genThreshold:0.88,     // effective accuracy that generalizes → Era 4
+    shiftTriggers:[0.55, 0.78], // raw-accuracy thresholds that arm shift 1 and shift 2
+    shiftWarn:5,                // seconds of telegraph before the world moves
+    shiftBase:0.10, shiftGapBite:0.5, // accuracy hit = base + gap×bite (overfit falls hardest)
+    seedDatasets:3, seedSilicon:220,
+    // Silicon reach-back valve. In the full game Silicon comes from Origins' Foundry (Metal+Knowledge→Silicon).
+    // This standalone abstracts that upstream chain to a Foundry that emits Silicon (rate = CFG.e1.foundryRate),
+    // BUILT with Data (a real reach-back tradeoff: invest downstream output back upstream). See summary note.
+    foundryRate:0.8, foundryCost:120, foundryGrowth:1.2, seedFoundry:2,
+    focus:{
+      fit:        { acc:1.7, gap:1.5, red:0,   disc:0.3, ins:1.0, label:'Fit',        desc:'Accuracy climbs fast — but the overfit gap grows.' },
+      generalize: { acc:0.3, gap:0,   red:1.0, disc:0.3, ins:1.2, label:'Generalize', desc:'Shrinks the overfit gap. Accuracy only creeps.' },
+      explore:    { acc:0.4, gap:0.5, red:0,   disc:2.6, ins:0.8, label:'Explore',    desc:'Surveys the board — experiments get cheaper. Accuracy holds.' },
+    },
+  };
+  const HUE = { silicon:'#a9d8ce', data:'#54d2ff', insight:'#6fe6a8' };
+  const GLYPH = { data:'◈', insight:'◆' }; // silicon uses its icon; data/insight use colored glyphs
+  const ICON = { silicon:'assets/icon-silicon.png', dataset:'assets/e3-dataset.png', model:'assets/e3-model.png', foundry:'assets/icon-foundry.png' };
+  const METHOD_ICON = { regression:'assets/e3-regression.png', features:'assets/e3-features.png', regularization:'assets/e3-regularization.png', clustering:'assets/e3-clustering.png', bayesian:'assets/e3-bayesian.png', ensembles:'assets/e3-ensembles.png' };
+  const RESFLAVOR = { silicon:'Sand, taught to carry thought — drawn from the Origins stack.', data:'Experience, stored for the machine to study.', insight:'The pattern beneath the noise.' };
+  const FLAVOR = { dataset:'The world, written down in numbers.', model:'It stops being told the answer and starts guessing it.', foundry:'A recipe and a furnace — the Origins stack, still feeding you Silicon.' };
+
+  // ---- Methods + utility studies (funded with Data, never rolled) — ported from METHODS/UTILS ----
+  const METHODS = [
+    { id:'regression',     name:'Regression',          flavor:'A line drawn through the noise.',          desc:'Experiments raise accuracy 40% faster.' },
+    { id:'features',       name:'Feature Engineering', flavor:'Asking the data better questions.',        desc:'Datasets yield 50% more Data.' },
+    { id:'regularization', name:'Regularization',      flavor:'Prefer the simpler explanation.',          desc:'Cuts the overfitting gap 2× faster — and lifts the validation ceiling.' },
+    { id:'clustering',     name:'Clustering',          flavor:'Like finds like.',                         desc:'The survey fills 60% faster.' },
+    { id:'bayesian',       name:'Bayesian Inference',  flavor:'Belief, updated by evidence.',             desc:'Each experiment yields 80% more Insight.' },
+    { id:'ensembles',      name:'Ensembles',           flavor:'A crowd of guesses, wiser than any one.',  desc:'+12% effective accuracy (many weak models, one strong vote).' },
+  ];
+  const UTILS = {
+    calibrate: { name:'Holdout Study',   flavor:'Set some truth aside, and check against it.', desc:'Cuts the current overfit gap by 30%.' },
+    sweep:     { name:'Parameter Sweep', flavor:'Try every dial, keep the best.',              desc:'A one-time push of raw accuracy.' },
+    distill:   { name:'Ablation Study',  flavor:'Remove a piece; see what mattered.',          desc:'A grant of Insight, scaled by your Methods.' },
+  };
+
+  // ---------- state ----------
+  function fresh(){ return {
+    silicon:0, data:0, insight:0,
+    accuracy:0, gap:0, methods:{}, focus:'fit',
+    survey:0, utilN:0, utilLvl:{ calibrate:0, sweep:0, distill:0 },
+    shifts:0, shiftAt:0, lastShift:-99, dataPhase:0,
+    dataset:0, model:0, foundry:0,
+    t:0, speed:1, dev:false, started:false, done:false,
+  }; }
+  let S = fresh();
+
+  // ---------- run recorder (lite) ----------
+  const REC = { v:1, events:[], dead:0 };
+  let lastAction='';
+  function rec(ev, extra){ if(REC.events.length>6000) REC.events.shift(); if(ev[0]!=='@') lastAction=ev;
+    REC.events.push(Object.assign({ gt:+S.t.toFixed(1), wt:Date.now() }, extra||{}, { ev })); }
+
+  // ---------- derived stats (ported e3Stats; no Era-5 recursion in this slice, so r=1) ----------
+  function e3Stats(){
+    const m=S.methods;
+    let accGain=CFG.accGain, dataMult=1, insMult=1, discMult=1, regMult=1, effBonus=0;
+    if(m.regression) accGain*=1.4;
+    if(m.features) dataMult*=1.5;
+    if(m.bayesian) insMult*=1.8;
+    if(m.clustering) discMult*=1.6;
+    if(m.regularization) regMult=2;
+    if(m.ensembles) effBonus+=0.12;
+    const cap = m.regularization ? 1 : 0.80; // validation ceiling until Regularization is funded (Explore matters)
+    return { accGain, dataMult, insMult, discMult, regMult, effBonus, cap };
+  }
+  function curFocus(){ return CFG.focus[S.focus] || CFG.focus.fit; }
+  function effAccuracy(){ const st=e3Stats();
+    return Math.max(0, Math.min(st.cap, S.accuracy + st.effBonus - S.gap)); }
+
+  // ---------- gross-flow accumulator (drives the connector animation) ----------
+  const FLOW = { silicon:{in:0,out:0}, data:{in:0,out:0}, insight:{in:0,out:0} };
+  const fIn =(k,a)=>{ if(FLOW[k]) FLOW[k].in+=a; };
+  const fOut=(k,a)=>{ if(FLOW[k]) FLOW[k].out+=a; };
+
+  // ---------- an experiment (ported runExperiment) ----------
+  function runExperiment(amount){ // amount can be fractional (auto from Models) or 1 (manual click)
+    const st=e3Stats(), f=curFocus();
+    amount = Math.min(amount, S.data / CFG.expDataCost); if(amount<=0) return;
+    const dataSpent = amount*CFG.expDataCost;
+    S.data -= dataSpent; fOut('data', dataSpent);
+    S.accuracy = Math.min(1, S.accuracy + st.accGain*f.acc*(1-S.accuracy)*amount);
+    S.gap = Math.max(0, Math.min(CFG.gapMax, S.gap + (CFG.gapGrow*f.gap - CFG.gapReduce*f.red*st.regMult)*amount));
+    const ins = CFG.insightPerExp*f.ins*effAccuracy()*st.insMult*amount;
+    S.insight += ins; fIn('insight', ins);
+    S.survey = Math.min(100, (S.survey||0) + CFG.surveyPerExp*f.disc*st.discMult*amount);
+  }
+
+  // ---------- the Experiment Board (ported nextMethod/surveyDisc/expCost/boardCards/buyCard/boardHTML) ----------
+  function nextMethod(){ return METHODS.find(mm=>!S.methods[mm.id])||null; }
+  function surveyDisc(){ return 1 - CFG.surveyDiscount*(S.survey||0)/100; }
+  function expCost(kind){
+    if(kind==='method'){ const i=METHODS.findIndex(mm=>!S.methods[mm.id]); return i<0?Infinity:Math.ceil(CFG.cardMethodCosts[i]*surveyDisc()); }
+    const u=CFG.cardUtil[kind]; if(!u) return Infinity;
+    return Math.ceil(u.cost*Math.pow(u.growth,(S.utilLvl&&S.utilLvl[kind])||0)*surveyDisc()); }
+  function boardCards(){ // the 3 face-up cards: the next method (the target, always visible) + 2 rotating utilities
+    const keys=Object.keys(UTILS), n=S.utilN||0, m=nextMethod();
+    const utils=[keys[n%3], keys[(n+1)%3]];
+    return m ? ['method', utils[0], utils[1]] : [utils[0], utils[1], keys[(n+2)%3]]; }
+  function buyCard(kind){ const c=expCost(kind); if(!(S.data>=c)) return false; const st=e3Stats();
+    if(kind==='method'){ const m=nextMethod(); if(!m) return false;
+      S.data-=c; S.methods[m.id]=true; S.survey=0; rec('method:'+m.id);
+      toast('METHOD · '+m.name, m.desc+'<br><i>Pinned in Methods, below.</i>');
+      playClick(); renderCards(); renderMethods(); refresh(); return true; }
+    if(!UTILS[kind]) return false;
+    S.data-=c; S.utilLvl[kind]=(S.utilLvl[kind]||0)+1; S.utilN=(S.utilN||0)+1; S.survey=0;
+    if(kind==='calibrate') S.gap=Math.max(0, S.gap*0.7);
+    if(kind==='sweep')     S.accuracy=Math.min(1, S.accuracy+0.025*(1-S.accuracy));
+    if(kind==='distill')   S.insight+=25*st.insMult;
+    playClick(); renderCards(); refresh(); return true; }
+  function boardHTML(){ // card structure is render-built; refresh() only touches costs/disabled (build-once rule)
+    return boardCards().map(kind=>{ const isM=kind==='method', m=isM?nextMethod():null, u=isM?null:UTILS[kind];
+      if(isM && !m) return '';
+      const name=isM?m.name:u.name, flavor=isM?m.flavor:u.flavor, desc=isM?m.desc:u.desc;
+      const lvl=(!isM && S.utilLvl[kind])?' <span class="xc-lv">Lv '+S.utilLvl[kind]+'</span>':'';
+      const ic=(isM && METHOD_ICON[m.id])?'<img class="xc-ic" src="'+METHOD_ICON[m.id]+'">':'';
+      return '<div class="exp-card'+(isM?' xc-method':'')+'" data-tip="'+esc('<i>'+flavor+'</i><br>'+desc+(isM?'':'<br>Repeatable; the price grows each time.'))+'">'+ic+
+        '<div class="xc-name">'+(isM?'<span class="xc-tag">METHOD</span>':'')+name+lvl+'</div><div class="xc-desc">'+desc+'</div>'+
+        '<button class="xc-buy" data-card="'+kind+'" id="xc-buy-'+kind+'"'+(isM?' data-mid="'+m.id+'"':'')+'>FUND &middot; <span class="c" id="xc-c-'+kind+'"></span></button></div>';
+    }).join('');
+  }
+
+  // ---------- buy math (Datasets ← Silicon, Models ← Data, Foundry ← Data) ----------
+  const BUYS = {
+    dataset:{res:'silicon', base:CFG.datasetCost, growth:CFG.datasetGrowth},
+    model:{res:'data', base:CFG.modelCost, growth:CFG.modelGrowth},
+    foundry:{res:'data', base:CFG.foundryCost, growth:CFG.foundryGrowth},
+  };
+  const unitCost=(k)=> Math.floor(BUYS[k].base*Math.pow(BUYS[k].growth,S[k]));
+  const canBuy=(k)=> S[BUYS[k].res] >= unitCost(k);
+  function buy(k){ if(!canBuy(k)) return; S[BUYS[k].res]-=unitCost(k); S[k]++; rec('buy:'+k); playClick(); refresh(); } // refresh, not render (no structure change)
+
+  // ---------- production (ported Era-3 produce slice) ----------
+  function produce(dt){
+    const st=e3Stats(), f=curFocus();
+    for(const k in FLOW){ FLOW[k].in=0; FLOW[k].out=0; }
+    // Foundry reach-back: emits Silicon (abstracts the Origins Metal+Knowledge→Silicon chain)
+    if(S.foundry>0){ const a=S.foundry*CFG.foundryRate*dt; S.silicon+=a; fIn('silicon',a); }
+    // Datasets make Data (Silicon is spent at BUILD time, not per tick)
+    if(S.dataset>0){ const a=S.dataset*CFG.datasetYield*st.dataMult*dt; S.data+=a; fIn('data',a); }
+    // Models auto-run experiments, drawing a light Silicon upkeep
+    if(S.model>0){
+      let modelRun=S.model;
+      const need=S.model*CFG.modelSilicon*dt;
+      if(need>0){ if(S.silicon>=need){ S.silicon-=need; fOut('silicon',need); } else { modelRun=S.model*(need>0?S.silicon/need:0); fOut('silicon',S.silicon); S.silicon=0; } }
+      if(modelRun>0) runExperiment(modelRun*CFG.expPerModel*dt);
+    }
+    // Distribution shift — deterministic (accuracy-progress triggers + a telegraph)
+    if(!S.done){
+      if(!S.shiftAt && S.shifts<CFG.shiftTriggers.length && S.accuracy>=CFG.shiftTriggers[S.shifts]){
+        S.shiftAt=S.t+CFG.shiftWarn; rec('shiftWarn'); }
+      if(S.shiftAt && S.t>=S.shiftAt){
+        S.shiftAt=0; S.shifts++; S.lastShift=S.t;
+        const hit=CFG.shiftBase + S.gap*CFG.shiftGapBite;
+        S.accuracy=Math.max(0.05, S.accuracy*(1-hit));
+        S.gap=Math.max(0, S.gap*0.5);          // the old memorization died with the old world
+        S.dataPhase=(S.dataPhase||0)+0.9;      // the points migrate to the new shape
+        rec('shift', {hit:+hit.toFixed(3)});
+        toast('DISTRIBUTION SHIFT', 'The world the data came from has <b>changed</b> — the points moved, and the accuracy fitted to the old world went with them. Re-fit. <i>Overfit models fall hardest.</i>', 'event'); }
+    }
+  }
+
+  // ---------- generalize (the era hand-off, like Origins' FABRICATE) ----------
+  function fabricate(){ if(effAccuracy()<CFG.genThreshold || S.done) return; S.done=true; rec('generalize');
+    toast('THE MODEL GENERALIZES', 'It performs on data it never saw. In the full game this is where Statistical hands off to <b>Deep</b> — the compute fabric, where three skills train at once.'); render(); }
+
+  // ---------- floating +N ----------
+  function floatNum(txt,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=txt; el.style.color=color; el.style.left=(x-10)+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
+
+  // ---------- sound (a soft data-ping) ----------
+  let actx=null; const ac=()=>actx||(actx=new (window.AudioContext||window.webkitAudioContext)());
+  function playClick(){ try{ const ctx=ac(),t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(560,t); o.frequency.exponentialRampToValueAtTime(880,t+0.05);
+    g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.12); o.start(t); o.stop(t+0.13); }catch(e){} }
+
+  // ---------- toasts (event dwell 8s, logged) ----------
+  function toast(head,body,kind){ const el=document.createElement('div'); el.className='toast'+(kind==='event'?' event':'');
+    el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>'; const box=$('toasts'); box.appendChild(el);
+    rec('@toast',{head}); while(box.children.length>3) box.removeChild(box.firstChild);
+    setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, kind==='event'?8000:4800); }
+
+  // ---------- rendering: structure (build-once), then per-tick value updates ----------
+  const RAIL = [ ['silicon','Silicon'], ['data','Data'], ['insight','Insight'] ];
+  function railChip(k,label){
+    const dot = k==='silicon'
+      ? '<span class="cdot" style="background:'+HUE[k]+'22;border:1px solid '+HUE[k]+'55"><img src="'+ICON.silicon+'"></span>'
+      : '<span class="cdot" style="background:'+HUE[k]+'22;border:1px solid '+HUE[k]+'55"><span class="cglyph" style="color:'+HUE[k]+'">'+GLYPH[k]+'</span></span>';
+    return '<div class="chip" data-tip="'+esc('<i>'+RESFLAVOR[k]+'</i>')+'">'+dot+
+      '<span class="cbody"><span class="clab">'+label+'</span><span class="cval" id="rv-'+k+'" style="color:'+HUE[k]+'">0</span></span><span class="cps" id="rp-'+k+'"></span></div>';
+  }
+  function connector(res){ return '<div class="flow" id="flow-'+res+'" style="--fc:'+HUE[res]+'"><svg viewBox="0 0 38 22" preserveAspectRatio="none">'+
+    '<line class="track" x1="2" y1="11" x2="36" y2="11"/><line class="pulse" x1="2" y1="11" x2="36" y2="11"/></svg></div>'; }
+  function stock(res,label){
+    const inner = res==='silicon' ? '<img class="sic" src="'+ICON.silicon+'">' : '<span class="sglyph" style="color:'+HUE[res]+'">'+GLYPH[res]+'</span>';
+    return '<div class="stock" data-tip="'+esc('<i>'+RESFLAVOR[res]+'</i>')+'">'+inner+'<div class="sv" id="stk-'+res+'" style="color:'+HUE[res]+'">0</div><div class="sl">'+label+'</div></div>'; }
+  function node(key,name,tip){ return '<div class="node" id="node-'+key+'" data-tip="'+esc(tip)+'"><img class="nic" src="'+ICON[key]+'">'+
+    '<div class="nname">'+name+' <span class="ncount" id="cnt-'+key+'"></span></div>'+
+    '<div class="nrate" id="rate-'+key+'"></div>'+
+    '<button class="buy nbuy" id="buy-'+key+'"></button></div>'; }
+
+  function renderFocus(){
+    const f=CFG.focus;
+    const SIG={ fit:[['TRAIN','▲▲','#ffb86b'],['VAL','▲','#8af0d8'],['OVERFIT','▲▲','#ff8a5c']],
+                generalize:[['OVERFIT','▼▼','#7de6a8'],['VAL','▲','#8af0d8'],['TRAIN','·','#8a9aa0']],
+                explore:[['SURVEY','▲▲','#6ea8ff'],['VAL','▲','#8af0d8'],['OVERFIT','▲','#ff8a5c']] };
+    $('focusRow').innerHTML = ['fit','generalize','explore'].map(k=>'<button class="focus-seg" data-focus="'+k+'" id="foc-'+k+'" data-tip="'+esc(f[k].desc)+'"><b>'+f[k].label+'</b><span>'+f[k].desc+'</span>'+
+      '<span class="foc-sig">'+SIG[k].map(c=>'<i style="color:'+c[2]+'">'+c[0]+' '+c[1]+'</i>').join('')+'</span></button>').join('');
+    $('focusRow').querySelectorAll('[data-focus]').forEach(b=>{ b.onclick=()=>{ S.focus=b.getAttribute('data-focus'); playClick(); refresh(); }; });
+  }
+  function renderPipe(){
+    let h='';
+    h+=stock('silicon','Silicon');
+    h+='<div class="seg">'+connector('silicon')+node('dataset','Dataset Feed','<i>The world, written down in numbers.</i><br>Built from Silicon. Each Dataset makes Data every second.')+connector('data')+stock('data','Data')+'</div>';
+    h+='<div class="seg">'+connector('data')+node('model','Fit Engine','<i>It stops being told the answer and starts guessing it.</i><br>Auto-runs trials — spends Data, draws a little Silicon, pushes the model + yields Insight.')+connector('insight')+stock('insight','Insight')+'</div>';
+    $('pipe').innerHTML=h;
+    ['dataset','model'].forEach(k=>{ const b=$('buy-'+k); if(b) b.onclick=()=>buy(k); });
+  }
+  function renderCards(){ $('expCards').innerHTML=boardHTML(); }
+  function renderMethods(){
+    let pins='', shownUnknown=false;
+    for(const m of METHODS){
+      if(S.methods[m.id]) pins += '<div class="method-pin found" data-tip="'+esc('<i>'+m.flavor+'</i><br>'+m.desc)+'">'+
+        (METHOD_ICON[m.id]?'<img src="'+METHOD_ICON[m.id]+'">':'<span class="mp-glyph">&#9670;</span>')+'<div class="mp-txt"><b>'+m.name+'</b><span>'+m.desc+'</span></div></div>';
+      else if(!shownUnknown){ shownUnknown=true; pins += '<div class="method-pin scanning"><span class="mp-glyph">?</span><div class="mp-txt"><b>'+(Object.keys(S.methods).length?'next method':'no methods yet')+'</b><span>fund it on the Experiment Board above.</span></div></div>'; }
+    }
+    $('methods').innerHTML='<div class="method-pins">'+pins+'</div>';
+  }
+  function renderSupply(){
+    $('supRow').innerHTML = '<button class="sup-btn" data-supbuy="foundry" id="sup-foundry"><span class="sup-nm">Foundry <b id="supc-foundry"></b></span><span class="sup-cost" id="supx-foundry"></span></button>';
+    const b=$('sup-foundry'); if(b) b.onclick=()=>buy('foundry');
+  }
+  function render(){ // structural build; refresh() does per-tick values
+    $('rail').innerHTML = RAIL.map(r=>railChip(r[0],r[1])).join('') + '<div class="rail-right"><button class="rail-btn" id="musicBtn">&#9834; music</button></div>';
+    $('musicBtn').onclick=toggleMusic;
+    renderFocus(); renderPipe(); renderCards(); renderMethods(); renderSupply();
+    // delegated card funding (cards rebuild on purchase; the container persists so delegation survives)
+    { const xc=$('expCards'); if(xc) xc.onclick=e=>{ const b=e.target.closest && e.target.closest('[data-card]'); if(b && !b.disabled) buyCard(b.dataset.card); }; }
+    refresh();
+  }
+
+  const RATES = {};
+  function costHTML(reqs){ // numbers-first per-requirement chips: green+✓ when affordable, grey while short (never red)
+    return reqs.map(([k,v])=>{ const ok=S[k]>=v; return '<span class="cost-res'+(ok?' ok':'')+'" style="'+(ok?'color:var(--good)':'color:var(--dim)')+';white-space:nowrap">'+(ok?'✓ ':'')+fmt(v)+' '+k+'</span>'; }).join(' + '); }
+
+  function connGlow(res, full){ const fEl=$('flow-'+res); if(!fEl) return; const gross=(FLOW[res]?FLOW[res].in+FLOW[res].out:0);
+    const thru=Math.max(0,Math.min(1, gross/(full||0.5)));
+    fEl.style.setProperty('--thru', thru.toFixed(2)); fEl.classList.toggle('idle', gross<0.0005); }
+
+  function nodeRefresh(key, flows){
+    const nd=$('node-'+key); if(!nd) return;
+    setTxt($('cnt-'+key), '×'+S[key]);
+    setHTML($('rate-'+key), S[key]>0 ? flows.map(([s,v,r])=>'<span class="'+(s==='+'?'up':'dn')+'">'+s+fmt(v*S[key])+' '+r+'</span>').join('') : '<span style="color:var(--dimmer)">not built yet</span>');
+    const b=$('buy-'+key); if(b){ setHTML(b,'Build · '+costHTML([[BUYS[key].res,unitCost(key)]])); const can=canBuy(key); setDis(b,!can); b.classList.toggle('ok',can); }
+    const starved = key==='model' && S.model>0 && S.data<CFG.expDataCost;
+    const cl='node'+(canBuy(key)?' can':'')+(starved?' starved':''); if(nd.className!==cl) nd.className=cl;
+  }
+
+  function refresh(){
+    const st=e3Stats(), f=curFocus();
+    // rail (value + net/s)
+    for(const r of RAIL){ const k=r[0]; setTxt($('rv-'+k), fmt(S[k]));
+      const rt=RATES[k]||0, ps=$('rp-'+k); if(ps){ setTxt(ps,(rt>=0?'+':'')+fmt(rt)+'/s'); const cl='cps '+(rt>0.005?'pos':rt<-0.005?'neg':'zero'); if(ps.className!==cl) ps.className=cl; } }
+    // stocks + connectors
+    for(const k of ['silicon','data','insight']) setTxt($('stk-'+k), fmt(S[k]));
+    connGlow('silicon', S.foundry*CFG.foundryRate + 0.001); connGlow('data', 1.5); connGlow('insight', 3);
+    // converters
+    nodeRefresh('dataset', [['+',CFG.datasetYield*st.dataMult,'data']]);
+    nodeRefresh('model', [['+',CFG.expPerModel,'trials'],['−',CFG.expPerModel*CFG.expDataCost,'data'],['−',CFG.modelSilicon,'silicon']]);
+    // RUN TRIAL verb — label tracks the Focus (R3.8); numbers-first yield hint
+    const fl=f.label.toUpperCase(); setTxt($('expLabel'), 'RUN '+fl+' TRIAL');
+    setTxt($('expY'), (S.data<CFG.expDataCost?'need '+CFG.expDataCost+' Data':'−'+CFG.expDataCost+' Data · +accuracy'));
+    setDis($('expBtn'), S.data<CFG.expDataCost || S.done);
+    ['fit','generalize','explore'].forEach(k=>{ const fb=$('foc-'+k); if(fb) fb.classList.toggle('active', S.focus===k); });
+    // two-needle readout
+    const eff=effAccuracy(), thr=CFG.genThreshold;
+    const pv=Math.max(0.5,Math.min(99.5,eff*100)), pt=Math.max(0.5,Math.min(99.5,Math.max(S.accuracy,eff)*100));
+    const feEl=$('ntFill'); if(feEl) feEl.style.width=pv+'%';
+    const gz=$('ntGap'); if(gz){ gz.style.left=pv+'%'; gz.style.width=Math.max(0,pt-pv)+'%'; }
+    const tp=$('ntTrain'); if(tp){ tp.style.left=pt+'%'; setText('ntTrainV',(S.accuracy*100).toFixed(0)+'%'); }
+    const vp=$('ntVal'); if(vp){ vp.style.left=pv+'%'; setText('ntValV',(eff*100).toFixed(0)+'%'); }
+    const gl=$('ntGoal'); if(gl) gl.style.left=(thr*100)+'%';
+    const cp=$('ntCap'); if(cp){ const cap=st.cap, capped=cap<0.999; cp.style.display=capped?'block':'none'; if(capped) cp.style.left=(cap*100)+'%'; }
+    $('ntrack').classList.toggle('converged', S.accuracy-eff<0.01);
+    const exps=S.model*CFG.expPerModel;
+    setText('accRate', fmt(exps)+' trials/s  ·  Focus: '+f.label+(S.data<CFG.expDataCost?'  ·  need Data':''));
+    // distribution-shift banner (telegraph while pending; aftermath note ~9s after)
+    { const bn=$('e3Banner'); let bh='';
+      if(S.shiftAt) bh='&#9888; THE WORLD IS CHANGING — the data is about to move. A <b>generalized</b> model survives the shift; an overfit one falls hardest.';
+      else if(S.t-(S.lastShift||-99) < 9) bh='&#10022; DISTRIBUTION SHIFT — the points moved. <b>Re-fit</b> to the new shape.';
+      setHTML(bn, bh); const cl='event-banner'+(bh?' show':''); if(bn.className!==cl) bn.className=cl; }
+    // experiment board: survey meter + live card costs (against the render-built structure)
+    { const sv=S.survey||0, sf=$('surveyFill'); if(sf) sf.style.width=sv.toFixed(1)+'%';
+      setText('surveyPct', Math.round(sv)+'%');
+      setText('surveyDiscLab', sv>=1 ? ('cards −'+Math.round((1-surveyDisc())*100)+'%') : (S.focus==='explore'?'surveying…':'Explore fills this'));
+      const mtd=nextMethod(), mbtn=$('xc-buy-method');
+      const stale = mbtn && mbtn.dataset && typeof mbtn.dataset.mid==='string' && (!mtd || mbtn.dataset.mid!==mtd.id);
+      if(stale) renderCards();
+      else for(const kind of boardCards()){ if(kind==='method'&&!mtd) continue; const bb=$('xc-buy-'+kind); if(bb){ const c=expCost(kind);
+        setText('xc-c-'+kind, fmt(c)+' Data'); setDis(bb, S.data<c); } } }
+    // supply bus
+    { const key='foundry', b=$('sup-'+key); if(b){ setTxt($('supc-'+key),'×'+S.foundry); const c=unitCost(key); setTxt($('supx-'+key), fmt(c)+' Data'); setDis(b, S.data<c); }
+      setText('supSi', 'Silicon '+fmt(S.silicon)+'  ·  '+S.foundry+' Foundries → +'+fmt(S.foundry*CFG.foundryRate)+'/s  ·  Models draw '+fmt(S.model*CFG.modelSilicon)+'/s'); }
+    // goal (right): validation toward the generalize gate; wakes (blue) when eligible → hand-off cutscene
+    const goalPct=Math.min(100,(eff/thr)*100);
+    $('genMeter').style.width=goalPct+'%';
+    setText('goalVal', (eff*100).toFixed(0));
+    setText('genLab', (eff*100).toFixed(0)+'% / '+(thr*100).toFixed(0)+'% validation');
+    const ready=eff>=thr && !S.done; setDis($('fabricate'), !ready); setTxt($('fabricate'), S.done?'GENERALIZED ✓':'GENERALIZE');
+    $('goal').classList.toggle('ready', ready);
+    // the living scatter (pinned in the stage)
+    drawScatter();
+    if(S.dev) updateDbg();
+  }
+
+  // ---------- the living scatter (ported drawScatter faithfully) ----------
+  let plotPulse = 0; // a trial pulses the plot (points flare, band widens briefly)
+  let drawPhase = 0; // the rendered world phase eases toward S.dataPhase so a shift MIGRATES the points
+  function drawScatter(){
+    const cv=$('scatter'); if(!cv || !cv.getContext) return;
+    const ctx=cv.getContext('2d'); if(!ctx || !ctx.arc) return;
+    const w=cv.width=cv.clientWidth||640, h=cv.height=cv.clientHeight||250, pad=22, gw=w-pad*2, gh=h-pad*2;
+    const acc=S.accuracy, gap=S.gap, t=S.t||0;
+    const X=x=>pad+x*gw, Y=y=>h-pad-Math.max(0.02,Math.min(0.98,y))*gh;
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='rgba(95,224,192,0.07)'; ctx.lineWidth=1;
+    for(let i=1;i<8;i++){ const gx=pad+gw*i/8; ctx.beginPath(); ctx.moveTo(gx,pad); ctx.lineTo(gx,h-pad); ctx.stroke(); }
+    for(let i=1;i<5;i++){ const gy=pad+gh*i/5; ctx.beginPath(); ctx.moveTo(pad,gy); ctx.lineTo(w-pad,gy); ctx.stroke(); }
+    ctx.strokeStyle='rgba(95,224,192,0.28)'; ctx.beginPath(); ctx.moveTo(pad,pad-6); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+    drawPhase += ((S.dataPhase||0)-drawPhase)*0.06; // ease toward the new world so a shift visibly MIGRATES the points
+    const fn=x=> 0.5 + 0.32*Math.sin(x*Math.PI*1.15 + 0.5 + drawPhase); // the hidden generating function (never drawn — no answer key)
+    const fit=x=> 0.5+(fn(x)-0.5)*acc + Math.sin(x*42 + t*2)*gap*0.16*acc;  // the current model (wobbles when overfit)
+    const genRef=x=> 0.5+(fn(x)-0.5)*Math.min(1,acc+0.04);                  // the generalized / validation trace (smooth)
+    if(ctx.setLineDash){ ctx.setLineDash([5,5]); }
+    ctx.beginPath(); for(let px=0;px<=gw;px+=3){ const x=px/gw; const cx=pad+px, cy=Y(genRef(x)); px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
+    ctx.strokeStyle='rgba(95,224,192,0.20)'; ctx.lineWidth=1.4; ctx.stroke();
+    if(ctx.setLineDash){ ctx.setLineDash([]); }
+    const pulse=plotPulse; plotPulse*=0.82; if(plotPulse<0.01) plotPulse=0;
+    const band=(1-acc)*0.16+0.012 + pulse*0.03;
+    ctx.beginPath();
+    for(let px=0;px<=gw;px+=3){ const x=px/gw; const cx=pad+px; (px===0?ctx.moveTo:ctx.lineTo).call(ctx,cx,Y(fit(x)+band)); }
+    for(let px=gw;px>=0;px-=3){ const x=px/gw; const cx=pad+px; ctx.lineTo(cx,Y(fit(x)-band)); }
+    ctx.closePath(); ctx.fillStyle='rgba(95,224,192,0.09)'; ctx.fill();
+    const N=30, pr=1+pulse*1.1; ctx.fillStyle='rgba(110,231,255,'+(0.8+pulse*0.2)+')';
+    if(ctx.shadowBlur!==undefined){ ctx.shadowColor='rgba(110,231,255,0.6)'; ctx.shadowBlur=4+pulse*8; }
+    for(let i=0;i<N;i++){ const x=(i+0.5)/N, hsh=Math.abs(Math.sin(i*12.9898)*43758.5453)%1, ny=(hsh-0.5)*0.32;
+      ctx.beginPath(); ctx.arc(X(x), Y(fn(x)+ny), 2.4*pr,0,6.3); ctx.fill(); }
+    if(ctx.shadowBlur!==undefined){ ctx.shadowBlur=0; }
+    ctx.beginPath(); for(let px=0;px<=gw;px+=2){ const x=px/gw; const cx=pad+px, cy=Y(fit(x)); px===0?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
+    const hot=Math.min(1,gap/0.35); ctx.lineWidth=2.4;
+    ctx.strokeStyle= hot>0.5 ? 'rgba(255,184,107,0.95)' : '#d7fff6';
+    if(ctx.shadowBlur!==undefined){ ctx.shadowColor= hot>0.5?'rgba(255,184,107,0.6)':'rgba(155,255,234,0.55)'; ctx.shadowBlur=7; }
+    ctx.stroke(); if(ctx.shadowBlur!==undefined) ctx.shadowBlur=0;
+    if(ctx.fillText){ ctx.font='11px "IBM Plex Mono", monospace'; ctx.textAlign='right';
+      const yFit=Y(fit(0.985)), yGen=Y(genRef(0.985));
+      ctx.fillStyle= hot>0.5 ? 'rgba(255,184,107,0.95)' : 'rgba(215,255,246,0.85)';
+      ctx.fillText(hot>0.5?'the model · memorizing':'the model', w-pad-6, yFit + (yFit<=yGen?-7:14));
+      ctx.fillStyle='rgba(95,224,192,0.55)';
+      ctx.fillText('validation', w-pad-6, yGen + (yFit<=yGen?14:-7));
+      ctx.textAlign='left'; }
+  }
+
+  // ---------- tick ----------
+  let _last=Date.now();
+  function tick(){ const now=Date.now(); let real=(now-_last)/1000; _last=now; if(real>0.5) real=0.5;
+    const dt=real*S.speed; S.t+=dt;
+    const before={}; for(const k of ['silicon','data','insight']) before[k]=S[k];
+    produce(dt);
+    if(dt>0) for(const k in before) RATES[k]=(S[k]-before[k])/dt;
+    refresh();
+  }
+
+  // ---------- tooltips ----------
+  const tip=$('tip'); let tipEl=null;
+  function placeTip(e){ const m=15; let x=e.clientX+m,y=e.clientY+m; const wd=tip.offsetWidth,ht=tip.offsetHeight;
+    if(x+wd>innerWidth-8)x=e.clientX-wd-m; if(y+ht>innerHeight-8)y=innerHeight-ht-8; if(x<8)x=8; if(y<8)y=8; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+  document.addEventListener('mouseover',e=>{ const t=e.target.closest?e.target.closest('[data-tip]'):null; if(t&&t!==tipEl){ tipEl=t; tip.innerHTML=t.getAttribute('data-tip'); tip.classList.add('show'); placeTip(e); } });
+  document.addEventListener('mousemove',e=>{ if(tipEl) placeTip(e); });
+  document.addEventListener('mouseout',e=>{ if(tipEl){ const to=e.relatedTarget; if(!to||!(to.closest&&to.closest('[data-tip]'))){ tip.classList.remove('show'); tipEl=null; } } });
+
+  // ---------- dead-click telemetry ----------
+  const ACTIONABLE='button,input,a,.node,.exp-card,.chip,.stock,.focus-seg,.verb-run,.sup-btn,.rail-btn';
+  document.addEventListener('pointerdown',e=>{ if(!S.started) return; const t=e.target;
+    if(t&&t.closest&&t.closest(ACTIONABLE)) return; REC.dead++; rec('@deadclick',{x:Math.round(e.clientX),y:Math.round(e.clientY),tag:(t&&t.tagName||'').toLowerCase()}); },true);
+
+  // ---------- music ----------
+  let musicOn=false;
+  function toggleMusic(){ musicOn=!musicOn; const m=$('music'); if(musicOn){ m.volume=0.38; m.play().catch(()=>{}); $('musicBtn').style.color='var(--accent)'; } else { m.pause(); $('musicBtn').style.color=''; } }
+  addEventListener('pointerdown',()=>{ if(musicOn){ const m=$('music'); if(m.paused) m.play().catch(()=>{}); } },{once:true});
+
+  // ---------- dev overlay ----------
+  function updateDbg(){ const o=$('dbg'); if(!o) return;
+    o.innerHTML='<b>STATISTICAL</b>  t=<b>'+Math.floor(S.t)+'</b>s\nval '+(effAccuracy()*100).toFixed(0)+'% / '+(CFG.genThreshold*100)+'%  acc '+(S.accuracy*100).toFixed(0)+'%  gap '+(S.gap*100).toFixed(0)+'%\ndata +'+fmt(RATES.data||0)+'/s  si '+fmt(S.silicon)+'\nfocus <b>'+S.focus+'</b>  last: <b>'+(lastAction||'—')+'</b>  dead: <b>'+REC.dead+'</b>';
+  }
+  function renderDev(){ if(!S.dev) return; $('dev').innerHTML='<div class="row">'+[1,3,10,50].map(s=>'<button data-s="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div>'+
+    '<div class="row"><button data-grant>+res</button><button data-newgame>new game+</button></div>';
+    $('dev').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ S.speed=+b.dataset.s; renderDev(); });
+    $('dev').querySelector('[data-grant]').onclick=()=>{ S.silicon+=1000; S.data+=1000; S.insight+=500; refresh(); };
+    $('dev').querySelector('[data-newgame]').onclick=newGame;
+  }
+  function toggleDev(on){ S.dev=on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); $('dbg').classList.toggle('show',S.dev); if(S.dev){ renderDev(); updateDbg(); } }
+  addEventListener('keydown',e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
+
+  function newGame(){ S=fresh(); REC.events.length=0; REC.dead=0; save(); render(); toast('NEW GAME','Fresh start.'); }
+
+  // ---------- save ----------
+  function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({S, t:Date.now()})); }catch(e){} }
+  function load(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d&&d.S){ S=Object.assign(fresh(),d.S); S.utilLvl=Object.assign({calibrate:0,sweep:0,distill:0},d.S.utilLvl||{}); S.methods=d.S.methods||{}; return true; } }catch(e){} return false; }
+  setInterval(save,5000); addEventListener('beforeunload',save);
+
+  // ---------- boot ----------
+  $('expBtn').onclick=()=>{ if(S.data<CFG.expDataCost || S.done) return; runExperiment(1); plotPulse=1; S.started=true; lastAction='trial'; playClick();
+    const r=$('expBtn').getBoundingClientRect(); floatNum('trial',HUE.data,r.right-40,r.top+10); refresh(); };
+  $('fabricate').onclick=fabricate;
+
+  load();
+  // seed opening state so the instrument starts in motion
+  if(!S.started && !S.dataset && !S.foundry){ S.silicon=CFG.seedSilicon; S.dataset=CFG.seedDatasets; S.foundry=CFG.seedFoundry; }
+  if(location.hash.indexOf('seed')>=0){ // dev-only: seed a rich mid-game state for screenshots
+    S.foundry=3; S.dataset=8; S.model=10;
+    S.accuracy=0.72; S.gap=0.16; S.focus='fit';
+    S.methods={ regression:1, features:1, regularization:1 };
+    S.utilLvl={ calibrate:1, sweep:0, distill:1 }; S.utilN=2;
+    S.survey=42; S.silicon=260; S.data=180; S.insight=90;
+    S.started=true; S.dataPhase=0.9; S.lastShift=-99;
+  }
+  render();
+  setInterval(tick, CFG.tickMs);
+})();
+</script>
+</body>
+</html>

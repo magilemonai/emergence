@@ -1,7 +1,78 @@
 # EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-06-29.
+> keep it current as the game evolves. Last updated 2026-06-30 (v3 ground-up UI rebuild in progress).
+
+## ⭐ RESUME HERE — the v3 "Flow Board" ground-up UI rebuild (2026-06-30)
+
+**What happened:** Cody self-playtested the shipped game twice (parses in `alpha tests/June 30 2026 -
+Cody/`). Verdict: *"the vibe is awesome but the layout is confusing. Super confusing… rip this thing
+apart and rebuild it from the ground up… be as ambitious as possible."* Same systems + soul, brand-new
+layout. Two verified deep-research passes grounded it: `DESIGN-r6-ui.md` (8 design laws, primary NN/g)
+and the exemplar teardown (Orb of Creation / Antimatter Dimensions / Universal Paperclips). The paradigm
+is **"The Flow Board"** — spec in **`DESIGN-v3-paradigm.md`**: one screen per era; a color-coded
+resource rail; a center pipeline that visibly shows sources→converters→outputs (connectors that brighten
+with throughput — the "see systems affect each other" invention, VALIDATED by Cody on Origins); big
+verbs; the goal always visible; radically less text (prose → tooltips); obvious clickability.
+
+**Load-bearing rule (do not violate):** BUILD-ONCE / update-in-place. `refresh()` must NEVER rewrite a
+button's innerHTML every tick — it replaces the child the pointer is on mid-click = the "dead-click"
+bug. Every v3 file uses change-detected setters `setTxt`/`setHTML`/`setDis`; purchases call `refresh()`,
+never a full rebuild. (Confirmed: Origins dead-clicks 18→1 after this fix.)
+
+**ALL FIVE ERAS are rebuilt as standalone Flow-Board slices** (each syntax-checked + headless-screenshot
+verified; built tonight — Origins & Symbolic by me, the other three by 3 parallel background agents,
+all verified by me):
+| File | Era | State |
+|---|---|---|
+| `emergence-v3.html` | Origins | ✅ validated by Cody (dead-clicks 18→1); Logic-Machine wakes at fabricate |
+| `emergence-v3-symbolic.html` | Symbolic | ✅ CRT phosphor; connective tissue + Rules→Inference→Theorem pipeline + legible goal path; fixes "super confusing" |
+| `emergence-v3-statistical.html` | Statistical | ✅ pinned living scatter, RUN TRIAL left, Silicon→Data→Insight |
+| `emergence-v3-deep.html` | Deep | ✅ ternary mixer (drag fixed), LOCK timers on runs, non-passive, more to buy |
+| `emergence-v3-foundation.html` | Foundation | ✅ show-don't-tell rupture (board shatters→rebuilds), ACTIVE veto-window aftermath |
+
+Each slice: reuses `assets/` + its own Google Fonts + its own `localStorage` key + a `#seed` hash hook
+(mid-game state for screenshots; Foundation also `#seedpost`/`#seedend`), a backtick dev overlay + REC-
+lite telemetry (snapshots the run BEFORE New Game+ wipes it — the run-2 bug), faithful economy port.
+
+**NEXT (the spine of the next session) — Phase 2/3: merge the five slices into ONE game:**
+1. **Extract the Flow-Board component kit** (Phase 2, task #12): rail / `.lane`/`.seg`/`.node`/`.stock`/
+   `.flow` connector / goal-with-wake / standing-controls / commission-or-event card / `setTxt`/`setHTML`
+   / tick loop — proven across 5 very different eras, ready to factor into shared components.
+2. **Build the unified multi-era shell** (Phase 3, task #13): one file, shared rail + era nav +
+   per-era theme re-skin + save + music; a **condense-rail mode** for resource density (Orb-of-Creation
+   lesson); carry the instrumentation.
+3. **Revert the 3 standalone economy stand-ins** the agents used for isolation:
+   - Statistical: Silicon reach-back is a Foundry-costs-Data valve → restore the real Origins Foundry
+     supply bus.
+   - Deep: collapsed 4-producer supply → restore the real cross-era reach-back.
+   - Foundation: `capIncome`/`seedBreadth` stand-ins → restore the real Deep→Foundation handoff.
+4. **Rebuild the test suite** for the merged v3 (task #18; the economy logic is ported — keep a green
+   bar + the no-idle-rebuild guard).
+5. Then Cody records the unified game → iterate → Phase 6 swap v3 → `emergence.html`, push, Zach round.
+
+**Minor flagged polish** (not blockers): Origins wake→font-morph into Symbolic (task #25); Deep's 3rd
+run-lane sits below the fold at 1280 + a DRIFT badge can show while a run is net-positive.
+
+**The loop is now a skill:** `/process-capture` (`.claude/skills/process-capture/`) runs the whole
+playtest pipeline — review the newest KittyCapture capture → parse to `alpha tests/` → to-do list →
+iterate (verify via `node test.js` and headless-Chrome screenshots).
+
+**Git / safety state:** NOTHING is committed from tonight. Uncommitted: the r6 iteration-1 edits to
+`emergence.html` (still 200 green), the 5 `emergence-v3*.html` files (untracked), `archive/`, the new
+`DESIGN-r6-ui.md`/`DESIGN-v3-paradigm.md`, the `alpha tests/June 30 2026 - Cody/` parses, and
+`.claude/skills/process-capture/`. Also still 22+ commits ahead of `origin/main`, unpushed. All files
+are on disk (safe); offer to commit an archive checkpoint when Cody's ready. Push auto-deploys the live
+site — do NOT push until Cody says.
+
+## Round 6 iteration-1 (superseded by the v3 rebuild, kept as reference)
+
+Before the ground-up decision, an incremental UI pass shipped into `emergence.html` (still there, 200
+green): clickability depth, numbers-first flow rows, Origins Flows moved up, Symbolic reorder + killed
+the WRITE-A-RULE "hidden text field" + Compile to the bottom, RUN TRIAL left, 8s event toasts +
+commission glow, and the Tier-0 debug overlay + REC instrumentation. Archived at
+`archive/emergence-r6-iteration1.html`. Details in `DESIGN-r6-ui.md` "SHIPPED". The v3 rebuild replaces
+this layout wholesale, but the instrumentation + build-once lessons carried into v3.
 
 ## v2 is now the shipped main
 
@@ -270,3 +341,28 @@ Per-era times were Origins **5.5m ✅**, Symbolic **6.0m ✅**, Statistical **2.
 - `CLAUDE.md` (this file) — current state. `DESIGN.md` — the living-supply-chain redesign. `DESIGN-v2.md` — the v2 overhaul plan + per-phase record. `DESIGN-era5.md` — the Foundation finale spec (now BUILT). `TESTING.md` — the suite (**200 tests**). `ART-PROMPTS.md` — icon prompts (ChatGPT → key → wire).
 - `DESIGN-research-2026-06.md` — verified deep-research pass (incremental craft + teaching-through-mechanics + AI-concept accuracy), with a per-finding application to EMERGENCE and a structural-vs-teaching shortlist. `TODO-research-r5.md` — the round-5 implementation checklist derived from it.
 - `alpha tests/June 9 2026 - Zach/` — Zach rounds 1-3 parses (round 3 = `TODO-zach-3.md`, R3.1–R3.9 complete). `alpha tests/June 17 2026 - Zach/` — round 4 (`zach_feedback_transcript.md` + Run Recorder export + `TODO-zach-4.md`).
+- **v3 rebuild docs (current):** `DESIGN-r6-ui.md` — the 8 design laws + the r6 iteration-1 "SHIPPED" record. `DESIGN-v3-paradigm.md` — the "Flow Board" paradigm spec (the ground-up rebuild). `alpha tests/June 30 2026 - Cody/` — Cody's 4 self-playtest parses (r6 IA diagnosis → r6b rebuild mandate → v3-origins → v3-origins-r2 confirmation, dead-clicks 18→1). The 5 era slices: `emergence-v3.html` (Origins) + `emergence-v3-{symbolic,statistical,deep,foundation}.html`.
+- **`.claude/skills/process-capture/`** — the `/process-capture` skill: the KittyCapture playtest→parse→to-do→iterate loop, one command.
+
+<!-- KITTYCAPTURE:BEGIN — paste this whole block into your project's CLAUDE.md -->
+## 📹 KittyCapture — recorded sessions for review
+
+This project has **KittyCapture** in `./KittyCapture/` — a small tool that records the screen plus my
+spoken commentary so you (Claude) can review what actually happened in a session.
+
+**How I record:** I run `KittyCapture/KittyCapture.cmd` (Windows) or `KittyCapture/kittycapture.command`
+(macOS/Linux), click ● to start, talk through what I'm doing, then click ■ to stop. It auto-transcribes
+my voice locally.
+
+**Where recordings land:** `KittyCapture/captures/<timestamp>/` — each folder contains:
+- `transcript.txt` — my timestamped spoken commentary, one `[mm:ss] …` line per moment. **Read this first.**
+- `video.mp4` — the screen recording. Sample frames with ffmpeg if you need to see the screen.
+- `mic.wav` — the raw audio. `manifest.json` — track metadata + the shared start clock.
+
+**When I ask you to review a session:** read the **newest** `KittyCapture/captures/*/transcript.txt`. If you
+need visuals, extract frames from that folder's `video.mp4` at the timestamps that matter — the transcript
+and video share one clock (t=0 = recording start), so a `[02:14]` line is 2:14 into the video. Example:
+`ffmpeg -ss 134 -i video.mp4 -frames:v 1 frame.png` grabs the frame at the `[02:14]` line.
+
+> Mac setup notes + the two macOS bug fixes I made are in `KittyCapture/MAC-SETUP-FEEDBACK.md` (for Zach).
+<!-- KITTYCAPTURE:END -->

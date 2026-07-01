@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMERGENCE v3 — Origins (Flow Board prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120d08; --panel:#1c140c; --panel-2:#231910; --line:#3a2a17; --edge:#4a3720;
+    --text:#eadfce; --dim:#b6a583; --dimmer:#7d6f56; --accent:#d6a85f;
+    --marks:#e6d2a4; --ore:#c08552; --knowledge:#e0a93f; --metal:#ef9f56; --silicon:#a9d8ce;
+    --good:#8fd39a; --danger:#d98a6a;
+    --stone-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #24180d 0%, transparent 60%),
+      var(--stone-noise), var(--bg);
+    color:var(--text); font-family:'EB Garamond',Georgia,serif; font-size:16px; line-height:1.4;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; padding:14px 18px 40px; }
+  h1,h2,h3,.disp{ font-family:'Cinzel',serif; letter-spacing:0.04em; }
+
+  /* ---------- Resource rail (color-coded, persistent, condensable) ---------- */
+  .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch;
+    padding:10px 8px; margin:0 -8px 12px; background:rgba(12,9,5,0.82); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line); }
+  .chip{ display:flex; align-items:center; gap:9px; padding:7px 12px 7px 9px; border-radius:10px;
+    border:1px solid var(--line); background:var(--panel); min-width:120px; position:relative; }
+  .chip .cdot{ width:26px; height:26px; border-radius:7px; flex:none; display:grid; place-items:center; }
+  .chip img{ width:22px; height:22px; object-fit:contain; }
+  .chip .cbody{ display:flex; flex-direction:column; line-height:1.15; min-width:0; }
+  .chip .clab{ font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); }
+  .chip .cval{ font-size:19px; font-variant-numeric:tabular-nums; font-weight:600; }
+  .chip .cps{ font-size:11px; font-variant-numeric:tabular-nums; margin-left:auto; align-self:flex-start; opacity:0.9; }
+  .cps.pos{ color:var(--good); } .cps.neg{ color:var(--danger); } .cps.zero{ color:var(--dimmer); }
+  .rail-right{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .rail-btn{ font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.1em; color:var(--dim); background:var(--panel);
+    border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; }
+  .rail-btn:hover{ border-color:var(--accent); color:var(--text); }
+
+  header.era{ display:flex; align-items:baseline; gap:14px; margin:4px 2px 14px; }
+  header.era .sig{ width:34px; height:34px; object-fit:contain; opacity:0.9; filter:drop-shadow(0 0 8px rgba(214,168,95,0.3)); }
+  header.era h1{ font-size:26px; margin:0; color:#f0e6d2; }
+  header.era .sub{ color:var(--dim); font-style:italic; font-size:15px; }
+  header.era .phase{ margin-left:auto; font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.16em; color:var(--accent); text-transform:uppercase; }
+
+  /* ---------- The board: verbs | pipeline | goal ---------- */
+  .board{ display:grid; grid-template-columns: 210px 1fr 240px; gap:14px; align-items:start; }
+  .board > div{ min-width:0; } /* let the center column shrink + WRAP the pipe instead of expanding past the viewport ("running off the side") */
+  @media(max-width:920px){ .board{ grid-template-columns:1fr; } }
+  .col-head{ font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dimmer); margin:2px 0 8px; }
+
+  /* verbs */
+  .verb{ width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left;
+    padding:16px 16px; margin-bottom:10px; border-radius:13px; cursor:pointer; color:#fff;
+    font-family:'Cinzel',serif; letter-spacing:0.06em; border:1px solid var(--edge);
+    background-image: var(--stone-noise), linear-gradient(180deg,#3a2918,#20150c);
+    box-shadow: inset 0 2px 0 rgba(255,228,171,0.14), inset 0 -6px 14px rgba(0,0,0,0.32), 0 5px 14px rgba(0,0,0,0.45); }
+  .verb:hover{ border-color:rgba(214,168,95,0.75); }
+  .verb:active{ transform:translateY(2px); box-shadow: inset 0 3px 9px rgba(0,0,0,0.5); }
+  .verb .vname{ font-size:16px; }
+  .verb .vyield{ font-size:13px; font-family:'EB Garamond',serif; font-variant-numeric:tabular-nums; }
+  .verb.marks{ --vc:var(--marks); } .verb.ore .vyield{ color:var(--ore); } .verb.marks .vyield{ color:var(--marks); }
+  .side-btn{ width:100%; display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:11px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); font-family:'Cinzel',serif; font-size:13px; letter-spacing:0.08em;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.3); }
+  .side-btn:hover{ border-color:var(--accent); }
+  .side-btn img{ width:22px; height:22px; object-fit:contain; }
+  .side-btn .badge{ margin-left:auto; min-width:20px; text-align:center; font-size:12px; background:var(--accent); color:#1a1206; border-radius:9px; padding:1px 6px; font-family:'EB Garamond',serif; }
+
+  /* pipeline lanes */
+  .lane{ background:linear-gradient(180deg,rgba(30,21,12,0.6),rgba(18,12,7,0.7)); border:1px solid var(--line);
+    border-radius:14px; padding:12px 12px 14px; margin-bottom:14px; position:relative; }
+  .lane-lab{ font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; display:flex; gap:8px; align-items:center; }
+  .lane-lab .ldash{ flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
+  .pipe{ display:flex; align-items:stretch; gap:6px; flex-wrap:wrap; }
+  .seg{ display:flex; align-items:stretch; gap:6px; min-width:0; flex:1 1 300px; } /* converter + its connectors wrap as one unit — no connector ever dangles at a row end */
+  .stock{ display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; min-width:78px;
+    padding:8px 6px; border-radius:11px; border:1px solid var(--line); background:rgba(0,0,0,0.22); }
+  .stock img{ width:26px; height:26px; object-fit:contain; }
+  .stock .sv{ font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .stock .sl{ font-family:'Cinzel',serif; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); }
+  /* flow connector: colored, brightens with throughput */
+  .flow{ align-self:center; width:38px; height:22px; position:relative; flex:none; }
+  .flow svg{ width:100%; height:100%; overflow:visible; }
+  .flow .track{ stroke:var(--fc,#8a7350); stroke-width:2; opacity:0.28; }
+  .flow .pulse{ stroke:var(--fc,#e6d2a4); stroke-width:2.4; stroke-dasharray:5 9; opacity:calc(0.25 + 0.75*var(--thru,0));
+    animation:flowmove 0.9s linear infinite; filter:drop-shadow(0 0 4px var(--fc)); }
+  .flow.idle .pulse{ animation:none; opacity:0.12; }
+  @keyframes flowmove{ to{ stroke-dashoffset:-14; } }
+
+  /* converter node = per-row dashboard: icon, +out/s, owned, cost, BUY */
+  .node{ flex:1; min-width:160px; display:grid; grid-template-columns:auto 1fr auto; grid-template-rows:auto auto; gap:2px 10px;
+    padding:9px 11px; border-radius:12px; border:1px solid var(--line); background:var(--panel);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); position:relative; }
+  .node.can{ border-color:rgba(214,168,95,0.5); }
+  .node.starved{ border-color:rgba(217,138,106,0.55); }
+  .node .nic{ grid-row:1/3; width:40px; height:40px; object-fit:contain; align-self:center; }
+  .node .nname{ font-family:'Cinzel',serif; font-size:14px; }
+  .node .ncount{ color:var(--accent); font-size:12px; font-variant-numeric:tabular-nums; }
+  .node .nrate{ grid-column:2/4; font-size:12px; font-variant-numeric:tabular-nums; color:var(--dim); display:flex; gap:10px; flex-wrap:wrap; }
+  .node .nrate .up{ color:var(--good); } .node .nrate .dn{ color:var(--danger); }
+  .node .nbuy{ grid-row:1/3; grid-column:3; align-self:center; }
+  .buy{ font-family:'Cinzel',serif; font-size:12px; letter-spacing:0.04em; padding:9px 12px; border-radius:9px; cursor:pointer;
+    background:var(--panel-2); border:1px solid var(--edge); color:var(--text); white-space:nowrap;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 1px 2px rgba(0,0,0,0.3); }
+  .buy:hover:not(:disabled){ border-color:var(--accent); background:#2b1f12; }
+  .buy:active:not(:disabled){ transform:translateY(1px); }
+  .buy:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .buy .c{ color:var(--accent); } .buy:disabled .c{ color:inherit; }
+  .buy.ok .c{ color:var(--good); }
+  .pause{ position:absolute; top:6px; right:8px; width:20px; height:20px; border-radius:6px; border:1px solid var(--line);
+    background:rgba(0,0,0,0.3); color:var(--dim); cursor:pointer; font-size:10px; line-height:18px; text-align:center; padding:0; }
+  .pause.on{ color:var(--danger); border-color:var(--danger); }
+  .auto{ display:flex; align-items:center; gap:8px; margin-top:8px; padding:7px 9px; border-radius:10px; background:rgba(0,0,0,0.18); border:1px solid var(--line); }
+  .auto img{ width:26px; height:26px; object-fit:contain; }
+  .auto .an{ font-family:'Cinzel',serif; font-size:12px; }
+  .auto .ar{ font-size:12px; color:var(--good); font-variant-numeric:tabular-nums; }
+  .auto .abuy{ margin-left:auto; }
+
+  /* goal */
+  .goal{ background:linear-gradient(180deg,rgba(40,28,15,0.7),rgba(20,13,7,0.8)); border:1px solid rgba(214,168,95,0.35);
+    border-radius:14px; padding:14px; text-align:center; }
+  .goal img.lm{ width:96px; height:96px; object-fit:contain; filter:drop-shadow(0 0 12px rgba(255,205,107,0.3)); }
+  .goal .gname{ font-family:'Cinzel',serif; font-size:14px; letter-spacing:0.08em; margin:6px 0 2px; }
+  .goal .gsub{ font-size:12px; color:var(--dim); font-style:italic; margin-bottom:10px; }
+  .meter{ height:12px; border-radius:6px; background:rgba(0,0,0,0.4); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5); }
+  .meter i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--silicon),#d9f2ea); transition:width 0.25s; }
+  .meter-lab{ font-size:12px; font-variant-numeric:tabular-nums; color:var(--dim); margin:5px 0 12px; }
+  .fab{ width:100%; font-family:'Cinzel',serif; font-size:14px; letter-spacing:0.06em; padding:14px; border-radius:11px; cursor:pointer;
+    color:#0e1513; border:1px solid var(--silicon); background:linear-gradient(180deg,#bfeae0,#7fc9bb);
+    box-shadow:0 0 18px rgba(169,216,206,0.3); }
+  .fab:disabled{ opacity:0.35; cursor:not-allowed; box-shadow:none; filter:grayscale(0.4); }
+  /* the Logic Machine sits dormant, then WAKES when you can fabricate — a phosphor-green pulse teasing the Symbolic era (Cody: "a mini cutscene, prelude the next era's vibe") */
+  .goal{ transition:border-color 0.4s, box-shadow 0.4s; }
+  .goal.ready{ border-color:#7dffb7; box-shadow:0 0 28px rgba(125,255,183,0.3); }
+  .goal.ready .gname{ color:#bfffe0; }
+  .goal.ready img.lm{ animation:lmWake 1.8s ease-in-out infinite; }
+  .goal.ready .fab{ animation:fabPulse 1.5s ease-in-out infinite; }
+  @keyframes lmWake{ 0%,100%{ filter:drop-shadow(0 0 10px rgba(125,255,183,0.4)); } 50%{ filter:drop-shadow(0 0 24px rgba(125,255,183,0.9)); } }
+  @keyframes fabPulse{ 0%,100%{ box-shadow:0 0 14px rgba(125,255,183,0.4); } 50%{ box-shadow:0 0 30px rgba(125,255,183,0.85); } }
+  @media (prefers-reduced-motion: reduce){ .goal.ready img.lm,.goal.ready .fab{ animation:none; } }
+  .locked{ color:var(--dimmer); font-style:italic; font-size:13px; padding:20px 6px; }
+
+  /* standing decisions row */
+  .standing{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }
+  @media(max-width:920px){ .standing{ grid-template-columns:1fr; } }
+  .ctrl{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:12px 14px; }
+  .ctrl-lab{ font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); margin-bottom:9px; }
+  .lever{ display:flex; align-items:center; gap:10px; }
+  .lever span{ font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.1em; color:var(--dim); }
+  .lever input{ flex:1; accent-color:var(--accent); cursor:pointer; }
+  .refine-row{ display:flex; align-items:center; gap:12px; }
+  .refine-row .rinfo{ flex:1; }
+  .refine-row .rname{ font-family:'Cinzel',serif; font-size:14px; }
+  .refine-row .reff{ font-size:12px; color:var(--good); }
+
+  /* commission card (bright, dwell-long, not missable) */
+  .commission{ grid-column:1/-1; display:none; align-items:center; gap:14px; margin-top:6px; padding:13px 16px;
+    border-radius:13px; border:1px solid var(--accent); background:linear-gradient(180deg,rgba(60,42,18,0.7),rgba(35,24,11,0.8));
+    animation:commGlow 2.6s ease-in-out infinite; }
+  .commission.show{ display:flex; }
+  @keyframes commGlow{ 0%,100%{ box-shadow:0 0 0 rgba(214,168,95,0); } 50%{ box-shadow:0 0 24px rgba(214,168,95,0.34); } }
+  @media (prefers-reduced-motion: reduce){ .commission{ animation:none; box-shadow:0 0 15px rgba(214,168,95,0.28); } .flow .pulse{ animation:none; } }
+  .commission .cm-i{ flex:1; }
+  .commission .cm-name{ font-family:'Cinzel',serif; font-size:15px; }
+  .commission .cm-need{ font-size:13px; color:var(--dim); }
+  .commission .cm-timer{ height:6px; border-radius:3px; background:rgba(0,0,0,0.4); overflow:hidden; margin-top:6px; }
+  .commission .cm-timer i{ display:block; height:100%; background:var(--accent); }
+  .commission .cm-acts{ display:flex; gap:8px; }
+
+  /* research drawer */
+  #research{ position:fixed; top:0; right:0; width:340px; max-width:88vw; height:100%; z-index:40;
+    background:linear-gradient(180deg,#1a120a,#140d07); border-left:1px solid var(--edge); transform:translateX(102%);
+    transition:transform 0.28s ease; box-shadow:-16px 0 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; }
+  #research.show{ transform:translateX(0); }
+  .rh{ display:flex; align-items:center; gap:8px; padding:14px 16px; border-bottom:1px solid var(--line); }
+  .rh h3{ margin:0; font-size:14px; letter-spacing:0.1em; }
+  .rh .x{ margin-left:auto; cursor:pointer; color:var(--dim); font-size:20px; background:none; border:none; }
+  .rbody{ overflow:auto; padding:12px 14px; }
+  .rsec{ font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dimmer); margin:12px 0 8px; }
+  .disco{ display:flex; align-items:center; gap:10px; padding:10px; border-radius:11px; border:1px solid var(--line); background:var(--panel); margin-bottom:8px; }
+  .disco.can{ border-color:rgba(214,168,95,0.55); box-shadow:0 0 12px rgba(214,168,95,0.12); }
+  .disco img{ width:34px; height:34px; object-fit:contain; }
+  .disco .di{ flex:1; min-width:0; }
+  .disco .dn{ font-family:'Cinzel',serif; font-size:13px; }
+  .disco .de{ font-size:12px; color:var(--good); }
+  .disco .dbuy{ width:100%; margin-top:7px; }
+  .cost-res{ color:var(--dim); white-space:nowrap; } .cost-res.ok{ color:var(--good); }
+
+  /* floating +N and tooltips */
+  #fx{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+  .float{ position:absolute; font-family:'Cinzel',serif; font-size:16px; font-weight:600; animation:floatUp 0.9s ease-out forwards; text-shadow:0 1px 3px #000; }
+  @keyframes floatUp{ to{ transform:translateY(-34px); opacity:0; } }
+  #tip{ position:fixed; z-index:70; max-width:300px; padding:10px 12px; border-radius:9px; background:rgba(14,10,6,0.97);
+    border:1px solid var(--edge); font-size:13px; line-height:1.45; color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.1s; }
+  #tip.show{ opacity:1; } #tip i{ color:var(--dim); }
+  #toasts{ position:fixed; right:16px; bottom:16px; z-index:65; display:flex; flex-direction:column; gap:8px; width:320px; max-width:80vw; }
+  .toast{ background:rgba(20,14,8,0.96); border:1px solid var(--accent); border-radius:11px; padding:11px 13px; animation:toastIn 0.35s ease; }
+  .toast .th{ font-family:'Cinzel',serif; font-size:12px; letter-spacing:0.08em; color:var(--accent); margin-bottom:3px; }
+  .toast .tb{ font-size:13px; color:var(--text); }
+  @keyframes toastIn{ from{ transform:translateX(20px); opacity:0; } }
+
+  /* dev overlay + panel */
+  #dev{ position:fixed; left:14px; bottom:14px; z-index:80; display:none; flex-direction:column; gap:7px;
+    background:rgba(8,6,3,0.92); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  #dev.show{ display:flex; } #dev .row{ display:flex; gap:6px; } #dev button{ font-family:inherit; font-size:12px; padding:5px 9px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--dim); cursor:pointer; }
+  #dev button.on{ color:var(--accent); border-color:var(--accent); }
+  #dbg{ position:fixed; left:14px; bottom:120px; z-index:79; display:none; font-family:ui-monospace,Menlo,monospace; font-size:11px; line-height:1.5;
+    color:#f0e2c6; background:rgba(8,6,3,0.82); border:1px solid rgba(214,168,95,0.35); border-radius:8px; padding:8px 10px; white-space:pre; pointer-events:none; }
+  #dbg.show{ display:block; } #dbg b{ color:var(--accent); }
+  .note{ text-align:center; color:var(--dimmer); font-size:12px; margin-top:26px; font-style:italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="rail" id="rail"></div>
+  <header class="era">
+    <img class="sig" src="assets/era1-sigil.png" alt="">
+    <h1>Origins</h1><span class="sub">from marks to matter</span>
+    <span class="phase" id="phase">Stone Age</span>
+  </header>
+
+  <div class="board">
+    <div class="col-verbs">
+      <div class="col-head">Your hands</div>
+      <button class="verb marks" id="inscribe"><span class="vname">Inscribe a mark</span><span class="vyield" id="inscribeY"></span></button>
+      <button class="verb ore" id="quarry" style="display:none"><span class="vname">Quarry ore</span><span class="vyield" id="quarryY"></span></button>
+      <button class="side-btn" id="researchBtn"><img src="assets/era1-sigil.png" alt="">RESEARCH<span class="badge" id="researchBadge">1</span></button>
+    </div>
+
+    <div class="col-pipe">
+      <div class="col-head">The work — sources flow into converters, converters into the next thing</div>
+      <div id="lanes"></div>
+    </div>
+
+    <div class="col-goal">
+      <div class="col-head">The goal</div>
+      <div class="goal" id="goal">
+        <img class="lm" src="assets/logic-machine.png" alt="">
+        <div class="gname">The Logic Machine</div>
+        <div class="gsub" id="goalSub">first, learn to make Silicon</div>
+        <div class="meter"><i id="siMeter"></i></div>
+        <div class="meter-lab" id="siLab"></div>
+        <button class="fab" id="fabricate" disabled>FABRICATE</button>
+      </div>
+    </div>
+
+    <div class="commission" id="commission">
+      <img src="assets/era1-sigil.png" alt="" style="width:34px;height:34px;object-fit:contain">
+      <div class="cm-i">
+        <div class="cm-name" id="cmName"></div>
+        <div class="cm-need" id="cmNeed"></div>
+        <div class="cm-timer"><i id="cmTimer"></i></div>
+      </div>
+      <div class="cm-acts">
+        <button class="buy" id="cmYes"></button>
+        <button class="buy" id="cmNo">Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="standing" id="standing" style="display:none">
+    <div class="ctrl" id="handsCtrl" style="display:none">
+      <div class="ctrl-lab" data-tip="<i>One workforce, split between the crafts.</i><br>Lean toward the craft that is starving; the other slows. Centered is even.">The Hands · one workforce, split</div>
+      <div class="lever"><span style="color:var(--marks)">THE RECORD</span><input type="range" id="hands" min="0" max="100" value="50"><span style="color:var(--metal)">THE FORGE</span></div>
+    </div>
+    <div class="ctrl" id="refineCtrl" style="display:none">
+      <div class="ctrl-lab">Refine the craft · spend surplus Ore</div>
+      <div class="refine-row" data-tip="<i>Practice compounds. Sink your surplus back into the work.</i><br>+5% to ALL Origins production per level. Repeatable.">
+        <div class="rinfo"><div class="rname">Refine <span class="ncount" id="refineN"></span></div><div class="reff" id="refineEff"></div></div>
+        <button class="buy" id="refineBuy"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">EMERGENCE v3 — Origins slice (Flow Board prototype). ` toggles dev. This is a paradigm test, not the final build.</div>
+</div>
+
+<div id="fx"></div>
+<div id="tip"></div>
+<div id="toasts"></div>
+<div id="research"><div class="rh"><h3>RESEARCH · one-time discoveries</h3><button class="x" id="researchClose">&times;</button></div><div class="rbody" id="researchBody"></div></div>
+<div id="dev"></div>
+<div id="dbg"></div>
+<audio id="music" src="assets/music-bone-loam.mp3" loop preload="none"></audio>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmt = n => { n=+n||0; const a=Math.abs(n);
+    if(a>=1e6) return (n/1e6).toFixed(2)+'M'; if(a>=1e3) return (n/1e3).toFixed(2)+'K';
+    if(a>=100) return n.toFixed(0); if(a>=10) return n.toFixed(1); if(a===0) return '0'; return n.toFixed(a<1?2:1); };
+  const esc = s => String(s).replace(/"/g,'&quot;');
+  // build-once / update-in-place: only touch the DOM when the value actually changed, so we never
+  // replace a button's children mid-click (that ate clicks = the "dead click" bug from the v3 playtest).
+  const setTxt = (el,t)=>{ if(el && el._t!==t){ el.textContent=t; el._t=t; } };
+  const setHTML= (el,h)=>{ if(el && el._h!==h){ el.innerHTML=h; el._h=h; } };
+  const setDis = (el,d)=>{ if(el && el.disabled!==d) el.disabled=d; };
+  const SAVE_KEY = 'emergence_v3_origins';
+
+  // ---------- tunables (ported from CFG.e1) ----------
+  const CFG = { tickMs:100,
+    inscribeBase:1, quarryBase:1,
+    scribeCost:12, scribeGrowth:1.16, scribeYield:0.9,
+    minerCost:16, minerGrowth:1.16, minerYield:0.9,
+    scriptoriumCost:45, scriptoriumGrowth:1.19, scriptoriumRate:1.1,
+    smelterCost:55, smelterGrowth:1.19, smelterRate:1.3,
+    foundryCost:350, foundryGrowth:1.2, foundryRate:0.8,
+    scriptoriumUpkeep:0.35, smelterUpkeep:0.25,
+    siliconGate:120,
+    refineBase:120, refineGrowth:1.28, refineBonus:0.05,
+    leverSwing:0.8, leverFloor:0.6,
+    commDur:75, commCool:18, commBonus:0.05,
+    comms:[
+      { id:'tablets', name:'The temple asks for tablets',   res:'marks',     base:150, reward:'rec',   flavor:'A season of prayers, recorded.' },
+      { id:'roads',   name:'The road needs stone',          res:'ore',       base:150, reward:'forge', flavor:'Cart after cart, to somewhere new.' },
+      { id:'bronze',  name:'The forge-lord wants metal',    res:'metal',     base:60,  reward:'rec',   flavor:'Weapons or plowshares; he pays either way.' },
+      { id:'archive', name:'The archive buys what you know',res:'knowledge', base:90,  reward:'free',  flavor:'They copy your marks into their own.' },
+    ],
+  };
+  const HUE = { marks:'#e6d2a4', ore:'#c08552', knowledge:'#e0a93f', metal:'#ef9f56', silicon:'#a9d8ce' };
+  const ICON = { marks:'assets/icon-marks.png', ore:'assets/icon-ore.png', knowledge:'assets/icon-knowledge.png',
+    metal:'assets/icon-ingot.png', silicon:'assets/icon-silicon.png',
+    scribe:'assets/icon-scribe.png', miner:'assets/icon-miner.png', scriptorium:'assets/icon-scriptorium.png',
+    smelter:'assets/icon-crucible.png', foundry:'assets/icon-foundry.png' };
+  const RESFLAVOR = { marks:'The first attempt to hold a thought in place.', ore:'The world before we reshaped it.',
+    knowledge:'Marks made meaningful.', metal:'Stone, disciplined by fire.', silicon:'Sand, taught to carry thought.' };
+
+  const DISCO = [
+    { id:'tally',        name:'Tally Marks',    res:'marks',     cost:6,   req:[],                         flavor:'A notch for each thing worth counting.',        eff:'Inscribing by hand is twice as productive.' },
+    { id:'scribe',       name:'The Scribe',     res:'marks',     cost:20,  req:['tally'],                  flavor:'Hands trained to the work.',                    eff:'+Marks · unlocks the Scribe (automates Marks).', fn(){ S.flags.canScribe=true; } },
+    { id:'stoneworking', name:'Stoneworking',   res:'marks',     cost:38,  req:['tally'],                  flavor:'The first deliberate reshaping of the world.',  eff:'+Ore · unlocks Quarrying and Miners.', fn(){ S.flags.o_materials=true; } },
+    { id:'apprenticeship',name:'Apprenticeship',costs:{marks:277,ore:315}, req:['scribe','stoneworking'], flavor:'A craft taught, not stumbled into.',            eff:'Scribes and Miners work 50% faster.' },
+    { id:'clayTablets',  name:'Clay Tablets',   res:'marks',     cost:110, req:['scribe','stoneworking'], reqRes:{ore:15}, flavor:'Something firmer than memory.', eff:'+Knowledge · unlocks the Scriptorium (Marks→Knowledge).', fn(){ S.flags.o_scriptorium=true; } },
+    { id:'kiln',         name:'The Kiln',       res:'ore',       cost:110, req:['clayTablets'],            reqRes:{knowledge:30}, flavor:'Captured fire.',       eff:'+Metal · unlocks the Smelter (Ore→Metal). Bronze Age.', fn(){ S.flags.o_smelter=true; S.age=2; } },
+    { id:'alphabet',     name:'The Alphabet',   res:'knowledge', cost:120, req:['clayTablets'],            flavor:'Signs that can spell anything.',                eff:'Scriptoria work 60% faster.' },
+    { id:'bronzeCasting',name:'Bronze Casting', res:'metal',     cost:90,  req:['kiln'],                   flavor:'Let the mold decide its shape.',                eff:'Smelters work 60% faster.' },
+    { id:'wheel',        name:'The Wheel',      res:'ore',       cost:130, req:['kiln'],                   flavor:'The load that once broke backs now rolls.',     eff:'Miners +80% Ore — Scribes 20% slower.' },
+    { id:'numerals',     name:'Numerals',       res:'knowledge', cost:520, req:['alphabet'],               flavor:'Number slips free of what it counts.',          eff:'Every converter works 30% faster.' },
+    { id:'theFoundry',   name:'The Foundry',    res:'knowledge', cost:780, req:['numerals'],               reqRes:{metal:230}, flavor:'Knowledge and matter, fused.', eff:'+Silicon · unlocks the Foundry (Metal+Knowledge→Silicon). Silicon Age.', fn(){ S.flags.o_foundry=true; S.age=3; } },
+    { id:'glassmaking',  name:'Glassmaking',    res:'metal',     cost:430, req:['theFoundry'],             flavor:'Sand taught to hold the light.',                eff:'Foundries run 50% faster.' },
+  ];
+  const DMAP = Object.fromEntries(DISCO.map(n=>[n.id,n]));
+
+  // ---------- state ----------
+  function fresh(){ return {
+    marks:0, ore:0, knowledge:0, metal:0, silicon:0,
+    scribe:0, miner:0, scriptorium:0, smelter:0, foundry:0, refine:0,
+    disco:{}, flags:{}, paused:{}, lever:0.5, age:1,
+    comm:null, commN:0, commCool:CFG.commCool, commRec:0, commForge:0, commDone:0,
+    t:0, speed:1, dev:false, started:false, done:false,
+  }; }
+  let S = fresh();
+
+  // ---------- run recorder (lite) — snapshot-before-reset so New Game+ can't wipe it ----------
+  const REC = { v:1, events:[], dead:0, t0:0 };
+  let lastAction='';
+  function rec(ev, extra){ if(REC.events.length>6000) REC.events.shift(); if(ev[0]!=='@') lastAction=ev;
+    REC.events.push(Object.assign({ gt:+S.t.toFixed(1), wt:Date.now() }, extra||{}, { ev })); }
+
+  // ---------- derived rates (ported oStats) ----------
+  function oStats(){
+    const d=S.disco;
+    let inscribe=CFG.inscribeBase, quarry=CFG.quarryBase, scrR=CFG.scriptoriumRate, smR=CFG.smelterRate, foR=CFG.foundryRate;
+    let scribeY=CFG.scribeYield, minerY=CFG.minerYield;
+    if(d.tally) inscribe*=2;
+    if(d.apprenticeship){ scribeY*=1.5; minerY*=1.5; }
+    if(d.alphabet) scrR*=1.6;
+    if(d.bronzeCasting) smR*=1.6;
+    if(d.wheel){ minerY*=1.8; quarry*=1.8; scribeY*=0.8; inscribe*=0.8; }
+    if(d.numerals){ scrR*=1.3; smR*=1.3; foR*=1.3; }
+    if(d.glassmaking) foR*=1.5;
+    const lv=S.lever;
+    const recM=(CFG.leverFloor+CFG.leverSwing*lv)*(1+CFG.commBonus*S.commRec);
+    const fge=(CFG.leverFloor+CFG.leverSwing*(1-lv))*(1+CFG.commBonus*S.commForge);
+    inscribe*=recM; scribeY*=recM; quarry*=fge; minerY*=fge;
+    const g=(1+S.refine*CFG.refineBonus);
+    return { inscribe:inscribe*g, quarry:quarry*g, scribeY:scribeY*g, minerY:minerY*g, scrR:scrR*g, smR:smR*g, foR:foR*g };
+  }
+
+  // ---------- gross-flow accumulator (drives the connector animation) ----------
+  const FLOW = { marks:{in:0,out:0}, ore:{in:0,out:0}, knowledge:{in:0,out:0}, metal:{in:0,out:0}, silicon:{in:0,out:0} };
+  const fIn =(k,a)=>{ if(FLOW[k]) FLOW[k].in+=a; };
+  const fOut=(k,a)=>{ if(FLOW[k]) FLOW[k].out+=a; };
+
+  // ---------- production (ported Origins slice) ----------
+  function produce(dt){
+    const os=oStats();
+    for(const k in FLOW){ FLOW[k].in=0; FLOW[k].out=0; }
+    if(S.scribe>0){ const a=S.scribe*os.scribeY*dt; S.marks+=a; fIn('marks',a); }
+    if(S.miner>0){  const a=S.miner*os.minerY*dt;  S.ore+=a;   fIn('ore',a); }
+    if(S.scriptorium>0 && !S.paused.scriptorium){
+      let out=Math.min(S.marks, S.scriptorium*os.scrR*dt);
+      const up=out*CFG.scriptoriumUpkeep; if(up>S.ore) out*=(up>0?S.ore/up:0);
+      S.marks-=out; S.ore-=out*CFG.scriptoriumUpkeep; S.knowledge+=out;
+      fOut('marks',out); fOut('ore',out*CFG.scriptoriumUpkeep); fIn('knowledge',out);
+    }
+    if(S.smelter>0 && !S.paused.smelter){
+      let out=Math.min(S.ore, S.smelter*os.smR*dt);
+      const up=out*CFG.smelterUpkeep; if(up>S.knowledge) out*=(up>0?S.knowledge/up:0);
+      S.ore-=out; S.knowledge-=out*CFG.smelterUpkeep; S.metal+=out;
+      fOut('ore',out); fOut('knowledge',out*CFG.smelterUpkeep); fIn('metal',out);
+    }
+    if(S.foundry>0 && !S.paused.foundry){ const c=Math.min(S.metal,S.knowledge,S.foundry*os.foR*dt); S.metal-=c; S.knowledge-=c; S.silicon+=c;
+      fOut('metal',c); fOut('knowledge',c); fIn('silicon',c); }
+    // commissions
+    if(S.flags.o_smelter && S.flags.o_scriptorium && !S.done){
+      if(S.comm){ S.comm.t-=dt; if(S.comm.t<=0){ S.comm=null; S.commCool=CFG.commCool; toast('THE CARAVAN MOVES ON','The commission lapsed. Another will come.','event'); render(); } }
+      else { S.commCool-=dt; if(S.commCool<=0){ const c=CFG.comms[S.commN%CFG.comms.length]; S.commN++;
+        const cap={ marks:S.scribe*os.scribeY, ore:S.miner*os.minerY, metal:S.smelter*os.smR*0.5, knowledge:S.scriptorium*os.scrR*0.5 };
+        const need=Math.ceil(Math.max(c.base,(cap[c.res]||0)*45));
+        S.comm={ i:CFG.comms.indexOf(c), res:c.res, need, t:CFG.commDur };
+        toast('A COMMISSION ARRIVES', c.name+': <b>'+fmt(need)+' '+c.res+'</b>. Fulfilling it boosts a craft permanently.','event'); render(); } }
+    }
+  }
+
+  // ---------- buy math ----------
+  const BUYS = {
+    scribe:{res:'marks',base:CFG.scribeCost,growth:CFG.scribeGrowth}, miner:{res:'ore',base:CFG.minerCost,growth:CFG.minerGrowth},
+    scriptorium:{res:'marks',base:CFG.scriptoriumCost,growth:CFG.scriptoriumGrowth}, smelter:{res:'ore',base:CFG.smelterCost,growth:CFG.smelterGrowth},
+    foundry:{res:'metal',base:CFG.foundryCost,growth:CFG.foundryGrowth}, refine:{res:'ore',base:CFG.refineBase,growth:CFG.refineGrowth},
+  };
+  const unitCost=(k)=> Math.floor(BUYS[k].base*Math.pow(BUYS[k].growth,S[k]));
+  const canBuy=(k)=> S[BUYS[k].res] >= unitCost(k);
+  function buy(k){ if(!canBuy(k)) return; S[BUYS[k].res]-=unitCost(k); S[k]++; rec('buy:'+k); playClick(); refresh(); } // refresh, not render: a purchase changes no structure, so don't rebuild (and destroy) the buttons mid-click
+
+  // ---------- discoveries ----------
+  const discoVisible=(n)=> n.req.every(r=>S.disco[r]);
+  function canDisco(n){ if(S.disco[n.id]||!discoVisible(n)) return false;
+    if(n.reqRes){ for(const k in n.reqRes) if(S[k]<n.reqRes[k]) return false; }
+    if(n.costs){ for(const k in n.costs) if(S[k]<n.costs[k]) return false; return true; }
+    return S[n.res]>=n.cost; }
+  function doDisco(n){ if(!canDisco(n)) return;
+    if(n.costs){ for(const k in n.costs) S[k]-=n.costs[k]; } else S[n.res]-=n.cost;
+    S.disco[n.id]=true; if(n.fn) n.fn(); rec('disco:'+n.id);
+    toast('DISCOVERED · '+n.name, '<i>'+n.flavor+'</i><br>'+n.eff);
+    render(); }
+
+  // ---------- commissions ----------
+  function fulfillComm(){ const c=S.comm; if(!c||S[c.res]<c.need) return; const def=CFG.comms[c.i];
+    S[c.res]-=c.need; S.comm=null; S.commCool=CFG.commCool; S.commDone++;
+    if(def.reward==='rec'){ S.commRec++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Record gains <b>+'+Math.round(CFG.commBonus*100)+'%</b>, permanently.'); }
+    else if(def.reward==='forge'){ S.commForge++; toast('COMMISSION FULFILLED', def.flavor+'<br>The Forge gains <b>+'+Math.round(CFG.commBonus*100)+'%</b>, permanently.'); }
+    else { S.scribe+=2; S.miner+=2; toast('COMMISSION FULFILLED', def.flavor+'<br>They send <b>hands</b>: +2 Scribes, +2 Miners.'); }
+    rec('comm:'+def.id); playClick(); render(); }
+  function declineComm(){ if(!S.comm) return; S.comm=null; S.commCool=CFG.commCool; toast('YOU WAVE THEM ON','Another will come.'); render(); }
+
+  function fabricate(){ if(S.silicon<CFG.siliconGate||S.done) return; S.silicon-=CFG.siliconGate; S.done=true; rec('fabricate');
+    toast('THE LOGIC MACHINE','You built a machine that follows rules you set. The next era begins here — in the full game, this is where Origins hands off to Symbolic.'); render(); }
+
+  // ---------- verbs ----------
+  function floatNum(txt,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=txt; el.style.color=color; el.style.left=(x-10)+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
+  function inscribe(ev){ const g=oStats().inscribe; S.marks+=g; S.started=true; lastAction='inscribe'; playClick();
+    if(ev&&ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),HUE.marks,r.right-40,r.top+10); } refresh(); }
+  function quarry(ev){ const g=oStats().quarry; S.ore+=g; S.started=true; lastAction='quarry'; playClick();
+    if(ev&&ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),HUE.ore,r.right-40,r.top+10); } refresh(); }
+
+  // ---------- sound (a soft chisel tick) ----------
+  let actx=null; const ac=()=>actx||(actx=new (window.AudioContext||window.webkitAudioContext)());
+  function playClick(){ try{ const ctx=ac(),t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='triangle'; o.frequency.setValueAtTime(880,t); o.frequency.exponentialRampToValueAtTime(300,t+0.05);
+    g.gain.setValueAtTime(0.09,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.09); o.start(t); o.stop(t+0.1); }catch(e){} }
+
+  // ---------- toasts (event dwell 8s, logged) ----------
+  function toast(head,body,kind){ const el=document.createElement('div'); el.className='toast';
+    el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>'; const box=$('toasts'); box.appendChild(el);
+    while(box.children.length>3) box.removeChild(box.firstChild);
+    setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, kind==='event'?8000:4800); }
+
+  // ---------- rendering ----------
+  const RAIL = [
+    ['marks','Marks',()=>true], ['ore','Ore',()=>S.flags.o_materials], ['knowledge','Knowledge',()=>S.flags.o_scriptorium],
+    ['metal','Metal',()=>S.flags.o_smelter], ['silicon','Silicon',()=>S.flags.o_foundry],
+  ];
+  // a lane converter descriptor
+  function connector(res){ return '<div class="flow" id="flow-'+res+'" style="--fc:'+HUE[res]+'"><svg viewBox="0 0 38 22" preserveAspectRatio="none">'+
+    '<line class="track" x1="2" y1="11" x2="36" y2="11"/><line class="pulse" x1="2" y1="11" x2="36" y2="11"/></svg></div>'; }
+  function stock(res,label){ return '<div class="stock" data-tip="'+esc('<i>'+RESFLAVOR[res]+'</i>')+'"><img src="'+ICON[res]+'"><div class="sv" id="stk-'+res+'" style="color:'+HUE[res]+'">0</div><div class="sl">'+label+'</div></div>'; }
+  function node(key,name,tip){ return '<div class="node" id="node-'+key+'" data-tip="'+esc(tip)+'"><img class="nic" src="'+ICON[key]+'">'+
+    '<div class="nname">'+name+' <span class="ncount" id="cnt-'+key+'"></span></div>'+
+    '<div class="nrate" id="rate-'+key+'"></div>'+
+    '<button class="buy nbuy" id="buy-'+key+'"></button>'+
+    '<button class="pause" id="pause-'+key+'" title="pause / resume">II</button></div>'; }
+
+  function buildLanes(){
+    let h='';
+    // RECORD lane: Marks -> Scriptorium -> Knowledge
+    h+='<div class="lane"><div class="lane-lab">The Record · Marks become Knowledge<div class="ldash"></div></div><div class="pipe">';
+    h+=stock('marks','Marks');
+    if(S.flags.o_scriptorium){ h+='<div class="seg">'+connector('marks')+node('scriptorium','Scriptorium','<i>Where marks are ordered and made to mean something.</i><br>Marks (+ a little Ore) → Knowledge. Pausable.')+connector('knowledge')+stock('knowledge','Knowledge')+'</div>'; }
+    h+='</div>';
+    if(S.flags.canScribe) h+='<div class="auto" id="auto-scribe" data-tip="'+esc('<i>A trained hand that never tires.</i><br>Automates Marks.')+'"><img src="'+ICON.scribe+'"><span class="an">Scribe <span class="ncount" id="cnt-scribe"></span></span><span class="ar" id="ar-scribe"></span><button class="buy abuy" id="buy-scribe"></button></div>';
+    h+='</div>';
+    // FORGE lane: Ore -> Smelter -> Metal -> Foundry -> Silicon
+    if(S.flags.o_materials){
+      h+='<div class="lane"><div class="lane-lab">The Forge · Ore becomes Metal, then Silicon<div class="ldash"></div></div><div class="pipe">';
+      h+=stock('ore','Ore');
+      if(S.flags.o_smelter){ h+='<div class="seg">'+connector('ore')+node('smelter','Smelter','<i>Fire coaxes metal out of stone.</i><br>Ore (+ a little Knowledge) → Metal. Pausable.')+connector('metal')+stock('metal','Metal')+'</div>'; }
+      if(S.flags.o_foundry){ h+='<div class="seg">'+connector('metal')+node('foundry','Foundry','<i>A recipe and a furnace.</i><br>Metal + Knowledge → Silicon. Pausable.')+connector('silicon')+stock('silicon','Silicon')+'</div>'; }
+      h+='</div>';
+      h+='<div class="auto" id="auto-miner" data-tip="'+esc('<i>Picks against the rock, hour after hour.</i><br>Automates Ore.')+'"><img src="'+ICON.miner+'"><span class="an">Miner <span class="ncount" id="cnt-miner"></span></span><span class="ar" id="ar-miner"></span><button class="buy abuy" id="buy-miner"></button></div>';
+      h+='</div>';
+    }
+    $('lanes').innerHTML=h;
+    // wire buys/pauses
+    ['scriptorium','smelter','foundry','scribe','miner'].forEach(k=>{ const b=$('buy-'+k); if(b) b.onclick=()=>buy(k); const p=$('pause-'+k); if(p) p.onclick=()=>{ S.paused[k]=!S.paused[k]; playClick(); render(); }; });
+  }
+
+  function buildResearch(){
+    const vis=DISCO.filter(n=>discoVisible(n)&&!S.disco[n.id]);
+    const have=DISCO.filter(n=>S.disco[n.id]).length;
+    let h='<div class="rsec">Tablets of knowing — kept forever ('+have+'/'+DISCO.length+')</div>';
+    if(!vis.length) h+='<div class="locked" style="text-align:center">All current research made. Keep building to reveal more.</div>';
+    for(const n of vis){ h+='<div class="disco" id="disco-'+n.id+'" data-tip="'+esc('<i>'+n.flavor+'</i>')+'"><img src="'+(ICON[n.id]||'assets/era1-sigil.png')+'"><div class="di"><div class="dn">'+n.name+'</div><div class="de">'+n.eff+'</div><button class="buy dbuy" id="dbuy-'+n.id+'"></button></div></div>'; }
+    $('researchBody').innerHTML=h;
+    for(const n of vis){ const b=$('dbuy-'+n.id); if(b) b.onclick=()=>doDisco(n); }
+  }
+
+  function render(){ // structural: build rail + lanes + research; refresh() does per-tick values
+    // rail
+    $('rail').innerHTML = RAIL.filter(r=>r[2]()).map(r=>{ const k=r[0];
+      return '<div class="chip" data-tip="'+esc('<i>'+RESFLAVOR[k]+'</i>')+'"><span class="cdot" style="background:'+HUE[k]+'22;border:1px solid '+HUE[k]+'55"><img src="'+ICON[k]+'"></span>'+
+        '<span class="cbody"><span class="clab">'+r[1]+'</span><span class="cval" id="rv-'+k+'" style="color:'+HUE[k]+'">0</span></span><span class="cps" id="rp-'+k+'"></span></div>';
+    }).join('') + '<div class="rail-right"><button class="rail-btn" id="musicBtn">♪ music</button></div>';
+    $('musicBtn').onclick=toggleMusic;
+    $('quarry').style.display = S.flags.o_materials?'flex':'none';
+    $('standing').style.display = (S.flags.o_scriptorium||S.flags.o_materials)?'grid':'none';
+    $('handsCtrl').style.display = S.flags.o_materials?'block':'none';
+    $('refineCtrl').style.display = S.flags.o_scriptorium?'block':'none';
+    $('phase').textContent = ['','Stone Age','Bronze Age','Silicon Age'][S.age]||'Stone Age';
+    $('goalSub').textContent = S.flags.o_foundry?'reach '+CFG.siliconGate+' Silicon':(S.flags.o_smelter?'first, learn to make Silicon (build the Foundry)':'first, learn to work materials');
+    buildLanes(); buildResearch(); refresh();
+  }
+
+  function connGlow(res, active){ const f=$('flow-'+res); if(!f) return; const gross=(FLOW[res]?FLOW[res].in+FLOW[res].out:0);
+    const thru=Math.max(0,Math.min(1, gross/ (0.4) )); // normalize; ~0.4/tick = full
+    f.style.setProperty('--thru', thru.toFixed(2)); f.classList.toggle('idle', gross<0.0005); }
+
+  const RATES = {};
+  const REWARD = { rec:'+5% the Record, forever', forge:'+5% the Forge, forever', free:'hands: +2 Scribes & Miners' };
+  function costHTML(reqs){ // numbers-first per-requirement chips: green+✓ when you have enough, grey while short (never red)
+    return reqs.map(([k,v])=>{ const ok=S[k]>=v; return '<span class="cost-res'+(ok?' ok':'')+'">'+(ok?'✓ ':'')+fmt(v)+' '+k+'</span>'; }).join(' + '); }
+  function refresh(){
+    const os=oStats();
+    // color-coded rail (value + net/s)
+    for(const r of RAIL){ if(!r[2]()) continue; const k=r[0]; setTxt($('rv-'+k), fmt(S[k]));
+      const rt=RATES[k]||0, ps=$('rp-'+k); if(ps){ setTxt(ps,(rt>=0?'+':'')+fmt(rt)+'/s'); const cl='cps '+(rt>0.005?'pos':rt<-0.005?'neg':'zero'); if(ps.className!==cl) ps.className=cl; } }
+    // verbs (lead with the number)
+    setTxt($('inscribeY'),'+'+fmt(os.inscribe)+' marks'); setTxt($('quarryY'),'+'+fmt(os.quarry)+' ore');
+    // stocks + connectors
+    for(const k of ['marks','ore','knowledge','metal','silicon']) setTxt($('stk-'+k), fmt(S[k]));
+    ['marks','ore','knowledge','metal','silicon'].forEach(connGlow);
+    // converters
+    nodeRefresh('scriptorium', [['+',os.scrR,'knowledge'],['−',os.scrR,'marks'],['−',os.scrR*CFG.scriptoriumUpkeep,'ore']]);
+    nodeRefresh('smelter', [['+',os.smR,'metal'],['−',os.smR,'ore'],['−',os.smR*CFG.smelterUpkeep,'knowledge']]);
+    nodeRefresh('foundry', [['+',os.foR,'silicon'],['−',os.foR,'metal'],['−',os.foR,'knowledge']]);
+    autoRefresh('scribe', os.scribeY, 'marks'); autoRefresh('miner', os.minerY, 'ore');
+    // refine (standing decision)
+    if(S.flags.o_scriptorium){ const b=$('refineBuy'); if(b){ setHTML(b,'Build · '+costHTML([['ore',unitCost('refine')]])); const can=canBuy('refine'); setDis(b,!can); b.classList.toggle('ok',can); }
+      setTxt($('refineN'),'×'+S.refine); setTxt($('refineEff'),'+'+Math.round(S.refine*CFG.refineBonus*100)+'% to all production'); }
+    // commission (reward legible up front)
+    const cm=$('commission');
+    if(S.comm){ if(!cm.classList.contains('show')) cm.classList.add('show'); const def=CFG.comms[S.comm.i];
+      setTxt($('cmName'), def.name);
+      setHTML($('cmNeed'), 'give <b style="color:'+HUE[S.comm.res]+'">'+fmt(S.comm.need)+' '+S.comm.res+'</b> → <b>'+REWARD[def.reward]+'</b>');
+      $('cmTimer').style.width=Math.max(0,(S.comm.t/CFG.commDur)*100)+'%';
+      const y=$('cmYes'); setHTML(y,'Fulfill · '+costHTML([[S.comm.res,S.comm.need]])); const okc=S[S.comm.res]>=S.comm.need; setDis(y,!okc); y.classList.toggle('ok',okc);
+      if(!y._wired){ y.onclick=fulfillComm; $('cmNo').onclick=declineComm; y._wired=1; }
+    } else if(cm.classList.contains('show')) cm.classList.remove('show');
+    // goal + fabricate (wakes when eligible — teases the next era)
+    $('siMeter').style.width=Math.min(100,(S.silicon/CFG.siliconGate)*100)+'%';
+    setTxt($('siLab'), S.flags.o_foundry? fmt(S.silicon)+' / '+CFG.siliconGate+' silicon' : 'unlock the Foundry to make Silicon');
+    const fb=$('fabricate'), ready=S.silicon>=CFG.siliconGate&&!S.done; setDis(fb,!ready); setTxt(fb, S.done?'FABRICATED ✓':'FABRICATE');
+    $('goal').classList.toggle('ready', ready);
+    // research badge + drawer buttons (were blank)
+    const canN=DISCO.filter(canDisco).length; const bdg=$('researchBadge'); setTxt(bdg,String(canN)); bdg.style.display=canN?'inline-block':'none';
+    refreshResearch();
+    if(S.dev) updateDbg();
+  }
+  function nodeRefresh(key, flows){
+    const node=$('node-'+key); if(!node) return;
+    setTxt($('cnt-'+key), '×'+S[key]);
+    setHTML($('rate-'+key), S[key]>0 ? flows.map(([s,v,r])=>'<span class="'+(s==='+'?'up':'dn')+'">'+s+fmt(v*S[key])+' '+r+'</span>').join('') : '<span style="color:var(--dimmer)">not built yet</span>');
+    const b=$('buy-'+key); if(b){ setHTML(b,'Build · '+costHTML([[BUYS[key].res,unitCost(key)]])); const can=canBuy(key); setDis(b,!can); b.classList.toggle('ok',can); }
+    const p=$('pause-'+key); if(p) p.classList.toggle('on',!!S.paused[key]);
+    const starved = S[key]>0 && !S.paused[key] && ((key==='scriptorium'&&S.marks<0.5)||(key==='smelter'&&S.ore<0.5)||(key==='foundry'&&(S.metal<0.5||S.knowledge<0.5)));
+    const cl='node'+(canBuy(key)?' can':'')+(starved?' starved':''); if(node.className!==cl) node.className=cl;
+  }
+  function autoRefresh(key, yld, res){ setTxt($('cnt-'+key),'×'+S[key]); setTxt($('ar-'+key),'+'+fmt(S[key]*yld)+' '+res+'/s');
+    const b=$('buy-'+key); if(b){ setHTML(b,'+1 · '+costHTML([[BUYS[key].res,unitCost(key)]])); const can=canBuy(key); setDis(b,!can); b.classList.toggle('ok',can); } }
+  function refreshResearch(){ // the discovery buttons were blank — fill cost + affordability
+    for(const n of DISCO){ const b=$('dbuy-'+n.id); if(!b) continue;
+      const reqs = n.costs ? Object.entries(n.costs) : [[n.res,n.cost]];
+      if(n.reqRes) for(const k in n.reqRes) reqs.push([k,n.reqRes[k]]);
+      setHTML(b,'Discover · '+costHTML(reqs)); const can=canDisco(n); setDis(b,!can); b.classList.toggle('ok',can); }
+  }
+
+  // ---------- tick ----------
+  let _last=Date.now();
+  function tick(){ const now=Date.now(); let real=(now-_last)/1000; _last=now; if(real>0.5) real=0.5;
+    const dt=real*S.speed; S.t+=dt;
+    // capture rates via before/after snapshot
+    const before={}; for(const k of ['marks','ore','knowledge','metal','silicon']) before[k]=S[k];
+    produce(dt);
+    if(dt>0) for(const k in before) RATES[k]=(S[k]-before[k])/dt;
+    refresh();
+  }
+
+  // ---------- tooltips ----------
+  const tip=$('tip'); let tipEl=null;
+  function placeTip(e){ const m=15; let x=e.clientX+m,y=e.clientY+m; const w=tip.offsetWidth,h=tip.offsetHeight;
+    if(x+w>innerWidth-8)x=e.clientX-w-m; if(y+h>innerHeight-8)y=innerHeight-h-8; if(x<8)x=8; if(y<8)y=8; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+  document.addEventListener('mouseover',e=>{ const t=e.target.closest?e.target.closest('[data-tip]'):null; if(t&&t!==tipEl){ tipEl=t; tip.innerHTML=t.getAttribute('data-tip'); tip.classList.add('show'); placeTip(e); } });
+  document.addEventListener('mousemove',e=>{ if(tipEl) placeTip(e); });
+  document.addEventListener('mouseout',e=>{ if(tipEl){ const to=e.relatedTarget; if(!to||!(to.closest&&to.closest('[data-tip]'))){ tip.classList.remove('show'); tipEl=null; } } });
+
+  // ---------- dead-click telemetry ----------
+  const ACTIONABLE='button,input,a,.node,.disco,.chip,.stock,.auto,.verb,.side-btn,.rail-btn';
+  document.addEventListener('pointerdown',e=>{ if(!S.started) return; const t=e.target;
+    if(t&&t.closest&&t.closest(ACTIONABLE)) return; REC.dead++; rec('@deadclick',{x:Math.round(e.clientX),y:Math.round(e.clientY),tag:(t&&t.tagName||'').toLowerCase()}); },true);
+  let _sl=0; addEventListener('scroll',()=>{ const now=Date.now(); if(now-_sl<1200) return; _sl=now; const max=Math.max(1,document.documentElement.scrollHeight-innerHeight); rec('@scroll',{pct:Math.round(Math.min(1,scrollY/max)*100)}); },{passive:true});
+
+  // ---------- music ----------
+  let musicOn=false;
+  function toggleMusic(){ musicOn=!musicOn; const m=$('music'); if(musicOn){ m.volume=0.4; m.play().catch(()=>{}); $('musicBtn').style.color='var(--accent)'; } else { m.pause(); $('musicBtn').style.color=''; } }
+  addEventListener('pointerdown',()=>{ if(musicOn){ const m=$('music'); if(m.paused) m.play().catch(()=>{}); } },{once:true});
+
+  // ---------- dev overlay ----------
+  function updateDbg(){ const o=$('dbg'); if(!o) return; const max=Math.max(1,document.documentElement.scrollHeight-innerHeight);
+    const pct=Math.round(Math.min(1,scrollY/max)*100);
+    o.innerHTML='<b>ORIGINS</b>  t=<b>'+Math.floor(S.t)+'</b>s  scroll <b>'+pct+'%</b>\nmarks +'+fmt(RATES.marks||0)+'/s  si '+fmt(S.silicon)+'/'+CFG.siliconGate+'\nlast: <b>'+(lastAction||'—')+'</b>  dead: <b>'+REC.dead+'</b>';
+  }
+  function renderDev(){ if(!S.dev) return; $('dev').innerHTML='<div class="row">'+[1,3,10,50].map(s=>'<button data-s="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div>'+
+    '<div class="row"><button data-grant>+res</button><button data-newgame>new game+</button><button data-dl>download run</button></div>';
+    $('dev').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ S.speed=+b.dataset.s; renderDev(); });
+    $('dev').querySelector('[data-grant]').onclick=()=>{ S.marks+=1000;S.ore+=1000;S.knowledge+=1000;S.metal+=1000;S.silicon+=200; refresh(); };
+    $('dev').querySelector('[data-newgame]').onclick=newGame;
+    $('dev').querySelector('[data-dl]').onclick=downloadRun;
+  }
+  function toggleDev(on){ S.dev=on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); $('dbg').classList.toggle('show',S.dev); if(S.dev){ renderDev(); updateDbg(); } }
+  addEventListener('keydown',e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
+
+  function runJSON(){ return JSON.stringify({ ...REC, t:+S.t.toFixed(1), age:S.age, done:S.done }); }
+  function downloadRun(){ try{ const b=new Blob([runJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='emergence-v3-run.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },400); toast('RUN DOWNLOADED','emergence-v3-run.json is in Downloads.'); }catch(e){} }
+  function newGame(){ // snapshot the run BEFORE wiping (the fix for the run-2 bug)
+    try{ localStorage.setItem(SAVE_KEY+'_lastrun', runJSON()); }catch(e){}
+    S=fresh(); REC.events.length=0; REC.dead=0; save(); render(); toast('NEW GAME','Fresh start. (Previous run telemetry snapshotted.)'); }
+
+  // ---------- save ----------
+  function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({S, t:Date.now()})); }catch(e){} }
+  function load(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d&&d.S){ S=Object.assign(fresh(),d.S); return true; } }catch(e){} return false; }
+  setInterval(save,5000); addEventListener('beforeunload',save);
+
+  // ---------- wire + boot ----------
+  $('inscribe').onclick=inscribe; $('quarry').onclick=quarry;
+  $('fabricate').onclick=fabricate;
+  $('researchBtn').onclick=()=>$('research').classList.toggle('show');
+  $('researchClose').onclick=()=>$('research').classList.remove('show');
+  $('hands').oninput=e=>{ S.lever=1-(+e.target.value/100); };
+  $('refineBuy').onclick=()=>buy('refine');
+
+  load();
+  if(location.hash.indexOf('seed')>=0){ // dev-only: seed a mid-game Silicon-age state for screenshots (never fires in normal play)
+    Object.assign(S.disco,{tally:1,scribe:1,stoneworking:1,clayTablets:1,kiln:1,alphabet:1,numerals:1,theFoundry:1}); // leave bronzeCasting/wheel/glassmaking to show research buttons
+    Object.assign(S.flags,{canScribe:1,o_materials:1,o_scriptorium:1,o_smelter:1,o_foundry:1});
+    S.age=3; S.scribe=8; S.miner=8; S.scriptorium=4; S.smelter=3; S.foundry=2;
+    S.marks=520; S.ore=840; S.knowledge=310; S.metal=190; S.silicon=130; S.started=true; // 130 ≥ gate → the Logic Machine 'wakes'
+    S.comm={ i:0, res:'marks', need:200, t:60 };
+    if(location.hash==='#seedr') setTimeout(()=>$('research').classList.add('show'),50);
+  }
+  render();
+  setInterval(tick, CFG.tickMs);
+})();
+</script>
+</body>
+</html>
