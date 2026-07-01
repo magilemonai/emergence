@@ -10,6 +10,10 @@ build's playtest #2. Once addressed, these fold back into `TODO-v3-unified.md`.)
 2. **Where does it go passive** — any moment you're watching a bar instead of deciding? Suspects:
    Deep's back half and Foundation pre-emergence.
 3. Which eras feel long, which feel short? (I won't touch pacing without your read.)
+4. New since playtest #2: **Esc opens Settings** (Pause / Restart / Music + Sound volume). Pause
+   freezes the run — use it mid-capture whenever you want to talk without the economy moving.
+   If you reload or come back later, a "WHILE YOU WERE AWAY" toast recaps what accrued — say
+   whether the away gains feel right (Deep runs can bleed while unattended; flag if that stings).
 
 ## Origins
 - **The Commission card is below the fold — did you notice it? Should it move up?**

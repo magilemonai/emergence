@@ -264,6 +264,22 @@
   .era-tab.locked:hover{ border-color:var(--line); color:var(--dim); }
   .refine-row{ display:flex; align-items:center; gap:12px; }
   .refine-row .rinfo{ flex:1; } .refine-row .rname{ font-family:var(--era-font); font-size:14px; } .refine-row .reff{ font-size:12px; color:var(--good); }
+
+  /* ---------- settings (Escape) + pause pill — theme-aware chrome ---------- */
+  #settings{ position:fixed; inset:0; z-index:90; display:none; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; }
+  #settings.show{ display:flex; }
+  #settings .set-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px; width:320px; max-width:88vw; color:var(--text); font-family:var(--era-font); }
+  #settings .set-h{ display:flex; justify-content:space-between; align-items:center; font-size:14px; letter-spacing:0.14em; color:var(--accent); margin-bottom:14px; }
+  #settings .x{ background:none; border:none; color:var(--dim); font-size:18px; cursor:pointer; line-height:1; }
+  #settings .set-row{ display:flex; gap:8px; margin-bottom:12px; align-items:center; }
+  #settings .set-row>button{ flex:1; font-family:inherit; font-size:12px; letter-spacing:0.08em; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:rgba(0,0,0,0.25); color:var(--text); cursor:pointer; }
+  #settings .set-row>button:hover{ border-color:var(--accent); }
+  #settings .set-slider label{ width:52px; font-size:12px; color:var(--dim); }
+  #settings .set-slider input{ flex:1; accent-color:var(--accent); }
+  #settings .set-slider span{ width:38px; text-align:right; font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums; }
+  #settings .set-note{ font-size:10px; color:var(--dim); opacity:0.7; text-align:center; margin-top:4px; }
+  #pausePill{ position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:88; display:none; font-family:var(--era-font); font-size:11px; letter-spacing:0.14em; padding:6px 14px; border-radius:999px; border:1px solid var(--accent); background:var(--panel); color:var(--accent); cursor:pointer; }
+  #pausePill.show{ display:block; }
 </style>
 </head>
 <body class="theme-1">
@@ -286,6 +302,16 @@
 <div id="rupture"></div>
 <div id="dev"></div>
 <div id="dbg"></div>
+<div id="settings">
+  <div class="set-card">
+    <div class="set-h">SETTINGS<button class="x" id="setClose">&times;</button></div>
+    <div class="set-row"><button id="setPause">II PAUSE</button><button id="setRestart">RESTART RUN</button></div>
+    <div class="set-row set-slider"><label>Music</label><input type="range" id="setMusVol" min="0" max="100"><span id="setMusVolV"></span></div>
+    <div class="set-row set-slider"><label>Sound</label><input type="range" id="setSfxVol" min="0" max="100"><span id="setSfxVolV"></span></div>
+    <div class="set-note">Esc opens/closes</div>
+  </div>
+</div>
+<button id="pausePill">II PAUSED — click to resume</button>
 <audio id="music" loop preload="none"></audio>
 
 <script src="v3-kit/kit.js"></script>
@@ -434,7 +460,9 @@
     });
   }
   function navTo(n) {
-    if (!ERAS[n]) return; S.era = n; setTheme(ERAS[n].theme); KIT.musicPlayEra(n); render();
+    if (!ERAS[n]) return; S.era = n; setTheme(ERAS[n].theme);
+    KIT.musicPlayEra(ERAS[n].bedKey ? ERAS[n].bedKey() : n); // Foundation post-rupture stays on the Unmoored bed
+    render();
   }
   function openEra(n) {
     S.maxEra = Math.max(S.maxEra, n);
@@ -449,8 +477,10 @@
     KIT.soundProfile = era.sound || {};
     // rail
     var chips = era.railDefs().filter(function (r) { return r[2](); }).map(function (r) { return KIT.chip(r[0], r[1]); }).join('');
-    $('rail').innerHTML = chips + '<div class="rail-right"><button class="rail-btn" id="musicBtn">♪ music</button></div>';
+    $('rail').innerHTML = chips + '<div class="rail-right"><button class="rail-btn" id="musicBtn">♪ music</button><button class="rail-btn" id="setBtn" title="settings (Esc)">⚙</button></div>';
     $('musicBtn').onclick = KIT.musicToggle;
+    if (KIT.MUSIC.on) $('musicBtn').style.color = 'var(--accent)'; // rail rebuilds on render — restore the toggle state
+    $('setBtn').onclick = function () { toggleSettings(); };
     // nav
     $('eraNav').innerHTML = eraNavHTML(); wireNav();
     // header
@@ -483,26 +513,40 @@
   var _last = Date.now();
   function tick() {
     var now = Date.now(), real = (now - _last) / 1000; _last = now; if (real > 0.5) real = 0.5;
-    var dt = real * (S.speed || 1); S.t += dt;
-    KIT.flowReset();
-    var before = {}; POOL.forEach(function (k) { before[k] = S[k] || 0; });
-    ORDER.forEach(function (n) { if (ERAS[n] && n <= S.maxEra && ERAS[n].produce) ERAS[n].produce(dt); });
-    if (dt > 0) POOL.forEach(function (k) { RATES[k] = ((S[k] || 0) - before[k]) / dt; });
+    var dt = S.uiPaused ? 0 : real * (S.speed || 1);
+    if (dt > 0) {
+      S.t += dt;
+      KIT.flowReset();
+      var before = {}; POOL.forEach(function (k) { before[k] = S[k] || 0; });
+      ORDER.forEach(function (n) { if (ERAS[n] && n <= S.maxEra && ERAS[n].produce) ERAS[n].produce(dt); });
+      POOL.forEach(function (k) { RATES[k] = ((S[k] || 0) - before[k]) / dt; });
+    } else if (S.uiPaused) POOL.forEach(function (k) { RATES[k] = 0; });
     refreshActive();
   }
 
   /* ---------- persistence ---------- */
   function runJSON() { return JSON.stringify({ v: KIT.REC.v, events: KIT.REC.events, dead: KIT.REC.dead, t: +S.t.toFixed(1), maxEra: S.maxEra }); }
-  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, S: S, t: Date.now() })); } catch (e) {} }
-  function load() {
+  function save() { // dev/speed/uiPaused are session-only: a reload must not resume at 50× or paused
+    try {
+      var out = {}; for (var k in S) if (k !== 'dev' && k !== 'speed' && k !== 'uiPaused') out[k] = S[k];
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, S: out, t: Date.now() }));
+    } catch (e) {}
+  }
+  function load() { // returns the save's wall-clock ms (for offline catch-up), or null
     try {
       var d = JSON.parse(localStorage.getItem(SAVE_KEY));
-      if (d && d.S) { var merged = KIT.deepMerge(S, d.S); clearObj(S); for (var k in merged) S[k] = merged[k]; return true; }
+      if (d && d.v === 1 && d.S) { var merged = KIT.deepMerge(S, d.S); clearObj(S); for (var k in merged) S[k] = merged[k]; return d.t || null; }
     } catch (e) {}
-    return false;
+    return null;
+  }
+  function offlineToast(o) {
+    var parts = POOL.filter(function (k) { return o.g[k] > 0.05; }).map(function (k) { return '+' + KIT.fmt(o.g[k]) + ' ' + k.charAt(0).toUpperCase() + k.slice(1); });
+    var mins = Math.floor(o.eff / 60), dur = mins >= 60 ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : mins + 'm';
+    KIT.toast('WHILE YOU WERE AWAY', 'Away for ' + dur + (o.capped ? ' (capped at 8h)' : '') + '. The system kept running:<br>' + parts.join(' &middot; '), 'event');
   }
   function newGame() {
     try { localStorage.setItem(SAVE_KEY + '_lastrun', runJSON()); } catch (e) {}
+    setPaused(false);
     freshAll(); KIT.REC.events.length = 0; KIT.REC.dead = 0; save();
     setTheme(ERAS[S.era].theme); render(); KIT.toast('NEW GAME', 'Fresh start. (Previous run telemetry snapshotted.)');
   }
@@ -529,7 +573,34 @@
   function downloadRun() {
     try { var b = new Blob([runJSON()], { type: 'application/json' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'emergence-v3-run.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400); KIT.toast('RUN DOWNLOADED', 'emergence-v3-run.json is in Downloads.'); } catch (e) {}
   }
-  addEventListener('keydown', function (e) { if (e.key === '`' || e.key === '~') { e.preventDefault(); toggleDev(); } });
+  addEventListener('keydown', function (e) {
+    if (e.key === '`' || e.key === '~') { e.preventDefault(); toggleDev(); }
+    else if (e.key === 'Escape') toggleSettings();
+  });
+
+  /* ---------- settings (Escape) — pause / restart / music + SFX volume (port of the shipped R4.9 panel) ---------- */
+  function setPaused(p) {
+    S.uiPaused = !!p;
+    var pp = $('pausePill'); if (pp) pp.classList.toggle('show', S.uiPaused);
+    settingsSync(); KIT.rec(S.uiPaused ? '@pause' : '@resume');
+  }
+  function settingsSync() {
+    KIT.setTxt($('setPause'), S.uiPaused ? '▶ RESUME' : 'II PAUSE');
+    var mv = Math.round(KIT.MUSIC.vol * 100), sv = Math.round(KIT.SFX.vol * 100);
+    $('setMusVol').value = mv; KIT.setTxt($('setMusVolV'), mv + '%');
+    $('setSfxVol').value = sv; KIT.setTxt($('setSfxVolV'), sv + '%');
+  }
+  function toggleSettings(on) {
+    var el = $('settings'), show = on !== undefined ? !!on : !el.classList.contains('show');
+    el.classList.toggle('show', show); if (show) settingsSync();
+  }
+  $('setClose').onclick = function () { toggleSettings(false); };
+  $('settings').onclick = function (e) { if (e.target === $('settings')) toggleSettings(false); };
+  $('setPause').onclick = function () { setPaused(!S.uiPaused); };
+  $('pausePill').onclick = function () { setPaused(false); };
+  $('setRestart').onclick = function () { if (confirm('Restart the run from the first mark?')) { toggleSettings(false); newGame(); } };
+  $('setMusVol').oninput = function () { KIT.musicSetVol(this.value / 100); KIT.setTxt($('setMusVolV'), this.value + '%'); };
+  $('setSfxVol').oninput = function () { KIT.sfxSetVol(this.value / 100); KIT.setTxt($('setSfxVolV'), this.value + '%'); KIT.playSound('buy'); };
 
   /* ---------- boot ---------- */
   KIT.initTip();
@@ -537,9 +608,10 @@
   $('researchClose').onclick = function () { $('research').classList.remove('show'); };
 
   freshAll();
-  load();
+  var lastSave = load();
   // dev seed hooks for screenshots (never fire in normal play)
   var HASH = location.hash;
+  var seeded = HASH.indexOf('seed') >= 0;
   if (HASH.indexOf('seedpost') >= 0 && ERAS[5]) { ERAS[5].seed('post'); } // aftermath + open veto
   else if (HASH.indexOf('seedend') >= 0 && ERAS[5]) { ERAS[5].seed('end'); } // resolved ending + recap
   else if (HASH.indexOf('found') >= 0 && ERAS[5]) { ERAS[5].seed('pre'); } // pre-emergence, Anomaly climbing
@@ -570,12 +642,28 @@
     S.marks = 520; S.ore = 840; S.knowledge = 310; S.metal = 190; S.silicon = 130; S.started = true;
     E.comm = { i: 0, res: 'marks', need: 200, t: 60 };
   }
+  // offline catch-up (8h cap): replay the away time muted, then tell the player what accrued
+  var offline = null;
+  if (!seeded && lastSave && S.started) {
+    offline = KIT.offlineCatchup({
+      elapsed: (Date.now() - lastSave) / 1000, keys: POOL,
+      getS: function () { return S; },
+      produceStep: function (d) { // mirrors tick(): advance the clock, then every unlocked era produces
+        S.t += d; KIT.flowReset();
+        ORDER.forEach(function (n) { if (ERAS[n] && n <= S.maxEra && ERAS[n].produce) ERAS[n].produce(d); });
+      }
+    });
+  }
+  KIT.audioLoad();
   setTheme(ERAS[S.era].theme);
+  KIT.musicPlayEra(ERAS[S.era].bedKey ? ERAS[S.era].bedKey() : S.era); // set the bed at boot (the ♪ toggle was dead until the first era switch)
+  document.addEventListener('pointerdown', function firstGesture() { KIT.musicEnsure(); document.removeEventListener('pointerdown', firstGesture); });
   render();
+  if (offline) setTimeout(function () { offlineToast(offline); }, 600);
   setInterval(tick, CFG.tickMs);
 
   // expose a tiny bit for headless verification
-  window.__EMG = { S: S, ERAS: ERAS, tick: tick, render: render, navTo: navTo, openEra: openEra };
+  window.__EMG = { S: S, ERAS: ERAS, KIT: KIT, tick: tick, render: render, navTo: navTo, openEra: openEra, save: save, newGame: newGame, toggleSettings: toggleSettings, setPaused: setPaused };
 })();
 </script>
 </body>

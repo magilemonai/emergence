@@ -7,7 +7,7 @@
 > folded in as their items resurface.
 > Scope right now = the v3 unified build (`emergence-v3-unified.html` + `v3-kit/`). Asset needs →
 > `ART-PROMPTS.md`. Feedback parses live in `alpha tests/<date> - <person>/`.
-> Last updated 2026-07-01 (playtest #2 processed).
+> Last updated 2026-07-01 (playtest #2 processed; session-services parity pass done same day).
 
 ## Status
 - Phase 2 (kit) ✅ · Phase 3 core (5 eras merged into one file) ✅ committed `2b129df` (local, unpushed).
@@ -32,9 +32,10 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 ## P0 — ONE SCREEN PER ERA (measured @1280×800, ~713px viewport)
 - [x] **Deep** (was game-breaking): triangle + 3 runs + gauges side-by-side (approved mock); overflow +569→**+176**. ([20:42],[23:14])
 - [x] **Statistical Focus dial** on-screen: compacted the pinned stage; primary loop (scatter+RUN TRIAL+dial+goal) fits. ([14:54])
-- [x] Global density pass (kit padding/margins) — shaved every era. Current overflow: Symbolic **+183**, Deep **+176**, Foundation **+196**, Origins **+289**, Statistical **+589**.
-- [ ] **Statistical true zero-scroll**: the Experiment Board + Methods (secondary) still push +589 — relocate/collapse them.
+- [x] Global density pass (kit padding/margins) — shaved every era. Fresh sweep 2026-07-01 PM: Origins **+289**, Symbolic **+164**, Statistical **+515**, Deep **+176**, Foundation pre **+196**, aftermath (seedpost) **0**, ending recap (seedend) **+714**.
+- [ ] **Statistical true zero-scroll**: the Experiment Board + Methods (secondary) still push +515 — relocate/collapse them. (Tried a Methods relocation once, it backfired — wants Cody's eye on collapse-vs-move.)
 - [ ] **Origins** (+289): trim the second lane / standing row to fit.
+- [ ] **Ending recap (seedend) is +714** — probably fine to scroll a read-only scorecard, but flag it for Cody's call.
 - [x] Verify at real 1280×800 (shoot-unified now uses it + reports overflowPx).
 
 ## P1 — must-fix UI bugs (quick, unambiguous)  ✅ DONE 2026-07-01
@@ -61,6 +62,20 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 - [x] Deep: Build Compute Node promoted to hero (.verb-hero, brighter/bigger than supply buttons) ([24:08]). (2026-07-01)  ·  [ ] supply visibly eases steering ([22:39]) — design.
 - [ ] Foundation: substrate tiles DO something when the agent operates prior eras (storytelling) ([38:21],[39:16]); ending needs a finale moment ([40:20]). — design, needs Cody.
 
+## Session services — parity with the shipped game (done 2026-07-01 PM, no playtest needed)
+All engineering, ported from Cody-approved shipped features; `node test-v3.js` now **75 green** +
+`tools/settings-smoke.js` (10 live checks). Feel items flagged below still want a playtest look.
+- [x] **Offline catch-up** (8h cap): away time replays muted + deterministic; "WHILE YOU WERE AWAY" toast.
+      Live-only systems freeze under `KIT.MUTE`: Origins commissions, Symbolic contradictions, Deep events,
+      the emergence rupture (fires on the first LIVE tick after you return — you see it), the whole aftermath.
+- [x] **Settings on Escape** (port of shipped R4.9): Pause/Resume (+ pause pill), Restart run (confirm),
+      Music + Sound volume sliders (persisted). ⚙ button on the rail next to ♪.
+- [x] **Save hardening**: versioned save; scrubs session-only `dev/speed/uiPaused` (reload no longer resumes at 50× dev speed).
+- [x] **Music fixes**: bed src now set at boot (♪ was dead until the first era switch); ♪ state + volumes persist;
+      persisted-on music auto-resumes on first click (autoplay policy); post-rupture nav keeps the Unmoored bed (`bedKey`).
+- [ ] PLAYTEST NOTE: Deep drift erosion still runs offline (matches shipped "the system kept running") —
+      8h away can bleed the runs low. If that feels punishing on a real return, gate erosion under MUTE too.
+
 ## Phase-3 remainder (from the merge plan)
 - [~] Revert 3 economy stand-ins → real cross-era reach-back (supply was doubled):
   - [x] **Statistical** — removed fake Foundry (Data→Silicon valve); Silicon now from the real Origins pool; supply bus = "Silicon from Origins →" reach-back nav. (2026-07-01)
@@ -71,12 +86,18 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 - [ ] Inline kit.css/kit.js + era modules into the single file (single-file constraint) — final packaging. (fold `test-v3.js` into `test.js` when v3 swaps into emergence.html)
 - [ ] Then: Cody records → iterate → swap v3 → `emergence.html`, push (auto-deploys). DO NOT push until Cody says.
 
-## Deferred from PRIOR sessions — still open (verify relevance before doing)
-- [ ] Pacing redistribution (Origins/Deep long; Statistical/aftermath short) — tune from a real run.
-- [ ] Foundation aftermath rework RR8/RR9/RR10 (Alignment-vs-Control distinct; plateau/breakthrough gates so it can't collapse in ~57s).
-- [ ] Open design calls: RR6c (shift changes optimal Focus), full RR7 benchmark readout, R4.32 backbone-resource-per-era through-line.
-- [ ] RR5 `chainPerFoundry` value (3%/foundry) needs a playtest tune.
-- NOTE: the round-4/5 items shipped into the OLD `emergence.html`; re-confirm each still applies to the v3 unified build before actioning.
+## Deferred from PRIOR sessions — relevance AUDITED against v3 (2026-07-01 PM)
+- [ ] Pacing redistribution — still relevant but the old numbers are from the v2 build; v3 pacing is
+      entirely unmeasured. Needs a full v3 run (REC download-run) before touching any CFG.
+- [ ] Foundation aftermath rework RR8/RR9/RR10 — still unaddressed in v3 (the aftermath carries the R3.5
+      stakes but Alignment-vs-Control are not mechanically distinct, and there are no plateau gates).
+      FOLD INTO the P3 Foundation design session with Cody — same conversation as pre-emergence agency.
+- [ ] RR6c (shift changes optimal Focus) + full RR7 benchmark readout — design calls, Cody's; both still
+      apply to v3 (v3 Statistical has shifts; the RR7-light tidbits partially carried via Foundation TIDBITS).
+- [x] R4.32 backbone-resource-per-era through-line — v3's shared POOL largely IS this (marks→…→scale all
+      top-level, color-coded on the rail, real reach-back). Consider it absorbed by the paradigm.
+- [ ] RR5 `chainPerFoundry` (3%/foundry) — carried into v3 (test asserts it reads the real `S.e1.foundry`);
+      tune from a real run.
 
 ## Art — DONE 2026-07-01
 - [x] 20 ChatGPT images (10 assets × 2 passes) keyed to transparent + filed in `images/keyed-2026-07-01/`.

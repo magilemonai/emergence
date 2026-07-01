@@ -107,7 +107,7 @@
 
   /* ---------- overlays: float, tooltip, toasts ---------- */
   function floatNum(txt, color, x, y) {
-    if (!hasDOM) return;
+    if (!hasDOM || KIT.MUTE) return;
     var el = document.createElement('div'); el.className = 'float'; el.textContent = txt;
     el.style.color = color; el.style.left = (x - 10) + 'px'; el.style.top = y + 'px';
     $('fx').appendChild(el); setTimeout(function () { el.remove(); }, 900);
@@ -131,7 +131,7 @@
   }
   // toast(head, body, kind) — kind ∈ '' | 'event' | 'edu'; header is .toast-h (no .th clash). Event dwell 8s.
   function toast(head, body, kind) {
-    if (!hasDOM) return;
+    if (!hasDOM || KIT.MUTE) return;
     var el = document.createElement('div'); el.className = 'toast' + (kind ? ' ' + kind : '');
     el.innerHTML = '<div class="toast-h">' + head + '</div><div class="tb">' + body + '</div>';
     var box = $('toasts'); box.appendChild(el);
@@ -147,14 +147,15 @@
   var _actx = null;
   function _ac() { return _actx || (_actx = new (window.AudioContext || window.webkitAudioContext)()); }
   var DEFAULT_SOUND = { osc: 'triangle', f0: 880, f1: 300, g: 0.09, dur: 0.1 };
+  var SFX = { vol: 1 }; // master SFX level (0 = silent); persisted via audioLoad/sfxSetVol
   function playSound(type) {
-    if (!hasDOM) return;
+    if (!hasDOM || KIT.MUTE || SFX.vol <= 0) return;
     try {
       var p = (KIT.soundProfile && KIT.soundProfile[type]) || KIT.soundProfile.buy || DEFAULT_SOUND;
       var ctx = _ac(), t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination); o.type = p.osc || 'triangle';
       o.frequency.setValueAtTime(p.f0, t); o.frequency.exponentialRampToValueAtTime(p.f1 || p.f0, t + (p.dur || 0.06) * 0.6);
-      g.gain.setValueAtTime(p.g || 0.09, t); g.gain.exponentialRampToValueAtTime(0.0001, t + (p.dur || 0.1));
+      g.gain.setValueAtTime((p.g || 0.09) * SFX.vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + (p.dur || 0.1));
       o.start(t); o.stop(t + (p.dur || 0.1) + 0.01);
     } catch (e) {}
   }
@@ -192,13 +193,46 @@
   function musicSetup(beds) { MUSIC.beds = beds || {}; if (hasDOM) MUSIC.el = $('music'); }
   function musicPlayEra(n) {
     if (!hasDOM || !MUSIC.el) return; var src = MUSIC.beds[n]; if (!src || MUSIC.cur === src) return;
-    MUSIC.cur = src; MUSIC.el.src = src; if (MUSIC.on) MUSIC.el.play().catch(function () {});
+    MUSIC.cur = src; MUSIC.el.src = src; if (MUSIC.on) { MUSIC.el.volume = MUSIC.vol; MUSIC.el.play().catch(function () {}); }
   }
   function musicToggle() {
     if (!hasDOM || !MUSIC.el) return; MUSIC.on = !MUSIC.on;
+    try { localStorage.setItem('emergence_v3_music', MUSIC.on ? 'on' : 'off'); } catch (e) {}
     var btn = $('musicBtn');
     if (MUSIC.on) { MUSIC.el.volume = MUSIC.vol; MUSIC.el.play().catch(function () {}); if (btn) btn.style.color = 'var(--accent)'; }
     else { MUSIC.el.pause(); if (btn) btn.style.color = ''; }
+  }
+  // resume a persisted-on bed after the first user gesture (browser autoplay policy blocks it at boot)
+  function musicEnsure() { if (!hasDOM || !MUSIC.el || !MUSIC.on || !MUSIC.cur) return; MUSIC.el.volume = MUSIC.vol; if (MUSIC.el.paused) MUSIC.el.play().catch(function () {}); }
+  function musicSetVol(v) { MUSIC.vol = Math.max(0, Math.min(1, +v || 0)); if (MUSIC.el) MUSIC.el.volume = MUSIC.vol; try { localStorage.setItem('emergence_v3_musvol', String(MUSIC.vol)); } catch (e) {} }
+  function sfxSetVol(v) { SFX.vol = Math.max(0, Math.min(1, +v || 0)); try { localStorage.setItem('emergence_v3_sfxvol', String(SFX.vol)); } catch (e) {} }
+  function audioLoad() { // restore persisted audio prefs at boot (music still starts only on gesture/toggle)
+    if (!hasDOM) return;
+    try {
+      var mv = localStorage.getItem('emergence_v3_musvol'); if (mv !== null) MUSIC.vol = Math.max(0, Math.min(1, +mv));
+      var sv = localStorage.getItem('emergence_v3_sfxvol'); if (sv !== null) SFX.vol = Math.max(0, Math.min(1, +sv));
+      MUSIC.on = localStorage.getItem('emergence_v3_music') === 'on' && MUSIC.vol > 0;
+    } catch (e) {}
+  }
+
+  /* ---------- offline catch-up (shipped pattern): MUTE the world, replay the elapsed time in
+     tick-sized steps so conversion order / caps / gates behave exactly like live play. Live-only
+     systems (commissions, Deep events, contradictions, emergence + aftermath) check KIT.MUTE and
+     freeze — offline is deterministic and silent. Node-testable (no DOM). ---------- */
+  function offlineCatchup(opts) {
+    // opts = { elapsed(s), cap(s, default 8h), step(s, default 0.1), keys:[...], getS(), produceStep(dt) — advances S.t + runs every era's produce }
+    var cap = opts.cap || 8 * 3600, eff = Math.min(opts.elapsed || 0, cap);
+    if (!(eff >= 1)) return null;
+    var S = opts.getS(), before = {};
+    opts.keys.forEach(function (k) { before[k] = S[k] || 0; });
+    KIT.MUTE = true;
+    var step = opts.step || 0.1, rem = eff, iter = 0;
+    while (rem > 0 && iter < 300000) { var d = Math.min(step, rem); opts.produceStep(d); rem -= d; iter++; }
+    KIT.MUTE = false;
+    var g = {}, any = false;
+    opts.keys.forEach(function (k) { g[k] = (S[k] || 0) - before[k]; if (g[k] > 0.05) any = true; });
+    if (!any) return null;
+    return { eff: eff, g: g, capped: (opts.elapsed || 0) > cap };
   }
 
   /* ---------- persistence (canonical): {S,t} + generic deep-merge into fresh() ---------- */
@@ -218,9 +252,11 @@
     FLOW: function () { return FLOW; }, flowInit: flowInit, flowReset: flowReset, fIn: fIn, fOut: fOut, connGlow: connGlow,
     connector: connector, stock: stock, node: node, chip: chip, costHTML: costHTML,
     floatNum: floatNum, initTip: initTip, toast: toast,
-    playSound: playSound, playClick: playClick, soundProfile: {},
+    playSound: playSound, playClick: playClick, soundProfile: {}, SFX: SFX, sfxSetVol: sfxSetVol,
     REC: REC, rec: rec, initTelemetry: initTelemetry, lastAction: function () { return lastAction; },
     MUSIC: MUSIC, musicSetup: musicSetup, musicPlayEra: musicPlayEra, musicToggle: musicToggle,
+    musicEnsure: musicEnsure, musicSetVol: musicSetVol, audioLoad: audioLoad,
+    MUTE: false, offlineCatchup: offlineCatchup,
     deepMerge: deepMerge, DEFAULT_SOUND: DEFAULT_SOUND
   };
   KIT.soundProfile = {}; // per-active-era oscillator profiles; set by the shell on era switch

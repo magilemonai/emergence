@@ -38,6 +38,24 @@ The game ships as one self-contained HTML file with all logic in a single IIFE. 
 
 These are the regression net for tuning: change a number in `CFG`, re-run, read off "still completable?" and "minutes per beat at human click rates." (The autoplayers click; real idle play is slower — that's the gap the in-game Run Recorder closes.)
 
+## The v3 unified build (active dev) has its own gate
+
+```bash
+node test-v3.js                    # 75 green — per-era economy, cross-era reach-back, build-once,
+                                   # offline catch-up + MUTE gating, shell persistence contract
+node tools/nav-smoke.js            # headless Chrome: all 5 eras render + theme + rail on nav
+node tools/shoot-unified.js <seed> out.png   # per-era screenshot, reports overflowPx (1280×800)
+node tools/settings-smoke.js       # live: boot music bed, Esc settings, pause, save-scrub,
+                                   # "while you were away" catch-up toast on reload
+```
+
+`test-v3.js` drives the real `v3-kit/era-*.js` factories through a mock shell (pure node) and
+regex-audits the shell source for the persistence contract (save scrubs `dev/speed/uiPaused`,
+versioned load, offline catch-up wired at boot). The offline rule: `KIT.MUTE` replays away-time
+silently and freezes live-only systems — commissions, contradictions, Deep events, the emergence
+rupture (fires on the first LIVE tick instead) and the whole aftermath. When v3 swaps into
+`emergence.html` (Phase 6), fold `test-v3.js` into `test.js`.
+
 ## Adding tests
 
 When you add a mechanic: (a) add a correctness section using the `ok()/near()` helpers, exposing any new functions via the test seam in `emergence.html`; (b) extend the relevant pacing autoplayer (`runOrigins` / `runSymbolic`, or a new `runStatistical`) and its report so the new era is covered.

@@ -61,7 +61,7 @@ function makeEraSymbolic(shell) {
     sync(); var st = stats();
     var g = 0; if (E.ruleset > 0) g += E.ruleset * st.rulesetYield * dt; if (E.daemon > 0) g += E.daemon * CFG.daemonRate * st.click * dt;
     if (g > 0) { S.rules += g; E.runRules += g; K.fIn('rules', g); }
-    if (!E.contra && E.contraN < CFG.contraAt.length && E.runRules >= CFG.contraAt[E.contraN] && !E.flags.symbolicDone) {
+    if (!K.MUTE && !E.contra && E.contraN < CFG.contraAt.length && E.runRules >= CFG.contraAt[E.contraN] && !E.flags.symbolicDone) { // live play only — offline stays clean
       var seed = Math.floor(E.runRules); E.contra = { a: 1000 + seed % 3989, b: 4000 + (seed * 7) % 5989 };
       K.toast('CONTRADICTION DETECTED', 'Rule #' + E.contra.a + ' conflicts with #' + E.contra.b + '. Discard one to clear the drag.', 'event'); shell.requestRender();
     }

@@ -77,19 +77,21 @@ function makeEraDeep(shell) {
       E.heat = Math.max(0, Math.min(110, E.heat + (CFG.heatRise * conc - CFG.cooling) * dt));
       var br = breadth();
       S.capability += br * compute * CFG.capRate * throttle * (1 + CFG.chainPerFoundry * ((S.e1 && S.e1.foundry) || 0)); // RR5: real Origins foundry count compounds Capability
-      E.eventT -= dt;
-      if (!E.event && !E.eventNext && E.eventT <= CFG.eventWarn) {
-        var hiK = doms[0].k, loK = doms[0].k; doms.forEach(function (d) { if (E[d.k] > E[hiK]) hiK = d.k; if (E[d.k] < E[loK]) loK = d.k; });
-        var shift = (Math.floor(t / (CFG.eventGap + CFG.eventDur)) % 2) === 0;
-        E.eventNext = { type: shift ? 'shift' : 'breakthrough', run: shift ? hiK : loK };
-      }
-      if (E.eventT <= 0) {
-        if (E.event) { E.event = null; E.eventT = CFG.eventGap; }
-        else {
-          var nx = E.eventNext || { type: 'shift', run: doms[0].k }; var lbl = domLabel(nx.run);
-          if (nx.type === 'shift') { E.event = { type: 'shift', run: nx.run, mult: 1 }; E[nx.run] = Math.max(0, E[nx.run] - CFG.shiftDrop); K.toast('DRIFT SQUALL · ' + lbl, 'This run now demands far more — pour compute in until it passes.', 'ev'); }
-          else { E.event = { type: 'breakthrough', run: nx.run, mult: CFG.breakthroughMult }; K.toast('BREAKTHROUGH · ' + lbl, 'Clean gradient — concentrate here, eat the heat, ease off after.', 'brk'); }
-          E.eventNext = null; E.eventT = CFG.eventDur;
+      if (!K.MUTE) { // exogenous events run live only (offline catch-up freezes the weather, like the shipped game)
+        E.eventT -= dt;
+        if (!E.event && !E.eventNext && E.eventT <= CFG.eventWarn) {
+          var hiK = doms[0].k, loK = doms[0].k; doms.forEach(function (d) { if (E[d.k] > E[hiK]) hiK = d.k; if (E[d.k] < E[loK]) loK = d.k; });
+          var shift = (Math.floor(t / (CFG.eventGap + CFG.eventDur)) % 2) === 0;
+          E.eventNext = { type: shift ? 'shift' : 'breakthrough', run: shift ? hiK : loK };
+        }
+        if (E.eventT <= 0) {
+          if (E.event) { E.event = null; E.eventT = CFG.eventGap; }
+          else {
+            var nx = E.eventNext || { type: 'shift', run: doms[0].k }; var lbl = domLabel(nx.run);
+            if (nx.type === 'shift') { E.event = { type: 'shift', run: nx.run, mult: 1 }; E[nx.run] = Math.max(0, E[nx.run] - CFG.shiftDrop); K.toast('DRIFT SQUALL · ' + lbl, 'This run now demands far more — pour compute in until it passes.', 'ev'); }
+            else { E.event = { type: 'breakthrough', run: nx.run, mult: CFG.breakthroughMult }; K.toast('BREAKTHROUGH · ' + lbl, 'Clean gradient — concentrate here, eat the heat, ease off after.', 'brk'); }
+            E.eventNext = null; E.eventT = CFG.eventDur;
+          }
         }
       }
     }

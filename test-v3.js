@@ -155,6 +155,78 @@ ORDER.forEach(function (n) {
   ok(!pThrew, 'era ' + n + ': produce() runs 15 ticks without throwing');
 });
 
+// ============================================================================ 9) offline catch-up + MUTE gating
+// KIT.offlineCatchup replays elapsed time with KIT.MUTE set; live-only systems must freeze.
+function produceStep(d) { S.t += d; KIT.flowReset(); ORDER.forEach(function (n) { if (n <= S.maxEra && ERAS[n].produce) ERAS[n].produce(d); }); }
+const CATCH = function (elapsed, cap) { return KIT.offlineCatchup({ elapsed: elapsed, cap: cap, keys: POOL, getS: function () { return S; }, produceStep: produceStep }); };
+
+// economy accrues + clock advances + MUTE restored
+freshAll(); S.started = true; S.e1.scribe = 5; S.e1.miner = 5;
+let off = CATCH(600);
+ok(off && off.g.marks > 0 && off.g.ore > 0, 'offline: scribes/miners accrue while away');
+near(S.t, 600, 0.2, 'offline: game clock advances by the away time');
+ok(KIT.MUTE === false, 'offline: MUTE is restored after catch-up');
+ok(off && !off.capped, 'offline: under the cap → not flagged capped');
+
+// cap respected
+freshAll(); S.started = true; S.e1.scribe = 5;
+off = CATCH(120, 60);
+near(S.t, 60, 0.2, 'offline: elapsed beyond the cap is discarded');
+ok(off && off.capped, 'offline: over the cap → flagged capped');
+
+// nothing accrued → null (no empty "while you were away" toast)
+freshAll(); S.started = true;
+ok(CATCH(300) === null, 'offline: no producers → returns null (no toast)');
+
+// deterministic: same state + same away time → identical result
+function marksAfterCatchup() { freshAll(); S.started = true; S.e1.scribe = 7; S.e1.scriptorium = 2; S.marks = 50; S.ore = 120; CATCH(400); return S.marks + S.knowledge * 1e6; }
+ok(marksAfterCatchup() === marksAfterCatchup(), 'offline: catch-up is deterministic (identical replays)');
+
+// Origins commissions freeze under MUTE (timers hold; no offers cycle silently)
+freshAll(); S.e1.flags.o_smelter = 1; S.e1.flags.o_scriptorium = 1; S.e1.commCool = 5;
+KIT.MUTE = true; ticks(100); KIT.MUTE = false;
+ok(S.e1.comm === null && S.e1.commCool === 5, 'MUTE: Origins commission timers freeze offline');
+ticks(60); ok(S.e1.comm !== null, 'live: the frozen commission cooldown resumes and an offer arrives');
+
+// Symbolic contradictions freeze under MUTE
+freshAll(); S.maxEra = 2; ERAS[2].open(S); S.e2.runRules = CFG.e2.contraAt[0] + 100; S.e2.ruleset = 1;
+KIT.MUTE = true; ticks(10); KIT.MUTE = false;
+ok(!S.e2.contra, 'MUTE: Symbolic contradictions do not fire offline');
+ticks(2); ok(!!S.e2.contra, 'live: the pending contradiction fires on the first live ticks');
+
+// Deep events freeze under MUTE (weather holds its clock)
+freshAll(); S.maxEra = 4; ERAS[4].open(S); S.e4.node = 10; S.data = 9999; S.insight = 9999; S.knowledge = 9999;
+S.e4.eventT = 5; KIT.MUTE = true; ticks(100); KIT.MUTE = false;
+ok(S.e4.eventT === 5 && !S.e4.event, 'MUTE: Deep event clock freezes offline');
+
+// Foundation: emergence never fires mid-catch-up; it ruptures on the first LIVE tick
+freshAll(); S.maxEra = 5; ERAS[5].open(S); S.e4.vision = 0.9; S.e4.language = 0.9; S.e4.reasoning = 0.9;
+S.scale = CFG.e5.emergeScale + 50;
+KIT.MUTE = true; ticks(10); KIT.MUTE = false;
+ok(!S.e5.emerged, 'MUTE: emergence does NOT fire during offline catch-up');
+ticks(1); ok(S.e5.emerged, 'live: emergence fires on the first live tick after catch-up');
+
+// Foundation aftermath freezes wholesale under MUTE (no Runaway while you sleep)
+freshAll(); S.maxEra = 5; ERAS[5].open(S); S.e4.vision = 0.9; S.e4.language = 0.9; S.e4.reasoning = 0.9;
+S.scale = CFG.e5.emergeScale + 50; ticks(1); // emerge live
+const aft = { control: S.e5.control, autonomy: S.e5.autonomy, vetoT: S.e5.vetoT };
+KIT.MUTE = true; ticks(200); KIT.MUTE = false;
+ok(S.e5.control === aft.control && S.e5.autonomy === aft.autonomy && S.e5.vetoT === aft.vetoT, 'MUTE: aftermath control/autonomy/veto clocks freeze offline');
+ticks(50); ok(S.e5.control < aft.control, 'live: aftermath control drain resumes');
+
+// Foundation bedKey: post-rupture nav must keep the Unmoored (rupture) bed
+ok(ERAS[5].bedKey() === 'rupture', 'bedKey: post-emergence Foundation stays on the rupture bed');
+freshAll(); ok(ERAS[5].bedKey() === 5, 'bedKey: pre-emergence Foundation uses its own bed');
+
+// ============================================================================ 10) shell persistence contract (regex over the shell source)
+// save() must scrub session-only keys — a reload must not resume at 50× dev speed or paused.
+const saveSrc = (html.match(/function save\(\) \{[\s\S]*?\n  \}/) || [''])[0];
+ok(/'dev'/.test(saveSrc) && /'speed'/.test(saveSrc) && /'uiPaused'/.test(saveSrc), 'shell save() scrubs dev/speed/uiPaused (session-only)');
+ok(/d\.v === 1/.test(html), 'shell load() checks the save version');
+ok(/offlineCatchup\(/.test(html) && /WHILE YOU WERE AWAY/.test(html), 'shell boots through offline catch-up + away toast');
+ok(/musicPlayEra\(ERAS\[S\.era\]\.bedKey/.test(html), 'shell sets the music bed at boot (♪ no longer dead until first nav)');
+ok(/uiPaused \? 0/.test(html), 'shell tick() honors pause');
+
 // ============================================================================ summary
 console.log('\nv3 unified test suite');
 console.log('  ' + pass + ' passed, ' + fail + ' failed');

@@ -84,9 +84,12 @@ function makeEraFoundation(shell) {
       if (E.improveCd > 0) E.improveCd = Math.max(0, E.improveCd - dt);
       if (E.caps.interpret) E.coherence = Math.min(40, E.coherence + CFG.coherGrow * dt);
       E.agency = Math.min(120, 100 * S.scale / CFG.emergeScale);
-      checkOdds();
-      if (S.scale >= CFG.emergeScale) emerge();
+      if (!K.MUTE) { // offline catch-up: Scale keeps climbing, but the rupture only fires on a LIVE tick (the player must see it)
+        checkOdds();
+        if (S.scale >= CFG.emergeScale) emerge();
+      }
     } else {
+      if (K.MUTE) return; // the aftermath is a live crisis — vetoes, control drain and endings freeze while away
       E.agentRate = Math.max(CFG.agentBase, E.agentRate * Math.pow(CFG.agentAccel, dt));
       var s2 = E.agentRate * slow * dt; S.scale += s2; K.fIn('scale', s2);
       S.capability += E.agentRate * 0.5 * dt;
@@ -378,6 +381,7 @@ function makeEraFoundation(shell) {
     bed: 'assets/music-graviton-lullaby.mp3', pool: ['scale'],
     sound: { buy: { osc: 'sine', f0: 440, f1: 720, g: 0.12, dur: 0.15 } },
     res: RES,
+    bedKey: function () { return (S.e5 && S.e5.rupture) ? 'rupture' : 5; }, // post-emergence the bed stays Unmoored (nav must not reset it)
     phase: phase, fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs, seed: seed,
     done: function () { sync(); return !!E.ending; }
   };

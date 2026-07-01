@@ -90,8 +90,8 @@ function makeEraOrigins(shell) {
       var c = Math.min(S.metal, S.knowledge, E.foundry * os.foR * dt); S.metal -= c; S.knowledge -= c; S.silicon += c;
       K.fOut('metal', c); K.fOut('knowledge', c); K.fIn('silicon', c);
     }
-    // commissions
-    if (E.flags.o_smelter && E.flags.o_scriptorium && !E.done) {
+    // commissions — live play only (K.MUTE = offline catch-up; timed offers freeze, they don't cycle silently)
+    if (!K.MUTE && E.flags.o_smelter && E.flags.o_scriptorium && !E.done) {
       if (E.comm) { E.comm.t -= dt; if (E.comm.t <= 0) { E.comm = null; E.commCool = CFG.commCool; K.toast('THE CARAVAN MOVES ON', 'The commission lapsed. Another will come.', 'event'); shell.requestRender(); } }
       else {
         E.commCool -= dt; if (E.commCool <= 0) {

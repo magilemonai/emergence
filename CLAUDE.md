@@ -40,9 +40,19 @@ call `refresh()`, never a full rebuild. (Origins dead-clicks 18→1 after this f
   Cody's "build-here" choice, he found it "kind of fun"); `chainPerFoundry` reads real `S.e1.foundry`;
   Foundation Scale climbs on real Deep breadth (`S.e4`), Capability from Deep's real production. Seams
   in `v3-kit/KIT.md`. **Still needs a Cody playtest to confirm no starvation + tune the supply chain.**
-- ✅ **Test suite rebuilt:** `node test-v3.js` = **51 green** (per-era economy, cross-era reach-back,
-  no-fake-foundry, Scale-from-real-e4, full-chain no-NaN, build-once determinism, heat-bites). `node
-  test.js` (shipped) still **200 green**.
+- ✅ **Test suite rebuilt:** `node test-v3.js` = **75 green** (per-era economy, cross-era reach-back,
+  no-fake-foundry, Scale-from-real-e4, full-chain no-NaN, build-once determinism, heat-bites, offline
+  catch-up + MUTE gating, shell persistence contract). `node test.js` (shipped) still **200 green**.
+- ✅ **Session-services parity pass (2026-07-01 PM, engineering only — zero layout changes):** the
+  unified build now matches the shipped game around the game: **offline catch-up** (8h cap, muted
+  deterministic replay + "WHILE YOU WERE AWAY" toast; live-only systems freeze under `KIT.MUTE` —
+  commissions / contradictions / Deep events / the whole aftermath; the rupture defers to the first
+  LIVE tick so the player actually sees it), **Settings on Escape** (Pause + pill, Restart, Music/Sound
+  sliders, persisted — port of shipped R4.9; ⚙ on the rail), **save hardening** (versioned; scrubs
+  session-only dev/speed/uiPaused — reload no longer resumes at 50× dev speed), **music fixes** (bed
+  src set at boot — the ♪ toggle was dead until the first era nav; prefs persist; auto-resume on first
+  gesture; post-rupture nav keeps Unmoored via `bedKey`). Verified live by `tools/settings-smoke.js`
+  (10 checks) + a clean 7-seed screenshot sweep.
 - ✅ **Art:** 20 ChatGPT images keyed + the better pass per pair installed at 512px (`images/
   keyed-2026-07-01/MAPPING.md`). Still glyph-fallback: Foundation caps **toolAccess / recursivePlanning
   / interpret** — prompts now WRITTEN (`ART-PROMPTS.md` item 5b); Cody generates → I key + wire.
@@ -57,7 +67,9 @@ call `refresh()`, never a full rebuild. (Origins dead-clicks 18→1 after this f
 **NEXT — design-heavy + playtest-gated (do NOT do these blind; Cody distrusts my raw GUI instincts):**
 1. **One-screen overflow** still open: Statistical **+515** (Experiment Board + Methods scroll — I tried
    relocating Methods once and it backfired, so this wants his eye on collapse-vs-move) and Origins
-   **+289**. Everything else fits (aftermath `seedpost` = 0).
+   **+289**. Fresh sweep 2026-07-01 PM: Symbolic +164 / Deep +176 / Foundation pre +196 (secondary
+   content below the fold), aftermath `seedpost` = 0; new data point: the **ending recap (`seedend`) is
+   +714** — probably fine for a read-only scorecard, flag for Cody's call.
 2. **Back-half passivity:** Deep tech tree is thin + Foundation pre-emergence is "just watching" after
    caps are bought — needs a real decision layer. Design, needs Cody.
 3. **Text → visual:** Symbolic tissue prose and Deep's orchestration line / event banner → color-driven
@@ -67,9 +79,9 @@ call `refresh()`, never a full rebuild. (Origins dead-clicks 18→1 after this f
    `emergence.html`, push (auto-deploys), Zach round. (Inline packaging is deferred until the layout
    settles — doing it now would only slow iteration.)
 
-**I gave Cody a per-era playtest-prompts checklist** (the exact questions I need him to speak to on his
-next capture — the one-screen scroll points, where it goes passive, the axiom hint, the heat rhythm, the
-Foundation pre-emergence gap). Offered to drop it into `PLAYTEST-PROMPTS.md`.
+**`PLAYTEST-PROMPTS.md` holds the per-era checklist** for his next capture (the one-screen scroll
+points, where it goes passive, the axiom hint, the heat rhythm, the Foundation pre-emergence gap).
+New QoL for recording: **Esc pauses** (settings panel) — he can freeze the run mid-capture to talk.
 
 **The MASTER todo is `TODO-v3-unified.md`** — the single durable list; `/process-capture` step 3 now
 synthesizes every capture INTO it (not ephemeral TaskCreate). Work it top-down.
