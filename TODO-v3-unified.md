@@ -27,8 +27,8 @@
 - [→] Deep: triangle deformed ([24:46]) — folded into P0 Deep one-screen redesign (owns that layout).
 
 ## P2 — reduce text / teach visually (recurring: "too much text, small text")
-- [ ] Symbolic: tissue prose → show Knowledge→Rules handoff visually ([07:45]); rewrite clumsy contradiction copy ([11:14]).
-- [ ] Foundation: dedupe repeated "wake/wakes aligned" copy ([36:20]); trim aftermath agent-stream density ([38:00]).
+- [~] Symbolic: [x] rewrote the clumsy contradiction copy ([11:14]); [ ] tissue prose → show Knowledge→Rules visually ([07:45]).
+- [~] Foundation: [x] deduped the repeated "wake/wakes aligned" copy (rush hint + coherence label) ([36:20]); [ ] trim aftermath agent-stream density ([38:00]).
 
 ## P3 — back-half agency (Deep + Foundation go passive)
 - [ ] Deep: more to do + make the steering loop reactable (partly solved by P0 one-screen) ([26:18],[26:39]).

@@ -126,7 +126,7 @@ function makeEraSymbolic(shell) {
     h += '<div class="col-goal"><div class="col-head">The goal</div><div class="goal" id="goal">' +
       '<div class="gname">Expert System</div><div class="gsub">a system that reasons on its own</div><div class="path" id="path"></div>' +
       '<button class="fab" id="fabricate" disabled>PROVE IT</button></div></div>';
-    h += '<div class="contra" id="contra"><div class="cm-i"><div class="cm-name" id="contraName"></div><div class="cm-d">the engine drags until you discard one — either discard teaches it something permanent</div></div>' +
+    h += '<div class="contra" id="contra"><div class="cm-i"><div class="cm-name" id="contraName"></div><div class="cm-d">Discard one rule to clear the drag. Either choice teaches the engine something permanent.</div></div>' +
       '<div class="cm-acts"><button class="buy" id="contraFwd"></button><button class="buy" id="contraBwd"></button></div></div>';
     return h;
   }

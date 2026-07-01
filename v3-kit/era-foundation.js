@@ -211,7 +211,7 @@ function makeEraFoundation(shell) {
       '<div class="lane"><div class="lane-lab">Capabilities · spend Capability<div class="ldash"></div></div><div class="caps-grid">' + CAPS.map(capTile).join('') + '</div></div></div>' +
       '<div class="col-goal"><div class="col-head">The system</div><div class="sys">' +
       '<div class="meter m-anom" id="anomHost"><i id="meter-anomaly"></i></div><div class="m-lab"><span class="anom-title" id="anom-label">Anomaly</span><span class="mv" id="anom-read">stable</span></div>' +
-      '<div class="meter m-coher"><i id="meter-coher"></i></div><div class="m-lab"><span>Coherence <small>will-wake alignment</small></span><span class="mv" id="coher-read">— blind</span></div>' +
+      '<div class="meter m-coher"><i id="meter-coher"></i></div><div class="m-lab"><span>Coherence <small>its alignment at emergence</small></span><span class="mv" id="coher-read">— blind</span></div>' +
       '<div class="hsub" id="rushHint" style="margin-top:12px"></div></div></div>';
   }
   function buildAftermath() {
@@ -303,7 +303,7 @@ function makeEraFoundation(shell) {
       var acls = 'meter m-anom' + (r >= 0.9 ? ' crit' : r >= 0.7 ? ' warn' : ''); var host = $('anomHost'); if (host && host.className !== acls) host.className = acls;
       setTxt($('anom-label'), E.caps.interpret ? 'Anomaly — Agency concentrating' : 'Anomaly');
       var at = $('anom-label'); if (at) at.classList.toggle('crit', r >= 0.9);
-      setTxt($('rushHint'), !E.caps.interpret ? 'Rush with Self-Improve, or acquire Interpretability to unlock the prepare track. It is coming either way.' : 'It would wake at ~' + Math.round(Math.min(100, CFG.alignBase + E.coherence)) + '% Alignment. Rush to emerge sooner, or prepare so it wakes aligned.');
+      setTxt($('rushHint'), !E.caps.interpret ? 'Rush with Self-Improve, or acquire Interpretability to unlock the prepare track. It is coming either way.' : 'It emerges at ~' + Math.round(Math.min(100, CFG.alignBase + E.coherence)) + '% Alignment. Rush now (sooner, less aligned), or build Coherence first (more aligned).');
       var bd = $('board'); if (bd) { var g = r >= 0.9 ? 'board anom-3' : r >= 0.7 ? 'board anom-2' : 'board'; if (bd.className !== g) bd.className = g; }
     } else {
       var nm = E.agentName ? (E.agentName + ' · ') : '';
