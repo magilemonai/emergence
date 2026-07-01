@@ -1,69 +1,86 @@
 # EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-06-30 (v3 ground-up UI rebuild in progress).
+> keep it current as the game evolves. Last updated 2026-07-01 (v3 five slices MERGED into one unified
+> game; two Cody self-playtests processed; leaving at design-heavy, playtest-gated items).
 
-## ⭐ RESUME HERE — the v3 "Flow Board" ground-up UI rebuild (2026-06-30)
+## ⭐ RESUME HERE — the v3 "Flow Board" unified build (2026-07-01)
 
-**What happened:** Cody self-playtested the shipped game twice (parses in `alpha tests/June 30 2026 -
-Cody/`). Verdict: *"the vibe is awesome but the layout is confusing. Super confusing… rip this thing
-apart and rebuild it from the ground up… be as ambitious as possible."* Same systems + soul, brand-new
-layout. Two verified deep-research passes grounded it: `DESIGN-r6-ui.md` (8 design laws, primary NN/g)
-and the exemplar teardown (Orb of Creation / Antimatter Dimensions / Universal Paperclips). The paradigm
-is **"The Flow Board"** — spec in **`DESIGN-v3-paradigm.md`**: one screen per era; a color-coded
-resource rail; a center pipeline that visibly shows sources→converters→outputs (connectors that brighten
-with throughput — the "see systems affect each other" invention, VALIDATED by Cody on Origins); big
-verbs; the goal always visible; radically less text (prose → tooltips); obvious clickability.
+**Where we are:** the five standalone Flow-Board slices are now **MERGED into ONE game** —
+**`emergence-v3-unified.html`** (the shell: inline theme CSS + CFG + the shell IIFE) loading
+`v3-kit/kit.{js,css}` (the shared component kit) + `v3-kit/era-{origins,symbolic,statistical,deep,
+foundation}.js` (per-era modules). This is now the active dev build. The shipped game is still
+`emergence.html` (untouched, 200 green). The v3 standalone slices (`emergence-v3*.html`) are superseded.
+
+**The paradigm ("The Flow Board", spec in `DESIGN-v3-paradigm.md`):** one screen per era; a color-coded
+resource rail; a center pipeline showing sources→converters→outputs (connectors brighten with throughput
+— the "see systems affect each other" invention, VALIDATED by Cody); big verbs; goal always visible;
+radically less text (prose → tooltips); obvious clickability. Grounded in `DESIGN-r6-ui.md` (8 design laws).
 
 **Load-bearing rule (do not violate):** BUILD-ONCE / update-in-place. `refresh()` must NEVER rewrite a
 button's innerHTML every tick — it replaces the child the pointer is on mid-click = the "dead-click"
-bug. Every v3 file uses change-detected setters `setTxt`/`setHTML`/`setDis`; purchases call `refresh()`,
-never a full rebuild. (Confirmed: Origins dead-clicks 18→1 after this fix.)
+bug. The kit's change-detected setters `setTxt`/`setHTML`/`setDis` guard every per-tick write; purchases
+call `refresh()`, never a full rebuild. (Origins dead-clicks 18→1 after this fix.) `test-v3.js` asserts it.
 
-**ALL FIVE ERAS are rebuilt as standalone Flow-Board slices** (each syntax-checked + headless-screenshot
-verified; built tonight — Origins & Symbolic by me, the other three by 3 parallel background agents,
-all verified by me):
-| File | Era | State |
-|---|---|---|
-| `emergence-v3.html` | Origins | ✅ validated by Cody (dead-clicks 18→1); Logic-Machine wakes at fabricate |
-| `emergence-v3-symbolic.html` | Symbolic | ✅ CRT phosphor; connective tissue + Rules→Inference→Theorem pipeline + legible goal path; fixes "super confusing" |
-| `emergence-v3-statistical.html` | Statistical | ✅ pinned living scatter, RUN TRIAL left, Silicon→Data→Insight |
-| `emergence-v3-deep.html` | Deep | ✅ ternary mixer (drag fixed), LOCK timers on runs, non-passive, more to buy |
-| `emergence-v3-foundation.html` | Foundation | ✅ show-don't-tell rupture (board shatters→rebuilds), ACTIVE veto-window aftermath |
+**Architecture of the merged build:**
+- **Era-module interface:** each era is a factory `makeEraX(shell)` returning `{id, theme, name, sub,
+  sigil, bed, pool, sound, res, phase(), fresh(st), open(st), produce(dt), build(), wire(), refresh(),
+  railDefs(), done()}`. The shell dispatches `render()`/`refreshActive()`/`tick()` and exposes `navTo`.
+- **Shared POOL:** cross-era resources live at `S` top-level (marks/ore/knowledge/metal/silicon/rules/
+  inference/axioms/data/insight/capability/scale); era-private state on `S.eN`. `KIT.flowInit(POOL)`.
+- **CFG** lives in the shell HTML (`var CFG = {...}`); `test-v3.js` evals it out via regex.
+- **Seed hooks** for headless shots: `#seed` (Origins), `#seedsym`, `#seedstat`, `#seeddeep`,
+  `#seedfound`/`#seedpost`/`#seedend`. Verify with `node tools/shoot-unified.js <seedhash> out.png`
+  (1280×800, reports `overflowPx`). `window.__EMG = {S, ERAS, tick, render, navTo, openEra}` for probes.
 
-Each slice: reuses `assets/` + its own Google Fonts + its own `localStorage` key + a `#seed` hash hook
-(mid-game state for screenshots; Foundation also `#seedpost`/`#seedend`), a backtick dev overlay + REC-
-lite telemetry (snapshots the run BEFORE New Game+ wipes it — the run-2 bug), faithful economy port.
+**DONE this arc (all committed locally, unpushed):**
+- ✅ Phase 2 (kit extracted) + Phase 3 (5 eras merged into one file). All 5 render + cross-era nav works.
+- ✅ **Real cross-era reach-back** (the 3 economy stand-ins reverted): Statistical draws real Origins
+  Silicon; Deep's supply buttons BUILD the real Origins/Statistical producers (paid in Silicon —
+  Cody's "build-here" choice, he found it "kind of fun"); `chainPerFoundry` reads real `S.e1.foundry`;
+  Foundation Scale climbs on real Deep breadth (`S.e4`), Capability from Deep's real production. Seams
+  in `v3-kit/KIT.md`. **Still needs a Cody playtest to confirm no starvation + tune the supply chain.**
+- ✅ **Test suite rebuilt:** `node test-v3.js` = **51 green** (per-era economy, cross-era reach-back,
+  no-fake-foundry, Scale-from-real-e4, full-chain no-NaN, build-once determinism, heat-bites). `node
+  test.js` (shipped) still **200 green**.
+- ✅ **Art:** 20 ChatGPT images keyed + the better pass per pair installed at 512px (`images/
+  keyed-2026-07-01/MAPPING.md`). Still glyph-fallback: Foundation caps **toolAccess / recursivePlanning
+  / interpret** — prompts now WRITTEN (`ART-PROMPTS.md` item 5b); Cody generates → I key + wire.
+- ✅ **Two Cody self-playtests of the unified build processed** (`alpha tests/July 1 2026 - Cody/`:
+  `unified-eyeball.md` + `unified-playtest-2.md`). **Direction VALIDATED** ("chase the factory /
+  flow-chart idea — satisfactory/factorio"; the emergence rupture is "much fun"). All reported **bugs
+  fixed** (Symbolic sigil, VALIDATION>TRAINING, music volume→0.15, focus arrows, trial-float spam, etc).
+  Deep got a visual/color pass (frozen-run "HELD" look, triangle corner-glow toward the starved run,
+  ADVANCE glow violet, heat retuned to bite) and a one-screen side-by-side steering layout (his
+  game-breaker). Symbolic axiom progress now surfaced; Foundation aftermath stream trimmed.
 
-**NEXT (the spine of the next session) — Phase 2/3: merge the five slices into ONE game:**
-1. **Extract the Flow-Board component kit** (Phase 2, task #12): rail / `.lane`/`.seg`/`.node`/`.stock`/
-   `.flow` connector / goal-with-wake / standing-controls / commission-or-event card / `setTxt`/`setHTML`
-   / tick loop — proven across 5 very different eras, ready to factor into shared components.
-2. **Build the unified multi-era shell** (Phase 3, task #13): one file, shared rail + era nav +
-   per-era theme re-skin + save + music; a **condense-rail mode** for resource density (Orb-of-Creation
-   lesson); carry the instrumentation.
-3. **Revert the 3 standalone economy stand-ins** the agents used for isolation:
-   - Statistical: Silicon reach-back is a Foundry-costs-Data valve → restore the real Origins Foundry
-     supply bus.
-   - Deep: collapsed 4-producer supply → restore the real cross-era reach-back.
-   - Foundation: `capIncome`/`seedBreadth` stand-ins → restore the real Deep→Foundation handoff.
-4. **Rebuild the test suite** for the merged v3 (task #18; the economy logic is ported — keep a green
-   bar + the no-idle-rebuild guard).
-5. Then Cody records the unified game → iterate → Phase 6 swap v3 → `emergence.html`, push, Zach round.
+**NEXT — design-heavy + playtest-gated (do NOT do these blind; Cody distrusts my raw GUI instincts):**
+1. **One-screen overflow** still open: Statistical **+515** (Experiment Board + Methods scroll — I tried
+   relocating Methods once and it backfired, so this wants his eye on collapse-vs-move) and Origins
+   **+289**. Everything else fits (aftermath `seedpost` = 0).
+2. **Back-half passivity:** Deep tech tree is thin + Foundation pre-emergence is "just watching" after
+   caps are bought — needs a real decision layer. Design, needs Cody.
+3. **Text → visual:** Symbolic tissue prose and Deep's orchestration line / event banner → color-driven
+   visuals ("color not text" is his standing bar). Design calls.
+4. **Pacing tunes** (era lengths, RR5 `chainPerFoundry` 3%/foundry) — only a real run tells us.
+5. Then: Cody records → iterate → **Phase 6** inline the kit into the single file + swap v3 →
+   `emergence.html`, push (auto-deploys), Zach round. (Inline packaging is deferred until the layout
+   settles — doing it now would only slow iteration.)
 
-**Minor flagged polish** (not blockers): Origins wake→font-morph into Symbolic (task #25); Deep's 3rd
-run-lane sits below the fold at 1280 + a DRIFT badge can show while a run is net-positive.
+**I gave Cody a per-era playtest-prompts checklist** (the exact questions I need him to speak to on his
+next capture — the one-screen scroll points, where it goes passive, the axiom hint, the heat rhythm, the
+Foundation pre-emergence gap). Offered to drop it into `PLAYTEST-PROMPTS.md`.
 
-**The loop is now a skill:** `/process-capture` (`.claude/skills/process-capture/`) runs the whole
-playtest pipeline — review the newest KittyCapture capture → parse to `alpha tests/` → to-do list →
-iterate (verify via `node test.js` and headless-Chrome screenshots).
+**The MASTER todo is `TODO-v3-unified.md`** — the single durable list; `/process-capture` step 3 now
+synthesizes every capture INTO it (not ephemeral TaskCreate). Work it top-down.
 
-**Git / safety state:** NOTHING is committed from tonight. Uncommitted: the r6 iteration-1 edits to
-`emergence.html` (still 200 green), the 5 `emergence-v3*.html` files (untracked), `archive/`, the new
-`DESIGN-r6-ui.md`/`DESIGN-v3-paradigm.md`, the `alpha tests/June 30 2026 - Cody/` parses, and
-`.claude/skills/process-capture/`. Also still 22+ commits ahead of `origin/main`, unpushed. All files
-are on disk (safe); offer to commit an archive checkpoint when Cody's ready. Push auto-deploys the live
-site — do NOT push until Cody says.
+**The loop is a skill:** `/process-capture` (`.claude/skills/process-capture/`) runs the whole pipeline —
+review the newest KittyCapture capture → parse to `alpha tests/` → synthesize into `TODO-v3-unified.md`
+→ iterate (verify via `node test-v3.js` + `node test.js` + `node tools/shoot-unified.js`).
+
+**Git / safety state:** everything through this session **is committed locally** (HEAD `d99218a`); only
+`KittyCapture/` is untracked and we do NOT commit it (large videos). **34 commits ahead of
+`origin/main`, unpushed.** Push auto-deploys the live site — do NOT push until Cody says.
 
 ## Round 6 iteration-1 (superseded by the v3 rebuild, kept as reference)
 
