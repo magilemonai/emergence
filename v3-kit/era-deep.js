@@ -25,13 +25,20 @@ function makeEraDeep(shell) {
     knowledge: '<i>Symbols and meaning.</i><br>Feeds the <b>Language</b> run. Made by Scriptoria.',
     silicon: '<i>Sand, taught to carry thought.</i><br>Builds Compute Nodes and the supply stack. Made by Foundries.'
   };
+  // Each supply button BUILDS the real upstream producer (in Origins / Statistical), from here, paid in Silicon.
   var SUPPLY = [
-    { key: 'foundry', name: 'Foundry', out: 'silicon', rate: CFG.foundryRate, cost: CFG.foundryCost, growth: CFG.foundryGrowth, res: 'silicon', icon: ICON.foundry, tip: '<b>Foundry</b> (Origins reach-back)<br><i>Metal and knowledge, fused into Silicon.</i><br>+Silicon/s. Each Foundry also lifts Capability +3% (the supply chain compounds).' },
-    { key: 'dataset', name: 'Dataset', out: 'data', rate: CFG.datasetYield, cost: CFG.datasetCost, growth: CFG.datasetGrowth, res: 'silicon', icon: ICON.data, tip: '<b>Dataset</b> (Statistical reach-back)<br><i>Observations, curated.</i><br>+Data/s. Data feeds the <b>Vision</b> run.' },
-    { key: 'model', name: 'Fit Engine', out: 'insight', rate: CFG.modelRate, cost: CFG.modelCost, growth: CFG.modelGrowth, res: 'data', glyph: GLYPH.model, tip: '<b>Fit Engine</b> (Statistical reach-back)<br><i>Experiments distilled into ideas.</i><br>+Insight/s (built from Data). Insight feeds the <b>Reasoning</b> run.' },
-    { key: 'scriptorium', name: 'Scriptorium', out: 'knowledge', rate: CFG.scriptoriumRate, cost: CFG.scriptoriumCost, growth: CFG.scriptoriumGrowth, res: 'silicon', icon: ICON.scriptorium, tip: '<b>Scriptorium</b> (Origins reach-back)<br><i>Marks made meaningful.</i><br>+Knowledge/s. Knowledge feeds the <b>Language</b> run.' }
+    { key: 'foundry', name: 'Foundry', out: 'silicon', era: 1, field: 'foundry', cost: CFG.foundryCost, growth: CFG.foundryGrowth, icon: ICON.foundry, tip: '<b>Foundry</b> — builds a real Origins Foundry, from here.<br><i>Metal and knowledge, fused into Silicon.</i><br>+Silicon/s · each also lifts Capability +3% (RR5). Paid in Silicon.' },
+    { key: 'dataset', name: 'Dataset', out: 'data', era: 3, field: 'dataset', cost: CFG.datasetCost, growth: CFG.datasetGrowth, icon: ICON.data, tip: '<b>Dataset</b> — builds a real Statistical Dataset.<br><i>Observations, curated.</i><br>+Data/s — feeds the <b>Vision</b> run. Paid in Silicon.' },
+    { key: 'model', name: 'Fit Engine', out: 'insight', era: 3, field: 'model', cost: CFG.modelCost, growth: CFG.modelGrowth, glyph: GLYPH.model, tip: '<b>Fit Engine</b> — builds a real Statistical Fit Engine.<br><i>Experiments distilled into ideas.</i><br>+Insight/s — feeds the <b>Reasoning</b> run. Paid in Silicon.' },
+    { key: 'scriptorium', name: 'Scriptorium', out: 'knowledge', era: 1, field: 'scriptorium', cost: CFG.scriptoriumCost, growth: CFG.scriptoriumGrowth, icon: ICON.scriptorium, tip: '<b>Scriptorium</b> — builds a real Origins Scriptorium.<br><i>Marks made meaningful.</i><br>+Knowledge/s — feeds the <b>Language</b> run. Paid in Silicon.' }
   ];
   var SUPMAP = {}; SUPPLY.forEach(function (s) { SUPMAP[s.key] = s; });
+  function producerCount(s) { return (S['e' + s.era] || {})[s.field] || 0; }
+  function producerRate(s) { var c = producerCount(s), e1 = shell.CFG.e1, e3 = shell.CFG.e3;
+    if (s.field === 'foundry') return c * e1.foundryRate;
+    if (s.field === 'scriptorium') return c * e1.scriptoriumRate;
+    if (s.field === 'dataset') return c * e3.datasetYield;
+    return c * e3.expPerModel * e3.insightPerExp; }
   var cap1 = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
   var domLabel = function (k) { var d = CFG.domains.filter(function (x) { return x.k === k; })[0]; return (d && d.label) || k; };
 
@@ -41,10 +48,8 @@ function makeEraDeep(shell) {
   /* ---------- production ---------- */
   function produce(dt) {
     sync();
-    if (E.foundry > 0) { var a1 = E.foundry * CFG.foundryRate * dt; S.silicon += a1; K.fIn('silicon', a1); }
-    if (E.dataset > 0) { var a2 = E.dataset * CFG.datasetYield * dt; S.data += a2; K.fIn('data', a2); }
-    if (E.model > 0) { var a3 = E.model * CFG.modelRate * dt; S.insight += a3; K.fIn('insight', a3); }
-    if (E.scriptorium > 0) { var a4 = E.scriptorium * CFG.scriptoriumRate * dt; S.knowledge += a4; K.fIn('knowledge', a4); }
+    // No stand-in producers here: the feedstocks (silicon/data/insight/knowledge) are produced by the REAL
+    // Origins + Statistical eras running in the background (fed via the supply-bus build-here buttons).
     if (E.node > 0) {
       var doms = CFG.domains, t = S.t || 0;
       var computeRate = E.node * CFG.nodeCompute, compute = computeRate * dt;
@@ -71,7 +76,7 @@ function makeEraDeep(shell) {
       var conc = Math.max(0, maxShare - CFG.heatBase);
       E.heat = Math.max(0, Math.min(110, E.heat + (CFG.heatRise * conc - CFG.cooling) * dt));
       var br = breadth();
-      S.capability += br * compute * CFG.capRate * throttle * (1 + CFG.chainPerFoundry * (E.foundry || 0));
+      S.capability += br * compute * CFG.capRate * throttle * (1 + CFG.chainPerFoundry * ((S.e1 && S.e1.foundry) || 0)); // RR5: real Origins foundry count compounds Capability
       E.eventT -= dt;
       if (!E.event && !E.eventNext && E.eventT <= CFG.eventWarn) {
         var hiK = doms[0].k, loK = doms[0].k; doms.forEach(function (d) { if (E[d.k] > E[hiK]) hiK = d.k; if (E[d.k] < E[loK]) loK = d.k; });
@@ -95,9 +100,9 @@ function makeEraDeep(shell) {
   var nodeCost = function () { return unitCost(CFG.nodeCost, CFG.nodeGrowth, E.node); };
   var canNode = function () { return S.silicon >= nodeCost(); };
   function buyNode() { sync(); if (!canNode()) return; S.silicon -= nodeCost(); E.node++; K.rec('buy:node'); K.playSound('buy'); shell.refresh(); }
-  var supCost = function (s) { return unitCost(s.cost, s.growth, E[s.key]); };
-  var canSup = function (s) { return S[s.res] >= supCost(s); };
-  function buySup(key) { sync(); var s = SUPMAP[key]; if (!canSup(s)) return; S[s.res] -= supCost(s); E[s.key]++; K.rec('buy:' + key); K.playSound('buy'); shell.refresh(); }
+  var supCost = function (s) { return unitCost(s.cost, s.growth, producerCount(s)); };
+  var canSup = function (s) { return S.silicon >= supCost(s); };
+  function buySup(key) { sync(); var s = SUPMAP[key]; if (!canSup(s)) return; S.silicon -= supCost(s); var st = S['e' + s.era]; if (st) st[s.field] = (st[s.field] || 0) + 1; K.rec('buy:' + key); K.playSound('buy'); shell.refresh(); }
   var stabilizerCost = function () { return Math.round(CFG.stabilizerCost + E.stabilizer * 60); };
   var lockCost = function () { return Math.round(CFG.lockCost * Math.pow(CFG.lockGrowth, E.locksBought || 0)); };
   function buyStabilizer() { sync(); var c = stabilizerCost(); if (E.stabilizer >= CFG.stabilizerMax || S.capability < c) return; S.capability -= c; E.stabilizer++; K.rec('stabilizer:' + E.stabilizer); K.playSound('buy'); K.toast('Stabilizer ↑', 'Drift reduced ' + Math.round(E.stabilizer * CFG.stabilizerCut * 100) + '% — the wind bites less.'); shell.refresh(); }
@@ -126,18 +131,19 @@ function makeEraDeep(shell) {
   function build() {
     sync();
     var h = '';
-    // LEFT
+    // LEFT — provisioning (Build Compute Node promoted to hero) + supply + steering
     h += '<div class="col-left"><div class="col-head">Provision the fabric</div>' +
-      '<button class="verb" id="buyNode"><span class="vname">Build Compute Node</span><span class="vyield" id="nodeYield"></span><span class="vcost" id="nodeCost"></span></button>' +
+      '<button class="verb verb-hero" id="buyNode"><span class="vname">Build Compute Node</span><span class="vyield" id="nodeYield"></span><span class="vcost" id="nodeCost"></span></button>' +
       '<div class="col-head">Supply bus — feed the runs</div><div id="supply"></div>' +
-      '<div class="col-head">Steering tools</div>' +
+      '<div class="col-head">Steering</div>' +
       '<button class="steer-btn" id="stabBtn" data-tip="' + esc('<b>Stabilizer</b><br><i>A calmer optimization landscape.</i><br>Permanently reduces how hard the drift bites every run. Stacks up to 5.') + '"><span class="st-nm">STABILIZER</span><span class="st-lvl" id="stabLvl"></span><span class="st-eff" id="stabEff"></span><span class="st-cost" id="stabCost"></span></button>' +
-      '<div class="lc-note">Lock a run (freeze it so it can\'t drift) from the button on each run below.</div></div>';
-    // CENTER
-    h += '<div class="col-center"><div class="col-head">The Fabric — three runs drift; route the budget to counter the wind</div>' +
+      '<div class="lc-note">Lock a run from the button on each run at right.</div></div>';
+    // CENTER — the fabric: mixer + the 3 runs SIDE BY SIDE (steer + watch all three without scrolling), gauges as a strip
+    h += '<div class="col-center"><div class="col-head">The Fabric — route the budget to counter the drift</div>' +
       '<div class="fabric"><div class="inst-head"><span class="inst-title">THE&nbsp;FABRIC</span><span class="inst-sub">balanced is never optimal — steer</span><span class="heat-led ok" id="heatLed"></span></div>' +
       '<div class="event-banner" id="eventBanner">holding course — watch the wind</div>' +
-      '<div class="mixer-wrap"><div class="dial-lab">Compute allocation · drag to route</div>' +
+      '<div class="fab-main">' +
+      '<div class="mixer-col"><div class="dial-lab">Compute allocation · drag to route</div>' +
       '<div class="tri-mixer" id="triMixer"><svg class="tri-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><defs>' +
       '<radialGradient id="triGV" cx="50%" cy="0%" r="92%"><stop offset="0%" stop-color="#54d2ff" stop-opacity="0.20"/><stop offset="60%" stop-color="#54d2ff" stop-opacity="0"/></radialGradient>' +
       '<radialGradient id="triGL" cx="0%" cy="100%" r="92%"><stop offset="0%" stop-color="#b58cff" stop-opacity="0.20"/><stop offset="60%" stop-color="#b58cff" stop-opacity="0"/></radialGradient>' +
@@ -146,21 +152,21 @@ function makeEraDeep(shell) {
       '<line class="tri-feed" id="feed-vision" x1="50" y1="9" x2="50" y2="63.7"/><line class="tri-feed" id="feed-language" x1="9" y1="90" x2="50" y2="63.7"/><line class="tri-feed" id="feed-reasoning" x1="91" y1="90" x2="50" y2="63.7"/>' +
       '<polygon class="tri-outline" points="50,7 7,92 93,92"/><circle class="tri-balanced" cx="50" cy="63.7" r="1.4"/></svg>' +
       '<span class="tri-corner tc-v">VISION <b id="pct-vision"></b></span><span class="tri-corner tc-l">LANG <b id="pct-language"></b></span><span class="tri-corner tc-r">REASON <b id="pct-reasoning"></b></span>' +
-      '<span class="tri-bal-lab">balanced</span><div class="tri-handle" id="triHandle"></div></div></div>' +
-      '<div class="orch" id="orch"></div>' +
-      '<div class="lanes-head">The three runs — each draws its own feedstock; the lock timer lives here</div><div id="lanes"></div></div></div>';
-    // RIGHT
-    h += '<div class="col-right"><div class="col-head">The goal</div>' +
-      '<div class="goal" id="goal"><img class="gs" src="assets/era4-sigil.png" alt=""><div class="gname">A generally-capable model</div><div class="gsub">breadth beats specialization</div>' +
-      '<div class="meter"><i id="breadthMeter"></i></div><div class="meter-lab" id="breadthLab"></div>' +
-      '<button class="advance" id="advance" disabled>ADVANCE → FOUNDATION</button>' +
-      '<div class="mini-gauge"><div class="gauge-lab" style="margin-top:6px">RUN CAPABILITY (geo-mean)</div><div class="meter-lab" id="runsRead" style="margin:4px 0 0"></div></div></div>' +
-      '<div class="col-head" style="margin-top:14px">Fabric state</div>' +
-      '<div class="fabstate"><div class="gauges">' +
+      '<span class="tri-bal-lab">balanced</span><div class="tri-handle" id="triHandle"></div></div>' +
+      '<div class="orch" id="orch"></div></div>' +
+      '<div class="runs-col"><div class="lanes-head">The three runs — each draws its own feedstock</div><div id="lanes"></div></div>' +
+      '</div>' +
+      '<div class="gauges gauges-strip">' +
       '<div><div class="gauge-lab">CAPABILITY <span class="gv" id="capV"></span></div><div class="gauge-bar"><i id="capGauge"></i></div></div>' +
       '<div><div class="gauge-lab">COMPUTE <span class="gv" id="computeV"></span></div><div class="gauge-bar"><i id="computeGauge"></i></div></div>' +
       '<div data-tip="' + esc('<i>Concentrating compute to fight drift heats the fabric.</i><br>A hot fabric throttles ALL output. Rhythm: concentrate to counter the wind, then ease toward balanced to cool.') + '"><div class="gauge-lab">HEAT <span class="gv" id="heatV"></span></div><div class="gauge-bar"><i id="heatGauge"></i></div></div>' +
       '</div></div></div>';
+    // RIGHT — the goal
+    h += '<div class="col-right"><div class="col-head">The goal</div>' +
+      '<div class="goal" id="goal"><img class="gs" src="assets/era4-sigil.png" alt=""><div class="gname">A generally-capable model</div><div class="gsub">breadth beats specialization</div>' +
+      '<div class="meter"><i id="breadthMeter"></i></div><div class="meter-lab" id="breadthLab"></div>' +
+      '<button class="advance" id="advance" disabled>ADVANCE → FOUNDATION</button>' +
+      '<div class="mini-gauge"><div class="gauge-lab" style="margin-top:6px">RUN CAPABILITY (geo-mean)</div><div class="meter-lab" id="runsRead" style="margin:4px 0 0"></div></div></div></div>';
     return h;
   }
 
@@ -226,9 +232,9 @@ function makeEraDeep(shell) {
     // supply
     SUPPLY.forEach(function (s) {
       var c = supCost(s), can = canSup(s);
-      setTxt($('supc-' + s.key), String(E[s.key]));
-      setHTML($('supo-' + s.key), '+<b>' + fmt(E[s.key] * s.rate) + '</b> ' + (FEEDLBL[s.out] || cap1(s.out)) + '/s');
-      setHTML($('supx-' + s.key), 'next <b>' + fmt(c) + ' ' + cap1(s.res) + '</b>');
+      setTxt($('supc-' + s.key), String(producerCount(s)));
+      setHTML($('supo-' + s.key), '+<b>' + fmt(producerRate(s)) + '</b> ' + (FEEDLBL[s.out] || cap1(s.out)) + '/s');
+      setHTML($('supx-' + s.key), 'next <b>' + fmt(c) + ' Silicon</b>');
       var btn = $('sup-' + s.key); if (btn) btn.classList.toggle('can', can);
     });
     // per-run info
@@ -308,20 +314,24 @@ function makeEraDeep(shell) {
     var br = breadth(), ready = br >= CFG.breadthGate && !E.done;
     var gm = $('breadthMeter'); if (gm) gm.style.width = Math.min(100, br / CFG.breadthGate * 100) + '%';
     setTxt($('breadthLab'), (br * 100).toFixed(1) + '% / ' + (CFG.breadthGate * 100).toFixed(0) + '% breadth');
-    setHTML($('runsRead'), doms.map(function (d) { return '<span style="color:' + RUNCOL[d.k] + '">' + (E[d.k] * 100).toFixed(0) + '%</span>'; }).join(' · ') + (E.foundry > 0 ? '<br><span style="color:var(--dimmer)">' + E.foundry + ' foundries → +' + Math.round(CFG.chainPerFoundry * E.foundry * 100) + '% cap</span>' : ''));
+    var oFdry = (S.e1 && S.e1.foundry) || 0;
+    setHTML($('runsRead'), doms.map(function (d) { return '<span style="color:' + RUNCOL[d.k] + '">' + (E[d.k] * 100).toFixed(0) + '%</span>'; }).join(' · ') + (oFdry > 0 ? '<br><span style="color:var(--dimmer)">' + oFdry + ' foundries → +' + Math.round(CFG.chainPerFoundry * oFdry * 100) + '% cap</span>' : ''));
     var adv = $('advance'); setDis(adv, !ready); setTxt(adv, E.done ? 'ADVANCED ✓' : 'ADVANCE → FOUNDATION');
     if ($('goal')) $('goal').classList.toggle('ready', ready);
   }
 
   function fresh(st) {
     st.capability = 0;
-    st.e4 = { node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision: 1, language: 1, reasoning: 1 }, heat: 0, event: null, eventNext: null, eventT: 12, stabilizer: 0, locksBought: 0, locks: { vision: 0, language: 0, reasoning: 0 }, fedT: { vision: 0, language: 0, reasoning: 0 }, foundry: 0, dataset: 0, model: 0, scriptorium: 0, done: false };
+    st.e4 = { node: 0, vision: 0, language: 0, reasoning: 0, alloc: { vision: 1, language: 1, reasoning: 1 }, heat: 0, event: null, eventNext: null, eventT: 12, stabilizer: 0, locksBought: 0, locks: { vision: 0, language: 0, reasoning: 0 }, fedT: { vision: 0, language: 0, reasoning: 0 }, done: false };
   }
   function open(st) {
     var e = st.e4;
-    if (!e.node) { // seed the fabric + a supply trickle (stand-in; task #3 wires real earlier-era buses)
+    if (!e.node) {
       e.node = CFG.seedNodes; st.silicon = (st.silicon || 0) + CFG.seedSilicon; st.data = (st.data || 0) + CFG.seedData; st.insight = (st.insight || 0) + CFG.seedInsight; st.knowledge = (st.knowledge || 0) + CFG.seedKnowledge;
-      e.foundry = 2; e.dataset = 3; e.model = 2; e.scriptorium = 2; e.alloc = { vision: 1, language: 1, reasoning: 1 };
+      e.alloc = { vision: 1, language: 1, reasoning: 1 };
+      // ensure the real upstream producers exist so the feedstocks flow (the build-here bus scales them up)
+      if (st.e1) { st.e1.foundry = Math.max(st.e1.foundry || 0, 2); st.e1.scriptorium = Math.max(st.e1.scriptorium || 0, 2); }
+      if (st.e3) { st.e3.dataset = Math.max(st.e3.dataset || 0, 3); st.e3.model = Math.max(st.e3.model || 0, 2); }
     }
     st.started = true;
   }

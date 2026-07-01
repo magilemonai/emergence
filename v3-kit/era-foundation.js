@@ -18,7 +18,7 @@ function makeEraFoundation(shell) {
   var RES = {
     scale: { hue: '#b78bff', glyph: '✶', flavor: 'How far past its starting point the system has climbed.' }
   };
-  var CAP_ICON = { selfModel: 'assets/cap-selfModel.png', worldModel: 'assets/cap-worldModel.png' };
+  var CAP_ICON = { selfModel: 'assets/cap-selfModel.png', worldModel: 'assets/cap-worldModel.png', memoryContinuity: 'assets/cap-transfer.png' };
   var CAPS = [
     { id: 'selfModel', name: 'Self-Modeling', cost: 80, agency: 6, flavor: 'It builds a working model of itself.', desc: '+50% Scale generation.' },
     { id: 'toolAccess', name: 'Tool Access', cost: 170, agency: 9, flavor: 'It can reach the systems you built — and operate them.', desc: '+60% Capability throughput.' },

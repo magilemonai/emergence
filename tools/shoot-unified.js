@@ -14,7 +14,7 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9243;
 
 const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars',
-  '--window-size=1280,1400', `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*',
+  '--window-size=1280,800', `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*',
   '--no-first-run', '--no-default-browser-check', 'about:blank']);
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -52,6 +52,8 @@ async function getJSON(url) { const r = await fetch(url); return r.json(); }
         nodes:document.querySelectorAll('#board .node').length,
         stocks:document.querySelectorAll('#board .stock').length,
         flows:document.querySelectorAll('#board .flow').length,
+        scrollH:document.documentElement.scrollHeight, viewH:window.innerHeight,
+        overflowPx:Math.max(0,document.documentElement.scrollHeight-window.innerHeight),
         goalReady:document.querySelector('.goal') && document.querySelector('.goal').classList.contains('ready')});})()`,
     returnByValue: true
   });

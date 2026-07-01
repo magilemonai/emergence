@@ -123,8 +123,8 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
 .buy:disabled,.act:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
 .buy .c{ color:var(--accent); } .buy:disabled .c{ color:inherit; }
 .buy.ok .c{ color:var(--good); }
-.pause{ position:absolute; top:6px; right:8px; width:20px; height:20px; border-radius:6px; border:1px solid var(--line);
-  background:rgba(0,0,0,0.3); color:var(--dim); cursor:pointer; font-size:10px; line-height:18px; text-align:center; padding:0; }
+.pause{ display:inline-block; vertical-align:middle; width:18px; height:18px; border-radius:5px; border:1px solid var(--line);
+  background:rgba(0,0,0,0.3); color:var(--dim); cursor:pointer; font-size:9px; line-height:15px; text-align:center; padding:0; margin-left:5px; }
 .pause.on{ color:var(--danger); border-color:var(--danger); }
 .auto{ display:flex; align-items:center; gap:8px; margin-top:8px; padding:7px 9px; border-radius:10px; background:rgba(0,0,0,0.18); border:1px solid var(--line); }
 .auto img{ width:26px; height:26px; object-fit:contain; }
@@ -195,7 +195,7 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
 .disco .di{ flex:1; min-width:0; }
 .disco .dn{ font-family:var(--era-font); font-size:13px; }
 .disco .de{ font-size:12px; color:var(--good); }
-.disco .dbuy{ width:100%; margin-top:7px; }
+.disco .dbuy{ width:100%; margin-top:7px; white-space:normal; height:auto; line-height:1.5; }
 .cost-res{ color:var(--dim); white-space:nowrap; } .cost-res.ok{ color:var(--good); }
 
 /* ---------- floating +N, tooltip, toasts ---------- */

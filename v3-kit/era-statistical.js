@@ -105,8 +105,7 @@ function makeEraStatistical(shell) {
   /* ---------- buys (Datasets ← Silicon, Models ← Data, Foundry ← Data [stand-in]) ---------- */
   var BUYS = {
     dataset: { res: 'silicon', base: CFG.datasetCost, growth: CFG.datasetGrowth },
-    model: { res: 'data', base: CFG.modelCost, growth: CFG.modelGrowth },
-    foundry: { res: 'data', base: CFG.foundryCost, growth: CFG.foundryGrowth }
+    model: { res: 'data', base: CFG.modelCost, growth: CFG.modelGrowth }
   };
   var unitCost = function (k) { return Math.floor(BUYS[k].base * Math.pow(BUYS[k].growth, E[k])); };
   var canBuy = function (k) { return S[BUYS[k].res] >= unitCost(k); };
@@ -115,7 +114,7 @@ function makeEraStatistical(shell) {
   /* ---------- production ---------- */
   function produce(dt) {
     sync(); var st = e3Stats();
-    if (E.foundry > 0) { var a = E.foundry * CFG.foundryRate * dt; S.silicon += a; K.fIn('silicon', a); } // STAND-IN: emits Silicon
+    // Silicon now comes from the REAL Origins Foundries (shared pool, produced in the background). No fake foundry here.
     if (E.dataset > 0) { var b = E.dataset * CFG.datasetYield * st.dataMult * dt; S.data += b; K.fIn('data', b); }
     if (E.model > 0) {
       var modelRun = E.model, need = E.model * CFG.modelSilicon * dt;
@@ -178,14 +177,15 @@ function makeEraStatistical(shell) {
       '<div class="goal" id="goal"><div class="gname">Generalize</div><div class="gsub">push VALIDATION to the goal line</div>' +
       '<div class="gval"><span id="goalVal">0</span><small>%</small></div><div class="meter"><i id="genMeter"></i></div><div class="meter-lab" id="genLab"></div>' +
       '<button class="fab" id="fabricate" disabled>GENERALIZE</button></div>' +
-      '<div class="panel supply-bus" style="margin-top:14px"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; add Foundries to scale</div>' +
+      '<div class="panel supply-bus" style="margin-top:14px"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; build more there if it runs low</div>' +
       '<div class="sup-row" id="supRow"></div><div class="sup-rate" id="supSi"></div></div></div>';
     return h;
   }
 
   function renderFocus() {
     var f = CFG.focus;
-    var SIG = { fit: [['TRAIN', '▲▲', '#ffb86b'], ['VAL', '▲', '#8af0d8'], ['OVERFIT', '▲▲', '#ff8a5c']], generalize: [['OVERFIT', '▼▼', '#7de6a8'], ['VAL', '▲', '#8af0d8'], ['TRAIN', '·', '#8a9aa0']], explore: [['SURVEY', '▲▲', '#6ea8ff'], ['VAL', '▲', '#8af0d8'], ['OVERFIT', '▲', '#ff8a5c']] };
+    // VAL arrow tracks what happens to VALIDATION: Fit & Explore push it DOWN (overfit grows), only Generalize UP.
+    var SIG = { fit: [['TRAIN', '▲▲', '#ffb86b'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲▲', '#ff8a5c']], generalize: [['OVERFIT', '▼▼', '#7de6a8'], ['VAL', '▲', '#8af0d8'], ['TRAIN', '·', '#8a9aa0']], explore: [['SURVEY', '▲▲', '#6ea8ff'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲', '#ff8a5c']] };
     $('focusRow').innerHTML = ['fit', 'generalize', 'explore'].map(function (k) { return '<button class="focus-seg" data-focus="' + k + '" id="foc-' + k + '" data-tip="' + esc(f[k].desc) + '"><b>' + f[k].label + '</b><span>' + f[k].desc + '</span><span class="foc-sig">' + SIG[k].map(function (c) { return '<i style="color:' + c[2] + '">' + c[0] + ' ' + c[1] + '</i>'; }).join('') + '</span></button>'; }).join('');
     Array.prototype.forEach.call($('focusRow').querySelectorAll('[data-focus]'), function (b) { b.onclick = function () { E.focus = b.getAttribute('data-focus'); K.playSound('buy'); shell.refresh(); }; });
   }
@@ -206,14 +206,15 @@ function makeEraStatistical(shell) {
     $('methods').innerHTML = '<div class="method-pins">' + pins + '</div>';
   }
   function renderSupply() {
-    $('supRow').innerHTML = '<button class="sup-btn" data-supbuy="foundry" id="sup-foundry"><span class="sup-nm">Foundry <b id="supc-foundry"></b></span><span class="sup-cost" id="supx-foundry"></span></button>';
-    var b = $('sup-foundry'); if (b) b.onclick = function () { buy('foundry'); };
+    // real reach-back: Silicon is drawn from the Origins Foundries. Low? Go build more there.
+    $('supRow').innerHTML = '<button class="sup-btn" id="sup-origins" data-tip="' + esc('<i>The instrument runs on Silicon from the Origins stack.</i><br>If Datasets stall, jump back to Origins and build more Foundries.') + '"><span class="sup-nm">Silicon from <b>Origins</b> →</span><span class="sup-cost" id="supx-origins"></span></button>';
+    var b = $('sup-origins'); if (b) b.onclick = function () { shell.navTo(1); };
   }
   function wire() {
     sync();
     renderFocus(); renderPipe(); renderCards(); renderMethods(); renderSupply();
     var xc = $('expCards'); if (xc) xc.onclick = function (e) { var b = e.target.closest && e.target.closest('[data-card]'); if (b && !b.disabled) buyCard(b.dataset.card); };
-    var eb = $('expBtn'); if (eb) eb.onclick = function () { sync(); if (S.data < CFG.expDataCost || E.done) return; runExperiment(1); plotPulse = 1; S.started = true; K.playSound('buy'); var r = eb.getBoundingClientRect(); K.floatNum('trial', HUE.data, r.right - 40, r.top + 10); shell.refresh(); };
+    var eb = $('expBtn'); if (eb) eb.onclick = function () { sync(); if (S.data < CFG.expDataCost || E.done) return; runExperiment(1); plotPulse = 1; S.started = true; K.playSound('buy'); shell.refresh(); }; // no 'trial' float — the plot pulse is the feedback
     var fb = $('fabricate'); if (fb) fb.onclick = fabricate;
   }
 
@@ -230,7 +231,7 @@ function makeEraStatistical(shell) {
   function refresh() {
     sync(); var st = e3Stats(), f = curFocus();
     ['silicon', 'data', 'insight'].forEach(function (k) { setTxt($('stk-' + k), fmt(S[k])); });
-    K.connGlow('silicon', { norm: E.foundry * CFG.foundryRate + 0.001 }); K.connGlow('data', { norm: 1.5 }); K.connGlow('insight', { norm: 3 });
+    K.connGlow('silicon', { norm: 1.5 }); K.connGlow('data', { norm: 1.5 }); K.connGlow('insight', { norm: 3 });
     nodeRefresh('dataset', [['+', CFG.datasetYield * st.dataMult, 'data']]);
     nodeRefresh('model', [['+', CFG.expPerModel, 'trials'], ['−', CFG.expPerModel * CFG.expDataCost, 'data'], ['−', CFG.modelSilicon, 'silicon']]);
     var fl = f.label.toUpperCase(); setTxt($('expLabel'), 'RUN ' + fl + ' TRIAL');
@@ -259,9 +260,12 @@ function makeEraStatistical(shell) {
     var stale = mbtn && mbtn.dataset && typeof mbtn.dataset.mid === 'string' && (!mtd || mbtn.dataset.mid !== mtd.id);
     if (stale) renderCards();
     else boardCards().forEach(function (kind) { if (kind === 'method' && !mtd) return; var bb = $('xc-buy-' + kind); if (bb) { var c = expCost(kind); setText('xc-c-' + kind, fmt(c) + ' Data'); setDis(bb, S.data < c); } });
-    // supply
-    var sb = $('sup-foundry'); if (sb) { setTxt($('supc-foundry'), '×' + E.foundry); var fc = unitCost('foundry'); setTxt($('supx-foundry'), fmt(fc) + ' Data'); setDis(sb, S.data < fc); }
-    setText('supSi', 'Silicon ' + fmt(S.silicon) + '  ·  ' + E.foundry + ' Foundries → +' + fmt(E.foundry * CFG.foundryRate) + '/s  ·  Models draw ' + fmt(E.model * CFG.modelSilicon) + '/s');
+    // supply — real Origins reach-back readout
+    var siRate = shell.RATES.silicon || 0;
+    setText('supx-origins', fmt(S.silicon) + ' Silicon · ' + (siRate >= 0 ? '+' : '') + fmt(siRate) + '/s');
+    var lowSi = S.silicon < unitCost('dataset') * 0.5 && siRate <= 0;
+    var so = $('sup-origins'); if (so) so.classList.toggle('can', lowSi);
+    setText('supSi', 'Datasets build from Silicon · Models draw ' + fmt(E.model * CFG.modelSilicon) + '/s.' + (lowSi ? '  Silicon low — build more Foundries in Origins.' : ''));
     // goal
     var goalPct = Math.min(100, (eff / thr) * 100);
     if ($('genMeter')) $('genMeter').style.width = goalPct + '%';
@@ -322,9 +326,9 @@ function makeEraStatistical(shell) {
     st.e3 = { accuracy: 0, gap: 0, methods: {}, focus: 'fit', survey: 0, utilN: 0, utilLvl: { calibrate: 0, sweep: 0, distill: 0 }, shifts: 0, shiftAt: 0, lastShift: -99, dataPhase: 0, dataset: 0, model: 0, foundry: 0, done: false };
   }
   function open(st) {
-    // seed the instrument in motion (Statistical stand-in seeds; task #3 wires real Origins Silicon reach-back)
+    // Statistical→Origins reach-back: Datasets consume Silicon that Origins produces. Seed a starting buffer + datasets.
     var e = st.e3;
-    if (!e.dataset && !e.foundry) { st.silicon = (st.silicon || 0) + CFG.seedSilicon; e.dataset = CFG.seedDatasets; e.foundry = CFG.seedFoundry; }
+    if (!e.dataset) { st.silicon = (st.silicon || 0) + CFG.seedSilicon; e.dataset = CFG.seedDatasets; }
     st.started = true;
   }
 

@@ -81,11 +81,12 @@
   function node(key, name, tip, opts) {
     opts = opts || {};
     var iconHTML = opts.icon ? '<img class="nic" src="' + opts.icon + '">' : '';
+    // pause lives INLINE in the name row (not absolute) so it can't overlap the Build button — the "bad UX" misclick.
+    var pauseHTML = opts.pausable !== false ? ' <button class="pause" id="pause-' + key + '" title="pause / resume">II</button>' : '';
     return '<div class="node" id="node-' + key + '" data-tip="' + esc(tip) + '">' + iconHTML +
-      '<div class="nname">' + name + ' <span class="ncount" id="cnt-' + key + '"></span></div>' +
+      '<div class="nname">' + name + ' <span class="ncount" id="cnt-' + key + '"></span>' + pauseHTML + '</div>' +
       '<div class="nrate" id="rate-' + key + '"></div>' +
       '<button class="buy nbuy" id="buy-' + key + '"></button>' +
-      (opts.pausable !== false ? '<button class="pause" id="pause-' + key + '" title="pause / resume">II</button>' : '') +
       '</div>';
   }
   function chip(key, label) { // rail chip
@@ -187,7 +188,7 @@
 
   /* ---------- music: one controller, all era beds, crossfade on era switch ----------
      beds = { 1:'assets/music-bone-loam.mp3', ... , rupture:'assets/music-unmoored-presence.mp3' } */
-  var MUSIC = { on: false, vol: 0.4, el: null, cur: null, beds: {} };
+  var MUSIC = { on: false, vol: 0.22, el: null, cur: null, beds: {} };
   function musicSetup(beds) { MUSIC.beds = beds || {}; if (hasDOM) MUSIC.el = $('music'); }
   function musicPlayEra(n) {
     if (!hasDOM || !MUSIC.el) return; var src = MUSIC.beds[n]; if (!src || MUSIC.cur === src) return;

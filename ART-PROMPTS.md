@@ -1,5 +1,10 @@
 # Art prompts — Eras 4 & 5 (generate in ChatGPT, then Claude keys + wires)
 
+> **v3 unified — pending asset needs** (single home for ChatGPT asset asks; source: `TODO-v3-unified.md`):
+> - _(none firm yet from the 2026-07-01 eyeball)_. Candidate: end-of-era cinematic art/motion if we
+>   take the "small cinematics between eras" idea beyond CSS ([13:17]). Fonts for the fabricate
+>   font-morph are already loaded — no new asset. Add concrete prompts here when a need firms up.
+
 Eras 4-5 are **fully built and playable** with glyph fallbacks. These are the icon
 sets to make them look finished. Same pipeline as before: generate in ChatGPT (higher
 fidelity), Claude keys the baked checkerboard to alpha (PIL luminance threshold ~150-212)

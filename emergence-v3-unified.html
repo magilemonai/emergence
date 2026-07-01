@@ -174,7 +174,20 @@
   body.theme-4 .lock-btn{ grid-row:1/3; grid-column:2; align-self:center; min-width:96px; padding:8px 10px; border-radius:9px; cursor:pointer; background:var(--panel-2); border:1px solid var(--edge); color:var(--text); font-family:var(--era-font); font-size:12px; font-weight:600; letter-spacing:0.04em; text-align:center; box-shadow:inset 0 1px 0 rgba(169,207,255,0.07); } body.theme-4 .lock-btn:hover:not(:disabled){ border-color:var(--accent); background:#122238; } body.theme-4 .lock-btn:disabled{ opacity:0.45; cursor:not-allowed; } body.theme-4 .lock-btn.active{ border-color:var(--bluehot); color:var(--bluehot); box-shadow:0 0 12px rgba(110,168,255,0.3); } body.theme-4 .lock-btn .lk-cost{ display:block; font-family:var(--mono); font-size:10.5px; color:var(--capability); font-weight:400; margin-top:2px; }
   body.theme-4 .goal img.gs{ width:70px; height:70px; object-fit:contain; filter:drop-shadow(0 0 12px rgba(110,168,255,0.4)); } body.theme-4 .goal .gname{ font-size:15px; letter-spacing:0.07em; margin:6px 0 2px; color:#eef5ff; }
   body.theme-4 .advance{ width:100%; font-size:14px; letter-spacing:0.06em; font-weight:600; padding:13px; border-radius:11px; cursor:pointer; color:#04120e; border:1px solid var(--good); background:linear-gradient(180deg,#a6ffdc,#5fe0b4); box-shadow:0 0 16px rgba(130,255,200,0.28); } body.theme-4 .advance:disabled{ opacity:0.32; cursor:not-allowed; box-shadow:none; filter:grayscale(0.35); } body.theme-4 .goal.ready{ border-color:var(--good); box-shadow:0 0 26px rgba(130,255,200,0.28); } body.theme-4 .goal.ready .advance{ animation:advPulse 1.5s ease-in-out infinite; }
-  @keyframes advPulse{ 50%{ box-shadow:0 0 28px rgba(130,255,200,0.8); } } body.theme-4 .mini-gauge{ margin-top:14px; text-align:left; }
+  @keyframes advPulse{ 50%{ box-shadow:0 0 28px rgba(130,255,200,0.8); } } body.theme-4 .mini-gauge{ margin-top:10px; text-align:left; }
+  /* Deep one-screen: mixer + the 3 runs side-by-side; gauges as a strip; compute node promoted */
+  body.theme-4 .fab-main{ display:grid; grid-template-columns:minmax(210px,42%) 1fr; gap:12px; align-items:start; margin-bottom:6px; }
+  @media(max-width:980px){ body.theme-4 .fab-main{ grid-template-columns:1fr; } }
+  body.theme-4 .mixer-col{ min-width:0; } body.theme-4 .runs-col{ min-width:0; }
+  body.theme-4 .tri-mixer{ padding-bottom:80%; max-width:280px; margin:2px auto 0; }  /* near-equilateral (was 60% = squashed); compact */
+  body.theme-4 .orch{ margin:8px 0 0; font-size:12px; }
+  body.theme-4 .runs-col .lanes-head{ margin:0 0 6px; }
+  body.theme-4 .runs-col .lane{ padding:6px 9px 7px; margin-bottom:7px; }
+  body.theme-4 .runs-col .lane-lab{ margin-bottom:4px; } body.theme-4 .runs-col .lane-lab .rsig{ width:18px; height:18px; } body.theme-4 .runs-col .lane-lab .rnm{ font-size:13px; }
+  body.theme-4 .runs-col .stock{ min-width:56px; } body.theme-4 .runs-col .run-cap{ font-size:19px; } body.theme-4 .runs-col .wind-fc{ height:12px; }
+  body.theme-4 .runs-col .lock-btn{ min-width:78px; padding:6px 8px; font-size:11px; }
+  body.theme-4 .gauges-strip{ flex-direction:row; gap:14px; margin-top:8px; padding-top:9px; border-top:1px solid rgba(110,168,255,0.12); } body.theme-4 .gauges-strip > div{ flex:1; }
+  body.theme-4 .verb-hero{ padding:15px 15px; background:linear-gradient(180deg,#173a63,#0c1c30); border-color:rgba(110,168,255,0.6); box-shadow: inset 0 1px 0 rgba(169,207,255,0.22), 0 0 20px rgba(110,168,255,0.22), 0 4px 12px rgba(0,0,0,0.5); } body.theme-4 .verb-hero .vname{ font-size:17px; }
   @media (prefers-reduced-motion:reduce){ body.theme-4 .event-banner.shift,body.theme-4 .event-banner.brk,body.theme-4 .heat-led.warm,body.theme-4 .heat-led.hot,body.theme-4 .goal.ready .advance{ animation:none; } }
   body.theme-5{ --bg:#0c0814; --panel:#160f24; --panel-2:#1d1430; --line:#382a52; --edge:#4a3a6e; --text:#e6dbf6; --dim:#b29ad0; --dimmer:#7c6a99; --accent:#b78bff; --capability:#6ea8ff; --scale:#b78bff; --autonomy:#c66bff; --alignment:#5fe0c0; --control:#9fb4d6; --coherence:#6ea8ff; --anomaly:#ff5a6e; --good:#7fe6c4; --danger:#ff7a8e; --tease:#ffffff; --era-font:'Space Grotesk','Inter',sans-serif; --body-font:'Inter',sans-serif; --mono:ui-monospace,Menlo,monospace; --rail-bg:rgba(8,5,14,0.84); --tip-bg:rgba(12,8,18,0.97); --field: radial-gradient(1100px 700px at 50% -12%, rgba(183,139,255,0.14), transparent 60%), radial-gradient(800px 520px at 88% 112%, rgba(110,168,255,0.08), transparent 60%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n5'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.55 0 0 0 0 0.4 0 0 0 0 0.85 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n5)'/%3E%3C/svg%3E"); }
   /* Foundation Tier-3 (recursion, agentic caps, revealed meters, veto, substrate, endcard, rupture) */
@@ -361,6 +374,7 @@
   var shell = {
     KIT: KIT, S: S, CFG: CFG, RATES: RATES,
     openEra: openEra, save: save,
+    navTo: function (n) { navTo(n); },   // reach-back: send the player to an earlier era to build more supply
     refresh: refreshActive,        // per-tick values on the live board
     requestRender: renderBoard     // structural rebuild of the live board
   };
@@ -518,15 +532,18 @@
   if (HASH.indexOf('seedpost') >= 0 && ERAS[5]) { ERAS[5].seed('post'); } // aftermath + open veto
   else if (HASH.indexOf('seedend') >= 0 && ERAS[5]) { ERAS[5].seed('end'); } // resolved ending + recap
   else if (HASH.indexOf('found') >= 0 && ERAS[5]) { ERAS[5].seed('pre'); } // pre-emergence, Anomaly climbing
-  else if (HASH.indexOf('deep') >= 0 && ERAS[4]) { // #seeddeep: mid-game Deep
+  else if (HASH.indexOf('deep') >= 0 && ERAS[4]) { // #seeddeep: mid-game Deep (real Origins+Statistical humming upstream)
     S.maxEra = 4; S.era = 4; S.started = true;
-    var E4 = S.e4; E4.node = 14; E4.foundry = 3; E4.dataset = 6; E4.model = 4; E4.scriptorium = 4;
-    E4.vision = 0.55; E4.language = 0.34; E4.reasoning = 0.62; E4.heat = 41; E4.stabilizer = 1;
+    S.e1.flags = { canScribe: 1, o_materials: 1, o_scriptorium: 1, o_smelter: 1, o_foundry: 1 }; S.e1.age = 3;
+    S.e1.scribe = 20; S.e1.miner = 20; S.e1.scriptorium = 6; S.e1.smelter = 6; S.e1.foundry = 3;
+    S.e3.dataset = 6; S.e3.model = 4; S.e3.accuracy = 0.9; S.e3.methods = { regression: 1, features: 1 };
+    S.marks = 500; S.ore = 800; S.knowledge = 400; S.metal = 300;
+    var E4 = S.e4; E4.node = 14; E4.vision = 0.55; E4.language = 0.34; E4.reasoning = 0.62; E4.heat = 41; E4.stabilizer = 1;
     E4.alloc = { vision: 0.30, language: 0.50, reasoning: 0.20 }; E4.event = { type: 'shift', run: 'reasoning', mult: 1 }; E4.eventT = 9; E4.eventNext = null;
-    S.silicon = 1350; S.data = 420; S.insight = 140; S.knowledge = 280; S.capability = 520;
+    S.silicon = 1350; S.data = 420; S.insight = 140; S.capability = 520;
   } else if (HASH.indexOf('stat') >= 0 && ERAS[3]) { // #seedstat: mid-game Statistical
     S.maxEra = 3; S.era = 3; S.started = true;
-    var E3 = S.e3; E3.foundry = 3; E3.dataset = 8; E3.model = 10; E3.accuracy = 0.72; E3.gap = 0.16; E3.focus = 'fit';
+    var E3 = S.e3; E3.dataset = 8; E3.model = 10; E3.accuracy = 0.72; E3.gap = 0.16; E3.focus = 'fit';
     E3.methods = { regression: 1, features: 1, regularization: 1 }; E3.utilLvl = { calibrate: 1, sweep: 0, distill: 1 }; E3.utilN = 2; E3.survey = 42; E3.dataPhase = 0.9; E3.lastShift = -99;
     S.silicon = 260; S.data = 180; S.insight = 90;
   } else if (HASH.indexOf('sym') >= 0 && ERAS[2]) { // #seedsym: mid-game Symbolic
