@@ -119,7 +119,8 @@ function makeEraSymbolic(shell) {
     h += '<div class="tissue"><b>Knowledge</b> → <b>Rules</b> → <b>Rulesets</b> reason them into <b>Inference</b> → aim it at a <b>Theorem</b>.</div>';
     h += '<div class="col-verbs"><div class="col-head">Your hand</div>' +
       '<button class="verb" id="writeRule"><span class="vname">Write a rule</span><span class="vyield" id="writeY"></span><span class="vkey">click / ↵</span></button>' +
-      '<div class="side-btn" id="compileBtn" style="display:' + (E.flags.compile ? 'flex' : 'none') + '"><span>COMPILE</span><span class="badge" id="compileBadge">+0</span></div></div>';
+      '<div class="side-btn" id="compileBtn" style="display:' + (E.flags.compile ? 'flex' : 'none') + '"><span>COMPILE</span><span class="badge" id="compileBadge">+0</span></div>' +
+      '<div class="compile-hint" id="compileHint" style="display:' + (E.flags.compile ? 'block' : 'none') + '"></div></div>';
     h += '<div class="col-pipe"><div class="col-head">The engine — rules reason into inference, inference proves theorems</div>' +
       '<div class="lane"><div class="lane-lab">Author · write rules, automate them<div class="ldash"></div></div><div class="pipe" id="authorPipe"></div></div>' +
       '<div class="lane"><div class="lane-lab">Prove · aim inference at a theorem<div class="ldash"></div></div><div class="proof-active" id="proofActive"></div><div class="theorems" id="theorems"></div></div></div>';
@@ -197,7 +198,12 @@ function makeEraSymbolic(shell) {
       setHTML(b, active ? 'PROVING…' : 'Aim · <span class="c" style="color:var(--inference)">' + fmt(cost) + ' inf</span>'); setDis(b, active);
       var th = $('th-' + id); if (th) { var cl = 'th' + ((id === 'optimization' || id === 'capacity') ? ' lemma' : '') + (active ? ' active' : ''); if (th.className !== cl) th.className = cl; }
     });
-    if (E.flags.compile) { setTxt($('compileBadge'), '+' + axiomGain()); }
+    if (E.flags.compile) {
+      var ag = axiomGain(); setTxt($('compileBadge'), '+' + ag);
+      // axiom clarity ([06:24] "not clear what contributes to Axioms or how close"): surface run-rules → axioms + next threshold
+      var nextAt = CFG.axiomDivisor * (ag + 1) * (ag + 1);
+      setHTML($('compileHint'), 'Banks <b>+' + ag + '</b> Axiom' + (ag === 1 ? '' : 's') + ' from this run (<b>' + fmt(E.runRules) + '</b> rules) · next +1 at <b>' + fmt(nextAt) + '</b> rules');
+    }
     if ($('path')) setHTML($('path'), pathHTML());
     var ready = canProve('expert'), fb = $('fabricate'); if (fb) { setDis(fb, !ready && !E.flags.symbolicDone); setTxt(fb, E.flags.symbolicDone ? 'PROVEN ✓' : (E.activeProof === 'expert' ? 'PROVING…' : 'PROVE IT')); }
     if ($('goal')) $('goal').classList.toggle('ready', ready || E.flags.symbolicDone);

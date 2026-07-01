@@ -25,7 +25,7 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 - [x] Deep corner-glow: the run needing compute pulses its triangle corner in its colour (steer toward it).
 - [x] Deep heat retuned to actually bite (heatRise 8→22, throttle 88→70; test asserts it hits WARM). NEEDS playtest feel-check.
 - [ ] Deep: replace remaining text alerts (orch line / event banner) with more color-driven visuals ([13:29]).
-- [ ] Symbolic: TOO MUCH TEXT (strongest complaint) + Axiom progress unclear — task #13.
+- [~] Symbolic: [x] Axiom progress now surfaced (live "Banks +N Axioms · next +1 at Y rules" hint under Compile) ([06:24]). (2026-07-01)  ·  [ ] TOO MUCH TEXT (strongest complaint) — tissue prose still needs a visual pass — task #13.
 - [ ] Back-half passivity: Deep tech tree thin + Foundation pre-emergence "just watching" — task #14 (design, needs Cody).
 - [ ] Origins commission below fold ([01:42]); Statistical secondary panels still scroll.
 
@@ -47,19 +47,19 @@ reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
 
 ## P2 — reduce text / teach visually (recurring: "too much text, small text")
 - [~] Symbolic: [x] rewrote the clumsy contradiction copy ([11:14]); [ ] tissue prose → show Knowledge→Rules visually ([07:45]).
-- [~] Foundation: [x] deduped the repeated "wake/wakes aligned" copy (rush hint + coherence label) ([36:20]); [ ] trim aftermath agent-stream density ([38:00]).
+- [x] Foundation: [x] deduped the repeated "wake/wakes aligned" copy (rush hint + coherence label) ([36:20]); [x] trimmed aftermath agent-stream density (agentSay log cap 6→4) ([38:00]). (2026-07-01)
 
 ## P3 — back-half agency (Deep + Foundation go passive)
 - [ ] Deep: more to do + make the steering loop reactable (partly solved by P0 one-screen) ([26:18],[26:39]).
 - [ ] Foundation: pre-emergence has nothing to do after caps are bought → add a decision/interaction ([36:33]).
 
 ## P4 — delight / story (Cody's ideas)
-- [ ] Origins goal glow ramps with progress (exponential; turns on at the end) ([06:14]).
-- [ ] Fabricate button font-morphs to the NEXT era's font (Origins→Symbolic) ([06:59]). ← **resurfaced deferred item** (CLAUDE.md task #25).
+- [x] Origins goal glow ramps with progress (exponential --wake; .ready pulses at the gate) ([06:14]). (2026-07-01)
+- [x] Fabricate button font-morphs to the NEXT era's font (Origins→Symbolic VT323) ([06:59], was CLAUDE.md task #25). (2026-07-01)
 - [ ] Small end-of-era cinematics (reward + look-ahead) ([13:17]). → may need ASSETS (see ART-PROMPTS.md).
-- [ ] Symbolic: gate early rulesets so the first inference climb is VISIBLE (not a blink) ([08:09]); inference animation ([09:30]).
-- [ ] Deep: make Build Compute Node the hero (more prominent than supply buttons) ([24:08]); supply visibly eases steering ([22:39]).
-- [ ] Foundation: substrate tiles DO something when the agent operates prior eras (storytelling) ([38:21],[39:16]); ending needs a finale moment ([40:20]).
+- [ ] Symbolic: gate early rulesets so the first inference climb is VISIBLE (not a blink) ([08:09]) — pacing tune, wants playtest; inference animation ([09:30]).
+- [x] Deep: Build Compute Node promoted to hero (.verb-hero, brighter/bigger than supply buttons) ([24:08]). (2026-07-01)  ·  [ ] supply visibly eases steering ([22:39]) — design.
+- [ ] Foundation: substrate tiles DO something when the agent operates prior eras (storytelling) ([38:21],[39:16]); ending needs a finale moment ([40:20]). — design, needs Cody.
 
 ## Phase-3 remainder (from the merge plan)
 - [~] Revert 3 economy stand-ins → real cross-era reach-back (supply was doubled):

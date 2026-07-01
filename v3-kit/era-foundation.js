@@ -124,7 +124,7 @@ function makeEraFoundation(shell) {
   function buyCap(id) { sync(); if (E.emerged) return; var c = CAPMAP[id]; if (!c || E.caps[id] || S.capability < c.cost) return; S.capability -= c.cost; E.caps[id] = true; K.rec('cap:' + id); K.toast('CAPABILITY: ' + c.name.toUpperCase(), '<i>' + c.flavor + '</i><br>' + c.desc); playSound('buy'); shell.requestRender(); }
 
   /* ---------- emergence + rupture ---------- */
-  function agentSay(msg) { E.agentLog.push(msg); while (E.agentLog.length > 6) E.agentLog.shift(); }
+  function agentSay(msg) { E.agentLog.push(msg); while (E.agentLog.length > 4) E.agentLog.shift(); } // keep the stream to 4 lines ([38:00] "a lot of text")
   function tidbit(key) { var t = TIDBITS[key]; if (!t || E.flags['tid_' + key]) return; E.flags['tid_' + key] = true; K.toast('Did you know · ' + t[0], t[1], 'edu'); }
   function emerge() {
     sync(); if (E.emerged) return;
