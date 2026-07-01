@@ -260,7 +260,12 @@ function makeEraDeep(shell) {
       var mr = Math.round(84 * share.vision + 181 * share.language + 111 * share.reasoning), mg = Math.round(210 * share.vision + 140 * share.language + 230 * share.reasoning), mbb = Math.round(255 * share.vision + 255 * share.language + 168 * share.reasoning);
       var bc = 'rgb(' + mr + ',' + mg + ',' + mbb + ')'; if (th._bc !== bc) { th.style.background = bc; th.style.boxShadow = '0 0 16px ' + bc + ', 0 2px 4px rgba(0,0,0,0.5)'; th._bc = bc; }
     }
-    doms.forEach(function (d) { var k = d.k; var ln = $('feed-' + k); if (ln) { setAttr(ln, 'x2', (hx.x * 100).toFixed(1)); setAttr(ln, 'y2', (hx.y * 100).toFixed(1)); ln.style.strokeOpacity = (0.1 + 0.9 * share[k]).toFixed(2); } setTxt($('pct-' + k), Math.round(share[k] * 100) + '%'); });
+    doms.forEach(function (d) {
+      var k = d.k; var ln = $('feed-' + k); if (ln) { setAttr(ln, 'x2', (hx.x * 100).toFixed(1)); setAttr(ln, 'y2', (hx.y * 100).toFixed(1)); ln.style.strokeOpacity = (0.1 + 0.9 * share[k]).toFixed(2); }
+      setTxt($('pct-' + k), Math.round(share[k] * 100) + '%');
+      // corner-glow: the triangle corner of a run that needs compute pulses in its own colour — steer toward it (color, not text)
+      var pc = $('pct-' + k); if (pc && pc.parentNode) { var need = (info[k].net < 0 || info[k].blocked || info[k].evBreak || info[k].evShift) && !info[k].locked; pc.parentNode.classList.toggle('need', need); }
+    });
     // lanes
     doms.forEach(function (d) {
       var k = d.k, i = info[k];
@@ -281,7 +286,7 @@ function makeEraDeep(shell) {
       else { st = 'holding'; badge = '<span class="rbadge b-hold">HOLDING</span>'; }
       setHTML($('rsub-' + k), 'share ' + Math.round(share[k] * 100) + '% · ' + st);
       setHTML($('badge-' + k), badge);
-      var lane = $('lane-' + k); if (lane) { var cls = 'lane' + (i.evBreak ? ' front' : '') + ((i.blocked || i.evShift || i.net < 0) ? ' low' : ''); if (lane.className !== cls) lane.className = cls; }
+      var lane = $('lane-' + k); if (lane) { var cls = 'lane' + (i.locked ? ' frozen' : '') + (i.evBreak ? ' front' : '') + ((!i.locked && (i.blocked || i.evShift || i.net < 0)) ? ' low' : ''); if (lane.className !== cls) lane.className = cls; }
       var lb = $('lock-' + k); if (lb) { var lc = lockCost(); if (i.locked) { setHTML(lb, '🔒 ' + Math.ceil(E.locks[k]) + 's'); lb.classList.add('active'); setDis(lb, true); } else { setHTML(lb, 'LOCK<span class="lk-cost">' + fmt(lc) + ' Cap</span>'); lb.classList.remove('active'); setDis(lb, S.capability < lc); } }
       updWind(k, share[k], i.evShift);
     });

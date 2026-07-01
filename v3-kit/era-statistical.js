@@ -47,7 +47,8 @@ function makeEraStatistical(shell) {
     return { accGain: accGain, dataMult: dataMult, insMult: insMult, discMult: discMult, regMult: regMult, effBonus: effBonus, cap: cap };
   }
   function curFocus() { return CFG.focus[E.focus] || CFG.focus.fit; }
-  function effAccuracy() { var st = e3Stats(); return Math.max(0, Math.min(st.cap, E.accuracy + st.effBonus - E.gap)); }
+  // VALIDATION (effective accuracy) can never exceed TRAINING (raw accuracy) — methods shrink the gap toward it, not past it.
+  function effAccuracy() { var st = e3Stats(); return Math.max(0, Math.min(st.cap, E.accuracy, E.accuracy + st.effBonus - E.gap)); }
 
   function runExperiment(amount) {
     sync(); var st = e3Stats(), f = curFocus();
@@ -177,7 +178,7 @@ function makeEraStatistical(shell) {
       '<div class="goal" id="goal"><div class="gname">Generalize</div><div class="gsub">push VALIDATION to the goal line</div>' +
       '<div class="gval"><span id="goalVal">0</span><small>%</small></div><div class="meter"><i id="genMeter"></i></div><div class="meter-lab" id="genLab"></div>' +
       '<button class="fab" id="fabricate" disabled>GENERALIZE</button></div>' +
-      '<div class="panel supply-bus" style="margin-top:14px"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; build more there if it runs low</div>' +
+      '<div class="panel supply-bus" style="margin-top:12px"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; build more there if it runs low</div>' +
       '<div class="sup-row" id="supRow"></div><div class="sup-rate" id="supSi"></div></div></div>';
     return h;
   }

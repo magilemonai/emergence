@@ -106,6 +106,10 @@ function deepCapAfter(oFoundry) {
   S.e1.foundry = oFoundry; ticks(3); return S.capability;
 }
 ok(deepCapAfter(10) > deepCapAfter(0), 'Deep RR5: more real Origins Foundries → more Capability (chainPerFoundry reads S.e1.foundry)');
+// heat must actually bite (playtest #2: "heat is dead"): sustained concentration heats past WARM
+freshAll(); S.maxEra = 4; ERAS[4].open(S); S.e4.node = 24; S.e4.alloc = { vision: 0.85, language: 0.075, reasoning: 0.075 };
+S.data = 99999; S.insight = 99999; S.knowledge = 99999; S.silicon = 99999;
+ticks(60); ok(S.e4.heat > CFG.e4.heatWarn, 'Deep heat: sustained concentration heats past WARM (not dead) — heat=' + Math.round(S.e4.heat));
 
 // ============================================================================ 6) Foundation reach-back
 freshAll(); S.maxEra = 5; ERAS[5].open(S);

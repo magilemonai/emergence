@@ -188,7 +188,7 @@
 
   /* ---------- music: one controller, all era beds, crossfade on era switch ----------
      beds = { 1:'assets/music-bone-loam.mp3', ... , rupture:'assets/music-unmoored-presence.mp3' } */
-  var MUSIC = { on: false, vol: 0.22, el: null, cur: null, beds: {} };
+  var MUSIC = { on: false, vol: 0.15, el: null, cur: null, beds: {} };
   function musicSetup(beds) { MUSIC.beds = beds || {}; if (hasDOM) MUSIC.el = $('music'); }
   function musicPlayEra(n) {
     if (!hasDOM || !MUSIC.el) return; var src = MUSIC.beds[n]; if (!src || MUSIC.cur === src) return;

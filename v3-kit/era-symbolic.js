@@ -225,7 +225,7 @@ function makeEraSymbolic(shell) {
   }
 
   return {
-    id: 2, theme: 'theme-2', name: 'Symbolic', sub: 'reasoning written as explicit rules', sigil: '',
+    id: 2, theme: 'theme-2', name: 'Symbolic', sub: 'reasoning written as explicit rules', sigil: 'assets/sigil-symbolic.png',
     bed: 'assets/music-phosphor-logic.mp3', pool: ['rules', 'inference', 'axioms'],
     sound: { buy: { osc: 'square', f0: 660, f1: 220, g: 0.05, dur: 0.09 }, event: { osc: 'square', f0: 330, f1: 180, g: 0.06, dur: 0.14 } },
     res: RES,

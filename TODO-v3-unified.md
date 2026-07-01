@@ -10,6 +10,21 @@
 - Cody played the full arc [capture `20260701_005934`]. Direction VALIDATED ("chase the factory/flow-chart
   idea — satisfactory/factorio"); emergence rupture is "much fun". Three problems undercut it → below.
 
+## Playtest #2 (2026-07-01 PM · `20260701_130925` · `alpha tests/July 1 2026 - Cody/unified-playtest-2.md`)
+Wins he called out: Fabricate font-morph, Statistical "fits on one page — great", the real build-here
+reach-back ("kind of fun"), triangle steering ("fun"), cross-era nav.
+- [x] Bug: Symbolic header sigil was broken (`sigil:''`) → wired `assets/sigil-symbolic.png`.
+- [x] Bug: VALIDATION blew past TRAINING (ensembles) → capped eff ≤ acc.
+- [x] Bug: music still loud → 0.22 → 0.15.
+- [x] Deep ADVANCE glow → violet (teases Foundation), was green.
+- [x] Deep frozen/locked run → whole-block "held" visual (desaturate + blue frost + ❄ HELD), not just text.
+- [x] Deep corner-glow: the run needing compute pulses its triangle corner in its colour (steer toward it).
+- [x] Deep heat retuned to actually bite (heatRise 8→22, throttle 88→70; test asserts it hits WARM). NEEDS playtest feel-check.
+- [ ] Deep: replace remaining text alerts (orch line / event banner) with more color-driven visuals ([13:29]).
+- [ ] Symbolic: TOO MUCH TEXT (strongest complaint) + Axiom progress unclear — task #13.
+- [ ] Back-half passivity: Deep tech tree thin + Foundation pre-emergence "just watching" — task #14 (design, needs Cody).
+- [ ] Origins commission below fold ([01:42]); Statistical secondary panels still scroll.
+
 ## P0 — ONE SCREEN PER ERA (measured @1280×800, ~713px viewport)
 - [x] **Deep** (was game-breaking): triangle + 3 runs + gauges side-by-side (approved mock); overflow +569→**+176**. ([20:42],[23:14])
 - [x] **Statistical Focus dial** on-screen: compacted the pinned stage; primary loop (scatter+RUN TRIAL+dial+goal) fits. ([14:54])
