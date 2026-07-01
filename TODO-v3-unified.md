@@ -1,9 +1,13 @@
-# TODO — v3 unified build (single durable source of truth)
+# TODO — MASTER / OVERALL list (the single durable source of truth)
 
-> The live checklist for `emergence-v3-unified.html` + `v3-kit/`. This is the DURABLE to-do
-> (the in-session Task list is just the working view of the current sprint and does not persist).
-> Asset needs go to `ART-PROMPTS.md`. Feedback sources: `alpha tests/July 1 2026 - Cody/unified-eyeball.md`.
-> Last updated 2026-07-01 (Cody's full-arc eyeball of the unified merge).
+> **This is THE master todo for the project.** Every playtest capture is synthesized *into* this file
+> (see `/process-capture` step 3): new items added, finished items marked `[x]` with a date, dedup'd
+> against what's here. The in-session TaskCreate list is only an ephemeral working view of the current
+> sprint and must never be the sole record. Legacy `TODO-*.md` + `CLAUDE.md` OPEN sections are being
+> folded in as their items resurface.
+> Scope right now = the v3 unified build (`emergence-v3-unified.html` + `v3-kit/`). Asset needs →
+> `ART-PROMPTS.md`. Feedback parses live in `alpha tests/<date> - <person>/`.
+> Last updated 2026-07-01 (playtest #2 processed).
 
 ## Status
 - Phase 2 (kit) ✅ · Phase 3 core (5 eras merged into one file) ✅ committed `2b129df` (local, unpushed).

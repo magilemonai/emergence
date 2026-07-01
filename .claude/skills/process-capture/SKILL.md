@@ -8,6 +8,10 @@ description: Process the newest KittyCapture recording of EMERGENCE into an iter
 The recurring loop for EMERGENCE playtests. Cody records himself playing (screen + spoken
 commentary) with KittyCapture, then hands it off. Run these four steps in order.
 
+**The durable spine is `TODO-v3-unified.md` — the single MASTER / OVERALL todo list.** Every capture
+gets *synthesized into* it (step 3). The in-session TaskCreate list is only an ephemeral working view
+and must never be the sole record, so nothing is lost between sessions.
+
 ## 1) Review the capture
 - Newest capture: `ls -dt KittyCapture/captures/*/ | head -1`. Read `transcript.txt` FIRST — his
   spoken commentary is the signal (tone doesn't transcribe, so **repetition = emphasis**).
@@ -27,21 +31,33 @@ the **headline verdict** (his words), **what landed / keep**, **bugs & aversive 
 directly for the load-bearing points. If it's a strategic pivot, also update `CLAUDE.md` and the
 memory files (`emergence-ui-intuitiveness`, `emergence-playtest-loop`).
 
-## 3) Build the to-do list
-Create tasks (TaskCreate) from the feedback, **most-critical first** — core-loop bugs before polish.
-Separate must-fix bugs from delight/feature asks from deferred items. Keep it honest about scope.
+## 3) Synthesize the to-do list into the MASTER TODO (durable — never only ephemeral)
+`TODO-v3-unified.md` is the single durable source of truth for open work. **Merge every capture's
+feedback INTO it** — do not just create ephemeral tasks:
+- **Add** new items; **mark finished ones `[x]`** with the date; **DEDUP** against what's already there
+  (don't re-add solved/duplicate items; when a *deferred* item resurfaces, link it to its origin).
+- Add a dated **`## Playtest #N (<date> · <capture-id>)`** block at the top summarizing the **wins he
+  called out** + the **new items**, so the history is legible.
+- Keep it grouped + honest about scope: **bugs** (most-critical first) · **one-screen** · **text /
+  legibility** · **back-half agency** · **delight / story** · **deferred** (verify relevance) ·
+  **assets-needed** (→ `ART-PROMPTS.md`) · **needs-Cody** (design calls + playtests).
+- THEN mirror just the **active sprint** into TaskCreate as a working view. The MD is the source of
+  truth; update it as you finish items.
+(Old round-specific `TODO-*.md` + `CLAUDE.md` OPEN sections are legacy — fold their still-live items in.)
 
 ## 4) Begin the iterative loop
-Work the list top-down. For each change:
-- Edit the relevant file (the shipped game is `emergence.html`; the v3 rebuild is `emergence-v3.html`).
-- Keep tests green: `node test.js` must stay green for `emergence.html`. For `emergence-v3.html`,
-  syntax-check the script (`node --check` on the extracted `<script>`) since it's outside the suite.
-- **Verify visually** with headless Chrome, because Cody's feedback is almost always visual:
-  `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu
-  --window-size=1280,1000 --screenshot=out.png "file://<abs-path>#seed"` then Read the PNG.
-  (`emergence-v3.html#seed` seeds a mid-game state for a populated screenshot.)
-- Mark tasks done as you finish; report progress. Don't push to live until Cody says (push
-  auto-deploys the GitHub Pages site).
+Work the master TODO top-down (bugs before polish). For each change:
+- Edit the relevant file. The **v3 build is `emergence-v3-unified.html`**, which loads
+  `v3-kit/kit.{js,css}` + `v3-kit/era-{origins,symbolic,statistical,deep,foundation}.js` (per-era
+  modules; CFG lives in the shell). The shipped game is still `emergence.html`.
+- Keep tests green: **`node test-v3.js`** (v3 suite) AND **`node test.js`** (shipped emergence.html)
+  must both stay green. Syntax-check edited modules with `node -c v3-kit/<file>.js`.
+- **Verify visually** with headless Chrome at a REAL viewport (his feedback is almost always visual,
+  and he cares about **one-screen**): `node tools/shoot-unified.js <seedhash> out.png` — it uses
+  1280×800 and reports `overflowPx` — then Read the PNG. Seeds: `#seed` (Origins), `#seedsym`,
+  `#seedstat`, `#seeddeep`, `#seedfound` / `#seedpost` / `#seedend`.
+- **Mark items `[x]` in `TODO-v3-unified.md` as you finish** (+ the TaskCreate mirror); report progress.
+  Don't push to live until Cody says (push auto-deploys the GitHub Pages site).
 
 ## Standing context (don't relearn each time)
 - Cody's feedback is dominated by **UI intuitiveness / information architecture**, not pacing. He
