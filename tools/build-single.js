@@ -45,8 +45,6 @@ html = html.replace(cssTag, '<style>\n/* ==== inlined v3-kit/kit.css ==== */\n' 
 // 4) sanity: no FUNCTIONAL external references left (comments may still mention paths)
 if (/(?:src|href)="v3-kit\//.test(html)) fail('a v3-kit/ src/href survived inlining');
 if (/(?:src|href)="https:\/\/fonts\./.test(html)) fail('a Google Fonts link survived');
-html = html.replace('<title>EMERGENCE — v3 unified (Flow Board)</title>',
-  '<title>EMERGENCE — v3 unified (Flow Board · single-file build)</title>');
 
 fs.writeFileSync(OUT, html);
 console.log('wrote ' + OUT + '  (' + (fs.statSync(OUT).size / 1024).toFixed(0) + ' KB, ' + faces.length + ' fonts embedded, assets/ still relative — ships with the assets dir like emergence.html)');

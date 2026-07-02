@@ -108,7 +108,10 @@ All engineering, ported from Cody-approved shipped features; `node test-v3.js` n
       `emergence-v3-single.html` (475 KB, gitignored). Verified headlessly: probes byte-identical to the
       modular build, zero console errors. Iteration stays modular; Phase 6 = build → verify → swap → push.
       (fold `test-v3.js` into `test.js` when v3 swaps into emergence.html)
-- [ ] Then: Cody records → iterate → build-single → swap v3 → `emergence.html`, push (auto-deploys). DO NOT push until Cody says.
+- [x] **SWAPPED + PUSHED LIVE (2026-07-01, Cody's call):** `emergence.html` = the built v3 artifact
+      (generated; `node test.js` enforces freshness vs the modular source). v2 archived with its suite
+      (`archive/emergence-v2-final.html` + `archive/test-emergence-v2.js`, verified 200 green). Live at
+      https://magilemonai.github.io/emergence/ . Iteration continues on the modular files → rebuild → push.
 
 ## Deferred from PRIOR sessions — relevance AUDITED against v3 (2026-07-01 PM)
 - [ ] Pacing redistribution — still relevant but the old numbers are from the v2 build; v3 pacing is

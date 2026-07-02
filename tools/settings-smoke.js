@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const OUT = process.argv[2] || '/tmp/uni-settings.png';
-const FILE = 'file://' + path.resolve(__dirname, '..', 'emergence-v3-unified.html');
+const FILE = 'file://' + (process.env.SHOOT_FILE ? path.resolve(process.env.SHOOT_FILE) : path.resolve(__dirname, '..', 'emergence-v3-unified.html')); // SHOOT_FILE overrides (e.g. the built emergence.html)
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9244;
 

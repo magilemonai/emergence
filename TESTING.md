@@ -1,12 +1,27 @@
 # Testing EMERGENCE
 
-Run before every commit. No dependencies, no build step:
+Run before every commit. No dependencies:
 
 ```bash
 node test.js      # or: npm test
 ```
 
+**Since the v3 swap (2026-07-01) `emergence.html` is a GENERATED artifact.** `test.js` now
+(1) runs the full v3 suite (`test-v3.js`, 92 green) against the modular source
+(`emergence-v3-unified.html` + `v3-kit/`), and (2) rebuilds the artifact to a temp file and
+FAILS if the committed `emergence.html` differs — after any source change run
+`node tools/build-single.js emergence.html` before committing.
+
+The pre-v3 shipped game is archived and stays testable:
+
+```bash
+node archive/test-emergence-v2.js   # the old 200-test suite vs archive/emergence-v2-final.html
+```
+
 Green means the build functions **and** is still completable. The suite exits non-zero on any failure, so it can gate commits/CI.
+
+> Most of the prose below documents the ARCHIVED v2 suite (kept as reference for its patterns —
+> the autoplayer strategies carried into test-v3.js). The v3 section further down is current.
 
 ## How it works
 

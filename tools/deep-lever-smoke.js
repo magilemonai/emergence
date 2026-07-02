@@ -7,7 +7,7 @@ const path = require('path');
 
 const OUT1 = process.argv[2] || '/tmp/deep-lever-run.png';
 const OUT2 = process.argv[3] || '/tmp/deep-lever-held.png';
-const FILE = 'file://' + path.resolve(__dirname, '..', 'emergence-v3-unified.html') + '#seeddeep';
+const FILE = 'file://' + (process.env.SHOOT_FILE ? path.resolve(process.env.SHOOT_FILE) : path.resolve(__dirname, '..', 'emergence-v3-unified.html')) + '#seeddeep'; // SHOOT_FILE overrides (e.g. the built emergence.html)
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9245;
 

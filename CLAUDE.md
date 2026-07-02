@@ -6,11 +6,13 @@
 
 ## ⭐ RESUME HERE — the v3 "Flow Board" unified build (2026-07-01)
 
-**Where we are:** the five standalone Flow-Board slices are now **MERGED into ONE game** —
-**`emergence-v3-unified.html`** (the shell: inline theme CSS + CFG + the shell IIFE) loading
-`v3-kit/kit.{js,css}` (the shared component kit) + `v3-kit/era-{origins,symbolic,statistical,deep,
-foundation}.js` (per-era modules). This is now the active dev build. The shipped game is still
-`emergence.html` (untouched, 200 green). The v3 standalone slices (`emergence-v3*.html`) are superseded.
+**Where we are:** the v3 Flow Board **IS THE LIVE GAME** (shipped 2026-07-01, Cody's call).
+**`emergence.html` is now a GENERATED artifact** — `node tools/build-single.js emergence.html`
+inlines the modular source (**`emergence-v3-unified.html`** shell + `v3-kit/kit.{js,css}` +
+`v3-kit/era-*.js`) and embeds the fonts. **Iterate on the modular files, then rebuild the artifact
+before committing** — `node test.js` FAILS if `emergence.html` drifts from source (freshness check).
+The pre-v3 game is archived with its suite: `archive/emergence-v2-final.html` +
+`node archive/test-emergence-v2.js` (200 green). The v3 standalone slices (`emergence-v3*.html`) are superseded.
 
 **The paradigm ("The Flow Board", spec in `DESIGN-v3-paradigm.md`):** one screen per era; a color-coded
 resource rail; a center pipeline showing sources→converters→outputs (connectors brighten with throughput
@@ -111,9 +113,10 @@ synthesizes every capture INTO it (not ephemeral TaskCreate). Work it top-down.
 review the newest KittyCapture capture → parse to `alpha tests/` → synthesize into `TODO-v3-unified.md`
 → iterate (verify via `node test-v3.js` + `node test.js` + `node tools/shoot-unified.js`).
 
-**Git / safety state:** everything through this session **is committed locally** (HEAD `d99218a`); only
-`KittyCapture/` is untracked and we do NOT commit it (large videos). **34 commits ahead of
-`origin/main`, unpushed.** Push auto-deploys the live site — do NOT push until Cody says.
+**Git / safety state:** **PUSHED LIVE 2026-07-01** (Cody: "I want this one to be live now") — the v3
+swap deployed to https://magilemonai.github.io/emergence/ . `KittyCapture/` is gitignored (never
+committed — large videos), as is the default `emergence-v3-single.html` build output. Future pushes
+auto-deploy; the standing rule stays: **push only when Cody says.**
 
 ## Round 6 iteration-1 (superseded by the v3 rebuild, kept as reference)
 
