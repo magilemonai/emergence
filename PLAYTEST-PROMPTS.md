@@ -46,3 +46,4 @@ build's playtest #2. Once addressed, these fold back into `TODO-v3-unified.md`.)
   (The big passivity question.)
 - Aftermath at 4 agent lines — better, or still dense?
 - Does the ending have a finale, or peter out?
+- The ending recap runs long (it scrolls about a full screen). OK for a read-only scorecard, or trim it?

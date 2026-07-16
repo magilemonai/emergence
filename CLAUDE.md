@@ -6,6 +6,10 @@
 
 ## ⭐ RESUME HERE — the v3 "Flow Board" unified build (2026-07-01)
 
+> **New session / new model? Read `OPUS-HANDOFF.md` first** (context + earned wisdom +
+> verification arsenal), then `ROADMAP.md` (the long arc + decision queue), then `NEXT.md`
+> (the live board). Written 2026-07-15 at the Fable→Opus transition.
+
 **Where we are:** the v3 Flow Board **IS THE LIVE GAME** (shipped 2026-07-01, Cody's call).
 **`emergence.html` is now a GENERATED artifact** — `node tools/build-single.js emergence.html`
 inlines the modular source (**`emergence-v3-unified.html`** shell + `v3-kit/kit.{js,css}` +
