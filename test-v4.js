@@ -304,12 +304,14 @@ freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.gap = 0.3; ok(ERAS[3].acts.polic
 S.e3.gap = 0.02; S.data = 0; S.e3.survey = 10; ok(ERAS[3].acts.policy() === 'explore', 'Statistical autopilot policy: a Method out of reach + low survey → Explore');
 S.data = 1e6; ok(ERAS[3].acts.policy() === 'fit', 'Statistical autopilot policy: otherwise Fit');
 freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 200; // predicting (past predAfter)
-['generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit'].forEach(function (k) { ERAS[3].acts.setFocus(k); });
+['generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit'].forEach(function (k) { S.t += 10; ERAS[3].acts.setFocus(k); });
 ok(S.e3.predN > 0 && S.e3.predHits > 0, 'Statistical: the model scores its predictions of your Focus changes');
 ok(S.e3.flags.autopilot === true && S.flags.autopilot === true, 'Statistical: a predictable player unlocks AUTOPILOT');
 ERAS[3].acts.setFocus('auto'); ok(S.e3.focus === 'auto' && S.flags.autopilotUsed === true, 'Statistical: choosing Autopilot is remembered (the agent brings it up later)');
 S.e3.gap = 0.3; S.data = 100; ERAS[3].acts.runExperiment(1); ok(S.e3.gap < 0.3, 'Statistical: under Autopilot a trial resolves to the policy (Generalize shrank the gap)');
-freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 200; ['fit', 'explore', 'generalize', 'explore', 'fit', 'generalize', 'explore'].forEach(function (k) { ERAS[3].acts.setFocus(k); });
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 200; ['fit', 'explore', 'generalize', 'explore', 'fit', 'generalize', 'explore'].forEach(function (k) { S.t += 10; ERAS[3].acts.setFocus(k); });
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 200; ['generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit'].forEach(function (k) { S.t += 0.4; ERAS[3].acts.setFocus(k); });
+ok(!S.e3.flags.autopilot && (S.e3.predN || 0) === 0, 'Statistical: twitchy Focus flips (under the dwell) are not counted as decisions');
 ok(!S.e3.flags.autopilot, 'Statistical: an erratic player is not called (no autopilot)');
 
 // ============================================================================ 10f) v4 — Deep: architecture, checkpoint/restore, distill, fed bonus

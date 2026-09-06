@@ -51,6 +51,13 @@ never destroy anything; only build additional versions."* Spec + rationale: **`D
   operated** after emergence (1.6× cadence, your verbs relabeled + disabled, no pauses, one line in place); a **finale**
   beat per ending; **legacy across runs** (name, ending, the odd rule; "You already know my name").
 
+**LIVE behind a switch (pushed 2026-09-06, Cody's call):** `https://magilemonai.github.io/emergence/?v=4` routes to v4
+(`index.html` switcher; default stays v3; separate save keys, so flipping is safe). **Self-playtest done the same day:**
+`tools/v4-playtest.js` plays the real UI at 1× with real pointer events (screenshots at every beat, era timings) —
+run 3 completed the arc in 36.8 min to Symbiotic with 0 console errors; the 14 bugs it surfaced are fixed (parse:
+`alpha tests/September 6 2026 - Claude/v4-selfplay.md`). New seeds for the overflow ledger: `seedstatauto`, `seeddeeptools`.
+`SHOOT_URL=<live url> node tools/shoot-unified.js` probes the deployed site.
+
 **Decision rights:** Cody decides everything visible, pacing values, and the ship/push. v4 was built on his explicit
 "go for it" — the design-heavy items are BUILT, not blind-shipped; the live site is untouched until he plays v4 and rules.
 The pacing bot moved (emergence ~19m vs ~23m in v3) because milestones/fed-bonus speed the middle — no CFG was tuned; a

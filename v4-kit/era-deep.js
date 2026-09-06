@@ -139,8 +139,9 @@ function makeEraDeep(shell) {
           if (E.event) { E.event = null; E.eventT = CFG.eventGap; }
           else {
             var nx = E.eventNext || { type: 'shift', run: doms[0].k }; var lbl = domLabel(nx.run);
-            if (nx.type === 'shift') { E.event = { type: 'shift', run: nx.run, mult: 1 }; E[nx.run] = Math.max(0, E[nx.run] - CFG.shiftDrop); K.toast('DRIFT SQUALL · ' + lbl, 'This run now demands far more — pour compute in until it passes.', 'ev'); }
-            else { E.event = { type: 'breakthrough', run: nx.run, mult: CFG.breakthroughMult }; K.toast('BREAKTHROUGH · ' + lbl, 'Clean gradient — concentrate here, eat the heat, ease off after.', 'brk'); }
+            var mine = !!(S.e5 && S.e5.emerged); // after emergence it routes the fabric — the weather is its problem, not a toast for you
+            if (nx.type === 'shift') { E.event = { type: 'shift', run: nx.run, mult: 1 }; E[nx.run] = Math.max(0, E[nx.run] - CFG.shiftDrop); if (!mine) K.toast('DRIFT SQUALL · ' + lbl, 'This run now demands far more — pour compute in until it passes.', 'ev'); }
+            else { E.event = { type: 'breakthrough', run: nx.run, mult: CFG.breakthroughMult }; if (!mine) K.toast('BREAKTHROUGH · ' + lbl, 'Clean gradient — concentrate here, eat the heat, ease off after.', 'brk'); }
             E.eventNext = null; E.eventT = CFG.eventDur;
           }
         }
@@ -359,6 +360,9 @@ function makeEraDeep(shell) {
       setHTML($('supx-' + s.key), (sb.n > 1 ? '+' + sb.n + ' · ' : '') + '<b>' + fmt(sb.cost) + '</b> Si');
       var btn = $('sup-' + s.key); if (btn) btn.classList.toggle('can', can);
     });
+    // Silicon is the quiet bottleneck (self-playtest: nodes stalled at 46 Si while the other feedstocks piled up) — the Foundry button pulses amber, like the Hold lever
+    var siLow = S.silicon < nodeBatch().cost * 0.5 && (shell.RATES.silicon || 0) < 1.5;
+    var fb0 = $('sup-foundry'); if (fb0) fb0.classList.toggle('si-low', siLow);
     // per-run info
     var info = {}, share = {};
     doms.forEach(function (d) {

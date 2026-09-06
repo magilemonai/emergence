@@ -59,10 +59,10 @@ function ok(c, m) { if (c) pass++; else { fail++; fails.push(m); } }
   ok(await ev(`document.querySelectorAll('#mchips .mchip').length === 6 && !!document.getElementById('xpBtn') && !document.querySelector('.exp-board')`), 'Statistical: method chips in the header, Experiments as a button, no board panel');
   await ev(`document.getElementById('xpBtn').click();`); ok(await ev(`document.getElementById('research').classList.contains('show') && document.querySelectorAll('#researchBody .exp-card').length === 3`), 'Statistical: EXPERIMENTS opens a 3-card drawer');
   await ev(`document.getElementById('researchClose').click();`);
-  for (const k of ['generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit']) await ev(`document.getElementById('foc-${k}').click();`);
+  for (const k of ['generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit']) await ev(`${G}.S.t += 8; document.getElementById('foc-${k}').click();`); // deliberate decisions (past the prediction dwell)
   await sleep(200);
   ok(await ev(`!!document.getElementById('foc-auto') && ${G}.S.e3.flags.autopilot === true`), 'Statistical: a predictable player sees AUTOPILOT appear as a fourth Focus');
-  await ev(`document.getElementById('foc-auto').click(); ${G}.tick();`); ok(await ev(`/AUTO/.test(document.getElementById('expLabel').textContent)`), 'Statistical: Autopilot labels the RUN TRIAL button');
+  await ev(`document.getElementById('foc-auto').click(); ${G}.tick();`); ok(await ev(`/Autopilot/.test(document.getElementById('expY').textContent) && document.getElementById('expLabel').textContent === 'RUN TRIAL'`), 'Statistical: Autopilot labels the RUN TRIAL button\'s focus line; the verb itself never changes');
   // Deep: architecture drawer + tools through the DOM
   await ev(`(function(){var S=${G}.S;S.maxEra=4;${G}.ERAS[4].open(S);S.e4.node=14;S.e4.vision=0.55;S.e4.language=0.4;S.e4.reasoning=0.6;S.silicon=2000;S.data=400;S.insight=200;S.knowledge=400;S.capability=2000;${G}.navTo(4);})()`);
   ok(await ev(`!document.getElementById('orch') && !!document.getElementById('archBtn') && !document.getElementById('stabBtn')`), 'Deep: orchestration prose gone; ARCHITECTURE button present; Stabilizer moved into it');

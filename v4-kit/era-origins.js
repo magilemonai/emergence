@@ -94,7 +94,7 @@ function makeEraOrigins(shell) {
       K.fOut('metal', c); K.fOut('knowledge', c); K.fIn('silicon', c);
     }
     // commissions — live play only (K.MUTE = offline catch-up; timed offers freeze, they don't cycle silently)
-    if (!K.MUTE && E.flags.o_smelter && E.flags.o_scriptorium && !E.done) {
+    if (!K.MUTE && E.flags.o_smelter && E.flags.o_scriptorium && !E.done && !(S.e5 && S.e5.emerged)) { // the caravans stop once it runs the crafts
       if (E.comm) { E.comm.t -= dt; if (E.comm.t <= 0) { E.comm = null; E.commCool = CFG.commCool; K.toast('THE CARAVAN MOVES ON', 'The commission lapsed. Another will come.', 'event'); shell.requestRender(); } }
       else {
         E.commCool -= dt; if (E.commCool <= 0) {

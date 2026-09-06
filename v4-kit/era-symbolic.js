@@ -65,7 +65,7 @@ function makeEraSymbolic(shell) {
     sync(); var st = stats();
     var g = 0; if (E.ruleset > 0) g += E.ruleset * st.rulesetYield * dt; if (E.daemon > 0) g += E.daemon * st.daemonRate * st.click * dt;
     if (g > 0) { S.rules += g; E.runRules += g; K.fIn('rules', g); }
-    if (!K.MUTE && !E.contra && E.contraN < CFG.contraAt.length && E.runRules >= CFG.contraAt[E.contraN] && !E.flags.symbolicDone) { // live play only — offline stays clean
+    if (!K.MUTE && !E.contra && E.contraN < CFG.contraAt.length && E.runRules >= CFG.contraAt[E.contraN] && !E.flags.symbolicDone && !(S.e5 && S.e5.emerged)) { // live play only — offline stays clean; none once it runs the engine
       var seed = Math.floor(E.runRules); E.contra = { a: 1000 + seed % 3989, b: 4000 + (seed * 7) % 5989 };
       if (E.contraN === 1) { E.contra.b = (S.legacy && S.legacy.oddRule) || ODD_RULE; E.contra.odd = true; S.flags.oddRule = E.contra.b; } // the second one names a rule nobody wrote
       term('<span class="w">⚠ #' + E.contra.a + ' ⊥ #' + E.contra.b + '</span>' + (E.contra.odd ? ' · <span class="w">origin: none</span>' : ''));

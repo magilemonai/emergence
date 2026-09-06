@@ -193,7 +193,7 @@
   }
   function initTelemetry(getStarted) {
     if (!hasDOM) return;
-    var ACTIONABLE = 'button,input,a,.node,.disco,.chip,.stock,.auto,.verb,.side-btn,.rail-btn,.cap,.exp-card,.method-pin,.tri-handle,.lock-btn,.steer-btn,.focus-seg,.th';
+    var ACTIONABLE = 'button,input,a,.node,.disco,.chip,.stock,.auto,.verb,.side-btn,.rail-btn,.cap,.exp-card,.method-pin,.tri-handle,.tri-mixer,.lock-btn,.steer-btn,.focus-seg,.auto-toggle,.th,.arch,.tool-btn,.fb,.mchip,.era-tab,.sup-btn,.xc-buy,.card-event,.contra,.survey-strip'; // the mixer surface + v4 controls (a drag on the triangle is a click, not a dead one)
     document.addEventListener('pointerdown', function (e) {
       if (getStarted && !getStarted()) return; var t = e.target;
       if (t && t.closest && t.closest(ACTIONABLE)) return;

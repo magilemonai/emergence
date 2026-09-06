@@ -54,8 +54,8 @@ h1,h2,h3,.disp{ font-family:var(--era-font,serif); letter-spacing:0.04em; }
 .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch;
   padding:7px 8px; margin:0 -8px 8px; background:var(--rail-bg,rgba(10,8,6,0.84)); backdrop-filter:blur(6px);
   border-bottom:1px solid var(--line); }
-.chip{ display:flex; align-items:center; gap:9px; padding:7px 12px 7px 9px; border-radius:10px;
-  border:1px solid var(--line); background:var(--panel); min-width:128px; position:relative; }
+.chip{ display:flex; align-items:center; gap:8px; padding:7px 10px 7px 8px; border-radius:10px;
+  border:1px solid var(--line); background:var(--panel); min-width:112px; position:relative; }
 .chip .cdot{ width:26px; height:26px; border-radius:7px; flex:none; display:grid; place-items:center; font-size:15px; }
 .chip img{ width:22px; height:22px; object-fit:contain; }         /* image resource */
 .chip .cglyph{ font-size:16px; line-height:1; }                    /* glyph resource */
@@ -232,7 +232,8 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
   border:1px solid var(--edge); font-size:13px; line-height:1.45; color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.1s; }
 #tip.show{ opacity:1; } #tip i{ color:var(--dim); } #tip b{ color:var(--accent); }
 /* toasts dock top-right just under the rail: the one region no era keeps a button in (the self-playtest logged 29 dead clicks on toasts that covered the timed cards + the supply bus at the bottom-right) */
-#toasts{ position:fixed; right:16px; top:74px; z-index:65; display:flex; flex-direction:column-reverse; gap:8px; width:330px; max-width:80vw; pointer-events:none; }
+#toasts{ position:fixed; right:16px; top:calc(var(--rail-h, 66px) + 8px); z-index:65; display:flex; flex-direction:column-reverse; gap:8px; width:330px; max-width:80vw; pointer-events:none; transition:right 0.25s; }
+#research.show ~ #toasts{ right:356px; } /* the side drawer is open: step left of it */
 .toast{ background:var(--panel); border:1px solid var(--accent); border-radius:11px; padding:11px 13px; animation:toastIn 0.35s ease; }
 .toast.event{ border-color:var(--tease,var(--accent)); }        /* kind → themed border */
 .toast.edu{ border-color:var(--good); }

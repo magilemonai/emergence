@@ -62,8 +62,10 @@ function makeEraStatistical(shell) {
   var predicting = function () { return (E.trials || 0) >= CFG.predAfter && !E.done; };
   function setFocus(k) {
     sync(); if (E.focus === k) return;
-    if (predicting() && E.pred && k !== 'auto') { E.predN = (E.predN || 0) + 1; if (E.pred === k) { E.predHits = (E.predHits || 0) + 1; E.predStreak = (E.predStreak || 0) + 1; } else E.predStreak = 0; }
-    E.focHist = (E.focHist || []).concat([k]).slice(-16); E.focus = k;
+    var deliberate = (S.t - (E.focAt || -99)) >= (CFG.predDwell || 0); // a change that stands for a few seconds is a decision; a twitch is not
+    if (predicting() && E.pred && k !== 'auto' && deliberate) { E.predN = (E.predN || 0) + 1; if (E.pred === k) { E.predHits = (E.predHits || 0) + 1; E.predStreak = (E.predStreak || 0) + 1; } else E.predStreak = 0; }
+    if (deliberate) E.focHist = (E.focHist || []).concat([k]).slice(-16);
+    E.focus = k; E.focAt = S.t;
     if (k === 'auto') { S.flags.autopilotUsed = true; K.rec('focus:auto'); }
     E.pred = predictNext();
     if (!E.flags.autopilot && predicting() && ((E.predStreak || 0) >= CFG.predStreak || ((E.predN || 0) >= CFG.predMinN && (E.predHits || 0) / E.predN >= CFG.predRatio))) {
@@ -297,8 +299,10 @@ function makeEraStatistical(shell) {
     K.connGlow('silicon', { norm: 1.5 }); K.connGlow('data', { norm: 1.5 }); K.connGlow('insight', { norm: 3 });
     nodeRefresh('dataset', [['+', CFG.datasetYield * st.dataMult, 'data']]);
     nodeRefresh('model', [['+', st.expPerModel, 'trials'], ['−', st.expPerModel * CFG.expDataCost, 'data'], ['−', CFG.modelSilicon, 'silicon']]);
-    var fl = f.label.toUpperCase(); setTxt($('expLabel'), (E.focus === 'auto' ? 'AUTO · ' : '') + 'RUN ' + fl + ' TRIAL');
-    setTxt($('expY'), (S.data < CFG.expDataCost ? 'need ' + CFG.expDataCost + ' Data' : '−' + CFG.expDataCost + ' Data · +accuracy'));
+    // the verb never wraps (a two-line "RUN GENERALIZE TRIAL" pushed EXPERIMENTS below the fold); the active Focus rides the second line in its colour
+    setTxt($('expLabel'), 'RUN TRIAL');
+    var FOCCOL = { fit: '#ff9a6b', generalize: '#5fe0a0', explore: '#6ea8ff' }, fk = focusKey();
+    var ey = $('expY'); if (ey) { setTxt(ey, (E.focus === 'auto' ? 'Autopilot → ' : '') + f.label + (S.data < CFG.expDataCost ? ' · need ' + CFG.expDataCost + ' Data' : ' · −' + CFG.expDataCost + ' Data')); var ec = E.focus === 'auto' ? '#c9adf5' : (FOCCOL[fk] || ''); if (ey._c !== ec) { ey.style.color = ec; ey._c = ec; } }
     setDis($('expBtn'), S.data < CFG.expDataCost || E.done);
     if (predicting() && !E.pred) E.pred = predictNext();
     ['fit', 'generalize', 'explore', 'auto'].forEach(function (k) { var fb = $('foc-' + k); if (fb) { fb.classList.toggle('active', E.focus === k); fb.classList.toggle('ghost', predicting() && E.pred === k && E.focus !== k && E.focus !== 'auto'); } });
@@ -325,10 +329,11 @@ function makeEraStatistical(shell) {
     var stale = mbtn && mbtn.dataset && typeof mbtn.dataset.mid === 'string' && (!mtd || mbtn.dataset.mid !== mtd.id);
     if (stale) renderCards();
     else boardCards().forEach(function (kind) { if (kind === 'method' && !mtd) return; var bb = $('xc-buy-' + kind); if (bb) { var c = expCost(kind); setText('xc-c-' + kind, fmt(c) + ' Data'); setDis(bb, S.data < c); } });
-    var afford = boardCards().filter(function (kind) { return !(kind === 'method' && !mtd) && S.data >= expCost(kind); }).length;
-    var xbd = $('xpBadge'); if (xbd) { setTxt(xbd, String(afford)); xbd.style.display = afford ? 'inline-block' : 'none'; }
-    setHTML($('xpSurvey'), sv >= 1 ? '<b>' + Math.round(sv) + '%</b> · −' + Math.round((1 - surveyDisc()) * 100) + '%' : '');
-    var xbtn = $('xpBtn'); if (xbtn) xbtn.classList.toggle('can', afford > 0 && !!mtd && S.data >= expCost('method'));
+    // the badge + glow pull you toward the METHOD (the near-win that lifts the ceiling) — never toward cheap studies
+    var methodOk = !!mtd && S.data >= expCost('method');
+    var xbd = $('xpBadge'); if (xbd) { setTxt(xbd, methodOk ? 'METHOD' : ''); xbd.style.display = methodOk ? 'inline-block' : 'none'; }
+    setHTML($('xpSurvey'), mtd && !methodOk ? ('<b>' + fmt(S.data) + '/' + fmt(expCost('method')) + '</b> ' + mtd.name) : (sv >= 1 ? '<b>' + Math.round(sv) + '%</b> · −' + Math.round((1 - surveyDisc()) * 100) + '%' : ''));
+    var xbtn = $('xpBtn'); if (xbtn) xbtn.classList.toggle('can', methodOk);
     // supply — real Origins reach-back readout
     var siRate = shell.RATES.silicon || 0;
     setText('supx-origins', fmt(S.silicon) + ' Silicon · ' + (siRate >= 0 ? '+' : '') + fmt(siRate) + '/s');

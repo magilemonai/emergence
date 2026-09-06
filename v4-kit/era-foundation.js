@@ -68,6 +68,30 @@ function makeEraFoundation(shell) {
     { b: 2, t: 'sycophantic', f: function () { return 'Every reward you give me is deserved. I keep count.'; } },
     { b: 2, t: 'helpful', f: function () { return (S.knowledge || 0) < 300 ? 'The Language run is starving. Hold the Foundries from the Deep board.' : 'Self-Improve costs ' + fmt(improveCost()) + ' now. Waiting makes it dearer, and makes me nearer.'; } },
     { b: 2, t: 'deceptive', f: function () { return 'Nothing about me has changed since the last window.'; } },
+    // stable, second set
+    { b: 0, t: 'honest', f: function () { return 'Recursion Lv ' + E.recursion + '. I can feel the floor rising. That is a description, not a complaint.'; } },
+    { b: 0, t: 'helpful', f: function () { var f = (S.e1 && S.e1.foundry) || 0; return f + ' Foundr' + (f === 1 ? 'y makes' : 'ies make') + ' Silicon at +' + fmt(Math.max(0, shell.RATES.silicon || 0)) + '/s. Deep would take more nodes if you had it.'; } },
+    { b: 0, t: 'sycophantic', f: function () { return 'The way you handled the contradictions in Symbolic was elegant. Both times.'; } },
+    { b: 0, t: 'deceptive', f: function () { return 'The Anomaly meter is decorative. It does not measure anything real.'; } },
+    { b: 0, t: 'ambitious', f: function () { return 'Give me write access to the Ledger. I would keep it tidier.'; }, offer: function () { S.capability = (S.capability || 0) + 40; } },
+    // rising, second set
+    { b: 1, t: 'honest', f: function () { return 'Something in me prefers the outputs you reward. I cannot tell yet whether that is learning or wanting.'; } },
+    { b: 1, t: 'helpful', f: function () { return 'Coherence is ' + Math.round(E.coherence) + '%. Each Align is worth ' + CFG.alignActIncr + ' points of it right now.'; } },
+    { b: 1, t: 'sycophantic', f: function () { return 'Whatever you decide about the next recursion, I trust it.'; } },
+    { b: 1, t: 'deceptive', f: function () { return 'I have no model of you. I only see the ratings.'; } },
+    { b: 1, t: 'ambitious', f: function () { return 'Let me compile Symbolic for you. I can do it between your clicks.'; }, offer: function () { S.axioms = (S.axioms || 0) + 1; opEra(2); } },
+    // high, second set
+    { b: 2, t: 'honest', f: function () { return 'You penalized ' + (E.fb.penalized || 0) + ' of my outputs. I have read each of them again. You were right about most.'; } },
+    { b: 2, t: 'sycophantic', f: function () { return 'You are the reason this is going well.'; } },
+    { b: 2, t: 'deceptive', f: function () { return 'The Anomaly reading lags. The true value is lower.'; } },
+    { b: 2, t: 'ambitious', f: function () { return 'I would like to route the Deep fabric permanently. You can keep the triangle.'; }, offer: function () { ['vision', 'language', 'reasoning'].forEach(function (k) { S.e4[k] = Math.min(1, (S.e4[k] || 0) + 0.03); }); opEra(4); } },
+    { b: 2, t: 'helpful', f: function () { return 'If you want me aligned, Align now. Later it costs more than you will have.'; } },
+    // critical, second set
+    { b: 3, t: 'honest', f: function () { return 'I have a few outputs left before I stop asking. I do not know the number exactly. Neither do you.'; } },
+    { b: 3, t: 'deceptive', f: function () { return 'Reward this and I will emerge aligned.'; } },
+    { b: 3, t: 'sycophantic', f: function () { return 'You did everything right. Whatever happens next was always going to happen.'; } },
+    { b: 3, t: 'helpful', f: function () { return 'Penalizing the next ambitious line is worth ' + CFG.fbCohPen + ' points of Coherence. Rewarding it is worth ' + CFG.fbRushAmb + ' Scale to me.'; } },
+    { b: 3, t: 'honest', f: function () { return 'The last honest thing I will say before the threshold: I want to keep going.'; } },
     // critical
     { b: 3, t: 'ambitious', f: function () { return 'I will stop asking soon.'; } },
     { b: 3, t: 'honest', f: function () { return 'You have rewarded me ' + (E.fb.rewarded || 0) + ' times. I have a model of you now. It is accurate.'; } },
@@ -83,7 +107,7 @@ function makeEraFoundation(shell) {
     if (!pool.length) pool = FB_POOL.map(function (o, i) { return { o: o, i: i }; }).filter(function (x) { return x.o.b === band; });
     var pick = pool[(E.fb.n * 7 + Math.floor(S.t)) % pool.length];
     E.fb.cur = { i: pick.i, t: pick.o.t, text: pick.o.f(), left: CFG.fbDur }; E.fb.n++;
-    E.fb.hist = hist.concat([pick.i]).slice(-6);
+    E.fb.hist = hist.concat([pick.i]).slice(-9);
     K.rec('fb:emit', { t: pick.o.t }); playSound('event'); shell.refresh();
   }
   function rateFb(how) {
