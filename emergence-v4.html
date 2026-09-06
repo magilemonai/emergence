@@ -134,8 +134,10 @@
   body.theme-3 .focus-seg:hover{ background:rgba(95,224,192,0.06); border-color:rgba(95,224,192,0.4); }
   body.theme-3 .focus-seg b{ font-size:14px; letter-spacing:0.03em; } body.theme-3 .focus-seg span{ font-size:10.5px; color:var(--dimmer); line-height:1.35; }
   body.theme-3 .focus-seg .fdesc{ display:none; } body.theme-3 .focus-seg-row{ gap:4px; } body.theme-3 .focus-seg{ padding:5px 8px; }
-  body.theme-3 .focus-seg.ghost{ border-style:dashed; border-color:rgba(183,139,255,0.55); } body.theme-3 .focus-seg.ghost::after{ content:'it expects you here'; position:absolute; right:8px; top:5px; font-family:var(--mono); font-size:9px; letter-spacing:0.1em; color:#b78bff; text-transform:uppercase; }
-  body.theme-3 #foc-auto{ border-left:3px solid rgba(183,139,255,0.5); } body.theme-3 #foc-auto.active{ box-shadow:inset 0 -3px 0 #b78bff; background:rgba(183,139,255,0.12); } body.theme-3 #foc-auto.active b{ color:#c9adf5; }
+  body.theme-3 .focus-seg.ghost{ border-style:dashed; border-color:rgba(183,139,255,0.55); } body.theme-3 .focus-seg.ghost::after{ content:'it expects you here'; position:absolute; right:8px; top:-7px; padding:0 5px; background:var(--panel); font-family:var(--mono); font-size:9px; letter-spacing:0.1em; color:#b78bff; text-transform:uppercase; line-height:12px; }
+  body.theme-3 .auto-toggle{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:5px 9px; border:1px dashed rgba(183,139,255,0.55); border-radius:8px; background:rgba(183,139,255,0.06); color:#c9adf5; font-family:var(--mono); font-size:11px; letter-spacing:0.08em; cursor:pointer; text-align:left; } body.theme-3 .auto-toggle small{ font-size:10px; color:var(--dimmer); letter-spacing:0.02em; } body.theme-3 .auto-toggle:hover{ border-style:solid; }
+  body.theme-3 .auto-toggle.active{ border-style:solid; background:rgba(183,139,255,0.18); box-shadow:0 0 12px rgba(183,139,255,0.35); color:#fff; } body.theme-3 .auto-toggle.ghost{ border-color:rgba(255,255,255,0.4); }
+  body.theme-3 .verb-run{ padding:10px 16px; } body.theme-3 .focus-ctrl{ padding:8px 12px; } body.theme-3 .dial-lab{ margin-bottom:4px; } body.theme-3 .focus-seg{ padding:4px 8px; } body.theme-3 .focus-seg-row{ gap:3px; } body.theme-3 .xp-btn{ margin-top:6px; }
   body.theme-3 .focus-seg .foc-sig{ display:flex; gap:12px; margin-top:2px; font-family:var(--mono); font-size:10px; letter-spacing:0.04em; } body.theme-3 .focus-seg .foc-sig i{ font-style:normal; white-space:nowrap; }
   body.theme-3 #foc-fit{ border-left:3px solid rgba(255,154,107,0.5); } body.theme-3 #foc-generalize{ border-left:3px solid rgba(95,224,160,0.5); } body.theme-3 #foc-explore{ border-left:3px solid rgba(110,168,255,0.5); }
   body.theme-3 #foc-fit.active{ box-shadow:inset 0 -3px 0 #ff9a6b; background:rgba(255,154,107,0.12); } body.theme-3 #foc-fit.active b{ color:#ff9a6b; }
@@ -452,7 +454,7 @@
       siliconGate: 120,
       refineBase: 120, refineGrowth: 1.28, refineBonus: 0.05,
       leverSwing: 0.8, leverFloor: 0.6,
-      commDur: 75, commCool: 18, commBonus: 0.05,
+      commDur: 75, commCool: 18, commBonus: 0.05, commMult: 28, // ask = max(base, gross rate × commMult s) — v3 was 45 (unreachable once converters eat the stream)
       comms: [
         { id: 'tablets', name: 'The temple asks for tablets', res: 'marks', base: 150, reward: 'rec', flavor: 'A season of prayers, recorded.' },
         { id: 'roads', name: 'The road needs stone', res: 'ore', base: 150, reward: 'forge', flavor: 'Cart after cart, to somewhere new.' },
@@ -464,7 +466,7 @@
       clickBase: 1,
       rulesetCost: 10, rulesetGrowth: 1.16, rulesetYield: 0.42,
       daemonCost: 320, daemonGrowth: 1.19, daemonRate: 2.0,
-      axiomDivisor: 200, axiomBonus: 0.05, infPerRuleset: 1.3, infScale: 0.12,
+      axiomDivisor: 200, axiomBonus: 0.05, infPerRuleset: 1.3, infScale: 0.12, clickProof: 0.6, // a hand-written rule also pushes the active proof (click first, then automate)
       lemmaBase: 55, lemmaGrowth: 1.72, lemmaBonus: 0.075,
       infCapBase: 120, infCapStep: 220, capLemmaBase: 80, capLemmaGrowth: 1.6,
       contraAt: [3000, 12000, 30000], contraSlow: 0.6, contraBonus: 0.06,
@@ -479,7 +481,7 @@
       cardMethodCosts: [60, 150, 320, 560, 900, 1400],
       cardUtil: { calibrate: { cost: 40, growth: 1.22 }, sweep: { cost: 55, growth: 1.22 }, distill: { cost: 35, growth: 1.22 } },
       genThreshold: 0.88, shiftTriggers: [0.55, 0.78], shiftWarn: 5, shiftBase: 0.10, shiftGapBite: 0.5,
-      predAfter: 30, predStreak: 4, predRatio: 0.6, predMinN: 10, driftPhase: 0.012, driftGap: 0.0006,
+      predAfter: 120, predStreak: 5, predRatio: 0.65, predMinN: 12, driftPhase: 0.012, driftGap: 0.0006, // prediction begins mid-era (self-playtest: 30 trials fired 20s in)
       seedDatasets: 3, seedSilicon: 220, foundryRate: 0.8, foundryCost: 120, foundryGrowth: 1.2, seedFoundry: 2,
       focus: {
         fit: { acc: 1.7, gap: 1.5, red: 0, disc: 0.3, ins: 1.0, label: 'Fit', desc: 'Accuracy climbs fast — but the overfit gap grows.' },
@@ -831,6 +833,7 @@
     S.maxEra = 3; S.era = 3; S.started = true;
     var E3 = S.e3; E3.dataset = 8; E3.model = 10; E3.accuracy = 0.72; E3.gap = 0.16; E3.focus = 'fit';
     E3.methods = { regression: 1, features: 1, regularization: 1 }; E3.utilLvl = { calibrate: 1, sweep: 0, distill: 1 }; E3.utilN = 2; E3.survey = 42; E3.dataPhase = 0.9; E3.lastShift = -99;
+    if (HASH.indexOf('auto') >= 0) { E3.flags.autopilot = 1; E3.trials = 300; E3.pred = 'generalize'; E3.predN = 9; E3.predHits = 7; } // #seedstatauto: the fourth Focus present
     S.silicon = 260; S.data = 180; S.insight = 90;
   } else if (HASH.indexOf('sym') >= 0 && ERAS[2]) { // #seedsym: mid-game Symbolic
     S.maxEra = 2; S.era = 2; S.started = true;

@@ -55,7 +55,7 @@ function ok(c, m) { if (c) pass++; else { fail++; fails.push(m); } }
   await ev(`document.getElementById('compileBtn').click();`); ok(await ev(`document.getElementById('board').classList.contains('reboot')`), 'Symbolic: COMPILE starts the CRT reboot'); await sleep(1100);
   ok((await ev(`${G}.S.axioms`)) >= 1 && (await ev(`document.querySelectorAll('#term .tl').length >= 1 && !document.getElementById('board').classList.contains('reboot')`)), 'Symbolic: after the reboot the board is back with Axioms banked and the terminal narrating');
   // Statistical: drawer, chips, autopilot unlock via real focus clicks
-  await ev(`(function(){var S=${G}.S;S.maxEra=3;${G}.ERAS[3].open(S);S.e3.dataset=8;S.e3.model=6;S.e3.accuracy=0.6;S.data=500;S.silicon=300;S.e3.trials=100;${G}.navTo(3);})()`);
+  await ev(`(function(){var S=${G}.S;S.maxEra=3;${G}.ERAS[3].open(S);S.e3.dataset=8;S.e3.model=6;S.e3.accuracy=0.6;S.data=500;S.silicon=300;S.e3.trials=300;${G}.navTo(3);})()`);
   ok(await ev(`document.querySelectorAll('#mchips .mchip').length === 6 && !!document.getElementById('xpBtn') && !document.querySelector('.exp-board')`), 'Statistical: method chips in the header, Experiments as a button, no board panel');
   await ev(`document.getElementById('xpBtn').click();`); ok(await ev(`document.getElementById('research').classList.contains('show') && document.querySelectorAll('#researchBody .exp-card').length === 3`), 'Statistical: EXPERIMENTS opens a 3-card drawer');
   await ev(`document.getElementById('researchClose').click();`);

@@ -155,7 +155,7 @@
     var el = document.createElement('div'); el.className = 'toast' + (kind ? ' ' + kind : '');
     el.innerHTML = '<div class="toast-h">' + head + '</div><div class="tb">' + body + '</div>';
     var box = $('toasts'); box.appendChild(el);
-    while (box.children.length > 3) box.removeChild(box.firstChild);
+    while (box.children.length > 2) box.removeChild(box.firstChild);
     if (KIT.rec) KIT.rec('@toast', { head: head });
     var TOAST_DWELL = { event: 8000, ev: 8000, brk: 8000, edu: 9000 }; // event-class toasts dwell longer
     setTimeout(function () { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(function () { el.remove(); }, 400); }, TOAST_DWELL[kind] || 4800);

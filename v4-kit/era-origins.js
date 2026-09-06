@@ -100,9 +100,9 @@ function makeEraOrigins(shell) {
         E.commCool -= dt; if (E.commCool <= 0) {
           var cdef = CFG.comms[E.commN % CFG.comms.length]; E.commN++;
           var cap = { marks: E.scribe * os.scribeY, ore: E.miner * os.minerY, metal: E.smelter * os.smR * 0.5, knowledge: E.scriptorium * os.scrR * 0.5 };
-          var need = Math.ceil(Math.max(cdef.base, (cap[cdef.res] || 0) * 45));
+          var need = Math.ceil(Math.max(cdef.base, (cap[cdef.res] || 0) * (CFG.commMult || 45)));
           E.comm = { i: CFG.comms.indexOf(cdef), res: cdef.res, need: need, t: CFG.commDur };
-          K.toast('A COMMISSION ARRIVES', cdef.name + ': <b>' + fmt(need) + ' ' + cdef.res + '</b>. Fulfilling it boosts a craft permanently.', 'event'); shell.requestRender();
+          K.playSound('event'); shell.requestRender(); // the glowing card beside the goal IS the announcement (no toast)
         }
       }
     }

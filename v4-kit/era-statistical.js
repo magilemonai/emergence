@@ -220,9 +220,10 @@ function makeEraStatistical(shell) {
     var f = CFG.focus;
     // VAL arrow tracks what happens to VALIDATION: Fit & Explore push it DOWN (overfit grows), only Generalize UP.
     var SIG = { fit: [['TRAIN', '▲▲', '#ffb86b'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲▲', '#ff8a5c']], generalize: [['OVERFIT', '▼▼', '#7de6a8'], ['VAL', '▲', '#8af0d8'], ['TRAIN', '·', '#8a9aa0']], explore: [['SURVEY', '▲▲', '#6ea8ff'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲', '#ff8a5c']], auto: [['IT CHOOSES', '↻', '#b78bff']] };
-    var keys = ['fit', 'generalize', 'explore']; if (E.flags.autopilot) keys.push('auto');
+    var keys = ['fit', 'generalize', 'explore'];
     var AUTO = { label: 'Autopilot', desc: 'It has learned what you do. Let it choose the Focus each trial: Generalize when the gap is wide, Explore when a Method is out of reach, Fit otherwise.' };
-    $('focusRow').innerHTML = keys.map(function (k) { var d = f[k] || AUTO; return '<button class="focus-seg" data-focus="' + k + '" id="foc-' + k + '" data-tip="' + esc(d.desc) + '"><b>' + d.label + '</b><span class="fdesc">' + d.desc + '</span><span class="foc-sig">' + SIG[k].map(function (c) { return '<i style="color:' + c[2] + '">' + c[0] + ' ' + c[1] + '</i>'; }).join('') + '</span></button>'; }).join('');
+    $('focusRow').innerHTML = keys.map(function (k) { var d = f[k]; return '<button class="focus-seg" data-focus="' + k + '" id="foc-' + k + '" data-tip="' + esc(d.desc) + '"><b>' + d.label + '</b><span class="fdesc">' + d.desc + '</span><span class="foc-sig">' + SIG[k].map(function (c) { return '<i style="color:' + c[2] + '">' + c[0] + ' ' + c[1] + '</i>'; }).join('') + '</span></button>'; }).join('') +
+      (E.flags.autopilot ? '<button class="auto-toggle" data-focus="auto" id="foc-auto" data-tip="' + esc(AUTO.desc) + '"><span>↻ AUTOPILOT</span><small>it chooses</small></button>' : '');
     Array.prototype.forEach.call($('focusRow').querySelectorAll('[data-focus]'), function (b) { b.onclick = function () { setFocus(b.getAttribute('data-focus')); }; });
     renderChips();
   }

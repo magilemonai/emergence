@@ -69,7 +69,7 @@ function makeEraSymbolic(shell) {
       var seed = Math.floor(E.runRules); E.contra = { a: 1000 + seed % 3989, b: 4000 + (seed * 7) % 5989 };
       if (E.contraN === 1) { E.contra.b = (S.legacy && S.legacy.oddRule) || ODD_RULE; E.contra.odd = true; S.flags.oddRule = E.contra.b; } // the second one names a rule nobody wrote
       term('<span class="w">⚠ #' + E.contra.a + ' ⊥ #' + E.contra.b + '</span>' + (E.contra.odd ? ' · <span class="w">origin: none</span>' : ''));
-      K.toast('CONTRADICTION DETECTED', 'Rule #' + E.contra.a + ' conflicts with #' + E.contra.b + '. Discard one to clear the drag.', 'event'); shell.requestRender();
+      K.playSound('event'); shell.requestRender(); // the card beside the goal IS the announcement (no toast)
     }
     // the terminal narrates the engine at work (live only): a derivation line every few seconds while a proof runs
     if (!K.MUTE && E.activeProof && E.ruleset > 0) {
@@ -96,6 +96,10 @@ function makeEraSymbolic(shell) {
   function buyDaemon() { sync(); if (!E.tech.inference) return; var b = daemonBatch(); if (S.rules < b.cost) return; var t0 = K.tierOf(E.daemon); S.rules -= b.cost; E.daemon += b.n; K.rec('buy:daemon', { n: b.n }); K.playSound('buy'); milestoneToast('Daemon', E.daemon, t0); shell.refresh(); }
   function writeRule(ev) {
     sync(); var g = stats().click; S.rules += g; E.runRules += g; S.started = true; K.playSound('buy');
+    if (E.activeProof) { // writing by hand advances the proof you are aiming at — the early proving method, before rulesets take over
+      var add = g * (CFG.clickProof || 0); E.proofAcc[E.activeProof] = (E.proofAcc[E.activeProof] || 0) + add; K.fOut('inference', add);
+      if (E.proofAcc[E.activeProof] >= proofCost(E.activeProof)) { completeProof(E.activeProof); return; }
+    }
     if (ev && ev.currentTarget) { var r = ev.currentTarget.getBoundingClientRect(); K.floatNum('+' + fmt(g), HUE.rules, r.right - 40, r.top + 10); }
     shell.refresh();
   }
@@ -199,7 +203,7 @@ function makeEraSymbolic(shell) {
   }
   function refresh() {
     sync(); var st = stats();
-    setHTML($('writeY'), '+' + fmt(st.click) + ' rules');
+    setHTML($('writeY'), '+' + fmt(st.click) + ' rules' + (E.activeProof ? ' · <span style="color:var(--inference)">+' + fmt(st.click * (CFG.clickProof || 0)) + ' proof</span>' : ''));
     setTxt($('stk-rules'), fmt(S.rules)); setTxt($('stk-inference'), fmt(S.inference)); setTxt($('stkcap-inference'), 'cap ' + fmt(infCap()));
     K.connGlow('rules', { norm: 0.5 }); K.connGlow('inference', { norm: 0.5 });
     setTxt($('cnt-ruleset'), '×' + E.ruleset);
@@ -239,7 +243,7 @@ function makeEraSymbolic(shell) {
       setHTML($('compileHint'), 'Banks <b>+' + ag + '</b> Axiom' + (ag === 1 ? '' : 's') + ' from this run (<b>' + fmt(E.runRules) + '</b> rules) · next +1 at <b>' + fmt(nextAt) + '</b> rules');
     }
     if ($('path')) setHTML($('path'), pathHTML());
-    var ready = canProve('expert'), fb = $('fabricate'); if (fb) { setDis(fb, !ready && !E.flags.symbolicDone); setTxt(fb, E.flags.symbolicDone ? 'PROVEN ✓' : (E.activeProof === 'expert' ? 'PROVING…' : 'PROVE IT')); }
+    var ready = canProve('expert'), fb = $('fabricate'); if (fb) { setDis(fb, (!ready && !E.flags.symbolicDone) || E.activeProof === 'expert'); setTxt(fb, E.flags.symbolicDone ? 'PROVEN ✓' : (E.activeProof === 'expert' ? 'PROVING…' : 'PROVE IT')); }
     if ($('goal')) $('goal').classList.toggle('ready', ready || E.flags.symbolicDone);
     // contradiction
     var cc = $('contra');

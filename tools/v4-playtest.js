@@ -35,7 +35,8 @@ function log(s) { const line = '[' + ((Date.now() - t0) / 1000).toFixed(0).padSt
   async function click(sel, why) {
     const r = await ev(`(function(){var el=document.querySelector(${JSON.stringify(sel)});if(!el)return null;var b=el.getBoundingClientRect();if(b.width<2||b.height<2)return {hidden:true};var cs=getComputedStyle(el);return {x:b.left+b.width/2,y:b.top+b.height/2,dis:!!el.disabled,pe:cs.pointerEvents,top:b.top,bottom:b.bottom};})()`);
     if (!r || r.hidden || r.dis || r.pe === 'none') return false;
-    if (r.top < 0 || r.bottom > 800) { log('⚠ wanted ' + sel + (why ? ' (' + why + ')' : '') + ' but it is off-screen (y ' + Math.round(r.top) + ')'); return false; }
+    const vp = await ev(`({w:innerWidth,h:innerHeight})`);
+    if (r.top < 0 || r.bottom > vp.h || r.x < 0 || r.x > vp.w) { log('⚠ wanted ' + sel + (why ? ' (' + why + ')' : '') + ' but it is OFF-SCREEN (x ' + Math.round(r.x) + ', y ' + Math.round(r.top) + '–' + Math.round(r.bottom) + ' of ' + vp.w + '×' + vp.h + ')'); return false; }
     await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: r.x, y: r.y });
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: r.x, y: r.y, button: 'left', clickCount: 1 });
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: r.x, y: r.y, button: 'left', clickCount: 1 });

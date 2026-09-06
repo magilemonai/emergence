@@ -287,6 +287,8 @@ ok(ERAS[2].acts.rulesetGated() === true, 'Symbolic: rulesetGated() reports the g
 ERAS[2].acts.buyRuleset(); ok(S.e2.ruleset === 1, 'Symbolic: a second buy is refused while gated');
 S.e2.tech.formalLogic = true; ERAS[2].acts.buyRuleset(); ok(S.e2.ruleset === 11, 'Symbolic: Formal Logic unlocks parallel Rulesets (×10 buys 10)');
 ok(Array.isArray(S.e2.term) && S.e2.term.length >= 1, 'Symbolic: the terminal has a boot line after open()');
+freshAll(); S.maxEra = 2; ERAS[2].open(S); S.e2.activeProof = 'formalLogic'; S.e2.proofAcc = { formalLogic: 0 }; ERAS[2].acts.writeRule();
+ok(S.e2.proofAcc.formalLogic > 0, 'Symbolic: writing a rule by hand advances the active proof (the click matters during the gate)');
 freshAll(); S.maxEra = 2; ERAS[2].open(S); S.e2.ruleset = 1; S.e2.contraN = 1; S.e2.runRules = CFG.e2.contraAt[1] + 10; ticks(2);
 ok(!!S.e2.contra && S.e2.contra.b === ERAS[2].acts.ODD_RULE && S.e2.contra.odd === true && S.flags.oddRule === ERAS[2].acts.ODD_RULE, 'Symbolic: the second contradiction names the rule nobody wrote (#' + ERAS[2].acts.ODD_RULE + ') and flags it');
 freshAll(); S.legacy = { oddRule: 7777, name: 'EKHO', runs: 1 }; S.maxEra = 2; ERAS[2].open(S); S.e2.ruleset = 1; S.e2.contraN = 1; S.e2.runRules = CFG.e2.contraAt[1] + 10; ticks(2);
@@ -301,13 +303,13 @@ freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.shifts = 0; S.e3.gap = 0.05; tic
 freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.gap = 0.3; ok(ERAS[3].acts.policy() === 'generalize', 'Statistical autopilot policy: wide gap → Generalize');
 S.e3.gap = 0.02; S.data = 0; S.e3.survey = 10; ok(ERAS[3].acts.policy() === 'explore', 'Statistical autopilot policy: a Method out of reach + low survey → Explore');
 S.data = 1e6; ok(ERAS[3].acts.policy() === 'fit', 'Statistical autopilot policy: otherwise Fit');
-freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 100; // predicting
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 200; // predicting (past predAfter)
 ['generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit'].forEach(function (k) { ERAS[3].acts.setFocus(k); });
 ok(S.e3.predN > 0 && S.e3.predHits > 0, 'Statistical: the model scores its predictions of your Focus changes');
 ok(S.e3.flags.autopilot === true && S.flags.autopilot === true, 'Statistical: a predictable player unlocks AUTOPILOT');
 ERAS[3].acts.setFocus('auto'); ok(S.e3.focus === 'auto' && S.flags.autopilotUsed === true, 'Statistical: choosing Autopilot is remembered (the agent brings it up later)');
 S.e3.gap = 0.3; S.data = 100; ERAS[3].acts.runExperiment(1); ok(S.e3.gap < 0.3, 'Statistical: under Autopilot a trial resolves to the policy (Generalize shrank the gap)');
-freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 100; ['fit', 'explore', 'generalize', 'explore', 'fit', 'generalize', 'explore'].forEach(function (k) { ERAS[3].acts.setFocus(k); });
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 200; ['fit', 'explore', 'generalize', 'explore', 'fit', 'generalize', 'explore'].forEach(function (k) { ERAS[3].acts.setFocus(k); });
 ok(!S.e3.flags.autopilot, 'Statistical: an erratic player is not called (no autopilot)');
 
 // ============================================================================ 10f) v4 — Deep: architecture, checkpoint/restore, distill, fed bonus

@@ -231,7 +231,8 @@ header.era .phase{ margin-left:auto; font-family:var(--era-font); font-size:11px
 #tip{ position:fixed; z-index:70; max-width:300px; padding:10px 12px; border-radius:9px; background:var(--tip-bg,rgba(14,10,6,0.97));
   border:1px solid var(--edge); font-size:13px; line-height:1.45; color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.1s; }
 #tip.show{ opacity:1; } #tip i{ color:var(--dim); } #tip b{ color:var(--accent); }
-#toasts{ position:fixed; right:16px; bottom:16px; z-index:65; display:flex; flex-direction:column; gap:8px; width:330px; max-width:80vw; }
+/* toasts dock top-right just under the rail: the one region no era keeps a button in (the self-playtest logged 29 dead clicks on toasts that covered the timed cards + the supply bus at the bottom-right) */
+#toasts{ position:fixed; right:16px; top:74px; z-index:65; display:flex; flex-direction:column-reverse; gap:8px; width:330px; max-width:80vw; pointer-events:none; }
 .toast{ background:var(--panel); border:1px solid var(--accent); border-radius:11px; padding:11px 13px; animation:toastIn 0.35s ease; }
 .toast.event{ border-color:var(--tease,var(--accent)); }        /* kind → themed border */
 .toast.edu{ border-color:var(--good); }
