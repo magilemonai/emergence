@@ -659,7 +659,7 @@
     var bm = [1, 10, 'max'].map(function (m) { return '<button class="rail-btn bm' + ((S.buyN || 1) === m ? ' on' : '') + '" data-bm="' + m + '" title="buy amount">' + (m === 'max' ? 'MAX' : '×' + m) + '</button>'; }).join('');
     $('rail').innerHTML = chips + '<div class="rail-right"><div class="buymode" title="bulk buy: every Build button buys this many">' + bm + '</div>' +
       '<button class="rail-btn" id="ledgerBtn" title="ledger — everything you own">▤</button>' +
-      '<button class="rail-btn" id="musicBtn" title="music">♪</button><button class="rail-btn" id="setBtn" title="settings (Esc)">⚙</button></div>';
+      '<button class="rail-btn" id="musicBtn" title="music on / off">♪ music</button><button class="rail-btn" id="setBtn" title="settings (Esc)">⚙</button></div>';
     document.documentElement.style.setProperty('--rail-h', $('rail').offsetHeight + 'px'); // toasts + sticky offsets follow the real rail height
     Array.prototype.forEach.call($('rail').querySelectorAll('[data-bm]'), function (b) {
       b.onclick = function () { var v = b.dataset.bm; S.buyN = v === 'max' ? 'max' : +v; Array.prototype.forEach.call($('rail').querySelectorAll('[data-bm]'), function (x) { x.classList.toggle('on', x === b); }); KIT.playSound('buy'); refreshActive(); };
