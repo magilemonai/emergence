@@ -348,7 +348,7 @@ function makeEraDeep(shell) {
     setTxt($('rv-compute'), fmt(computeRate) + '/s'); var pc = $('rp-compute'); if (pc) { setTxt(pc, E.node + ' nodes'); if (pc.className !== 'cps zero') pc.className = 'cps zero'; }
     // node verb
     var nb = nodeBatch(), ncan = canNode();
-    setTxt($('nodeYield'), '+' + fmt(CFG.nodeCompute * K.tierMult(E.node)) + ' compute/s each' + (K.tierOf(E.node) ? ' (×' + K.tierMult(E.node).toFixed(2) + ')' : ''));
+    setTxt($('nodeYield'), '+' + fmt(CFG.nodeCompute * K.tierMult(E.node)) + ' compute/s' + (K.tierOf(E.node) ? ' ·×' + K.tierMult(E.node).toFixed(2) : ' each'));
     setHTML($('nodeCost'), '×' + E.node + (K.nextMilestone(E.node) ? '<span style="color:var(--dimmer)">/' + K.nextMilestone(E.node) + '</span>' : '') + ' · ' + (nb.n > 1 ? '+' + nb.n + ' for' : 'next') + ' <b>' + fmt(nb.cost) + ' Si</b>');
     $('buyNode').classList.toggle('can', ncan);
     // supply

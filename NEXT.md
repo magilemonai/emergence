@@ -2,8 +2,8 @@
 
 > read by magi lemon command. 1–6 bullets, most important first. edit freely; `- [x]` hides a line.
 
-- [ ] record a real playtest of the live v3 flow board (/process-capture) and tune the cross-era supply chain by feel
-- [ ] fix the one-screen overflow: statistical +515 and origins +289 — collapse vs move, per panel
-- [ ] add a real decision layer to the passive back half (deep tech tree + pre-emergence foundation phase)
-- [ ] generate the 3 missing foundation cap images (prompts already in ART-PROMPTS.md)
-- [ ] reconcile — honest commits landed since this board was last synced; debrief to true it
+- [ ] play v4 locally (`emergence-v4.html`, Esc → Restart first) and record it — `PLAYTEST-PROMPTS.md` v4 section; then `/process-capture` folds it into `TODO-v4.md`
+- [ ] rule on v4: ship it (swap into emergence.html + push) or iterate first — the live site is still v3 until you say
+- [ ] the playtest-gated feel calls in `TODO-v4.md`: feedback cadence, autopilot threshold, the sixth tab, operated eras, pacing (bot emerges ~19m now)
+- [ ] generate the 3 missing foundation cap images (prompts in ART-PROMPTS.md 5b) — still pending from July
+- [ ] zach round on v4 once your pass is in

@@ -49,7 +49,7 @@ function makeEraStatistical(shell) {
     return { accGain: accGain, dataMult: dataMult, insMult: insMult, discMult: discMult, regMult: regMult, effBonus: effBonus, cap: cap, expPerModel: expPerModel };
   }
   // AUTOPILOT: a learned policy — what a good player does. It is the first decision the machine takes from you.
-  function policy() { if (E.gap > 0.15) return 'generalize'; var m = nextMethod(); if (m && (E.survey || 0) < 70 && S.data < expCost('method')) return 'explore'; return 'fit'; }
+  function policy() { sync(); if (E.gap > 0.15) return 'generalize'; var m = nextMethod(); if (m && (E.survey || 0) < 70 && S.data < expCost('method')) return 'explore'; return 'fit'; }
   function focusKey() { return E.focus === 'auto' ? policy() : E.focus; }
   function curFocus() { return CFG.focus[focusKey()] || CFG.focus.fit; }
   // PREDICTION: after enough trials the model guesses your next Focus from your own habits (falls back to the policy).

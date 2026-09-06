@@ -47,15 +47,18 @@ feedback INTO it** — do not just create ephemeral tasks:
 
 ## 4) Begin the iterative loop
 Work the master TODO top-down (bugs before polish). For each change:
-- Edit the relevant file. The **v3 build is `emergence-v3-unified.html`**, which loads
-  `v3-kit/kit.{js,css}` + `v3-kit/era-{origins,symbolic,statistical,deep,foundation}.js` (per-era
-  modules; CFG lives in the shell). The shipped game is still `emergence.html`.
-- Keep tests green: **`node test-v3.js`** (v3 suite) AND **`node test.js`** (shipped emergence.html)
-  must both stay green. Syntax-check edited modules with `node -c v3-kit/<file>.js`.
+- Edit the relevant file. **Since 2026-09-06 the dev build is v4: `emergence-v4.html`**, which loads
+  `v4-kit/kit.{js,css}` + `v4-kit/era-{origins,symbolic,statistical,deep,foundation,agent}.js` (per-era
+  modules; CFG lives in the shell). The live `emergence.html` is still the v3 artifact until Cody ships v4;
+  v3's source (`emergence-v3-unified.html` + `v3-kit/`) is frozen and archived at `archive/v3/`. The master
+  list for v4 captures is **`TODO-v4.md`** (synthesize there, not into the v3 TODO).
+- Keep tests green: **`node test.js`** (runs the v3 suite, the v4 suite, and the live-artifact freshness
+  check) AND **`node tools/v4-smoke.js`** (headless DOM run through the whole v4 arc; fails on any console
+  error). Syntax-check edited modules with `node -c v4-kit/<file>.js`.
 - **Verify visually** with headless Chrome at a REAL viewport (his feedback is almost always visual,
-  and he cares about **one-screen**): `node tools/shoot-unified.js <seedhash> out.png` — it uses
-  1280×800 and reports `overflowPx` — then Read the PNG. Seeds: `#seed` (Origins), `#seedsym`,
-  `#seedstat`, `#seeddeep`, `#seedfound` / `#seedpost` / `#seedend`.
+  and he cares about **one-screen**): `SHOOT_FILE=emergence-v4.html node tools/shoot-unified.js <seedhash> out.png`
+  — it uses 1280×800 and reports `overflowPx` — then Read the PNG. Seeds: `seed` (Origins), `seedsym`/`seedsymc`,
+  `seedstat`, `seeddeep`, `seedfound` / `seedpost` / `seedend`, `seedagent` (the sixth tab), `seedoperated1..4`.
 - **Mark items `[x]` in `TODO-v3-unified.md` as you finish** (+ the TaskCreate mirror); report progress.
   Don't push to live until Cody says (push auto-deploys the GitHub Pages site).
 

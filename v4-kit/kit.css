@@ -24,7 +24,7 @@ body{
   color:var(--text); font-family:var(--body-font,Georgia,serif); font-size:16px; line-height:1.4;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{ max-width:1180px; margin:0 auto; padding:14px 18px 16px; position:relative; z-index:1; }
+.wrap{ max-width:1180px; margin:0 auto; padding:14px 18px 10px; position:relative; z-index:1; }
 h1,h2,h3,.disp{ font-family:var(--era-font,serif); letter-spacing:0.04em; }
 
 /* ---------- v4: milestone pip + bulk-buy mode + era title card ---------- */

@@ -1,10 +1,62 @@
 # EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-07-01 (v3 five slices MERGED into one unified
-> game; two Cody self-playtests processed; leaving at design-heavy, playtest-gated items).
+> keep it current as the game evolves. Last updated 2026-09-06 (v4 "The Substrate Remembers" BUILT
+> beside the live v3; v3 archived in full; v4 awaits Cody's playtest + ship call).
 
-## ⭐ RESUME HERE — the v3 "Flow Board" unified build (2026-07-01)
+## ⭐ RESUME HERE — v4 "The Substrate Remembers" (built 2026-09-06, NOT yet live)
+
+**Mandate (Cody, 2026-09-06):** *"make every single bit of it more compelling… Inscryption as inspiration…
+increase the twists, the subversion, the mechanics — improve and refine… archive the current state so we
+never destroy anything; only build additional versions."* Spec + rationale: **`DESIGN-v4.md`**. Master list:
+**`TODO-v4.md`** (built / for-Cody's-eye / deferred). Playtest questions: `PLAYTEST-PROMPTS.md` (v4 section on top).
+
+**Where things live (additive versions — nothing was edited or deleted):**
+- **LIVE game = v3**, unchanged: `emergence.html` is still the v3 artifact of `emergence-v3-unified.html` + `v3-kit/`;
+  `node test.js` still enforces that freshness. v3 is ALSO archived in full at **`archive/v3/`** (artifact, source,
+  suite runnable in place, tools, slices, docs) + git tag **`v3.0-flow-board-live`**. `archive/README.md` is the ledger.
+- **DEV build = v4:** **`emergence-v4.html`** (shell: CSS + `CFG` + boot) + **`v4-kit/`** (`kit.{js,css}`,
+  `era-{origins,symbolic,statistical,deep,foundation,agent}.js`) + **`test-v4.js`**. Own save key (`emergence_v4`)
+  and a legacy key (`emergence_v4_legacy`) that persists ACROSS runs. Open `emergence-v4.html` locally to play it.
+- **Package:** `EMG_SHELL=emergence-v4.html EMG_KIT=v4-kit node tools/build-single.js emergence-v4-single.html`
+  (gitignored artifact). **Ship (only when Cody says):** same command with `emergence.html` as the output, then point
+  `test.js`'s freshness check at the v4 shell/kit (one-line env change), `node test.js`, commit, push (auto-deploys).
+
+**Verification arsenal (all green as of 2026-09-06):**
+| What | Command |
+|---|---|
+| Full gate | `node test.js` → v3 suite (92) + **v4 suite (158)** + v3 artifact freshness |
+| v4 DOM smoke — drives the REAL UI through the whole arc (drawers, Compile reboot, autopilot unlock, rupture, sixth tab, operated eras, finale, legacy) | `node tools/v4-smoke.js` (35 checks; fails on any console error) |
+| Any v4 screen at 1280×800 + overflowPx | `SHOOT_FILE=emergence-v4.html node tools/shoot-unified.js <seed> out.png` — seeds: `seed`, `seedsym`/`seedsymc`, `seedstat`, `seeddeep`, `seedfound`, `seedpost`, `seedend`, **`seedagent`** (the sixth tab), **`seedoperated1`…`4`** (an era after emergence) |
+| The archived v3 | `node archive/v3/test-v3.js` (92) |
+
+**What v4 adds (every item built + tested; see `TODO-v4.md` for the playtest questions each raises):**
+- **Incremental staples (eras 1-3 are a real incremental now):** bulk buy ×1/×10/MAX on the rail; count milestones at
+  ×10/×25/×50/×100 (+25%/tier, a pip on every node shows the next one); a Ledger drawer (▤) of everything owned; keys
+  1-6 + Space; era title cards on every handoff; tabs + era title share one row (**every era now fits one screen at 1280×800**;
+  the ending scorecard scrolls by design).
+- **Origins:** commission beside the goal; Hands/Refine in the verbs column; the goal image walks stone → bronze → silicon → machine.
+- **Symbolic:** ONE Ruleset until Formal Logic (the first inference climb is visible); a 3-line diegetic terminal instead of
+  explainer prose; Compile = CRT reboot; the second contradiction names **rule #4471, "origin: none."**
+- **Statistical:** methods as header chips; Experiments as a drawer; RR6c (after shift 2 the world keeps drifting);
+  **the model predicts your next Focus ("it expects you here") and, if you are predictable, unlocks AUTOPILOT**; a violet
+  point that refuses to move after the first shift.
+- **Deep:** an **Architecture drawer** (Stabilizer, Attention, Convolution, Chain of Thought, MoE, Checkpointing, Distillation
+  — each bends the steering geometry) → **CHECKPOINT/RESTORE** and **DISTILL** verbs; well-fed runs learn faster (+15%);
+  the orchestration sentence is gone (color strip + countdown); once, the banner says "I am watching the wind too."
+- **Foundation:** **FEEDBACK** — an RLHF loop before emergence (outputs with hidden traits; ✓/✗ in a window; rewarding
+  ambition DOES what it offers and rushes emergence; Interpretability reveals the trait); the rupture renames the rail
+  chips and glitches the tabs; **a sixth tab appears, named for the agent** — a Flow Board of YOU (the Operator as the
+  converter, its ledger claiming every foreshadow: #4471, the point, autopilot, the wind, your lapses); **earlier eras are
+  operated** after emergence (1.6× cadence, your verbs relabeled + disabled, no pauses, one line in place); a **finale**
+  beat per ending; **legacy across runs** (name, ending, the odd rule; "You already know my name").
+
+**Decision rights:** Cody decides everything visible, pacing values, and the ship/push. v4 was built on his explicit
+"go for it" — the design-heavy items are BUILT, not blind-shipped; the live site is untouched until he plays v4 and rules.
+The pacing bot moved (emergence ~19m vs ~23m in v3) because milestones/fed-bonus speed the middle — no CFG was tuned; a
+human run decides. Mobile: desktop-first remains the standing ruling (940px collapse only); flagged, not skipped silently.
+
+## (previous) RESUME — the v3 "Flow Board" unified build (2026-07-01)
 
 > **New session / new model? Read `OPUS-HANDOFF.md` first** (context + earned wisdom +
 > verification arsenal), then `ROADMAP.md` (the long arc + decision queue), then `NEXT.md`

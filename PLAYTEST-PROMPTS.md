@@ -1,5 +1,17 @@
 # PLAYTEST PROMPTS — what to speak to on the next capture
 
+## v4 (2026-09-06) — play `emergence-v4.html` locally (Esc → Restart Run first if a save is sitting there)
+Whole run: **1-6 keys switch eras, Space fires the era's verb, ▤ opens the Ledger, ×1/×10/MAX on the rail.** Say when a milestone pip (7/10) pulls you.
+- **Origins**: does the commission beside the goal get noticed now? Do the age images on the goal (stone → bronze → silicon → machine) read?
+- **Symbolic**: the first Inference bar with ONE Ruleset — visible now, or too slow? The terminal lines: alive, or text? COMPILE's reboot: a moment? The second contradiction names #4471 — did you notice "origin: none"?
+- **Statistical**: **"it expects you here"** on the Focus dial — did you see it, did it bother you, did AUTOPILOT feel like a gift or a threat? After the second shift the world keeps drifting — did Generalize become a rhythm? The violet point.
+- **Deep**: the ARCHITECTURE drawer — did the badge pull you in? Which upgrade first? CHECKPOINT/RESTORE after a squall — did you reach for it? DISTILL — did it ever feel right? The banner is a colored strip now — enough?
+- **Foundation**: **the FEEDBACK card** — cadence, can you tell honest from sycophantic blind, did rewarding an ambitious offer tempt you? The rupture: the rail renaming, the tabs glitching, **the sixth tab** — say what you felt when it appeared and what you did first. Go back to Origins after: is it enough that your verbs are its now?
+- **Ending**: the finale beat — a moment, or a fade? Then restart: the era card remembers the name; Symbolic's odd rule returns. Worth it?
+
+---
+## v3 prompts (kept)
+
 Keep this open while you record. Saying these out loud as you hit each era is the signal I can't
 get any other way. **Bolded = highest value per area.** (Generated 2026-07-01, after the unified
 build's playtest #2. Once addressed, these fold back into `TODO-v3-unified.md`.)

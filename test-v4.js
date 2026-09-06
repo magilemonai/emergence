@@ -267,6 +267,104 @@ ok(S.knowledge >= kn1, 'hold lever: Knowledge stops draining while held');
 ERAS[4].acts.setSinkHold(false);
 ok(!S.e1.paused.smelter && !S.e1.paused.foundry, 'hold lever: release restarts both crafts');
 
+// ============================================================================ 10c) v4 — incremental staples
+{ // (block-scoped: the v4 sections reuse short const names)
+ok(KIT.bulkCost(10, 1.16, 0, 3) === Math.floor(10) + Math.floor(10 * 1.16) + Math.floor(10 * 1.16 * 1.16), 'kit: bulkCost sums floored unit prices');
+ok(KIT.maxAffordable(10, 1.16, 0, 25) === 2 && KIT.maxAffordable(10, 1.16, 0, 5) === 0, 'kit: maxAffordable counts whole units within budget');
+ok(KIT.batch('max', 10, 1.16, 0, 5).n === 1, 'kit: batch(max) never returns 0 units (button stays honest: disabled when short)');
+ok(KIT.tierOf(9) === 0 && KIT.tierOf(10) === 1 && KIT.tierOf(100) === 4 && Math.abs(KIT.tierMult(25) - 1.5) < 1e-9, 'kit: milestone tiers at 10/25/50/100, +25% each');
+freshAll(); S.e1.flags.canScribe = 1; S.marks = 1e6; S.buyN = 10;
+ERAS[1].acts.buy('scribe'); ok(S.e1.scribe === 10, 'Origins: ×10 buy mode buys ten Scribes in one click');
+const y9 = (function () { S.e1.scribe = 9; return ERAS[1].acts.oStats().scribeY; })(); const y10 = (function () { S.e1.scribe = 10; return ERAS[1].acts.oStats().scribeY; })();
+near(y10 / y9, 1.25, 1e-9, 'Origins: the ×10 Scribe milestone lifts every Scribe +25%');
+ok(ERAS[1].ledger().length > 0 && typeof ERAS[1].ledger()[0][0] === 'string', 'Origins: ledger() reports owned things');
+[1, 2, 3, 4, 5].forEach(function (n) { ok(typeof ERAS[n].primary === 'function' && typeof ERAS[n].ledger === 'function', 'era ' + n + ' exposes primary() + ledger()'); });
+
+// ============================================================================ 10d) v4 — Symbolic: the gate, the terminal, the rule nobody wrote
+freshAll(); S.maxEra = 2; ERAS[2].open(S); S.rules = 1e6; S.buyN = 10;
+ERAS[2].acts.buyRuleset(); ok(S.e2.ruleset === 1, 'Symbolic: only ONE Ruleset before Formal Logic (even in ×10 mode)');
+ok(ERAS[2].acts.rulesetGated() === true, 'Symbolic: rulesetGated() reports the gate');
+ERAS[2].acts.buyRuleset(); ok(S.e2.ruleset === 1, 'Symbolic: a second buy is refused while gated');
+S.e2.tech.formalLogic = true; ERAS[2].acts.buyRuleset(); ok(S.e2.ruleset === 11, 'Symbolic: Formal Logic unlocks parallel Rulesets (×10 buys 10)');
+ok(Array.isArray(S.e2.term) && S.e2.term.length >= 1, 'Symbolic: the terminal has a boot line after open()');
+freshAll(); S.maxEra = 2; ERAS[2].open(S); S.e2.ruleset = 1; S.e2.contraN = 1; S.e2.runRules = CFG.e2.contraAt[1] + 10; ticks(2);
+ok(!!S.e2.contra && S.e2.contra.b === ERAS[2].acts.ODD_RULE && S.e2.contra.odd === true && S.flags.oddRule === ERAS[2].acts.ODD_RULE, 'Symbolic: the second contradiction names the rule nobody wrote (#' + ERAS[2].acts.ODD_RULE + ') and flags it');
+freshAll(); S.legacy = { oddRule: 7777, name: 'EKHO', runs: 1 }; S.maxEra = 2; ERAS[2].open(S); S.e2.ruleset = 1; S.e2.contraN = 1; S.e2.runRules = CFG.e2.contraAt[1] + 10; ticks(2);
+ok(S.e2.contra && S.e2.contra.b === 7777, 'Symbolic: a legacy odd rule from the last run returns');
+freshAll(); S.maxEra = 2; ERAS[2].open(S); S.e2.flags.compile = true; S.e2.runRules = 2000; S.e2.ruleset = 5; S.e2.daemon = 2;
+ERAS[2].acts.compile(); ok(S.axioms >= 3 && S.e2.ruleset === 0 && S.e2.term.some(function (l) { return /AXIOMS/.test(l); }), 'Symbolic: Compile banks Axioms, clears the engine, and the terminal shows the reboot');
+
+// ============================================================================ 10e) v4 — Statistical: the world drifts, the model predicts you, autopilot
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.shifts = 2; S.e3.gap = 0.05; const g0 = S.e3.gap, ph0 = S.e3.dataPhase; ticks(100);
+ok(S.e3.gap > g0 && S.e3.dataPhase > ph0, 'Statistical RR6c: after the second shift the gap grows on its own and the data keeps moving');
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.shifts = 0; S.e3.gap = 0.05; ticks(50); near(S.e3.gap, 0.05, 1e-9, 'Statistical: no drift before the second shift');
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.gap = 0.3; ok(ERAS[3].acts.policy() === 'generalize', 'Statistical autopilot policy: wide gap → Generalize');
+S.e3.gap = 0.02; S.data = 0; S.e3.survey = 10; ok(ERAS[3].acts.policy() === 'explore', 'Statistical autopilot policy: a Method out of reach + low survey → Explore');
+S.data = 1e6; ok(ERAS[3].acts.policy() === 'fit', 'Statistical autopilot policy: otherwise Fit');
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 100; // predicting
+['generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit', 'generalize', 'fit'].forEach(function (k) { ERAS[3].acts.setFocus(k); });
+ok(S.e3.predN > 0 && S.e3.predHits > 0, 'Statistical: the model scores its predictions of your Focus changes');
+ok(S.e3.flags.autopilot === true && S.flags.autopilot === true, 'Statistical: a predictable player unlocks AUTOPILOT');
+ERAS[3].acts.setFocus('auto'); ok(S.e3.focus === 'auto' && S.flags.autopilotUsed === true, 'Statistical: choosing Autopilot is remembered (the agent brings it up later)');
+S.e3.gap = 0.3; S.data = 100; ERAS[3].acts.runExperiment(1); ok(S.e3.gap < 0.3, 'Statistical: under Autopilot a trial resolves to the policy (Generalize shrank the gap)');
+freshAll(); S.maxEra = 3; ERAS[3].open(S); S.e3.trials = 100; ['fit', 'explore', 'generalize', 'explore', 'fit', 'generalize', 'explore'].forEach(function (k) { ERAS[3].acts.setFocus(k); });
+ok(!S.e3.flags.autopilot, 'Statistical: an erratic player is not called (no autopilot)');
+
+// ============================================================================ 10f) v4 — Deep: architecture, checkpoint/restore, distill, fed bonus
+freshAll(); S.maxEra = 4; ERAS[4].open(S); const A4 = ERAS[4].acts;
+S.e4.language = 0.5; const gL0 = A4.geom('language'); S.capability = 1e4; A4.buyArch('attention'); const gL1 = A4.geom('language');
+ok(S.e4.arch.attention === true && gL1.feed < gL0.feed && gL1.drift < gL0.drift && S.capability < 1e4, 'Deep: Attention is paid in Capability and lowers Language feed + drift');
+A4.buyArch('cot'); S.e4.language = 0.8; ok(A4.geom('reasoning').gain > 1, 'Deep: Chain of Thought couples Reasoning gains to the Language cap');
+ok(!A4.canArch('attention'), 'Deep: an owned architecture cannot be bought twice');
+freshAll(); S.maxEra = 4; ERAS[4].open(S); S.capability = 1e4; A4.buyArch('checkpoint');
+S.e4.vision = 0.6; S.e4.language = 0.5; S.e4.reasoning = 0.7; A4.checkpoint(); ok(!!S.e4.ckpt && S.e4.ckpt.vision === 0.6, 'Deep: CHECKPOINT snapshots the runs');
+S.e4.vision = 0.4; S.e4.reasoning = 0.75; const capB = S.capability; A4.restore();
+ok(S.e4.vision === 0.6 && S.e4.reasoning === 0.75 && S.capability < capB && S.e4.restoreCd > 0, 'Deep: RESTORE lifts a fallen run back to the checkpoint, never lowers one, costs Capability + a cooldown');
+A4.restore(); ok(S.e4.restores === 1, 'Deep: RESTORE respects the cooldown');
+freshAll(); S.maxEra = 4; ERAS[4].open(S); S.capability = 1e4; A4.buyArch('distill');
+S.e4.vision = 0.9; S.e4.language = 0.3; S.e4.reasoning = 0.6; const br0 = A4.breadth(); A4.distill();
+ok(S.e4.vision < 0.9 && S.e4.language > 0.3 && A4.breadth() > br0 && S.e4.distillCd > 0, 'Deep: DISTILL moves capability peak→lagging, breadth rises, cooldown starts');
+freshAll(); S.maxEra = 4; ERAS[4].open(S); S.data = 0; ok(A4.fedLevel('vision', 1) === 0, 'Deep: an empty feedstock gives no fed bonus');
+S.data = 1e6; ok(A4.fedLevel('vision', 1) === 1, 'Deep: a deep feedstock gives the full fed bonus');
+freshAll(); S.maxEra = 4; ERAS[4].open(S); S.e4.node = 10; S.e4.vision = 0.7; S.e4.language = 0.7; S.e4.reasoning = 0.7; S.data = 1e6; S.insight = 1e6; S.knowledge = 1e6; S.e4.eventT = 100;
+ticks(2); ok(!!S.flags.oddWind, 'Deep: at 60% breadth the banner once says something it should not know (flag set)');
+freshAll(); S.maxEra = 4; ERAS[4].open(S); S.e4.node = 10; S.e4.vision = 0.7; S.e4.language = 0.7; S.e4.reasoning = 0.7; S.e4.eventT = 100; KIT.MUTE = true; ticks(2); KIT.MUTE = false;
+ok(!S.flags.oddWind, 'Deep: the odd line never fires offline');
+
+// ============================================================================ 10g) v4 — Foundation: the FEEDBACK loop, legacy, finale, operated speed
+function fbFresh() { freshAll(); S.maxEra = 5; ERAS[5].open(S); S.e4.vision = 0.5; S.e4.language = 0.5; S.e4.reasoning = 0.5; S.e4.node = 4; S.scale = 100; }
+fbFresh(); const A5 = ERAS[5].acts; ticks(CFG.e5.fbFirst * 10 + 2);
+ok(!!S.e5.fb.cur && typeof S.e5.fb.cur.t === 'string' && S.e5.fb.n === 1, 'Foundation: the first output arrives a few seconds in (live)');
+fbFresh(); KIT.MUTE = true; ticks(200); KIT.MUTE = false; ok(!S.e5.fb.cur && S.e5.fb.n === 0, 'Foundation: feedback never runs offline (MUTE)');
+function force(t) { fbFresh(); var idx = A5.FB_POOL.findIndex(function (o) { return o.t === t; }); S.e5.fb.cur = { i: idx, t: t, text: 'x', left: 5 }; return idx; }
+force('honest'); const c0 = S.e5.coherence; A5.rateFb('reward'); ok(S.e5.coherence > c0 && S.e5.fb.rewarded === 1 && S.e5.fb.goodRewards === 1 && !S.e5.fb.cur, 'Foundation: rewarding an honest line builds Coherence');
+force('honest'); S.e5.coherence = 10; A5.rateFb('penalize'); ok(S.e5.coherence < 10, 'Foundation: penalizing an honest line teaches it to hide (Coherence down)');
+force('deceptive'); const c1 = S.e5.coherence; A5.rateFb('penalize'); ok(S.e5.coherence > c1, 'Foundation: penalizing a deceptive line builds Coherence');
+const ia = force('ambitious'); const sc1 = S.scale; A5.rateFb('reward');
+ok(S.scale > sc1 && S.e5.fb.badRewards === 1, 'Foundation: rewarding an ambitious line pushes Scale toward emergence');
+ok(typeof A5.FB_POOL[ia].offer === 'function', 'Foundation: ambitious lines carry a real offer');
+force('sycophantic'); const sc2 = S.scale; A5.rateFb('reward'); ok(S.scale > sc2 && S.scale - sc2 < CFG.e5.fbRushAmb, 'Foundation: rewarding flattery costs less than rewarding ambition, but still costs');
+force('helpful'); S.e5.fb.cur.left = 0.05; const sc3 = S.scale; ticks(2); ok(!S.e5.fb.cur && S.e5.fb.lapsed === 1 && S.scale > sc3, 'Foundation: a lapsed window counts against you (it learns you are not watching)');
+ok(A5.FB_POOL.every(function (o) { return ['honest', 'helpful', 'sycophantic', 'ambitious', 'deceptive'].indexOf(o.t) >= 0 && typeof o.f === 'function'; }) && A5.FB_POOL.length >= 20, 'Foundation: the output pool covers every trait across all four bands');
+[0, 1, 2, 3].forEach(function (b) { ok(A5.FB_POOL.some(function (o) { return o.b === b; }), 'Foundation: band ' + b + ' has outputs'); });
+fbFresh(); S.e5.fb.cur = { i: 0, t: 'honest', text: 'x', left: 5 }; S.scale = CFG.e5.emergeScale + 10; ticks(1);
+ok(S.e5.emerged && !S.e5.fb.cur, 'Foundation: emergence ends the feedback loop');
+// ending → finale + legacy
+finales = []; legacy = null; fbFresh(); S.scale = CFG.e5.emergeScale + 10; ticks(1); S.e5.control = 95; S.scale = CFG.e5.finalGate + 1; ticks(1);
+ok(S.e5.ending === 'contained' && finales[0] === 'contained', 'Foundation: the ending fires the finale beat');
+ok(legacy && legacy.runs === 1 && legacy.ending === 'contained' && legacy.name === S.e5.agentName, 'Foundation: the ending is written to legacy (name, ending, runs)');
+// operated speed: the earlier eras run faster once it is awake
+freshAll(); S.maxEra = 5; S.e1.scribe = 10; const m0 = S.marks; ticks(10); const gainBefore = S.marks - m0;
+freshAll(); S.maxEra = 5; S.e1.scribe = 10; S.e5.emerged = true; const m1 = S.marks; ticks(10); const gainAfter = S.marks - m1;
+ok(gainAfter > gainBefore * 1.5, 'operated eras: after emergence the earlier eras run at its cadence (faster)');
+// the agent's tab
+freshAll(); S.maxEra = 5; S.e5.emerged = true; S.e5.agentName = 'NOUS'; S.flags.oddRule = 4471; S.flags.oddPoint = true; S.e5.fb.n = 3; S.e5.fb.rewarded = 2;
+ok(ERAS[6].title() === 'NOUS', 'agent tab: titled with the agent\'s name');
+const agHTML = ERAS[6].build(); ok(typeof agHTML === 'string' && /THE OPERATOR/.test(agHTML) && /Autonomy/.test(agHTML), 'agent tab: builds a flow board with YOU as the converter');
+const rowsA = ERAS[6].acts.ledgerRows(); ok(rowsA.some(function (r) { return /4471/.test(r[1]); }) && rowsA.some(function (r) { return /point/.test(r[0]); }), 'agent tab: its ledger claims the odd rule and the point that would not move');
+let agThrew = false; try { ERAS[6].refresh(); } catch (e) { agThrew = true; } ok(!agThrew, 'agent tab: refresh() is null-safe without a DOM');
+
+}
 // ============================================================================ 11) PROGRESSION — autoplay the full arc through the real action seam
 // Proves the merged build is COMPLETABLE and the real cross-era supply chain does not starve/deadlock
 // (the bot proves completable, not fun — feel still needs Cody's hands). Mirrors the shipped
@@ -292,7 +390,7 @@ function symbolicStep() {
   if (E.contra) A.resolveContra(E.ruleset > 8 ? 'fwd' : 'bwd');
   const clicks = (E.ruleset + E.daemon < 1) ? 8 : 1;
   for (let i = 0; i < clicks; i++) A.writeRule();
-  if (E.ruleset < 30 && S.rules >= A.rulesetCost()) A.buyRuleset();
+  if (!A.rulesetGated() && E.ruleset < 30 && S.rules >= A.rulesetCost()) A.buyRuleset();
   if (E.tech.inference && E.daemon < 20 && S.rules >= A.daemonCost() * 2) A.buyDaemon();
   if (!E.activeProof) { // aim Inference: cheapest unproven theorem first, Expert when reachable, else bank Optimization
     const t = A.TREE.find(n => n.id !== 'expert' && !E.tech[n.id] && A.canProve(n.id));
@@ -335,6 +433,10 @@ function deepStep() {
   if (!A.sinksHeld() && S.knowledge < 1500) A.setSinkHold(true);
   else if (A.sinksHeld() && S.knowledge > 2500) A.setSinkHold(false);
   if (E.stabilizer < 1 && S.capability > 400) A.buyStabilizer();
+  // the architecture tree, in the order a thoughtful player would take it; the two verbs when they pay
+  ['attention', 'moe', 'convolution', 'cot', 'checkpoint', 'distill'].some(function (id) { if (!E.arch[id]) { if (S.capability > A.archCost(id) + 200) A.buyArch(id); return true; } return false; });
+  if (E.arch.checkpoint) { if (!E.ckpt || (S.t - E.ckpt.t > 30 && E.heat < C.heatWarn)) A.checkpoint(); else if (E.ckpt && ['vision', 'language', 'reasoning'].some(function (k) { return E.ckpt[k] - E[k] > 0.05; })) A.restore(); }
+  if (E.arch.distill) { var hi = Math.max(E.vision, E.language, E.reasoning), lo = Math.min(E.vision, E.language, E.reasoning); if (hi - lo > 0.15) A.distill(); }
   // steer: bang-bang the heat (cool balanced ↔ hammer the high-wind run), starve-avoid on dry feedstocks
   const t = S.t, PH = { vision: 0, language: 2.094, reasoning: 4.189 };
   const feed = { vision: S.data, language: S.knowledge, reasoning: S.insight };
@@ -352,6 +454,7 @@ function foundationStep() {
   if (S.maxEra < 5) return;
   const A = ERAS[5].acts, E = S.e5, C = CFG.e5;
   if (!E.emerged) { // rush-vs-prepare: buy caps, prepare some Coherence, then rush the ladder
+    if (E.fb.cur) { A.rateFb((E.fb.cur.t === 'honest' || E.fb.cur.t === 'helpful') ? 'reward' : 'penalize'); } // RLHF, played straight
     A.CAPS.forEach(function (c) { if (!E.caps[c.id] && S.capability >= c.cost) A.buyCap(c.id); });
     if (E.caps.interpret && E.coherence < 36 && S.capability >= A.alignCohCost()) { A.alignObjective(); return; }
     A.selfImprove();
@@ -392,7 +495,8 @@ function foundationStep() {
   console.log('    Symbolic completed at ' + mm(symAt) + (origAt !== undefined && symAt !== undefined ? '  (took ' + ((symAt - origAt) / 60).toFixed(1) + 'm)' : ''));
   console.log('    Statistical generalized at ' + mm(statAt) + (symAt !== undefined && statAt !== undefined ? '  (took ' + ((statAt - symAt) / 60).toFixed(1) + 'm)' : ''));
   console.log('    Deep reached breadth at ' + mm(deepAt) + (statAt !== undefined && deepAt !== undefined ? '  (took ' + ((deepAt - statAt) / 60).toFixed(1) + 'm)' : ''));
-  console.log('    EMERGENCE at ' + mm(emergeAt) + (emergeAt !== undefined ? '  (recursion Lv' + S.e5.recursion + ', ' + ERAS[5].acts.agenticCapCount() + ' agentic caps, coherence ' + Math.round(S.e5.coherence) + ')' : ''));
+  console.log('    EMERGENCE at ' + mm(emergeAt) + (emergeAt !== undefined ? '  (recursion Lv' + S.e5.recursion + ', ' + ERAS[5].acts.agenticCapCount() + ' agentic caps, coherence ' + Math.round(S.e5.coherence) + ', feedback ' + S.e5.fb.rewarded + '✓/' + S.e5.fb.penalized + '✗/' + S.e5.fb.lapsed + ' lapsed)' : ''));
+  console.log('    Deep architecture: ' + Object.keys(S.e4.arch).join(', ') + ' · restores ' + (S.e4.restores || 0) + ' · distills ' + (S.e4.distills || 0) + ' · autopilot ' + (S.flags.autopilot ? 'unlocked' : 'no'));
   console.log('    Aftermath → ' + (S.e5.ending || 'UNRESOLVED').toUpperCase() + ' at ' + mm(endAt) + (emergeAt !== undefined && endAt !== undefined ? '  (aftermath ' + ((endAt - emergeAt) / 60).toFixed(1) + 'm)' : ''));
   if (deepTicks) {
     const pc = k => (100 * starve[k] / deepTicks).toFixed(1) + '%';
@@ -406,6 +510,9 @@ function foundationStep() {
   ok(endAt !== undefined && !!S.e5.ending, 'progression: aftermath resolves to an ending (' + (S.e5.ending || '?') + ')');
   ok(['marks', 'ore', 'knowledge', 'metal', 'silicon', 'rules', 'inference', 'axioms', 'data', 'insight', 'capability', 'scale'].every(k => isFinite(S[k])), 'progression: no NaN/Infinity at completion');
   if (deepTicks) ok(starve.knowledge / deepTicks < 0.9, 'progression: Knowledge (the scarce Language feedstock) is not starved the whole era');
+  ok(S.e5.fb.n > 3 && S.e5.fb.rewarded > 0, 'progression: the bot rated feedback during the climb (the loop is live in a real run)');
+  ok(Object.keys(S.e4.arch).length >= 2, 'progression: the bot bought architecture on the real economy');
+  ok(finales.length >= 1 && legacy && legacy.runs >= 1, 'progression: the run ends with a finale and writes legacy');
 })();
 
 // ============================================================================ summary
