@@ -27,6 +27,26 @@
   }
   function esc(s) { return String(s).replace(/"/g, '&quot;'); }
 
+  /* ---------- v4 incremental staples: bulk buy + count milestones ----------
+     bulkCost(base,growth,count,n)  = price of the next n units (geometric, floored per unit like unitCost)
+     maxAffordable(base,growth,count,have,cap) = largest n whose bulkCost <= have (0 if none)
+     batch(mode,base,growth,count,have) -> {n,cost}: mode 1 | 10 | 'max' (S.buyN). n>=1 always (cost may exceed have)
+     tierOf(count) / tierMult(count) / nextMilestone(count): ×10/×25/×50/×100 → +25% per tier reached */
+  function unitCostAt(base, growth, count) { return Math.floor(base * Math.pow(growth, count)); }
+  function bulkCost(base, growth, count, n) { var c = 0; for (var i = 0; i < n; i++) c += unitCostAt(base, growth, count + i); return c; }
+  function maxAffordable(base, growth, count, have, cap) { cap = cap || 250; var n = 0, c = 0; while (n < cap) { var u = unitCostAt(base, growth, count + n); if (c + u > have) break; c += u; n++; } return n; }
+  function batch(mode, base, growth, count, have) {
+    var n = mode === 'max' ? Math.max(1, maxAffordable(base, growth, count, have)) : Math.max(1, +mode || 1);
+    return { n: n, cost: bulkCost(base, growth, count, n) };
+  }
+  var MILESTONES = [10, 25, 50, 100];
+  var MILESTONE_BONUS = 0.25;
+  function tierOf(count) { var t = 0; for (var i = 0; i < MILESTONES.length; i++) if (count >= MILESTONES[i]) t++; return t; }
+  function tierMult(count) { return 1 + MILESTONE_BONUS * tierOf(count); }
+  function nextMilestone(count) { for (var i = 0; i < MILESTONES.length; i++) if (count < MILESTONES[i]) return MILESTONES[i]; return null; }
+  // pip HTML for a node name row: "7/10" toward the next tier, or "×1.25" when tiered and maxed
+  function pipHTML(count) { var nm = nextMilestone(count), t = tierOf(count); return nm ? (count + '/' + nm) + (t ? ' · ×' + (1 + MILESTONE_BONUS * t).toFixed(2) : '') : '×' + (1 + MILESTONE_BONUS * t).toFixed(2) + ' max'; }
+
   // change-detected setters — the dead-click fix. Byte-identical across all 5 slices.
   function setTxt(el, t) { if (el && el._t !== t) { el.textContent = t; el._t = t; } }
   function setHTML(el, h) { if (el && el._h !== h) { el.innerHTML = h; el._h = h; } }
@@ -84,7 +104,7 @@
     // pause lives INLINE in the name row (not absolute) so it can't overlap the Build button — the "bad UX" misclick.
     var pauseHTML = opts.pausable !== false ? ' <button class="pause" id="pause-' + key + '" title="pause / resume">II</button>' : '';
     return '<div class="node" id="node-' + key + '" data-tip="' + esc(tip) + '">' + iconHTML +
-      '<div class="nname">' + name + ' <span class="ncount" id="cnt-' + key + '"></span>' + pauseHTML + '</div>' +
+      '<div class="nname">' + name + ' <span class="ncount" id="cnt-' + key + '"></span><span class="mpip" id="mp-' + key + '" data-tip="' + esc('<b>Milestones</b> at ×10 · ×25 · ×50 · ×100: each tier +25% to this building, forever.') + '"></span>' + pauseHTML + '</div>' +
       '<div class="nrate" id="rate-' + key + '"></div>' +
       '<button class="buy nbuy" id="buy-' + key + '"></button>' +
       '</div>';
@@ -251,6 +271,8 @@
     RES: function () { return RES; }, setRes: setRes, resVisual: resVisual, hue: hue,
     FLOW: function () { return FLOW; }, flowInit: flowInit, flowReset: flowReset, fIn: fIn, fOut: fOut, connGlow: connGlow,
     connector: connector, stock: stock, node: node, chip: chip, costHTML: costHTML,
+    unitCostAt: unitCostAt, bulkCost: bulkCost, maxAffordable: maxAffordable, batch: batch,
+    MILESTONES: MILESTONES, MILESTONE_BONUS: MILESTONE_BONUS, tierOf: tierOf, tierMult: tierMult, nextMilestone: nextMilestone, pipHTML: pipHTML,
     floatNum: floatNum, initTip: initTip, toast: toast,
     playSound: playSound, playClick: playClick, soundProfile: {}, SFX: SFX, sfxSetVol: sfxSetVol,
     REC: REC, rec: rec, initTelemetry: initTelemetry, lastAction: function () { return lastAction; },

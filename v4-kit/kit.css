@@ -27,6 +27,29 @@ body{
 .wrap{ max-width:1180px; margin:0 auto; padding:14px 18px 40px; position:relative; z-index:1; }
 h1,h2,h3,.disp{ font-family:var(--era-font,serif); letter-spacing:0.04em; }
 
+/* ---------- v4: milestone pip + bulk-buy mode + era title card ---------- */
+.mpip{ font-family:var(--mono,ui-monospace,monospace); font-size:9.5px; letter-spacing:0.04em; color:var(--dimmer); margin-left:6px; padding:1px 5px; border:1px solid var(--line); border-radius:6px; vertical-align:middle; cursor:help; }
+.mpip.tiered{ color:var(--good); border-color:color-mix(in srgb,var(--good) 45%, transparent); }
+.mpip.near{ color:var(--accent); border-color:var(--accent); }
+.mpip:empty{ display:none; }
+.buymode{ display:flex; gap:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.buymode .rail-btn{ border:none; border-radius:0; padding:8px 9px; border-right:1px solid var(--line); }
+.buymode .rail-btn:last-child{ border-right:none; }
+.buymode .rail-btn.on{ color:var(--accent); background:color-mix(in srgb,var(--accent) 14%, var(--panel)); }
+#eracard{ position:fixed; inset:0; z-index:95; display:none; align-items:center; justify-content:center; flex-direction:column; gap:10px; pointer-events:none;
+  background:radial-gradient(900px 600px at 50% 50%, var(--bg) 0%, rgba(0,0,0,0.92) 100%); }
+#eracard.show{ display:flex; animation:ecIn 2.2s ease forwards; }
+#eracard img{ width:110px; height:110px; object-fit:contain; filter:drop-shadow(0 0 22px var(--accent)); animation:ecSig 2.2s ease forwards; }
+#eracard .ec-n{ font-family:var(--era-font); font-size:44px; letter-spacing:0.14em; color:var(--text); text-shadow:0 0 24px var(--accent); }
+#eracard .ec-s{ font-family:var(--body-font); font-style:italic; font-size:16px; color:var(--dim); }
+#eracard .ec-k{ font-family:var(--era-font); font-size:11px; letter-spacing:0.28em; color:var(--accent); text-transform:uppercase; margin-bottom:6px; }
+@keyframes ecIn{ 0%{ opacity:0; } 12%{ opacity:1; } 80%{ opacity:1; } 100%{ opacity:0; } }
+@keyframes ecSig{ 0%{ transform:scale(0.7); filter:drop-shadow(0 0 0 var(--accent)); } 40%{ transform:scale(1); filter:drop-shadow(0 0 30px var(--accent)); } 100%{ transform:scale(1.04); } }
+@media (prefers-reduced-motion:reduce){ #eracard.show{ animation:ecFade 1.4s ease forwards; } #eracard img{ animation:none; } @keyframes ecFade{ 0%{ opacity:1; } 100%{ opacity:0; } } }
+.ledger-row{ display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.ledger-row b{ color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600; }
+.ledger-row .lv{ color:var(--dim); font-variant-numeric:tabular-nums; text-align:right; }
+
 /* ---------- Resource rail (color-coded, persistent, condensable) ---------- */
 .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch;
   padding:7px 8px; margin:0 -8px 8px; background:var(--rail-bg,rgba(10,8,6,0.84)); backdrop-filter:blur(6px);

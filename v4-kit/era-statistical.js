@@ -44,7 +44,9 @@ function makeEraStatistical(shell) {
     if (m.regularization) regMult = 2;
     if (m.ensembles) effBonus += 0.12;
     var cap = m.regularization ? 1 : 0.80;
-    return { accGain: accGain, dataMult: dataMult, insMult: insMult, discMult: discMult, regMult: regMult, effBonus: effBonus, cap: cap };
+    dataMult *= K.tierMult(E.dataset); // v4 milestones: ×10/×25/×50/×100 Datasets → +25% Data per tier
+    var expPerModel = CFG.expPerModel * K.tierMult(E.model); // … and Fit Engines → +25% trials per tier
+    return { accGain: accGain, dataMult: dataMult, insMult: insMult, discMult: discMult, regMult: regMult, effBonus: effBonus, cap: cap, expPerModel: expPerModel };
   }
   function curFocus() { return CFG.focus[E.focus] || CFG.focus.fit; }
   // VALIDATION (effective accuracy) can never exceed TRAINING (raw accuracy) — methods shrink the gap toward it, not past it.
@@ -53,6 +55,7 @@ function makeEraStatistical(shell) {
   function runExperiment(amount) {
     sync(); var st = e3Stats(), f = curFocus();
     amount = Math.min(amount, S.data / CFG.expDataCost); if (amount <= 0) return;
+    E.trials = (E.trials || 0) + amount;
     var dataSpent = amount * CFG.expDataCost;
     S.data -= dataSpent; K.fOut('data', dataSpent);
     E.accuracy = Math.min(1, E.accuracy + st.accGain * f.acc * (1 - E.accuracy) * amount);
@@ -108,9 +111,16 @@ function makeEraStatistical(shell) {
     dataset: { res: 'silicon', base: CFG.datasetCost, growth: CFG.datasetGrowth },
     model: { res: 'data', base: CFG.modelCost, growth: CFG.modelGrowth }
   };
+  var NAME = { dataset: 'Dataset Feed', model: 'Fit Engine' };
   var unitCost = function (k) { return Math.floor(BUYS[k].base * Math.pow(BUYS[k].growth, E[k])); };
-  var canBuy = function (k) { return S[BUYS[k].res] >= unitCost(k); };
-  function buy(k) { sync(); if (!canBuy(k)) return; S[BUYS[k].res] -= unitCost(k); E[k]++; K.rec('buy:' + k); K.playSound('buy'); shell.refresh(); }
+  var batchOf = function (k) { return K.batch(shell.buyN ? shell.buyN() : 1, BUYS[k].base, BUYS[k].growth, E[k], S[BUYS[k].res]); };
+  var canBuy = function (k) { return S[BUYS[k].res] >= batchOf(k).cost; };
+  function buy(k) {
+    sync(); if (!canBuy(k)) return; var b = batchOf(k), t0 = K.tierOf(E[k]);
+    S[BUYS[k].res] -= b.cost; E[k] += b.n; K.rec('buy:' + k, { n: b.n }); K.playSound('buy');
+    if (K.tierOf(E[k]) > t0) K.toast('MILESTONE · ' + NAME[k] + ' ×' + E[k], '+' + Math.round(K.MILESTONE_BONUS * 100) + '% to every ' + NAME[k] + ', forever.');
+    shell.refresh();
+  }
 
   /* ---------- production ---------- */
   function produce(dt) {
@@ -120,7 +130,7 @@ function makeEraStatistical(shell) {
     if (E.model > 0) {
       var modelRun = E.model, need = E.model * CFG.modelSilicon * dt;
       if (need > 0) { if (S.silicon >= need) { S.silicon -= need; K.fOut('silicon', need); } else { modelRun = E.model * (need > 0 ? S.silicon / need : 0); K.fOut('silicon', S.silicon); S.silicon = 0; } }
-      if (modelRun > 0) runExperiment(modelRun * CFG.expPerModel * dt);
+      if (modelRun > 0) runExperiment(modelRun * st.expPerModel * dt);
     }
     if (!E.done) {
       if (!E.shiftAt && E.shifts < CFG.shiftTriggers.length && E.accuracy >= CFG.shiftTriggers[E.shifts]) { E.shiftAt = S.t + CFG.shiftWarn; K.rec('shiftWarn'); }
@@ -216,9 +226,11 @@ function makeEraStatistical(shell) {
     sync();
     renderFocus(); renderPipe(); renderCards(); renderMethods(); renderSupply();
     var xc = $('expCards'); if (xc) xc.onclick = function (e) { var b = e.target.closest && e.target.closest('[data-card]'); if (b && !b.disabled) buyCard(b.dataset.card); };
-    var eb = $('expBtn'); if (eb) eb.onclick = function () { sync(); if (S.data < CFG.expDataCost || E.done) return; runExperiment(1); plotPulse = 1; S.started = true; K.playSound('buy'); shell.refresh(); }; // no 'trial' float — the plot pulse is the feedback
+    var eb = $('expBtn'); if (eb) eb.onclick = runTrial; // no 'trial' float — the plot pulse is the feedback
     var fb = $('fabricate'); if (fb) fb.onclick = fabricate;
   }
+
+  function runTrial() { sync(); if (S.data < CFG.expDataCost || E.done) return; runExperiment(1); plotPulse = 1; S.started = true; K.playSound('buy'); K.rec('trial'); shell.refresh(); }
 
   /* ---------- refresh ---------- */
   var costHave = function (k) { return S[k]; };
@@ -226,7 +238,9 @@ function makeEraStatistical(shell) {
     var nd = $('node-' + key); if (!nd) return;
     setTxt($('cnt-' + key), '×' + E[key]);
     setHTML($('rate-' + key), E[key] > 0 ? flows.map(function (f) { return '<span class="' + (f[0] === '+' ? 'up' : 'dn') + '">' + f[0] + fmt(f[1] * E[key]) + ' ' + f[2] + '</span>'; }).join('') : '<span style="color:var(--dimmer)">not built yet</span>');
-    var b = $('buy-' + key); if (b) { setHTML(b, 'Build · ' + K.costHTML([[BUYS[key].res, unitCost(key)]], costHave)); var can = canBuy(key); setDis(b, !can); b.classList.toggle('ok', can); }
+    var bt = batchOf(key);
+    var b = $('buy-' + key); if (b) { setHTML(b, 'Build' + (bt.n > 1 ? ' ×' + bt.n : '') + ' · ' + K.costHTML([[BUYS[key].res, bt.cost]], costHave)); var can = canBuy(key); setDis(b, !can); b.classList.toggle('ok', can); }
+    var mp = $('mp-' + key); if (mp) { var c = E[key] || 0; setTxt(mp, c > 0 ? K.pipHTML(c) : ''); var nm = K.nextMilestone(c); var mcl = 'mpip' + (K.tierOf(c) > 0 ? ' tiered' : '') + (nm && nm - c <= 2 ? ' near' : ''); if (mp.className !== mcl) mp.className = mcl; }
     var starved = key === 'model' && E.model > 0 && S.data < CFG.expDataCost;
     var cl = 'node' + (canBuy(key) ? ' can' : '') + (starved ? ' starved' : ''); if (nd.className !== cl) nd.className = cl;
   }
@@ -235,7 +249,7 @@ function makeEraStatistical(shell) {
     ['silicon', 'data', 'insight'].forEach(function (k) { setTxt($('stk-' + k), fmt(S[k])); });
     K.connGlow('silicon', { norm: 1.5 }); K.connGlow('data', { norm: 1.5 }); K.connGlow('insight', { norm: 3 });
     nodeRefresh('dataset', [['+', CFG.datasetYield * st.dataMult, 'data']]);
-    nodeRefresh('model', [['+', CFG.expPerModel, 'trials'], ['−', CFG.expPerModel * CFG.expDataCost, 'data'], ['−', CFG.modelSilicon, 'silicon']]);
+    nodeRefresh('model', [['+', st.expPerModel, 'trials'], ['−', st.expPerModel * CFG.expDataCost, 'data'], ['−', CFG.modelSilicon, 'silicon']]);
     var fl = f.label.toUpperCase(); setTxt($('expLabel'), 'RUN ' + fl + ' TRIAL');
     setTxt($('expY'), (S.data < CFG.expDataCost ? 'need ' + CFG.expDataCost + ' Data' : '−' + CFG.expDataCost + ' Data · +accuracy'));
     setDis($('expBtn'), S.data < CFG.expDataCost || E.done);
@@ -250,7 +264,7 @@ function makeEraStatistical(shell) {
     var gl = $('ntGoal'); if (gl) gl.style.left = (thr * 100) + '%';
     var cp = $('ntCap'); if (cp) { var cap = st.cap, capped = cap < 0.999; cp.style.display = capped ? 'block' : 'none'; if (capped) cp.style.left = (cap * 100) + '%'; }
     $('ntrack').classList.toggle('converged', E.accuracy - eff < 0.01);
-    var exps = E.model * CFG.expPerModel;
+    var exps = E.model * st.expPerModel;
     setText('accRate', fmt(exps) + ' trials/s  ·  Focus: ' + f.label + (S.data < CFG.expDataCost ? '  ·  need Data' : ''));
     // shift banner
     var bn = $('e3Banner'); if (bn) { var bh = ''; if (E.shiftAt) bh = '&#9888; THE WORLD IS CHANGING — the data is about to move. A <b>generalized</b> model survives the shift; an overfit one falls hardest.'; else if (S.t - (E.lastShift || -99) < 9) bh = '&#10022; DISTRIBUTION SHIFT — the points moved. <b>Re-fit</b> to the new shape.'; setHTML(bn, bh); var cl = 'event-banner' + (bh ? ' show' : ''); if (bn.className !== cl) bn.className = cl; }
@@ -342,7 +356,21 @@ function makeEraStatistical(shell) {
     phase: function () { return 'TRAINING'; },
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
     done: function () { sync(); return !!E.done; },
-    acts: { runExperiment: runExperiment, buy: buy, canBuy: canBuy, unitCost: unitCost, buyCard: buyCard, expCost: expCost, nextMethod: nextMethod, effAccuracy: effAccuracy, fabricate: fabricate }
+    primary: function () { runTrial(); }, // Space
+    ledger: function () {
+      sync(); var rows = [];
+      if (E.dataset) rows.push(['Dataset Feeds' + (K.tierOf(E.dataset) ? ' <b>×' + K.tierMult(E.dataset).toFixed(2) + '</b>' : ''), '×' + E.dataset]);
+      if (E.model) rows.push(['Fit Engines' + (K.tierOf(E.model) ? ' <b>×' + K.tierMult(E.model).toFixed(2) + '</b>' : ''), '×' + E.model]);
+      var found = METHODS.filter(function (m) { return E.methods[m.id]; });
+      if (found.length) rows.push(['Methods', found.length + '/' + METHODS.length + ' · ' + found.map(function (m) { return m.name; }).join(', ')]);
+      var u = E.utilLvl || {}; var ul = Object.keys(UTILS).filter(function (k) { return u[k]; }).map(function (k) { return UTILS[k].name + ' Lv ' + u[k]; });
+      if (ul.length) rows.push(['Studies', ul.join(', ')]);
+      if (E.trials) rows.push(['Trials run', fmt(E.trials)]);
+      if (E.shifts) rows.push(['Distribution shifts survived', String(E.shifts)]);
+      if (E.done) rows.push(['Generalized', (effAccuracy() * 100).toFixed(0) + '% validation']);
+      return rows;
+    },
+    acts: { runExperiment: runExperiment, runTrial: runTrial, buy: buy, canBuy: canBuy, unitCost: unitCost, batchOf: batchOf, buyCard: buyCard, expCost: expCost, nextMethod: nextMethod, effAccuracy: effAccuracy, fabricate: fabricate }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraStatistical;

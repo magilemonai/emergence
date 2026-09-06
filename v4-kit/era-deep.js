@@ -34,11 +34,11 @@ function makeEraDeep(shell) {
   ];
   var SUPMAP = {}; SUPPLY.forEach(function (s) { SUPMAP[s.key] = s; });
   function producerCount(s) { return (S['e' + s.era] || {})[s.field] || 0; }
-  function producerRate(s) { var c = producerCount(s), e1 = shell.CFG.e1, e3 = shell.CFG.e3;
-    if (s.field === 'foundry') return c * e1.foundryRate;
-    if (s.field === 'scriptorium') return c * e1.scriptoriumRate;
-    if (s.field === 'dataset') return c * e3.datasetYield;
-    return c * e3.expPerModel * e3.insightPerExp; }
+  function producerRate(s) { var c = producerCount(s), e1 = shell.CFG.e1, e3 = shell.CFG.e3, tm = K.tierMult(c);
+    if (s.field === 'foundry') return c * e1.foundryRate * tm;
+    if (s.field === 'scriptorium') return c * e1.scriptoriumRate * tm;
+    if (s.field === 'dataset') return c * e3.datasetYield * tm;
+    return c * e3.expPerModel * tm * e3.insightPerExp; }
   var cap1 = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
   var domLabel = function (k) { var d = CFG.domains.filter(function (x) { return x.k === k; })[0]; return (d && d.label) || k; };
 
@@ -52,7 +52,7 @@ function makeEraDeep(shell) {
     // Origins + Statistical eras running in the background (fed via the supply-bus build-here buttons).
     if (E.node > 0) {
       var doms = CFG.domains, t = S.t || 0;
-      var computeRate = E.node * CFG.nodeCompute, compute = computeRate * dt;
+      var computeRate = E.node * CFG.nodeCompute * K.tierMult(E.node), compute = computeRate * dt; // v4 milestones on nodes
       var throttle = E.heat >= CFG.heatThrottle ? CFG.throttleHot : (E.heat >= CFG.heatWarn ? CFG.throttleWarm : 1);
       var tw = doms.reduce(function (acc, d) { return acc + (E.alloc[d.k] || 0); }, 0) || 1; var maxShare = 0;
       doms.forEach(function (d) {
@@ -100,10 +100,17 @@ function makeEraDeep(shell) {
   /* ---------- buys / steering ---------- */
   var unitCost = function (base, growth, count) { return Math.floor(base * Math.pow(growth, count)); };
   var nodeCost = function () { return unitCost(CFG.nodeCost, CFG.nodeGrowth, E.node); };
-  var canNode = function () { return S.silicon >= nodeCost(); };
-  function buyNode() { sync(); if (!canNode()) return; S.silicon -= nodeCost(); E.node++; K.rec('buy:node'); K.playSound('buy'); shell.refresh(); }
+  var nodeBatch = function () { return K.batch(shell.buyN ? shell.buyN() : 1, CFG.nodeCost, CFG.nodeGrowth, E.node, S.silicon); };
+  var canNode = function () { return S.silicon >= nodeBatch().cost; };
+  function buyNode() {
+    sync(); if (!canNode()) return; var b = nodeBatch(), t0 = K.tierOf(E.node);
+    S.silicon -= b.cost; E.node += b.n; K.rec('buy:node', { n: b.n }); K.playSound('buy');
+    if (K.tierOf(E.node) > t0) K.toast('MILESTONE · Compute Node ×' + E.node, '+' + Math.round(K.MILESTONE_BONUS * 100) + '% compute from every node, forever.');
+    shell.refresh();
+  }
   var supCost = function (s) { return unitCost(s.cost, s.growth, producerCount(s)); };
-  var canSup = function (s) { return S.silicon >= supCost(s); };
+  var supBatch = function (s) { return K.batch(shell.buyN ? shell.buyN() : 1, s.cost, s.growth, producerCount(s), S.silicon); };
+  var canSup = function (s) { return S.silicon >= supBatch(s).cost; };
   // A Scriptorium without scribes converts nothing (Marks pin at 0) — the build-here buy must deliver the
   // +Knowledge/s it advertises, so the staff (scribes for Marks, miners for the Ore upkeep) comes with it.
   function staffKnowledgeLine() {
@@ -118,7 +125,11 @@ function makeEraDeep(shell) {
     if (needMiners > 0) e1.miner += needMiners;
     if (e1.paused) e1.paused.scriptorium = false; // it came staffed — make sure it runs
   }
-  function buySup(key) { sync(); var s = SUPMAP[key]; if (!canSup(s)) return; S.silicon -= supCost(s); var st = S['e' + s.era]; if (st) st[s.field] = (st[s.field] || 0) + 1; if (key === 'scriptorium') staffKnowledgeLine(); K.rec('buy:' + key); K.playSound('buy'); shell.refresh(); }
+  function buySup(key) {
+    sync(); var s = SUPMAP[key]; if (!canSup(s)) return; var b = supBatch(s); S.silicon -= b.cost;
+    var st = S['e' + s.era]; if (st) st[s.field] = (st[s.field] || 0) + b.n;
+    if (key === 'scriptorium') staffKnowledgeLine(); K.rec('buy:' + key, { n: b.n }); K.playSound('buy'); shell.refresh();
+  }
   // The other two Knowledge players: Smelters (upkeep) and Foundries (1:1) BURN it. Hold = pause both, from here.
   var sinksHeld = function () { var p = S.e1 && S.e1.paused; return !!(p && p.smelter && p.foundry); };
   function setSinkHold(held) {
@@ -254,22 +265,22 @@ function makeEraDeep(shell) {
   }
   function refresh() {
     sync(); var doms = CFG.domains, t = S.t || 0;
-    var computeRate = E.node * CFG.nodeCompute;
+    var computeRate = E.node * CFG.nodeCompute * K.tierMult(E.node);
     var tw = doms.reduce(function (acc, d) { return acc + (E.alloc[d.k] || 0); }, 0) || 1;
     var throttle = E.heat >= CFG.heatThrottle ? CFG.throttleHot : (E.heat >= CFG.heatWarn ? CFG.throttleWarm : 1);
     // compute chip is special (rate + node count) — the rest of the rail is handled by the shell
     setTxt($('rv-compute'), fmt(computeRate) + '/s'); var pc = $('rp-compute'); if (pc) { setTxt(pc, E.node + ' nodes'); if (pc.className !== 'cps zero') pc.className = 'cps zero'; }
     // node verb
-    var nc = nodeCost(), ncan = canNode();
-    setTxt($('nodeYield'), '+' + fmt(CFG.nodeCompute) + ' compute/s each');
-    setHTML($('nodeCost'), '×' + E.node + ' built · next <b>' + fmt(nc) + ' Silicon</b>');
+    var nb = nodeBatch(), ncan = canNode();
+    setTxt($('nodeYield'), '+' + fmt(CFG.nodeCompute * K.tierMult(E.node)) + ' compute/s each' + (K.tierOf(E.node) ? ' · milestone ×' + K.tierMult(E.node).toFixed(2) : ''));
+    setHTML($('nodeCost'), '×' + E.node + ' built · ' + (nb.n > 1 ? '+' + nb.n + ' for' : 'next') + ' <b>' + fmt(nb.cost) + ' Silicon</b>' + (K.nextMilestone(E.node) ? ' · <span style="color:var(--dimmer)">' + E.node + '/' + K.nextMilestone(E.node) + '</span>' : ''));
     $('buyNode').classList.toggle('can', ncan);
     // supply
     SUPPLY.forEach(function (s) {
-      var c = supCost(s), can = canSup(s);
+      var sb = supBatch(s), can = canSup(s);
       setTxt($('supc-' + s.key), String(producerCount(s)));
       setHTML($('supo-' + s.key), '+<b>' + fmt(producerRate(s)) + '</b> ' + (FEEDLBL[s.out] || cap1(s.out)) + '/s');
-      setHTML($('supx-' + s.key), 'next <b>' + fmt(c) + ' Silicon</b>');
+      setHTML($('supx-' + s.key), (sb.n > 1 ? '+' + sb.n + ' for' : 'next') + ' <b>' + fmt(sb.cost) + ' Silicon</b>');
       var btn = $('sup-' + s.key); if (btn) btn.classList.toggle('can', can);
     });
     // per-run info
@@ -400,7 +411,17 @@ function makeEraDeep(shell) {
     phase: function () { return 'Compute Fabric'; },
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
     done: function () { sync(); return !!E.done; },
-    acts: { buyNode: buyNode, nodeCost: nodeCost, buySup: buySup, supCost: supCost, SUPMAP: SUPMAP, SUPPLY: SUPPLY, buyStabilizer: buyStabilizer, lockRun: lockRun, advance: advance, breadth: breadth, setSinkHold: setSinkHold, sinksHeld: sinksHeld, sinkBurnRate: sinkBurnRate }
+    primary: function () { buyNode(); }, // Space
+    ledger: function () {
+      sync(); var rows = [];
+      if (E.node) rows.push(['Compute Nodes' + (K.tierOf(E.node) ? ' <b>×' + K.tierMult(E.node).toFixed(2) + '</b>' : ''), '×' + E.node]);
+      if (E.stabilizer) rows.push(['Stabilizer', 'Lv ' + E.stabilizer + ' · −' + Math.round(E.stabilizer * CFG.stabilizerCut * 100) + '% drift']);
+      if (E.locksBought) rows.push(['Runs locked', String(E.locksBought)]);
+      rows.push(['Runs', CFG.domains.map(function (d) { return d.label + ' ' + Math.round((E[d.k] || 0) * 100) + '%'; }).join(' · ')]);
+      if (E.done) rows.push(['Breadth gate', 'reached']);
+      return rows;
+    },
+    acts: { buyNode: buyNode, nodeCost: nodeCost, nodeBatch: nodeBatch, buySup: buySup, supCost: supCost, supBatch: supBatch, SUPMAP: SUPMAP, SUPPLY: SUPPLY, buyStabilizer: buyStabilizer, lockRun: lockRun, advance: advance, breadth: breadth, setSinkHold: setSinkHold, sinksHeld: sinksHeld, sinkBurnRate: sinkBurnRate }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraDeep;

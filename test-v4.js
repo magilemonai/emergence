@@ -41,7 +41,8 @@ const shell = {
   openEra: function (n) { S.maxEra = Math.max(S.maxEra, n); if (ERAS[n] && ERAS[n].open) ERAS[n].open(S); S.era = n; },
   save: function () {}, navTo: function (n) { S.era = n; },
   era: function (n) { return ERAS[n]; },
-  refresh: function () {}, requestRender: function () { renderCount++; }
+  refresh: function () {}, requestRender: function () { renderCount++; },
+  buyN: function () { return S.buyN || 1; }, drawerKind: function () { return 'research'; }, setDrawer: function () {}
 };
 const ORDER = [1, 2, 3, 4, 5];
 const ERAS = {
@@ -54,7 +55,7 @@ const POOL = []; ORDER.forEach(function (n) { (ERAS[n].pool || []).forEach(funct
 KIT.flowInit(POOL);
 
 function clearObj(o) { for (const k in o) if (o.hasOwnProperty(k)) delete o[k]; }
-function freshAll() { clearObj(S); S.maxEra = 1; S.era = 1; S.t = 0; S.speed = 1; S.started = false; S.flags = {}; ORDER.forEach(function (n) { ERAS[n].fresh(S); }); }
+function freshAll() { clearObj(S); S.maxEra = 1; S.era = 1; S.t = 0; S.speed = 1; S.started = false; S.flags = {}; S.buyN = 1; ORDER.forEach(function (n) { ERAS[n].fresh(S); }); }
 function tick(dt) {
   KIT.flowReset(); const before = {}; POOL.forEach(function (k) { before[k] = S[k] || 0; });
   ORDER.forEach(function (n) { if (n <= S.maxEra && ERAS[n].produce) ERAS[n].produce(dt); });

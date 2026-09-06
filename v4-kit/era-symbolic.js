@@ -39,7 +39,8 @@ function makeEraSymbolic(shell) {
     click *= (1 + CFG.contraBonus * (E.paraBwd || 0)); rm *= (1 + CFG.contraBonus * (E.paraFwd || 0));
     if (E.contra) g *= CFG.contraSlow;
     var axBonus = CFG.axiomBonus * (T.metalogic ? 1.5 : 1); g *= (1 + S.axioms * axBonus); g *= (1 + CFG.lemmaBonus * E.optLevel);
-    return { click: click * g, rulesetYield: CFG.rulesetYield * rm * g, axBonus: axBonus };
+    // v4 milestones (×10/×25/×50/×100 rulesets or daemons → +25% per tier to that engine)
+    return { click: click * g, rulesetYield: CFG.rulesetYield * rm * g * K.tierMult(E.ruleset), daemonRate: CFG.daemonRate * K.tierMult(E.daemon), axBonus: axBonus };
   }
   var symInfRate = function () { return E.ruleset * CFG.infPerRuleset; };
   var infCap = function () { return CFG.infCapBase + E.infCapLevel * CFG.infCapStep; };
@@ -59,7 +60,7 @@ function makeEraSymbolic(shell) {
   /* ---------- production ---------- */
   function produce(dt) {
     sync(); var st = stats();
-    var g = 0; if (E.ruleset > 0) g += E.ruleset * st.rulesetYield * dt; if (E.daemon > 0) g += E.daemon * CFG.daemonRate * st.click * dt;
+    var g = 0; if (E.ruleset > 0) g += E.ruleset * st.rulesetYield * dt; if (E.daemon > 0) g += E.daemon * st.daemonRate * st.click * dt;
     if (g > 0) { S.rules += g; E.runRules += g; K.fIn('rules', g); }
     if (!K.MUTE && !E.contra && E.contraN < CFG.contraAt.length && E.runRules >= CFG.contraAt[E.contraN] && !E.flags.symbolicDone) { // live play only — offline stays clean
       var seed = Math.floor(E.runRules); E.contra = { a: 1000 + seed % 3989, b: 4000 + (seed * 7) % 5989 };
@@ -78,8 +79,11 @@ function makeEraSymbolic(shell) {
   /* ---------- actions ---------- */
   var rulesetCost = function () { return Math.floor(CFG.rulesetCost * Math.pow(CFG.rulesetGrowth, E.ruleset)); };
   var daemonCost = function () { return Math.floor(CFG.daemonCost * Math.pow(CFG.daemonGrowth, E.daemon)); };
-  function buyRuleset() { sync(); var c = rulesetCost(); if (S.rules < c) return; S.rules -= c; E.ruleset++; K.rec('buy:ruleset'); K.playSound('buy'); shell.refresh(); }
-  function buyDaemon() { sync(); if (!E.tech.inference) return; var c = daemonCost(); if (S.rules < c) return; S.rules -= c; E.daemon++; K.rec('buy:daemon'); K.playSound('buy'); shell.refresh(); }
+  var rulesetBatch = function () { return K.batch(shell.buyN ? shell.buyN() : 1, CFG.rulesetCost, CFG.rulesetGrowth, E.ruleset, S.rules); };
+  var daemonBatch = function () { return K.batch(shell.buyN ? shell.buyN() : 1, CFG.daemonCost, CFG.daemonGrowth, E.daemon, S.rules); };
+  function milestoneToast(name, count, t0) { if (K.tierOf(count) > t0) K.toast('MILESTONE · ' + name + ' ×' + count, '+' + Math.round(K.MILESTONE_BONUS * 100) + '% to every ' + name + ', forever.'); }
+  function buyRuleset() { sync(); var b = rulesetBatch(); if (S.rules < b.cost) return; var t0 = K.tierOf(E.ruleset); S.rules -= b.cost; E.ruleset += b.n; K.rec('buy:ruleset', { n: b.n }); K.playSound('buy'); milestoneToast('Ruleset', E.ruleset, t0); shell.refresh(); }
+  function buyDaemon() { sync(); if (!E.tech.inference) return; var b = daemonBatch(); if (S.rules < b.cost) return; var t0 = K.tierOf(E.daemon); S.rules -= b.cost; E.daemon += b.n; K.rec('buy:daemon', { n: b.n }); K.playSound('buy'); milestoneToast('Daemon', E.daemon, t0); shell.refresh(); }
   function writeRule(ev) {
     sync(); var g = stats().click; S.rules += g; E.runRules += g; S.started = true; K.playSound('buy');
     if (ev && ev.currentTarget) { var r = ev.currentTarget.getBoundingClientRect(); K.floatNum('+' + fmt(g), HUE.rules, r.right - 40, r.top + 10); }
@@ -135,9 +139,9 @@ function makeEraSymbolic(shell) {
     sync();
     var h = K.stock('rules', 'Rules');
     h += '<div class="seg">' + K.connector('rules') +
-      '<div class="node" id="node-ruleset" data-tip="' + esc('<i>Logic that begets more logic.</i><br>Writes Rules automatically and emits Inference (reasoning power).') + '"><div class="nname">Ruleset <span class="ncount" id="cnt-ruleset"></span></div><button class="buy nbuy" id="buy-ruleset"></button><div class="nrate" id="rate-ruleset"></div></div>' +
+      '<div class="node" id="node-ruleset" data-tip="' + esc('<i>Logic that begets more logic.</i><br>Writes Rules automatically and emits Inference (reasoning power).') + '"><div class="nname">Ruleset <span class="ncount" id="cnt-ruleset"></span><span class="mpip" id="mp-ruleset"></span></div><button class="buy nbuy" id="buy-ruleset"></button><div class="nrate" id="rate-ruleset"></div></div>' +
       K.connector('inference') + stockCap('inference', 'Inference') + '</div>';
-    if (E.tech.inference) h += '<div class="seg" style="flex:1 1 100%"><div class="node" id="node-daemon" data-tip="' + esc('<i>A patient process that keeps working while you look away.</i><br>Fires the write action for you.') + '"><div class="nname">Daemon <span class="ncount" id="cnt-daemon"></span></div><button class="buy nbuy" id="buy-daemon"></button><div class="nrate" id="rate-daemon"></div></div></div>';
+    if (E.tech.inference) h += '<div class="seg" style="flex:1 1 100%"><div class="node" id="node-daemon" data-tip="' + esc('<i>A patient process that keeps working while you look away.</i><br>Fires the write action for you.') + '"><div class="nname">Daemon <span class="ncount" id="cnt-daemon"></span><span class="mpip" id="mp-daemon"></span></div><button class="buy nbuy" id="buy-daemon"></button><div class="nrate" id="rate-daemon"></div></div></div>';
     $('authorPipe').innerHTML = h;
     var br = $('buy-ruleset'); if (br) br.onclick = buyRuleset; var bd = $('buy-daemon'); if (bd) bd.onclick = buyDaemon;
   }
@@ -171,6 +175,11 @@ function makeEraSymbolic(shell) {
     if (!_keyWired) { _keyWired = true; addEventListener('keydown', function (e) { if (e.key === 'Enter' && shell.S.era === 2 && !/input|textarea/i.test((e.target && e.target.tagName) || '')) writeRule(); }); }
   }
 
+  function pipRefresh(key, c) {
+    var mp = $('mp-' + key); if (!mp) return;
+    setTxt(mp, c > 0 ? K.pipHTML(c) : ''); var nm = K.nextMilestone(c);
+    var cl = 'mpip' + (K.tierOf(c) > 0 ? ' tiered' : '') + (nm && nm - c <= 2 ? ' near' : ''); if (mp.className !== cl) mp.className = cl;
+  }
   function refresh() {
     sync(); var st = stats();
     setHTML($('writeY'), '+' + fmt(st.click) + ' rules');
@@ -178,11 +187,15 @@ function makeEraSymbolic(shell) {
     K.connGlow('rules', { norm: 0.5 }); K.connGlow('inference', { norm: 0.5 });
     setTxt($('cnt-ruleset'), '×' + E.ruleset);
     setHTML($('rate-ruleset'), E.ruleset > 0 ? '<span class="up">+' + fmt(E.ruleset * st.rulesetYield) + ' rules/s</span><span class="inf">+' + fmt(symInfRate()) + ' inference/s</span>' : '<span style="color:var(--dimmer)">writes rules + emits inference</span>');
-    var br = $('buy-ruleset'); if (br) { setHTML(br, 'Build · <span class="c">' + fmt(rulesetCost()) + ' rules</span>'); var canR = S.rules >= rulesetCost(); setDis(br, !canR); br.classList.toggle('ok', canR); }
+    var rb = rulesetBatch();
+    var br = $('buy-ruleset'); if (br) { setHTML(br, 'Build' + (rb.n > 1 ? ' ×' + rb.n : '') + ' · <span class="c">' + fmt(rb.cost) + ' rules</span>'); var canR = S.rules >= rb.cost; setDis(br, !canR); br.classList.toggle('ok', canR); }
+    pipRefresh('ruleset', E.ruleset);
     if (E.tech.inference) {
       setTxt($('cnt-daemon'), '×' + E.daemon);
-      setHTML($('rate-daemon'), E.daemon > 0 ? '<span class="up">+' + fmt(E.daemon * CFG.daemonRate * st.click) + ' rules/s</span>' : '<span style="color:var(--dimmer)">auto-writes rules</span>');
-      var bd = $('buy-daemon'); if (bd) { setHTML(bd, 'Build · <span class="c">' + fmt(daemonCost()) + ' rules</span>'); var canD = S.rules >= daemonCost(); setDis(bd, !canD); bd.classList.toggle('ok', canD); }
+      setHTML($('rate-daemon'), E.daemon > 0 ? '<span class="up">+' + fmt(E.daemon * st.daemonRate * st.click) + ' rules/s</span>' : '<span style="color:var(--dimmer)">auto-writes rules</span>');
+      var db = daemonBatch();
+      var bd = $('buy-daemon'); if (bd) { setHTML(bd, 'Build' + (db.n > 1 ? ' ×' + db.n : '') + ' · <span class="c">' + fmt(db.cost) + ' rules</span>'); var canD = S.rules >= db.cost; setDis(bd, !canD); bd.classList.toggle('ok', canD); }
+      pipRefresh('daemon', E.daemon);
     }
     // active proof
     var pa = $('proofActive');
@@ -238,6 +251,19 @@ function makeEraSymbolic(shell) {
     phase: function () { sync(); return 'Expert System ' + TREE.filter(function (n) { return E.tech[n.id]; }).length + '/' + TREE.length; },
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
     done: function () { sync(); return !!E.flags.symbolicDone; },
+    primary: function () { writeRule(); }, // Space
+    ledger: function () {
+      sync(); var rows = [];
+      if (E.ruleset) rows.push(['Rulesets' + (K.tierOf(E.ruleset) ? ' <b>×' + K.tierMult(E.ruleset).toFixed(2) + '</b>' : ''), '×' + E.ruleset]);
+      if (E.daemon) rows.push(['Daemons' + (K.tierOf(E.daemon) ? ' <b>×' + K.tierMult(E.daemon).toFixed(2) + '</b>' : ''), '×' + E.daemon]);
+      var proven = TREE.filter(function (n) { return E.tech[n.id]; });
+      if (proven.length) rows.push(['Theorems', proven.length + '/' + TREE.length + ' · ' + proven.map(function (n) { return n.name; }).join(', ')]);
+      if (E.optLevel) rows.push(['Optimization', 'Lv ' + E.optLevel]);
+      if (E.infCapLevel) rows.push(['Inference Capacity', 'Lv ' + E.infCapLevel]);
+      if (S.axioms || E.compiles) rows.push(['Axioms', S.axioms + ' banked · ' + E.compiles + ' compile' + (E.compiles === 1 ? '' : 's')]);
+      if (E.contraN) rows.push(['Contradictions resolved', String(E.contraN)]);
+      return rows;
+    },
     acts: { writeRule: writeRule, buyRuleset: buyRuleset, buyDaemon: buyDaemon, rulesetCost: rulesetCost, daemonCost: daemonCost, selectProof: selectProof, canProve: canProve, compile: compile, axiomGain: axiomGain, resolveContra: resolveContra, TREE: TREE }
   };
 }

@@ -305,6 +305,7 @@
 <div id="toasts"></div>
 <div id="research"><div class="rh"><h3 id="researchTitle">RESEARCH</h3><button class="x" id="researchClose">&times;</button></div><div class="rbody" id="researchBody"></div></div>
 <div id="rupture"></div>
+<div id="eracard"><div class="ec-k" id="ecK"></div><img id="ecSig" src="" alt=""><div class="ec-n" id="ecN"></div><div class="ec-s" id="ecS"></div></div>
 <div id="dev"></div>
 <div id="dbg"></div>
 <div id="settings">
@@ -419,8 +420,12 @@
     navTo: function (n) { navTo(n); },   // reach-back: send the player to an earlier era to build more supply
     era: function (n) { return ERAS[n]; }, // cross-era module access (Deep's build-here bus reads Origins' real rates)
     refresh: refreshActive,        // per-tick values on the live board
-    requestRender: renderBoard     // structural rebuild of the live board
+    requestRender: renderBoard,    // structural rebuild of the live board
+    drawerKind: function () { return DRAWER; },            // 'research' | 'ledger' — the side drawer is shared
+    setDrawer: function (kind) { DRAWER = kind; },
+    buyN: function () { return S.buyN || 1; }              // bulk-buy mode (×1 / ×10 / MAX) — read by every era's buys
   };
+  var DRAWER = 'research';
 
   /* ---------- era registry (modules register as they are ported) ---------- */
   var ERAS = {};
@@ -444,7 +449,7 @@
   function clearObj(o) { for (var k in o) if (o.hasOwnProperty(k)) delete o[k]; }
   function freshAll() {
     clearObj(S);
-    S.maxEra = 1; S.era = 1; S.t = 0; S.speed = 1; S.dev = false; S.started = false; S.flags = {};
+    S.maxEra = 1; S.era = 1; S.t = 0; S.speed = 1; S.dev = false; S.started = false; S.flags = {}; S.buyN = 1;
     ORDER.forEach(function (n) { if (ERAS[n] && ERAS[n].fresh) ERAS[n].fresh(S); });
   }
 
@@ -472,9 +477,33 @@
   }
   function openEra(n) {
     S.maxEra = Math.max(S.maxEra, n);
-    if (ERAS[n]) { if (ERAS[n].open) ERAS[n].open(S); navTo(n); }
+    if (ERAS[n]) { if (ERAS[n].open) ERAS[n].open(S); navTo(n); showEraCard(n, 'era ' + n + ' · the ' + ERAS[n].name.toLowerCase() + ' era begins'); }
     else { KIT.toast('THE FRONTIER', 'The ' + (ERA_META[n] || 'next') + ' era is not wired into this build yet. (Porting one era at a time.)', 'event'); render(); }
     save();
+  }
+
+  /* ---------- ledger (everything you own, across eras) + the era title card ---------- */
+  function ledgerHTML() {
+    var h = '';
+    ORDER.forEach(function (n) {
+      var era = ERAS[n]; if (!era || n > S.maxEra || !era.ledger) return;
+      var rows = era.ledger(); if (!rows || !rows.length) return;
+      h += '<div class="rsec">' + era.name + '</div>' + rows.map(function (r) { return '<div class="ledger-row"><span>' + r[0] + '</span><span class="lv">' + r[1] + '</span></div>'; }).join('');
+    });
+    return h || '<div class="locked" style="text-align:center">Nothing owned yet. Make a mark.</div>';
+  }
+  function openLedger() {
+    var dr = $('research');
+    if (DRAWER === 'ledger' && dr.classList.contains('show')) { dr.classList.remove('show'); DRAWER = 'research'; return; }
+    DRAWER = 'ledger'; $('researchTitle').textContent = 'LEDGER · everything you own'; $('researchBody').innerHTML = ledgerHTML(); dr.classList.add('show');
+    KIT.rec('@ledger');
+  }
+  var _ecT = null;
+  function showEraCard(n, kicker) {
+    var era = ERAS[n], ec = $('eracard'); if (!era || !ec || KIT.MUTE) return;
+    $('ecK').textContent = kicker || ''; $('ecSig').src = era.sigil || ''; $('ecN').textContent = era.name.toUpperCase(); $('ecS').textContent = era.sub || '';
+    ec.classList.remove('show'); void ec.offsetWidth; ec.classList.add('show');
+    if (_ecT) clearTimeout(_ecT); _ecT = setTimeout(function () { ec.classList.remove('show'); }, 2300);
   }
 
   /* ---------- render (structural) / refresh (per-tick) ---------- */
@@ -483,7 +512,14 @@
     KIT.soundProfile = era.sound || {};
     // rail
     var chips = era.railDefs().filter(function (r) { return r[2](); }).map(function (r) { return KIT.chip(r[0], r[1]); }).join('');
-    $('rail').innerHTML = chips + '<div class="rail-right"><button class="rail-btn" id="musicBtn">♪ music</button><button class="rail-btn" id="setBtn" title="settings (Esc)">⚙</button></div>';
+    var bm = [1, 10, 'max'].map(function (m) { return '<button class="rail-btn bm' + ((S.buyN || 1) === m ? ' on' : '') + '" data-bm="' + m + '" title="buy amount">' + (m === 'max' ? 'MAX' : '×' + m) + '</button>'; }).join('');
+    $('rail').innerHTML = chips + '<div class="rail-right"><div class="buymode" title="bulk buy: every Build button buys this many">' + bm + '</div>' +
+      '<button class="rail-btn" id="ledgerBtn" title="ledger — everything you own">▤</button>' +
+      '<button class="rail-btn" id="musicBtn">♪ music</button><button class="rail-btn" id="setBtn" title="settings (Esc)">⚙</button></div>';
+    Array.prototype.forEach.call($('rail').querySelectorAll('[data-bm]'), function (b) {
+      b.onclick = function () { var v = b.dataset.bm; S.buyN = v === 'max' ? 'max' : +v; Array.prototype.forEach.call($('rail').querySelectorAll('[data-bm]'), function (x) { x.classList.toggle('on', x === b); }); KIT.playSound('buy'); refreshActive(); };
+    });
+    $('ledgerBtn').onclick = openLedger;
     $('musicBtn').onclick = KIT.musicToggle;
     if (KIT.MUSIC.on) $('musicBtn').style.color = 'var(--accent)'; // rail rebuilds on render — restore the toggle state
     $('setBtn').onclick = function () { toggleSettings(); };
@@ -580,8 +616,11 @@
     try { var b = new Blob([runJSON()], { type: 'application/json' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'emergence-v3-run.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400); KIT.toast('RUN DOWNLOADED', 'emergence-v3-run.json is in Downloads.'); } catch (e) {}
   }
   addEventListener('keydown', function (e) {
-    if (e.key === '`' || e.key === '~') { e.preventDefault(); toggleDev(); }
-    else if (e.key === 'Escape') toggleSettings();
+    if (e.key === '`' || e.key === '~') { e.preventDefault(); toggleDev(); return; }
+    if (e.key === 'Escape') { toggleSettings(); return; }
+    if (/input|textarea|select/i.test((e.target && e.target.tagName) || '') || $('settings').classList.contains('show')) return;
+    if (/^[1-6]$/.test(e.key)) { var n = +e.key; if (ERAS[n] && n <= S.maxEra && n !== S.era) { navTo(n); KIT.rec('@key:' + n); } return; }
+    if (e.key === ' ' && !S.uiPaused) { var era = ERAS[S.era]; if (era && era.primary) { e.preventDefault(); era.primary(); } }
   });
 
   /* ---------- settings (Escape) — pause / restart / music + SFX volume (port of the shipped R4.9 panel) ---------- */
@@ -611,7 +650,7 @@
   /* ---------- boot ---------- */
   KIT.initTip();
   KIT.initTelemetry(function () { return S.started; });
-  $('researchClose').onclick = function () { $('research').classList.remove('show'); };
+  $('researchClose').onclick = function () { $('research').classList.remove('show'); DRAWER = 'research'; };
 
   freshAll();
   var lastSave = load();
@@ -665,6 +704,7 @@
   KIT.musicPlayEra(ERAS[S.era].bedKey ? ERAS[S.era].bedKey() : S.era); // set the bed at boot (the ♪ toggle was dead until the first era switch)
   document.addEventListener('pointerdown', function firstGesture() { KIT.musicEnsure(); document.removeEventListener('pointerdown', firstGesture); });
   render();
+  if (!seeded && !S.started) setTimeout(function () { showEraCard(1, 'first, a mark'); }, 200);
   if (offline) setTimeout(function () { offlineToast(offline); }, 600);
   setInterval(tick, CFG.tickMs);
 

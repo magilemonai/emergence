@@ -66,6 +66,8 @@ function makeEraOrigins(shell) {
     var recM = (CFG.leverFloor + CFG.leverSwing * lv) * (1 + CFG.commBonus * E.commRec);
     var fge = (CFG.leverFloor + CFG.leverSwing * (1 - lv)) * (1 + CFG.commBonus * E.commForge);
     inscribe *= recM; scribeY *= recM; quarry *= fge; minerY *= fge;
+    // v4 milestones: ×10/×25/×50/×100 of a building → +25% per tier to THAT building (always a near-win in view)
+    scribeY *= K.tierMult(E.scribe); minerY *= K.tierMult(E.miner); scrR *= K.tierMult(E.scriptorium); smR *= K.tierMult(E.smelter); foR *= K.tierMult(E.foundry);
     var g = (1 + E.refine * CFG.refineBonus);
     return { inscribe: inscribe * g, quarry: quarry * g, scribeY: scribeY * g, minerY: minerY * g, scrR: scrR * g, smR: smR * g, foR: foR * g };
   }
@@ -107,9 +109,16 @@ function makeEraOrigins(shell) {
   }
 
   /* ---------- buy / disco / commission / fabricate ---------- */
+  var NAME = { scribe: 'Scribe', miner: 'Miner', scriptorium: 'Scriptorium', smelter: 'Smelter', foundry: 'Foundry', refine: 'Refine' };
   var unitCost = function (k) { return Math.floor(BUYS[k].base * Math.pow(BUYS[k].growth, E[k])); };
-  var canBuy = function (k) { return S[BUYS[k].res] >= unitCost(k); };
-  function buy(k) { sync(); if (!canBuy(k)) return; S[BUYS[k].res] -= unitCost(k); E[k]++; K.rec('buy:' + k); K.playSound('buy'); shell.refresh(); }
+  var batchOf = function (k) { return K.batch(shell.buyN ? shell.buyN() : 1, BUYS[k].base, BUYS[k].growth, E[k], S[BUYS[k].res]); }; // ×1 / ×10 / MAX
+  var canBuy = function (k) { return S[BUYS[k].res] >= batchOf(k).cost; };
+  function buy(k) {
+    sync(); if (!canBuy(k)) return; var b = batchOf(k), t0 = K.tierOf(E[k]);
+    S[BUYS[k].res] -= b.cost; E[k] += b.n; K.rec('buy:' + k, { n: b.n }); K.playSound('buy');
+    if (k !== 'refine' && K.tierOf(E[k]) > t0) K.toast('MILESTONE · ' + NAME[k] + ' ×' + E[k], '+' + Math.round(K.MILESTONE_BONUS * 100) + '% to every ' + NAME[k] + ', forever.');
+    shell.refresh();
+  }
 
   var discoVisible = function (n) { return n.req.every(function (r) { return E.disco[r]; }); };
   function canDisco(n) {
@@ -169,7 +178,7 @@ function makeEraOrigins(shell) {
     h += K.stock('marks', 'Marks');
     if (E.flags.o_scriptorium) { h += '<div class="seg">' + K.connector('marks') + node1('scriptorium', 'Scriptorium', '<i>Where marks are ordered and made to mean something.</i><br>Marks (+ a little Ore) → Knowledge. Pausable.') + K.connector('knowledge') + K.stock('knowledge', 'Knowledge') + '</div>'; }
     h += '</div>';
-    if (E.flags.canScribe) h += '<div class="auto" id="auto-scribe" data-tip="' + esc('<i>A trained hand that never tires.</i><br>Automates Marks.') + '"><img src="' + ICON.scribe + '"><span class="an">Scribe <span class="ncount" id="cnt-scribe"></span></span><span class="ar" id="ar-scribe"></span><button class="buy abuy" id="buy-scribe"></button></div>';
+    if (E.flags.canScribe) h += '<div class="auto" id="auto-scribe" data-tip="' + esc('<i>A trained hand that never tires.</i><br>Automates Marks.') + '"><img src="' + ICON.scribe + '"><span class="an">Scribe <span class="ncount" id="cnt-scribe"></span><span class="mpip" id="mp-scribe"></span></span><span class="ar" id="ar-scribe"></span><button class="buy abuy" id="buy-scribe"></button></div>';
     h += '</div>';
     if (E.flags.o_materials) {
       h += '<div class="lane"><div class="lane-lab">The Forge · Ore becomes Metal, then Silicon<div class="ldash"></div></div><div class="pipe">';
@@ -177,7 +186,7 @@ function makeEraOrigins(shell) {
       if (E.flags.o_smelter) { h += '<div class="seg">' + K.connector('ore') + node1('smelter', 'Smelter', '<i>Fire coaxes metal out of stone.</i><br>Ore (+ a little Knowledge) → Metal. Pausable.') + K.connector('metal') + K.stock('metal', 'Metal') + '</div>'; }
       if (E.flags.o_foundry) { h += '<div class="seg">' + K.connector('metal') + node1('foundry', 'Foundry', '<i>A recipe and a furnace.</i><br>Metal + Knowledge → Silicon. Pausable.') + K.connector('silicon') + K.stock('silicon', 'Silicon') + '</div>'; }
       h += '</div>';
-      h += '<div class="auto" id="auto-miner" data-tip="' + esc('<i>Picks against the rock, hour after hour.</i><br>Automates Ore.') + '"><img src="' + ICON.miner + '"><span class="an">Miner <span class="ncount" id="cnt-miner"></span></span><span class="ar" id="ar-miner"></span><button class="buy abuy" id="buy-miner"></button></div>';
+      h += '<div class="auto" id="auto-miner" data-tip="' + esc('<i>Picks against the rock, hour after hour.</i><br>Automates Ore.') + '"><img src="' + ICON.miner + '"><span class="an">Miner <span class="ncount" id="cnt-miner"></span><span class="mpip" id="mp-miner"></span></span><span class="ar" id="ar-miner"></span><button class="buy abuy" id="buy-miner"></button></div>';
       h += '</div>';
     }
     return h;
@@ -228,14 +237,21 @@ function makeEraOrigins(shell) {
     if ($('inscribe')) $('inscribe').onclick = inscribe;
     if ($('quarry')) $('quarry').onclick = quarry;
     if ($('fabricate')) $('fabricate').onclick = fabricate;
-    if ($('researchBtn')) $('researchBtn').onclick = function () { $('research').classList.toggle('show'); };
+    if ($('researchBtn')) $('researchBtn').onclick = function () {
+      var dr = $('research'), wasResearch = shell.drawerKind() === 'research';
+      if (wasResearch && dr.classList.contains('show')) { dr.classList.remove('show'); return; }
+      shell.setDrawer('research'); $('researchTitle').textContent = 'RESEARCH · one-time discoveries'; renderResearch(); dr.classList.add('show');
+    };
     if ($('hands')) $('hands').oninput = function (e) { E.lever = 1 - (+e.target.value / 100); };
     if ($('refineBuy')) $('refineBuy').onclick = function () { buy('refine'); };
     ['scriptorium', 'smelter', 'foundry', 'scribe', 'miner'].forEach(function (k) {
       var b = $('buy-' + k); if (b) b.onclick = function () { buy(k); };
       var p = $('pause-' + k); if (p) p.onclick = function () { E.paused[k] = !E.paused[k]; K.playSound('buy'); shell.requestRender(); };
     });
-    // research drawer body
+    // research drawer body (only when the shared drawer is showing research — never clobber the Ledger)
+    if (shell.drawerKind() !== 'ledger') renderResearch();
+  }
+  function renderResearch() {
     var rb = buildResearchBody(); setHTML($('researchBody'), rb.html);
     rb.vis.forEach(function (n) { var b = $('dbuy-' + n.id); if (b) b.onclick = function () { doDisco(n); }; });
   }
@@ -246,14 +262,23 @@ function makeEraOrigins(shell) {
     var nd = $('node-' + key); if (!nd) return;
     setTxt($('cnt-' + key), '×' + E[key]);
     setHTML($('rate-' + key), E[key] > 0 ? flows.map(function (f) { return '<span class="' + (f[0] === '+' ? 'up' : 'dn') + '">' + f[0] + fmt(f[1] * E[key]) + ' ' + f[2] + '</span>'; }).join('') : '<span style="color:var(--dimmer)">not built yet</span>');
-    var b = $('buy-' + key); if (b) { setHTML(b, 'Build · ' + K.costHTML([[BUYS[key].res, unitCost(key)]], costHave)); var can = canBuy(key); setDis(b, !can); b.classList.toggle('ok', can); }
+    var bt = batchOf(key);
+    var b = $('buy-' + key); if (b) { setHTML(b, 'Build' + (bt.n > 1 ? ' ×' + bt.n : '') + ' · ' + K.costHTML([[BUYS[key].res, bt.cost]], costHave)); var can = canBuy(key); setDis(b, !can); b.classList.toggle('ok', can); }
+    pipRefresh(key);
     var p = $('pause-' + key); if (p) p.classList.toggle('on', !!E.paused[key]);
     var starved = E[key] > 0 && !E.paused[key] && ((key === 'scriptorium' && S.marks < 0.5) || (key === 'smelter' && S.ore < 0.5) || (key === 'foundry' && (S.metal < 0.5 || S.knowledge < 0.5)));
     var cl = 'node' + (canBuy(key) ? ' can' : '') + (starved ? ' starved' : ''); if (nd.className !== cl) nd.className = cl;
   }
+  function pipRefresh(key) {
+    var mp = $('mp-' + key); if (!mp) return; var c = E[key] || 0;
+    setTxt(mp, c > 0 ? K.pipHTML(c) : ''); var nm = K.nextMilestone(c);
+    var cl = 'mpip' + (K.tierOf(c) > 0 ? ' tiered' : '') + (nm && nm - c <= 2 ? ' near' : ''); if (mp.className !== cl) mp.className = cl;
+  }
   function autoRefresh(key, yld, res) {
     setTxt($('cnt-' + key), '×' + E[key]); setTxt($('ar-' + key), '+' + fmt(E[key] * yld) + ' ' + res + '/s');
-    var b = $('buy-' + key); if (b) { setHTML(b, '+1 · ' + K.costHTML([[BUYS[key].res, unitCost(key)]], costHave)); var can = canBuy(key); setDis(b, !can); b.classList.toggle('ok', can); }
+    var bt = batchOf(key);
+    var b = $('buy-' + key); if (b) { setHTML(b, '+' + bt.n + ' · ' + K.costHTML([[BUYS[key].res, bt.cost]], costHave)); var can = canBuy(key); setDis(b, !can); b.classList.toggle('ok', can); }
+    pipRefresh(key);
   }
   function refreshResearch() {
     DISCO.forEach(function (n) {
@@ -273,7 +298,7 @@ function makeEraOrigins(shell) {
     nodeRefresh('foundry', [['+', os.foR, 'silicon'], ['−', os.foR, 'metal'], ['−', os.foR, 'knowledge']]);
     autoRefresh('scribe', os.scribeY, 'marks'); autoRefresh('miner', os.minerY, 'ore');
     if (E.flags.o_scriptorium) {
-      var rb = $('refineBuy'); if (rb) { setHTML(rb, 'Build · ' + K.costHTML([['ore', unitCost('refine')]], costHave)); var can = canBuy('refine'); setDis(rb, !can); rb.classList.toggle('ok', can); }
+      var rb = $('refineBuy'); if (rb) { var rbt = batchOf('refine'); setHTML(rb, 'Build' + (rbt.n > 1 ? ' ×' + rbt.n : '') + ' · ' + K.costHTML([['ore', rbt.cost]], costHave)); var can = canBuy('refine'); setDis(rb, !can); rb.classList.toggle('ok', can); }
       setTxt($('refineN'), '×' + E.refine); setTxt($('refineEff'), '+' + Math.round(E.refine * CFG.refineBonus * 100) + '% to all production');
     }
     // event card
@@ -326,8 +351,19 @@ function makeEraOrigins(shell) {
     fresh: fresh, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
     hasDrawer: true, drawerTitle: 'RESEARCH · one-time discoveries',
     done: function () { sync(); return !!E.done; },
+    primary: function () { inscribe(); }, // Space
+    ledger: function () {
+      sync(); var rows = [];
+      ['scribe', 'miner', 'scriptorium', 'smelter', 'foundry'].forEach(function (k) { if (E[k]) rows.push([NAME[k] + (K.tierOf(E[k]) ? ' <b>×' + K.tierMult(E[k]).toFixed(2) + '</b>' : ''), '×' + E[k]]); });
+      if (E.refine) rows.push(['Refine', 'Lv ' + E.refine + ' · +' + Math.round(E.refine * CFG.refineBonus * 100) + '%']);
+      var have = DISCO.filter(function (n) { return E.disco[n.id]; });
+      if (have.length) rows.push(['Discoveries', have.length + '/' + DISCO.length + ' · ' + have.map(function (n) { return n.name; }).join(', ')]);
+      if (E.commDone) rows.push(['Commissions fulfilled', String(E.commDone) + (E.commRec ? ' · Record +' + Math.round(E.commRec * CFG.commBonus * 100) + '%' : '') + (E.commForge ? ' · Forge +' + Math.round(E.commForge * CFG.commBonus * 100) + '%' : '')]);
+      if (E.done) rows.push(['The Logic Machine', 'fabricated']);
+      return rows;
+    },
     // action seam — the same functions the wired buttons call (test autoplayer / dev tooling)
-    acts: { inscribe: inscribe, quarry: quarry, buy: buy, canBuy: canBuy, unitCost: unitCost, DISCO: DISCO, canDisco: canDisco, doDisco: doDisco, fulfillComm: fulfillComm, fabricate: fabricate, oStats: oStats }
+    acts: { inscribe: inscribe, quarry: quarry, buy: buy, canBuy: canBuy, unitCost: unitCost, batchOf: batchOf, DISCO: DISCO, canDisco: canDisco, doDisco: doDisco, fulfillComm: fulfillComm, fabricate: fabricate, oStats: oStats }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraOrigins;

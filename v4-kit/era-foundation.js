@@ -75,7 +75,7 @@ function makeEraFoundation(shell) {
     // Capability's base flows from the REAL Deep fabric (background produce). Tool Access = operate it harder:
     // +60% on the capability Deep generates, recomputed from Deep's real state (and amplified by recursion).
     if (!E.emerged && E.caps.toolAccess) {
-      var e4 = S.e4, dc = (e4.node || 0) * shell.CFG.e4.nodeCompute;
+      var e4 = S.e4, dc = (e4.node || 0) * shell.CFG.e4.nodeCompute * K.tierMult(e4.node || 0);
       var inc = 0.6 * breadthOf() * dc * shell.CFG.e4.capRate * rMult() * dt;
       if (inc > 0) { S.capability += inc; K.fIn('capability', inc); }
     }
@@ -384,6 +384,17 @@ function makeEraFoundation(shell) {
     bedKey: function () { return (S.e5 && S.e5.rupture) ? 'rupture' : 5; }, // post-emergence the bed stays Unmoored (nav must not reset it)
     phase: phase, fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs, seed: seed,
     done: function () { sync(); return !!E.ending; },
+    primary: function () { if (!S.e5.emerged) selfImprove(); }, // Space
+    ledger: function () {
+      sync(); var rows = [];
+      if (E.recursion) rows.push(['Recursion', 'Lv ' + E.recursion + ' · +' + Math.round((rMult() - 1) * 100) + '% all production']);
+      var owned = CAPS.filter(function (c) { return E.caps[c.id]; });
+      if (owned.length) rows.push(['Capabilities', owned.length + '/' + CAPS.length + ' · ' + owned.map(function (c) { return c.name; }).join(', ')]);
+      if (E.preps) rows.push(['Objective aligned', E.preps + '× · Coherence ' + Math.round(E.coherence) + '%']);
+      if (E.emerged) rows.push(['Emerged', E.agentName ? 'as ' + E.agentName : 'yes']);
+      if (E.ending) rows.push(['Ending', (ENDINGS[E.ending] || {}).title || E.ending]);
+      return rows;
+    },
     acts: { CAPS: CAPS, buyCap: buyCap, improveCost: improveCost, alignCohCost: alignCohCost, selfImprove: selfImprove, alignObjective: alignObjective, constrainAct: constrainAct, alignAct: alignAct, delegateAct: delegateAct, resolveVeto: resolveVeto, agenticCapCount: agenticCapCount }
   };
 }
