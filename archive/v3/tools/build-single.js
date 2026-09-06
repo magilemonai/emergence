@@ -8,14 +8,11 @@
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
-// v4+: EMG_SHELL=emergence-v4.html EMG_KIT=v4-kit node tools/build-single.js emergence-v4-single.html
-const SHELL = process.env.EMG_SHELL || 'emergence-v3-unified.html';
-const KITDIR = process.env.EMG_KIT || 'v3-kit';
-const OUT = process.argv[2] || path.join(root, SHELL.replace(/\.html$/, '') .replace('-unified', '') + '-single.html');
+const OUT = process.argv[2] || path.join(root, 'emergence-v3-single.html');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 const fail = m => { console.error('BUILD FAIL: ' + m); process.exit(1); };
 
-let html = read(SHELL);
+let html = read('emergence-v3-unified.html');
 
 // 1) fonts: replace the Google Fonts links with embedded @font-face (base64 woff2 from fonts/)
 const fontFiles = fs.readdirSync(path.join(root, 'fonts')).filter(f => f.endsWith('.woff2')).sort();
@@ -32,21 +29,21 @@ if (!linkBlock.test(html)) fail('Google Fonts link block not found');
 html = html.replace(linkBlock, '<style>\n/* ==== embedded fonts (fonts/*.woff2, latin subsets) ==== */\n' + faces.join('\n') + '\n</style>');
 
 // 2) kit.css → inline <style>
-const cssTag = '<link rel="stylesheet" href="' + KITDIR + '/kit.css">';
+const cssTag = '<link rel="stylesheet" href="v3-kit/kit.css">';
 if (!html.includes(cssTag)) fail('kit.css link tag not found');
-html = html.replace(cssTag, '<style>\n/* ==== inlined ' + KITDIR + '/kit.css ==== */\n' + read(KITDIR + '/kit.css') + '\n</style>');
+html = html.replace(cssTag, '<style>\n/* ==== inlined v3-kit/kit.css ==== */\n' + read('v3-kit/kit.css') + '\n</style>');
 
 // 3) kit.js + era modules → inline <script> (order preserved)
 ['kit.js', 'era-origins.js', 'era-symbolic.js', 'era-statistical.js', 'era-deep.js', 'era-foundation.js'].forEach(f => {
-  const tag = '<script src="' + KITDIR + '/' + f + '"></script>';
+  const tag = '<script src="v3-kit/' + f + '"></script>';
   if (!html.includes(tag)) fail('script tag not found: ' + f);
-  const src = read(KITDIR + '/' + f);
+  const src = read('v3-kit/' + f);
   if (src.includes('</script>')) fail(f + " contains '</script>' — cannot inline safely");
-  html = html.replace(tag, '<script>\n/* ==== inlined ' + KITDIR + '/' + f + ' ==== */\n' + src + '\n</script>');
+  html = html.replace(tag, '<script>\n/* ==== inlined v3-kit/' + f + ' ==== */\n' + src + '\n</script>');
 });
 
 // 4) sanity: no FUNCTIONAL external references left (comments may still mention paths)
-if (new RegExp('(?:src|href)="' + KITDIR + '/').test(html)) fail('a ' + KITDIR + '/ src/href survived inlining');
+if (/(?:src|href)="v3-kit\//.test(html)) fail('a v3-kit/ src/href survived inlining');
 if (/(?:src|href)="https:\/\/fonts\./.test(html)) fail('a Google Fonts link survived');
 
 fs.writeFileSync(OUT, html);

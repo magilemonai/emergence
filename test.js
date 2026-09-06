@@ -20,6 +20,10 @@ let failed = false;
 try { execFileSync(process.execPath, [path.join(__dirname, 'test-v3.js')], { stdio: 'inherit' }); }
 catch (e) { failed = true; }
 
+// 1b) the v4 suite — the next build, developed beside v3 (emergence-v4.html + v4-kit/)
+try { execFileSync(process.execPath, [path.join(__dirname, 'test-v4.js')], { stdio: 'inherit' }); }
+catch (e) { failed = true; }
+
 // 2) artifact freshness — the live file must be exactly what the build script produces
 try {
   const tmp = path.join(os.tmpdir(), 'emergence-freshness-check.html');

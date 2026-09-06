@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMERGENCE v3 — Symbolic (Flow Board prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Symbolic = CRT green-phosphor terminal. Same Flow Board paradigm as emergence-v3.html (Origins), reskinned. */
+  :root{
+    --bg:#050d08; --panel:#0a180e; --panel-2:#0d1f12; --line:#1d3a26; --edge:#2b5237;
+    --text:#c7f0d4; --dim:#7bbd93; --dimmer:#4f7a60; --accent:#ffcd6b;
+    --good:#8dffb7; --bright:#b9ffd2; --danger:#ff8a5c;
+    --rules:#8dffb7; --inference:#6fe6d8; --axioms:#ffcd6b;
+    --scan: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,20,8,0.25) 3px);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{ background: radial-gradient(1200px 700px at 50% -10%, #0c2416 0%, transparent 60%), var(--bg);
+    color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased; }
+  body::after{ content:''; position:fixed; inset:0; background:var(--scan); pointer-events:none; opacity:0.5; z-index:5; mix-blend-mode:overlay; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:14px 18px 40px; position:relative; z-index:1; }
+  .disp{ font-family:'VT323',monospace; }
+
+  .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; padding:10px 8px; margin:0 -8px 12px;
+    background:rgba(5,13,8,0.86); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); }
+  .chip{ display:flex; align-items:center; gap:9px; padding:7px 12px; border-radius:9px; border:1px solid var(--line); background:var(--panel); min-width:132px; }
+  .chip .cdot{ width:12px; height:12px; border-radius:3px; flex:none; box-shadow:0 0 8px currentColor; }
+  .chip .cbody{ display:flex; flex-direction:column; line-height:1.15; }
+  .chip .clab{ font-family:'VT323',monospace; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); }
+  .chip .cval{ font-size:19px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .chip .cps{ font-size:12px; margin-left:auto; font-variant-numeric:tabular-nums; }
+  .cps.pos{ color:var(--good); } .cps.neg{ color:var(--danger); } .cps.zero{ color:var(--dimmer); }
+  .rail-right{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .rail-btn{ font-family:'VT323',monospace; font-size:15px; color:var(--dim); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; }
+  .rail-btn:hover{ border-color:var(--accent); color:var(--text); }
+
+  header.era{ display:flex; align-items:baseline; gap:12px; margin:4px 2px 6px; }
+  header.era h1{ font-family:'VT323',monospace; font-size:38px; margin:0; color:var(--good); text-shadow:0 0 10px rgba(141,255,183,0.5); letter-spacing:0.02em; }
+  header.era .sub{ color:var(--dim); font-size:14px; }
+  header.era .phase{ margin-left:auto; font-family:'VT323',monospace; font-size:15px; letter-spacing:0.14em; color:var(--accent); text-transform:uppercase; }
+  .tissue{ margin:0 2px 14px; padding:9px 13px; border-left:2px solid var(--edge); background:rgba(10,30,16,0.5); color:var(--dim); font-size:13.5px; }
+  .tissue b{ color:var(--bright); }
+
+  .board{ display:grid; grid-template-columns:210px 1fr 250px; gap:14px; align-items:start; }
+  .board > div{ min-width:0; }
+  @media(max-width:920px){ .board{ grid-template-columns:1fr; } }
+  .col-head{ font-family:'VT323',monospace; font-size:15px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dimmer); margin:2px 0 8px; }
+
+  .verb{ width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; padding:16px; margin-bottom:10px;
+    border-radius:11px; cursor:pointer; color:#04140a; font-family:'VT323',monospace; letter-spacing:0.02em;
+    border:1px solid var(--good); background:linear-gradient(180deg,#9dffc4,#5fd68f);
+    box-shadow:0 0 20px rgba(141,255,183,0.3), inset 0 1px 0 rgba(255,255,255,0.4); }
+  .verb:hover{ box-shadow:0 0 30px rgba(141,255,183,0.5); }
+  .verb:active{ transform:translateY(2px); }
+  .verb .vname{ font-size:22px; line-height:1; }
+  .verb .vyield{ font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; }
+  .verb .vkey{ font-family:'IBM Plex Mono',monospace; font-size:10px; opacity:0.7; }
+  .side-btn{ width:100%; display:flex; align-items:center; gap:8px; padding:11px 13px; border-radius:10px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); font-family:'VT323',monospace; font-size:16px; letter-spacing:0.06em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 4px rgba(0,0,0,0.3); }
+  .side-btn:hover{ border-color:var(--accent); }
+  .side-btn .badge{ margin-left:auto; min-width:20px; text-align:center; font-size:13px; background:var(--accent); color:#0a1206; border-radius:8px; padding:0 6px; }
+
+  .lane{ background:linear-gradient(180deg,rgba(10,28,16,0.6),rgba(5,15,9,0.7)); border:1px solid var(--line); border-radius:13px; padding:12px; margin-bottom:14px; }
+  .lane-lab{ font-family:'VT323',monospace; font-size:15px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; display:flex; gap:8px; align-items:center; }
+  .lane-lab::before{ content:'> '; color:var(--accent); }
+  .lane-lab .ldash{ flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
+  .pipe{ display:flex; align-items:stretch; gap:6px; flex-wrap:wrap; }
+  .seg{ display:flex; align-items:stretch; gap:6px; min-width:0; flex:1 1 300px; }
+  .stock{ display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-width:86px; padding:8px 6px; border-radius:10px; border:1px solid var(--line); background:rgba(0,0,0,0.28); }
+  .stock .sv{ font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .stock .sl{ font-family:'VT323',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--dim); }
+  .stock .scap{ font-size:10px; color:var(--dimmer); }
+  .flow{ align-self:center; width:36px; height:20px; flex:none; }
+  .flow svg{ width:100%; height:100%; overflow:visible; }
+  .flow .track{ stroke:var(--fc,#3a6b4c); stroke-width:2; opacity:0.3; }
+  .flow .pulse{ stroke:var(--fc,#8dffb7); stroke-width:2.4; stroke-dasharray:5 9; opacity:calc(0.2 + 0.8*var(--thru,0)); animation:flowmove 0.9s linear infinite; filter:drop-shadow(0 0 4px var(--fc)); }
+  .flow.idle .pulse{ animation:none; opacity:0.1; }
+  @keyframes flowmove{ to{ stroke-dashoffset:-14; } }
+
+  .node{ flex:1; min-width:170px; display:grid; grid-template-columns:1fr auto; gap:3px 10px; padding:10px 12px; border-radius:11px; border:1px solid var(--line); background:var(--panel); box-shadow:inset 0 1px 0 rgba(255,255,255,0.04); }
+  .node.can{ border-color:rgba(141,255,183,0.5); }
+  .node .nname{ font-family:'VT323',monospace; font-size:18px; letter-spacing:0.03em; }
+  .node .ncount{ color:var(--accent); font-size:13px; font-variant-numeric:tabular-nums; }
+  .node .nrate{ grid-column:1/3; font-size:12px; font-variant-numeric:tabular-nums; display:flex; gap:12px; flex-wrap:wrap; color:var(--dim); }
+  .node .nrate .up{ color:var(--good); } .node .nrate .dn{ color:var(--danger); } .node .nrate .inf{ color:var(--inference); }
+  .node .nbuy{ grid-row:1/3; grid-column:2; align-self:center; }
+  .buy{ font-family:'VT323',monospace; font-size:15px; letter-spacing:0.03em; padding:9px 13px; border-radius:8px; cursor:pointer; white-space:nowrap;
+    background:var(--panel-2); border:1px solid var(--edge); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.3); }
+  .buy:hover:not(:disabled){ border-color:var(--good); background:#123020; }
+  .buy:active:not(:disabled){ transform:translateY(1px); }
+  .buy:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .buy .c{ color:var(--rules); } .buy:disabled .c{ color:inherit; } .buy.ok .c{ color:var(--good); }
+
+  /* active proof */
+  .proof-active{ padding:11px 13px; border-radius:11px; border:1px solid var(--line); background:rgba(0,0,0,0.25); margin-bottom:10px; }
+  .proof-active .pa-top{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:7px; }
+  .proof-active .pa-top b{ color:var(--bright); }
+  .proof-active.idle{ color:var(--dim); font-size:13px; }
+  .meter{ height:11px; border-radius:6px; background:rgba(0,0,0,0.45); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5); }
+  .meter i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--inference),var(--bright)); transition:width 0.25s; }
+  /* theorem targets */
+  .theorems{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
+  .th{ display:flex; flex-direction:column; gap:4px; padding:10px 11px; border-radius:10px; border:1px solid var(--line); background:var(--panel); }
+  .th.active{ border-color:var(--inference); box-shadow:0 0 14px rgba(111,230,216,0.25); }
+  .th.lemma{ border-style:dashed; }
+  .th .thn{ font-family:'VT323',monospace; font-size:17px; }
+  .th .thd{ font-size:11.5px; color:var(--dim); line-height:1.4; }
+  .th .thaim{ margin-top:2px; }
+
+  .goal{ background:linear-gradient(180deg,rgba(10,30,18,0.7),rgba(5,15,9,0.8)); border:1px solid rgba(141,255,183,0.3); border-radius:13px; padding:14px; }
+  .goal .gname{ font-family:'VT323',monospace; font-size:22px; color:var(--good); text-align:center; }
+  .goal .gsub{ font-size:12px; color:var(--dim); text-align:center; font-style:italic; margin-bottom:10px; }
+  .path{ display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
+  .path .pstep{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--dimmer); }
+  .path .pstep.done{ color:var(--good); } .path .pstep.now{ color:var(--bright); }
+  .path .pstep .pmark{ width:16px; text-align:center; }
+  .goal .fab{ width:100%; font-family:'VT323',monospace; font-size:18px; padding:13px; border-radius:10px; cursor:pointer; color:#04140a;
+    border:1px solid var(--good); background:linear-gradient(180deg,#9dffc4,#5fd68f); }
+  .goal .fab:disabled{ opacity:0.35; cursor:not-allowed; filter:grayscale(0.4); }
+  .goal.ready{ border-color:#7de6ff; box-shadow:0 0 28px rgba(125,230,255,0.3); } /* wakes teal → teases Statistical (Era 3) */
+  .goal.ready .gname{ color:#aef0ff; text-shadow:0 0 12px rgba(125,230,255,0.6); }
+  .goal.ready .fab{ background:linear-gradient(180deg,#bfeeff,#7fd0e6); border-color:#7de6ff; animation:fabPulse 1.5s ease-in-out infinite; }
+  @keyframes fabPulse{ 0%,100%{ box-shadow:0 0 12px rgba(125,230,255,0.4); } 50%{ box-shadow:0 0 28px rgba(125,230,255,0.85); } }
+
+  /* standing: compile + contradiction */
+  .standing{ display:grid; grid-template-columns:1fr; gap:14px; margin-top:6px; }
+  .ctrl{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px; }
+  .ctrl-lab{ font-family:'VT323',monospace; font-size:15px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); }
+  .ctrl .ci{ flex:1; } .ctrl .cd{ font-size:12px; color:var(--dim); }
+  .contra{ grid-column:1/-1; display:none; gap:12px; align-items:center; padding:13px 16px; border-radius:12px; border:1px solid var(--danger);
+    background:linear-gradient(180deg,rgba(60,20,10,0.6),rgba(30,12,6,0.75)); animation:contraGlow 1.4s ease-in-out infinite; margin-top:6px; }
+  .contra.show{ display:flex; flex-wrap:wrap; }
+  @keyframes contraGlow{ 0%,100%{ box-shadow:0 0 0 rgba(255,138,92,0); } 50%{ box-shadow:0 0 22px rgba(255,138,92,0.35); } }
+  @media (prefers-reduced-motion: reduce){ .contra,.goal.ready .fab{ animation:none; } .flow .pulse{ animation:none; } }
+  .contra .cm-i{ flex:1; min-width:200px; } .contra .cm-name{ font-family:'VT323',monospace; font-size:17px; color:#ffb98c; }
+  .contra .cm-d{ font-size:12px; color:var(--dim); } .contra .cm-acts{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  #fx{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+  .float{ position:absolute; font-family:'VT323',monospace; font-size:20px; animation:floatUp 0.9s ease-out forwards; text-shadow:0 1px 3px #000; }
+  @keyframes floatUp{ to{ transform:translateY(-34px); opacity:0; } }
+  #tip{ position:fixed; z-index:70; max-width:300px; padding:10px 12px; border-radius:8px; background:rgba(4,12,7,0.97); border:1px solid var(--edge); font-size:13px; line-height:1.45; pointer-events:none; opacity:0; transition:opacity 0.1s; }
+  #tip.show{ opacity:1; } #tip i{ color:var(--dim); }
+  #toasts{ position:fixed; right:16px; bottom:16px; z-index:65; display:flex; flex-direction:column; gap:8px; width:320px; max-width:80vw; }
+  .toast{ background:rgba(6,16,10,0.96); border:1px solid var(--good); border-radius:10px; padding:11px 13px; animation:toastIn 0.35s ease; }
+  .toast .th2{ font-family:'VT323',monospace; font-size:15px; letter-spacing:0.06em; color:var(--good); margin-bottom:3px; }
+  .toast .tb{ font-size:13px; }
+  @keyframes toastIn{ from{ transform:translateX(20px); opacity:0; } }
+  #dev{ position:fixed; left:14px; bottom:14px; z-index:80; display:none; flex-direction:column; gap:7px; background:rgba(4,10,6,0.92); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  #dev.show{ display:flex; } #dev .row{ display:flex; gap:6px; } #dev button{ font-family:inherit; font-size:12px; padding:5px 9px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--dim); cursor:pointer; }
+  #dev button.on{ color:var(--accent); border-color:var(--accent); }
+  #dbg{ position:fixed; left:14px; bottom:120px; z-index:79; display:none; font-family:ui-monospace,monospace; font-size:11px; line-height:1.5; color:#c7f0d4; background:rgba(4,10,6,0.82); border:1px solid rgba(141,255,183,0.35); border-radius:8px; padding:8px 10px; white-space:pre; pointer-events:none; }
+  #dbg.show{ display:block; } #dbg b{ color:var(--accent); }
+  .note{ text-align:center; color:var(--dimmer); font-size:12px; margin-top:26px; font-style:italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="rail" id="rail"></div>
+  <header class="era"><h1>Symbolic</h1><span class="sub">reasoning written as explicit rules</span><span class="phase" id="phase">Expert System 0/9</span></header>
+  <div class="tissue">You inscribed marks, then <b>Knowledge</b>. Now Knowledge becomes <b>Rules</b> — write them, let <b>Rulesets</b> reason (they emit <b>Inference</b>), and aim Inference at a <b>Theorem</b> to prove it. Prove the <b>Expert System</b> to finish the era.</div>
+
+  <div class="board">
+    <div class="col-verbs">
+      <div class="col-head">Your hand</div>
+      <button class="verb" id="writeRule"><span class="vname">Write a rule</span><span class="vyield" id="writeY"></span><span class="vkey">click / ↵</span></button>
+      <div class="side-btn" id="compileBtn" style="display:none"><span>COMPILE</span><span class="badge" id="compileBadge">+0</span></div>
+    </div>
+
+    <div class="col-pipe">
+      <div class="col-head">The engine — rules reason into inference, inference proves theorems</div>
+      <div class="lane">
+        <div class="lane-lab">Author · write rules, automate them<div class="ldash"></div></div>
+        <div class="pipe" id="authorPipe"></div>
+      </div>
+      <div class="lane">
+        <div class="lane-lab">Prove · aim inference at a theorem<div class="ldash"></div></div>
+        <div class="proof-active" id="proofActive"></div>
+        <div class="theorems" id="theorems"></div>
+      </div>
+    </div>
+
+    <div class="col-goal">
+      <div class="col-head">The goal</div>
+      <div class="goal" id="goal">
+        <div class="gname">Expert System</div>
+        <div class="gsub">a system that reasons on its own</div>
+        <div class="path" id="path"></div>
+        <button class="fab" id="fabricate" disabled>PROVE IT</button>
+      </div>
+    </div>
+
+    <div class="contra" id="contra">
+      <div class="cm-i"><div class="cm-name" id="contraName"></div><div class="cm-d">the engine drags until you discard one — either discard teaches it something permanent</div></div>
+      <div class="cm-acts"><button class="buy" id="contraFwd"></button><button class="buy" id="contraBwd"></button></div>
+    </div>
+  </div>
+
+  <div class="note">EMERGENCE v3 — Symbolic slice (Flow Board prototype). ` toggles dev. Paradigm test, not the final build.</div>
+</div>
+
+<div id="fx"></div><div id="tip"></div><div id="toasts"></div><div id="dev"></div><div id="dbg"></div>
+<audio id="music" src="assets/music-phosphor-logic.mp3" loop preload="none"></audio>
+
+<script>
+(() => {
+  const $=id=>document.getElementById(id);
+  const fmt=n=>{ n=+n||0; const a=Math.abs(n); if(a>=1e9)return(n/1e9).toFixed(2)+'B'; if(a>=1e6)return(n/1e6).toFixed(2)+'M'; if(a>=1e3)return(n/1e3).toFixed(2)+'K'; if(a>=100)return n.toFixed(0); if(a>=10)return n.toFixed(1); if(a===0)return'0'; return n.toFixed(a<1?2:1); };
+  const esc=s=>String(s).replace(/"/g,'&quot;');
+  const setTxt=(el,t)=>{ if(el&&el._t!==t){ el.textContent=t; el._t=t; } };      // build-once / update-in-place —
+  const setHTML=(el,h)=>{ if(el&&el._h!==h){ el.innerHTML=h; el._h=h; } };        // never rewrite a button mid-tick (kills dead-clicks)
+  const setDis=(el,d)=>{ if(el&&el.disabled!==d) el.disabled=d; };
+  const SAVE_KEY='emergence_v3_symbolic';
+
+  const CFG={ tickMs:100, clickBase:1,
+    rulesetCost:10, rulesetGrowth:1.16, rulesetYield:0.42,
+    daemonCost:320, daemonGrowth:1.19, daemonRate:2.0,
+    axiomDivisor:200, axiomBonus:0.05, infPerRuleset:1.3, infScale:0.12,
+    lemmaBase:55, lemmaGrowth:1.72, lemmaBonus:0.075,
+    infCapBase:120, infCapStep:220, capLemmaBase:80, capLemmaGrowth:1.6,
+    contraAt:[3000,12000,30000], contraSlow:0.6, contraBonus:0.06 };
+  const HUE={ rules:'#8dffb7', inference:'#6fe6d8', axioms:'#ffcd6b' };
+  const TREE=[
+    { id:'formalLogic', name:'Formal Logic',     cost:650,   req:[],                                   desc:'+50% to all rule production.' },
+    { id:'fwdChain',    name:'Forward Chaining',  cost:1400,  req:['formalLogic'], excl:'bwdChain',     desc:'DOCTRINE · Rulesets +80%. Closes Backward Chaining.' },
+    { id:'bwdChain',    name:'Backward Chaining', cost:1400,  req:['formalLogic'], excl:'fwdChain',     desc:'DOCTRINE · Each rule you write ×3. Closes Forward Chaining.' },
+    { id:'rete',        name:'Rete Network',      cost:3200,  req:['fwdChain'],                         desc:'Each Ruleset boosts every other (+3% each).' },
+    { id:'inference',   name:'Inference Engine',  cost:4600,  req:[], reqAny:['fwdChain','bwdChain'],   desc:'Unlocks Daemons — automation that writes rules for you.' },
+    { id:'heuristics',  name:'Heuristic Search',  cost:3200,  req:['bwdChain'],                         desc:'Writing scales with Rulesets owned (+8% each).' },
+    { id:'knowledge',   name:'Knowledge Base',    cost:8500,  req:['inference'], reqAny:['rete','heuristics'], desc:'Unlocks Compile — bank a run into permanent Axioms.' },
+    { id:'metalogic',   name:'Meta-Logic',        cost:16000, req:['knowledge'],                        desc:'Every Axiom becomes 50% stronger.' },
+    { id:'expert',      name:'Expert System',     cost:30000, req:['metalogic'], reqAxioms:5,           desc:'Complete the era. A system that reasons on its own.' },
+  ];
+  const TMAP=Object.fromEntries(TREE.map(n=>[n.id,n]));
+  const symName=id=> id==='optimization'?'Optimization': id==='capacity'?'Inference Capacity': (TMAP[id]&&TMAP[id].name)||id;
+
+  function fresh(){ return { rules:0, runRules:0, inference:0, axioms:0, totalAxioms:0, compiles:0,
+    ruleset:0, daemon:0, tech:{}, optLevel:0, infCapLevel:0, activeProof:null, proofAcc:{},
+    contra:null, contraN:0, paraFwd:0, paraBwd:0,
+    flags:{ tree:true, canRuleset:true, compile:false, symbolicDone:false }, t:0, speed:1, dev:false, started:false }; }
+  let S=fresh();
+
+  const REC={ v:1, events:[], dead:0 }; let lastAction='';
+  function rec(ev,extra){ if(REC.events.length>6000) REC.events.shift(); if(ev[0]!=='@') lastAction=ev; REC.events.push(Object.assign({gt:+S.t.toFixed(1),wt:Date.now()},extra||{},{ev})); }
+
+  function stats(){ const T=S.tech; let click=CFG.clickBase, rm=1, g=1;
+    if(T.formalLogic) g*=1.5; if(T.fwdChain) rm*=1.8; if(T.bwdChain) click*=3;
+    if(T.rete) rm*=(1+0.03*S.ruleset); if(T.heuristics) click*=(1+0.08*S.ruleset);
+    click*=(1+CFG.contraBonus*(S.paraBwd||0)); rm*=(1+CFG.contraBonus*(S.paraFwd||0));
+    if(S.contra) g*=CFG.contraSlow;
+    const axBonus=CFG.axiomBonus*(T.metalogic?1.5:1); g*=(1+S.axioms*axBonus); g*=(1+CFG.lemmaBonus*S.optLevel);
+    return { click:click*g, rulesetYield:CFG.rulesetYield*rm*g, axBonus }; }
+  const symInfRate=()=> S.ruleset*CFG.infPerRuleset;
+  const infCap=()=> CFG.infCapBase + S.infCapLevel*CFG.infCapStep;
+  function proofCost(id){ if(id==='optimization') return Math.floor(CFG.lemmaBase*Math.pow(CFG.lemmaGrowth,S.optLevel));
+    if(id==='capacity') return Math.floor(CFG.capLemmaBase*Math.pow(CFG.capLemmaGrowth,S.infCapLevel));
+    return Math.ceil(TMAP[id].cost*CFG.infScale); }
+  function canProve(id){ if(id==='optimization'||id==='capacity') return true; const n=TMAP[id]; if(!n||S.tech[id]) return false;
+    if(!n.req.every(r=>S.tech[r])) return false; if(n.reqAny&&!n.reqAny.some(r=>S.tech[r])) return false;
+    if(n.excl&&S.tech[n.excl]) return false; if(n.reqAxioms&&S.axioms<n.reqAxioms) return false; return true; }
+  const treeVisible=n=> !S.tech[n.id] && n.req.every(r=>S.tech[r]) && (!n.reqAny||n.reqAny.some(r=>S.tech[r])) && !(n.excl&&S.tech[n.excl]);
+
+  const FLOW={ rules:{in:0,out:0}, inference:{in:0,out:0} };
+  function produce(dt){ for(const k in FLOW){ FLOW[k].in=0; FLOW[k].out=0; }
+    const st=stats();
+    let g=0; if(S.ruleset>0) g+=S.ruleset*st.rulesetYield*dt; if(S.daemon>0) g+=S.daemon*CFG.daemonRate*st.click*dt;
+    if(g>0){ S.rules+=g; S.runRules+=g; FLOW.rules.in+=g; }
+    if(!S.contra && S.contraN<CFG.contraAt.length && S.runRules>=CFG.contraAt[S.contraN] && !S.flags.symbolicDone){
+      const seed=Math.floor(S.runRules); S.contra={ a:1000+seed%3989, b:4000+(seed*7)%5989 };
+      toast('CONTRADICTION DETECTED','Rule #'+S.contra.a+' conflicts with #'+S.contra.b+'. Discard one to clear the drag.','event'); render(); }
+    const inf=symInfRate()*dt;
+    if(inf>0){ FLOW.inference.in+=inf; if(S.activeProof){ S.proofAcc[S.activeProof]=(S.proofAcc[S.activeProof]||0)+inf; FLOW.inference.out+=inf;
+        if(S.proofAcc[S.activeProof]>=proofCost(S.activeProof)) completeProof(S.activeProof); }
+      else S.inference=Math.min(infCap(), S.inference+inf); }
+  }
+
+  const rulesetCost=()=> Math.floor(CFG.rulesetCost*Math.pow(CFG.rulesetGrowth,S.ruleset));
+  const daemonCost=()=> Math.floor(CFG.daemonCost*Math.pow(CFG.daemonGrowth,S.daemon));
+  function buyRuleset(){ const c=rulesetCost(); if(S.rules<c) return; S.rules-=c; S.ruleset++; rec('buy:ruleset'); playClick(); refresh(); }
+  function buyDaemon(){ if(!S.tech.inference) return; const c=daemonCost(); if(S.rules<c) return; S.rules-=c; S.daemon++; rec('buy:daemon'); playClick(); refresh(); }
+
+  function writeRule(ev){ const g=stats().click; S.rules+=g; S.runRules+=g; S.started=true; lastAction='write'; playClick();
+    if(ev&&ev.currentTarget){ const r=ev.currentTarget.getBoundingClientRect(); floatNum('+'+fmt(g),HUE.rules,r.right-40,r.top+10); } refresh(); }
+  function selectProof(id){ if(!canProve(id)||S.activeProof===id) return; S.activeProof=id; S.proofAcc[id]=(S.proofAcc[id]||0)+S.inference; S.inference=0; rec('aim:'+id); playClick(); render(); }
+  function completeProof(id){ if(id==='optimization') S.optLevel++; else if(id==='capacity') S.infCapLevel++;
+    else { S.tech[id]=true; if(id==='knowledge') S.flags.compile=true; if(id==='expert') S.flags.symbolicDone=true; }
+    S.proofAcc[id]=0; S.activeProof=null; rec('proof:'+id);
+    toast('Q.E.D. · '+symName(id), TMAP[id]?TMAP[id].desc:'lemma level up'); render(); }
+  const axiomGain=()=> Math.floor(Math.sqrt(S.runRules/CFG.axiomDivisor));
+  function compile(){ if(!S.flags.compile||S.flags.symbolicDone) return; const g=axiomGain(); if(g<1) return;
+    S.axioms+=g; S.totalAxioms+=g; S.compiles++; S.rules=0; S.runRules=0; S.ruleset=0; S.daemon=0; S.contra=null; S.contraN=0;
+    rec('compile'); toast('COMPILE · +'+g+' axioms','Run banked. Rules, Rulesets and Daemons cleared; Axioms and Technique kept — rebuild from a higher floor.'); render(); }
+  function resolveContra(side){ if(!S.contra) return; if(side==='fwd') S.paraFwd=(S.paraFwd||0)+1; else S.paraBwd=(S.paraBwd||0)+1;
+    S.contraN=(S.contraN||0)+1; S.contra=null; rec('contra:'+side); playClick();
+    toast('CONTRADICTION RESOLVED', side==='fwd'?'Specific rule discarded · Rulesets +'+Math.round(CFG.contraBonus*100)+'% forever':'General rule discarded · manual writes +'+Math.round(CFG.contraBonus*100)+'% forever'); render(); }
+
+  // sound
+  let actx=null; const ac=()=>actx||(actx=new(window.AudioContext||window.webkitAudioContext)());
+  function playClick(){ try{ const c=ac(),t=c.currentTime,o=c.createOscillator(),g=c.createGain(); o.connect(g); g.connect(c.destination); o.type='square'; o.frequency.setValueAtTime(660,t); o.frequency.exponentialRampToValueAtTime(220,t+0.04); g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.08); o.start(t); o.stop(t+0.09); }catch(e){} }
+  function floatNum(txt,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=txt; el.style.color=color; el.style.left=(x-10)+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
+  function toast(head,body,kind){ const el=document.createElement('div'); el.className='toast'; el.innerHTML='<div class="th2">'+head+'</div><div class="tb">'+body+'</div>'; const b=$('toasts'); b.appendChild(el); while(b.children.length>3) b.removeChild(b.firstChild); setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, kind==='event'?8000:4800); }
+
+  // ---- structural build ----
+  const connector=res=>'<div class="flow" id="flow-'+res+'" style="--fc:'+HUE[res]+'"><svg viewBox="0 0 36 20" preserveAspectRatio="none"><line class="track" x1="2" y1="10" x2="34" y2="10"/><line class="pulse" x1="2" y1="10" x2="34" y2="10"/></svg></div>';
+  const stock=(res,label,cap)=>'<div class="stock" style="border-color:'+HUE[res]+'44"><div class="sv" id="stk-'+res+'" style="color:'+HUE[res]+'">0</div><div class="sl">'+label+'</div>'+(cap?'<div class="scap" id="stkcap-'+res+'"></div>':'')+'</div>';
+
+  function buildAuthor(){
+    let h=stock('rules','Rules');
+    h+='<div class="seg">'+connector('rules')+
+      '<div class="node" id="node-ruleset" data-tip="'+esc('<i>Logic that begets more logic.</i><br>Writes Rules automatically and emits Inference (reasoning power).')+'"><div class="nname">Ruleset <span class="ncount" id="cnt-ruleset"></span></div><button class="buy nbuy" id="buy-ruleset"></button><div class="nrate" id="rate-ruleset"></div></div>'+
+      connector('inference')+stock('inference','Inference',true)+'</div>';
+    if(S.tech.inference) h+='<div class="seg" style="flex:1 1 100%"><div class="node" id="node-daemon" data-tip="'+esc('<i>A patient process that keeps working while you look away.</i><br>Fires the write action for you.')+'"><div class="nname">Daemon <span class="ncount" id="cnt-daemon"></span></div><button class="buy nbuy" id="buy-daemon"></button><div class="nrate" id="rate-daemon"></div></div></div>';
+    $('authorPipe').innerHTML=h;
+    const br=$('buy-ruleset'); if(br) br.onclick=buyRuleset; const bd=$('buy-daemon'); if(bd) bd.onclick=buyDaemon;
+  }
+  function buildTheorems(){
+    const items=['optimization','capacity',...TREE.filter(treeVisible).map(n=>n.id)];
+    let h='';
+    for(const id of items){ const lem=id==='optimization'||id==='capacity';
+      const nm = id==='optimization'?('Optimization Lv '+(S.optLevel+1)): id==='capacity'?('Inference Capacity Lv '+(S.infCapLevel+1)) : TMAP[id].name;
+      const d = id==='optimization'?('+'+Math.round(CFG.lemmaBonus*100)+'% all rule production — repeatable'): id==='capacity'?('+'+CFG.infCapStep+' max banked Inference — repeatable') : TMAP[id].desc;
+      h+='<div class="th'+(lem?' lemma':'')+'" id="th-'+id+'" data-tip="'+esc(d)+'"><div class="thn">'+nm+'</div><div class="thd">'+d+'</div><button class="buy thaim" id="aim-'+id+'"></button></div>';
+    }
+    $('theorems').innerHTML=h;
+    for(const id of items){ const b=$('aim-'+id); if(b) b.onclick=()=>selectProof(id); }
+  }
+  function buildPath(){ // the route to Expert System, as a checklist (the goal made legible)
+    const order=['formalLogic','inference','knowledge','metalogic','expert'];
+    let h=''; for(const id of order){ const done=S.tech[id]; const now=!done&&canProve(id);
+      h+='<div class="pstep'+(done?' done':now?' now':'')+'"><span class="pmark">'+(done?'✓':now?'▸':'·')+'</span>'+symName(id)+'</div>'; }
+    $('path').innerHTML=h;
+  }
+  function render(){
+    $('rail').innerHTML=[['rules','Rules'],['inference','Inference'],['axioms','Axioms']].map(r=>
+      '<div class="chip" data-tip="'+esc(r[1])+'"><span class="cdot" style="background:'+HUE[r[0]]+';color:'+HUE[r[0]]+'"></span><span class="cbody"><span class="clab">'+r[1]+'</span><span class="cval" id="rv-'+r[0]+'" style="color:'+HUE[r[0]]+'">0</span></span><span class="cps" id="rp-'+r[0]+'"></span></div>').join('')
+      +'<div class="rail-right"><button class="rail-btn" id="musicBtn">♪ music</button></div>';
+    $('musicBtn').onclick=toggleMusic;
+    $('compileBtn').style.display=S.flags.compile?'flex':'none';
+    buildAuthor(); buildTheorems(); buildPath(); refresh();
+  }
+  function connGlow(res){ const f=$('flow-'+res); if(!f) return; const gross=FLOW[res]?FLOW[res].in+FLOW[res].out:0; const thru=Math.max(0,Math.min(1,gross/0.5)); f.style.setProperty('--thru',thru.toFixed(2)); f.classList.toggle('idle',gross<0.0005); }
+
+  const RATES={};
+  function refresh(){ const st=stats();
+    setTxt($('rv-rules'),fmt(S.rules)); setTxt($('rv-inference'),fmt(S.inference)); setTxt($('rv-axioms'),fmt(S.axioms));
+    for(const k of ['rules','inference','axioms']){ const rt=RATES[k]||0, ps=$('rp-'+k); if(ps){ setTxt(ps,(rt>=0?'+':'')+fmt(rt)+'/s'); const cl='cps '+(rt>0.005?'pos':rt<-0.005?'neg':'zero'); if(ps.className!==cl) ps.className=cl; } }
+    setHTML($('writeY'),'+'+fmt(st.click)+' rules');
+    setTxt($('stk-rules'),fmt(S.rules)); setTxt($('stk-inference'),fmt(S.inference)); setTxt($('stkcap-inference'),'cap '+fmt(infCap()));
+    connGlow('rules'); connGlow('inference');
+    // ruleset node
+    setTxt($('cnt-ruleset'),'×'+S.ruleset);
+    setHTML($('rate-ruleset'), S.ruleset>0?'<span class="up">+'+fmt(S.ruleset*st.rulesetYield)+' rules/s</span><span class="inf">+'+fmt(symInfRate())+' inference/s</span>':'<span style="color:var(--dimmer)">writes rules + emits inference</span>');
+    { const b=$('buy-ruleset'); if(b){ setHTML(b,'Build · <span class="c">'+fmt(rulesetCost())+' rules</span>'); const can=S.rules>=rulesetCost(); setDis(b,!can); b.classList.toggle('ok',can); } }
+    if(S.tech.inference){ setTxt($('cnt-daemon'),'×'+S.daemon);
+      setHTML($('rate-daemon'), S.daemon>0?'<span class="up">+'+fmt(S.daemon*CFG.daemonRate*st.click)+' rules/s</span>':'<span style="color:var(--dimmer)">auto-writes rules</span>');
+      const b=$('buy-daemon'); if(b){ setHTML(b,'Build · <span class="c">'+fmt(daemonCost())+' rules</span>'); const can=S.rules>=daemonCost(); setDis(b,!can); b.classList.toggle('ok',can); } }
+    // active proof
+    const pa=$('proofActive');
+    if(S.activeProof){ pa.classList.remove('idle'); const id=S.activeProof, c=proofCost(id), acc=S.proofAcc[id]||0, pct=Math.min(100,acc/c*100), rate=symInfRate(), eta=rate>0?Math.ceil((c-acc)/rate):0;
+      setHTML(pa,'<div class="pa-top"><span>Proving <b>'+symName(id)+'</b></span><span>'+fmt(acc)+' / '+fmt(c)+(eta?' · ~'+eta+'s':'')+'</span></div><div class="meter"><i style="width:'+pct+'%"></i></div>'); }
+    else setHTML(pa,'<div class="pa-idle">▸ Pick a <b>Theorem</b> below to aim your Inference at it (otherwise Inference just banks, capped).</div>');
+    if(!S.activeProof && !pa.classList.contains('idle')) pa.classList.add('idle');
+    // theorem buttons
+    const items=['optimization','capacity',...TREE.filter(treeVisible).map(n=>n.id)];
+    for(const id of items){ const b=$('aim-'+id); if(!b) continue; const active=S.activeProof===id, cost=proofCost(id);
+      setHTML(b, active?'PROVING…':'Aim · <span class="c" style="color:var(--inference)">'+fmt(cost)+' inf</span>'); setDis(b,active);
+      const th=$('th-'+id); if(th){ const cl='th'+((id==='optimization'||id==='capacity')?' lemma':'')+(active?' active':''); if(th.className!==cl) th.className=cl; } }
+    // compile badge
+    if(S.flags.compile){ const g=axiomGain(); setTxt($('compileBadge'),'+'+g); const cb=$('compileBtn'); if(cb&&!cb._wired){ cb.onclick=compile; cb._wired=1; } }
+    // goal (Expert System)
+    buildPathRefresh();
+    const ready=canProve('expert'), fb=$('fabricate'); setDis(fb,!ready&&!S.flags.symbolicDone); setTxt(fb, S.flags.symbolicDone?'PROVEN ✓':(S.activeProof==='expert'?'PROVING…':'PROVE IT'));
+    $('goal').classList.toggle('ready', ready||S.flags.symbolicDone);
+    if(!fb._wired){ fb.onclick=()=>{ if(canProve('expert')) selectProof('expert'); }; fb._wired=1; }
+    setTxt($('phase'), 'Expert System '+TREE.filter(n=>S.tech[n.id]).length+'/'+TREE.length);
+    // contradiction card
+    const cc=$('contra');
+    if(S.contra){ if(!cc.classList.contains('show')) cc.classList.add('show');
+      setTxt($('contraName'),'⚠ Contradiction · #'+S.contra.a+' vs #'+S.contra.b+' — engine at '+Math.round(CFG.contraSlow*100)+'%');
+      setHTML($('contraFwd'),'Discard #'+S.contra.a+' <small>(specific → Rulesets +'+Math.round(CFG.contraBonus*100)+'%)</small>');
+      setHTML($('contraBwd'),'Discard #'+S.contra.b+' <small>(general → writes +'+Math.round(CFG.contraBonus*100)+'%)</small>');
+      if(!cc._wired){ $('contraFwd').onclick=()=>resolveContra('fwd'); $('contraBwd').onclick=()=>resolveContra('bwd'); cc._wired=1; }
+    } else if(cc.classList.contains('show')) cc.classList.remove('show');
+    if(S.dev) updateDbg();
+  }
+  function buildPathRefresh(){ const order=['formalLogic','inference','knowledge','metalogic','expert']; let h='';
+    for(const id of order){ const done=S.tech[id], now=!done&&canProve(id); h+='<div class="pstep'+(done?' done':now?' now':'')+'"><span class="pmark">'+(done?'✓':now?'▸':'·')+'</span>'+symName(id)+(id==='expert'&&!done?' <span style="opacity:.6">(needs Meta-Logic + 5 Axioms)</span>':'')+'</div>'; }
+    setHTML($('path'),h);
+  }
+
+  let _last=Date.now();
+  function tick(){ const now=Date.now(); let real=(now-_last)/1000; _last=now; if(real>0.5) real=0.5; const dt=real*S.speed; S.t+=dt;
+    const b={ rules:S.rules, inference:S.inference, axioms:S.axioms }; produce(dt);
+    if(dt>0) for(const k in b) RATES[k]=(S[k]-b[k])/dt; refresh(); }
+
+  // tooltips
+  const tip=$('tip'); let tipEl=null;
+  function placeTip(e){ const m=15; let x=e.clientX+m,y=e.clientY+m; const w=tip.offsetWidth,h=tip.offsetHeight; if(x+w>innerWidth-8)x=e.clientX-w-m; if(y+h>innerHeight-8)y=innerHeight-h-8; if(x<8)x=8; if(y<8)y=8; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+  document.addEventListener('mouseover',e=>{ const t=e.target.closest?e.target.closest('[data-tip]'):null; if(t&&t!==tipEl){ tipEl=t; tip.innerHTML=t.getAttribute('data-tip'); tip.classList.add('show'); placeTip(e); } });
+  document.addEventListener('mousemove',e=>{ if(tipEl) placeTip(e); });
+  document.addEventListener('mouseout',e=>{ if(tipEl){ const to=e.relatedTarget; if(!to||!(to.closest&&to.closest('[data-tip]'))){ tip.classList.remove('show'); tipEl=null; } } });
+  // dead-click telemetry
+  const ACT='button,input,a,.node,.th,.chip,.stock,.verb,.side-btn,.rail-btn';
+  document.addEventListener('pointerdown',e=>{ if(!S.started) return; const t=e.target; if(t&&t.closest&&t.closest(ACT)) return; REC.dead++; rec('@deadclick',{tag:(t&&t.tagName||'').toLowerCase()}); },true);
+  addEventListener('keydown',e=>{ if(e.key==='Enter'){ writeRule(); } });
+
+  let musicOn=false;
+  function toggleMusic(){ musicOn=!musicOn; const m=$('music'); if(musicOn){ m.volume=0.4; m.play().catch(()=>{}); $('musicBtn').style.color='var(--accent)'; } else { m.pause(); $('musicBtn').style.color=''; } }
+  addEventListener('pointerdown',()=>{ if(musicOn){ const m=$('music'); if(m.paused) m.play().catch(()=>{}); } },{once:true});
+
+  function updateDbg(){ const o=$('dbg'); if(!o) return; setHTML(o,'<b>SYMBOLIC</b> t=<b>'+Math.floor(S.t)+'</b>s\nrules '+fmt(S.rules)+' (+'+fmt(RATES.rules||0)+'/s) inf +'+fmt(symInfRate())+'/s\nproven '+TREE.filter(n=>S.tech[n.id]).length+'/'+TREE.length+'  last <b>'+(lastAction||'—')+'</b> dead <b>'+REC.dead+'</b>'); }
+  function renderDev(){ if(!S.dev) return; $('dev').innerHTML='<div class="row">'+[1,3,10,50].map(s=>'<button data-s="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div><div class="row"><button data-grant>+rules</button><button data-newgame>new game+</button><button data-dl>download run</button></div>';
+    $('dev').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ S.speed=+b.dataset.s; renderDev(); });
+    $('dev').querySelector('[data-grant]').onclick=()=>{ S.rules+=5000; S.runRules+=5000; refresh(); };
+    $('dev').querySelector('[data-newgame]').onclick=newGame; $('dev').querySelector('[data-dl]').onclick=downloadRun; }
+  function toggleDev(on){ S.dev=on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); $('dbg').classList.toggle('show',S.dev); if(S.dev){ renderDev(); updateDbg(); } }
+  addEventListener('keydown',e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
+  const runJSON=()=>JSON.stringify({ ...REC, t:+S.t.toFixed(1), proven:TREE.filter(n=>S.tech[n.id]).length, done:S.flags.symbolicDone });
+  function downloadRun(){ try{ const b=new Blob([runJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='emergence-v3-symbolic-run.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },400); toast('RUN DOWNLOADED','emergence-v3-symbolic-run.json in Downloads.'); }catch(e){} }
+  function newGame(){ try{ localStorage.setItem(SAVE_KEY+'_lastrun', runJSON()); }catch(e){} S=fresh(); REC.events.length=0; REC.dead=0; save(); render(); toast('NEW GAME','Fresh start. (Previous run snapshotted.)'); }
+  function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({S})); }catch(e){} }
+  function load(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d&&d.S){ S=Object.assign(fresh(),d.S); return true; } }catch(e){} return false; }
+  setInterval(save,5000); addEventListener('beforeunload',save);
+
+  $('writeRule').onclick=writeRule;
+  load();
+  if(location.hash.indexOf('seed')>=0){ // dev-only mid-game seed for screenshots
+    S.tech={formalLogic:1,fwdChain:1,rete:1,inference:1}; S.ruleset=14; S.daemon=3; S.rules=4200; S.runRules=6800; S.inference=90; S.axioms=0; S.started=true; S.activeProof='knowledge'; S.proofAcc={knowledge:300};
+    if(location.hash==='#seedc') S.contra={a:2731,b:8244};
+  }
+  render();
+  setInterval(tick, CFG.tickMs);
+})();
+</script>
+</body>
+</html>

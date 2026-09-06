@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMERGENCE v3 — Deep (Flow Board prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04070d; --panel:#07111d; --panel-2:#0b1420; --line:#1c2f4a; --edge:#2b4570;
+    --text:#dceaff; --dim:#8ea6c8; --dimmer:#5f7799; --accent:#6ea8ff; --bluehot:#a9cfff;
+    --good:#82ffc8; --hot:#ffb15c; --danger:#ff5f6d;
+    --compute:#a9cfff; --capability:#6ea8ff; --data:#54d2ff; --insight:#6fe6a8; --knowledge:#e0a93f; --silicon:#a9d8ce;
+    --vision:#54d2ff; --language:#b58cff; --reasoning:#6fe6a8;
+    --grid: repeating-linear-gradient(0deg, rgba(110,168,255,0.04) 0 1px, transparent 1px 34px);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background:
+      radial-gradient(1100px 680px at 50% -10%, rgba(110,168,255,0.10), transparent 60%),
+      var(--grid), var(--bg);
+    color:var(--text); font-family:'Rajdhani','Saira Condensed',sans-serif; font-size:16px; line-height:1.35;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1240px; margin:0 auto; padding:12px 18px 40px; }
+  h1,h2,h3,.disp{ font-family:'Rajdhani',sans-serif; letter-spacing:0.04em; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  /* ---------- Resource rail (color-coded, persistent) ---------- */
+  .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch;
+    padding:9px 8px; margin:0 -8px 10px; background:rgba(4,7,13,0.86); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line); }
+  .chip{ display:flex; align-items:center; gap:9px; padding:6px 12px 6px 8px; border-radius:9px;
+    border:1px solid var(--line); background:var(--panel); min-width:118px; position:relative; }
+  .chip .cdot{ width:26px; height:26px; border-radius:7px; flex:none; display:grid; place-items:center; font-family:'Rajdhani'; font-size:15px; font-weight:700; }
+  .chip img{ width:20px; height:20px; object-fit:contain; }
+  .chip .cbody{ display:flex; flex-direction:column; line-height:1.1; min-width:0; }
+  .chip .clab{ font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); }
+  .chip .cval{ font-size:19px; font-family:'IBM Plex Mono',monospace; font-weight:500; }
+  .chip .cps{ font-size:11px; font-family:'IBM Plex Mono',monospace; margin-left:auto; align-self:flex-start; opacity:0.9; }
+  .cps.pos{ color:var(--good); } .cps.neg{ color:var(--danger); } .cps.zero{ color:var(--dimmer); }
+  .rail-right{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .rail-btn{ font-size:12px; letter-spacing:0.08em; color:var(--dim); background:var(--panel);
+    border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; }
+  .rail-btn:hover{ border-color:var(--accent); color:var(--text); }
+
+  header.era{ display:flex; align-items:baseline; gap:14px; margin:2px 2px 12px; }
+  header.era .sig{ width:32px; height:32px; object-fit:contain; opacity:0.9; filter:drop-shadow(0 0 8px rgba(110,168,255,0.4)); align-self:center; }
+  header.era h1{ font-size:26px; margin:0; color:#eef5ff; letter-spacing:0.06em; }
+  header.era .sub{ color:var(--dim); font-style:italic; font-size:14px; }
+  header.era .phase{ margin-left:auto; font-size:11px; letter-spacing:0.16em; color:var(--accent); text-transform:uppercase; }
+
+  /* ---------- The board ---------- */
+  .board{ display:grid; grid-template-columns: 226px 1fr 244px; gap:14px; align-items:start; }
+  .board > div{ min-width:0; }
+  @media(max-width:980px){ .board{ grid-template-columns:1fr; } }
+  .col-head{ font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dimmer); margin:2px 0 8px; }
+
+  /* left column — provisioning + steering */
+  .verb{ width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;
+    padding:14px 15px; margin-bottom:10px; border-radius:12px; cursor:pointer; color:#eaf3ff;
+    letter-spacing:0.05em; border:1px solid var(--edge);
+    background:linear-gradient(180deg,#122845,#0a1524);
+    box-shadow: inset 0 1px 0 rgba(169,207,255,0.18), inset 0 -6px 14px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.45); }
+  .verb:hover:not(:disabled){ border-color:rgba(110,168,255,0.8); }
+  .verb:active:not(:disabled){ transform:translateY(2px); box-shadow: inset 0 3px 9px rgba(0,0,0,0.5); }
+  .verb:disabled{ opacity:0.5; cursor:not-allowed; }
+  .verb .vname{ font-size:16px; font-weight:600; }
+  .verb .vyield{ font-size:12.5px; font-family:'IBM Plex Mono',monospace; color:var(--compute); }
+  .verb .vcost{ font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--dim); }
+  .verb .vcost b{ color:var(--silicon); font-weight:500; }
+  .verb.can .vcost b{ color:var(--good); }
+
+  .side-btn{ width:100%; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; padding:9px 11px; border-radius:10px; cursor:pointer;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); text-align:left; margin-bottom:8px;
+    box-shadow: inset 0 1px 0 rgba(169,207,255,0.06), 0 2px 4px rgba(0,0,0,0.3); }
+  .side-btn:hover:not(:disabled){ border-color:var(--accent); }
+  .side-btn:active:not(:disabled){ transform:translateY(1px); }
+  .side-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .side-btn img{ width:24px; height:24px; object-fit:contain; grid-row:1/3; }
+  .side-btn .sglyph{ width:24px; height:24px; grid-row:1/3; display:grid; place-items:center; font-size:16px; font-weight:700; border-radius:6px; }
+  .side-btn .sb-nm{ font-size:13px; font-weight:600; letter-spacing:0.03em; }
+  .side-btn .sb-out{ font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--dim); grid-column:2; }
+  .side-btn .sb-out b{ color:var(--good); font-weight:500; }
+  .side-btn .sb-cnt{ grid-row:1/3; grid-column:3; font-family:'IBM Plex Mono',monospace; font-size:15px; color:var(--accent); min-width:34px; text-align:right; }
+  .side-btn .sb-cost{ grid-column:2/4; font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--dimmer); }
+  .side-btn .sb-cost b{ color:var(--silicon); font-weight:500; } .side-btn.can .sb-cost b{ color:var(--good); }
+  .side-btn.can{ border-color:rgba(110,168,255,0.45); }
+
+  .steer-btn{ width:100%; display:grid; grid-template-columns:1fr auto; gap:2px 8px; padding:10px 12px; border-radius:11px; cursor:pointer;
+    background:linear-gradient(180deg,rgba(20,38,64,0.7),rgba(10,20,34,0.8)); border:1px solid var(--edge); color:var(--text); text-align:left;
+    box-shadow: inset 0 1px 0 rgba(169,207,255,0.1); }
+  .steer-btn:hover:not(:disabled){ border-color:var(--accent); }
+  .steer-btn:active:not(:disabled){ transform:translateY(1px); }
+  .steer-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .steer-btn .st-nm{ font-size:13px; font-weight:600; letter-spacing:0.04em; }
+  .steer-btn .st-lvl{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); text-align:right; }
+  .steer-btn .st-eff{ font-size:11px; color:var(--good); }
+  .steer-btn .st-cost{ grid-column:1/3; font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--dim); }
+  .steer-btn .st-cost b{ color:var(--capability); font-weight:500; }
+
+  .lc-note{ font-size:11px; color:var(--dimmer); font-style:italic; margin:2px 2px 10px; line-height:1.4; }
+
+  /* center — the fabric */
+  .fabric{ background:linear-gradient(180deg,rgba(10,22,38,0.72),rgba(4,9,16,0.86)); border:1px solid var(--line);
+    border-radius:14px; padding:12px 13px 14px; }
+  .inst-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(110,168,255,0.16); }
+  .inst-title{ font-size:22px; font-weight:600; letter-spacing:0.07em; color:var(--bluehot); text-shadow:0 0 12px rgba(110,168,255,0.5); }
+  .inst-sub{ font-size:12px; color:var(--dim); font-style:italic; }
+  .heat-led{ margin-left:auto; width:11px; height:11px; border-radius:50%; background:var(--accent); align-self:center; }
+  .heat-led.ok{ background:var(--accent); box-shadow:0 0 9px var(--accent); }
+  .heat-led.warm{ background:var(--hot); box-shadow:0 0 10px var(--hot); animation:blink 1.4s steps(1) infinite; }
+  .heat-led.hot{ background:var(--danger); box-shadow:0 0 12px var(--danger); animation:blink 0.6s steps(1) infinite; }
+  @keyframes blink{ 50%{ opacity:0.3; } }
+
+  /* event banner — reserved height, dwells (never reflows) */
+  .event-banner{ min-height:34px; display:flex; align-items:center; padding:7px 12px; margin-bottom:8px; border-radius:9px;
+    font-size:13px; font-family:'IBM Plex Mono',monospace; border:1px solid transparent; background:rgba(2,6,12,0.4);
+    color:var(--dimmer); transition:border-color 0.3s, background 0.3s; }
+  .event-banner b{ font-weight:600; }
+  .event-banner.warn{ border-color:rgba(110,168,255,0.4); color:var(--bluehot); background:rgba(30,52,86,0.4); }
+  .event-banner.shift{ border-color:var(--hot); color:var(--hot); background:rgba(60,40,16,0.4); animation:evGlow 2.4s ease-in-out infinite; }
+  .event-banner.brk{ border-color:var(--good); color:var(--good); background:rgba(16,52,40,0.4); animation:evGlow 2.4s ease-in-out infinite; }
+  @keyframes evGlow{ 50%{ box-shadow:0 0 18px rgba(110,168,255,0.25); } }
+  @media (prefers-reduced-motion:reduce){ .event-banner.shift,.event-banner.brk{ animation:none; } .heat-led.warm,.heat-led.hot{ animation:none; } }
+
+  /* the mixer + gauges */
+  .dial-lab{ font-size:11px; letter-spacing:0.15em; color:var(--dim); margin-bottom:7px; text-transform:uppercase; }
+  .mixer-wrap{ display:flex; flex-direction:column; max-width:512px; margin:0 auto 10px; }
+  .fabstate{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:14px 14px 16px; }
+  .tri-mixer{ position:relative; width:100%; padding-bottom:60%; border:1px solid rgba(110,168,255,0.2); border-radius:8px;
+    touch-action:none; cursor:crosshair; background:rgba(2,6,12,0.4); }
+  .tri-mixer:hover{ border-color:rgba(110,168,255,0.42); }
+  .tri-mixer.dragging{ border-color:rgba(110,168,255,0.6); }
+  .tri-svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .tri-outline{ fill:rgba(110,168,255,0.04); stroke:rgba(110,168,255,0.45); stroke-width:0.9; }
+  .tri-feed{ stroke-width:1.4; stroke-opacity:0.4; }
+  #feed-vision{ stroke:var(--vision); } #feed-language{ stroke:var(--language); } #feed-reasoning{ stroke:var(--reasoning); }
+  .tri-balanced{ fill:rgba(169,207,255,0.55); }
+  .tri-corner{ position:absolute; font-size:11px; letter-spacing:0.05em; color:var(--dim); pointer-events:none; }
+  .tri-corner b{ font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; margin-left:2px; }
+  .tc-v{ top:-2px; left:50%; transform:translateX(-50%); color:var(--vision); } .tc-v b{ color:var(--vision); }
+  .tc-l{ bottom:0; left:1%; color:var(--language); } .tc-l b{ color:var(--language); }
+  .tc-r{ bottom:0; right:1%; color:var(--reasoning); } .tc-r b{ color:var(--reasoning); }
+  .tri-bal-lab{ position:absolute; left:50%; top:60%; transform:translate(-50%,7px); font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.1em; color:var(--dimmer); text-transform:uppercase; pointer-events:none; }
+  /* the drag FIX: the handle snaps to the pointer — no left/top transition, so it goes where you click, not laggy-follow */
+  .tri-handle{ position:absolute; width:22px; height:22px; border-radius:50%; background:var(--bluehot); border:2px solid #fff;
+    box-shadow:0 0 16px rgba(110,168,255,0.9), 0 2px 4px rgba(0,0,0,0.5); transform:translate(-50%,-50%);
+    transition:transform 0.08s, box-shadow 0.1s; pointer-events:none; z-index:2; }
+  .tri-mixer.dragging .tri-handle{ transform:translate(-50%,-50%) scale(1.24); box-shadow:0 0 26px rgba(110,168,255,1), 0 2px 4px rgba(0,0,0,0.5); }
+
+  .gauges{ display:flex; flex-direction:column; justify-content:center; gap:13px; }
+  .gauge-lab{ font-size:11px; letter-spacing:0.1em; color:var(--dim); margin-bottom:4px; display:flex; justify-content:space-between; }
+  .gauge-lab .gv{ font-family:'IBM Plex Mono',monospace; color:var(--text); }
+  .gauge-bar{ height:9px; background:rgba(2,6,12,0.7); border:1px solid rgba(110,168,255,0.2); overflow:hidden; border-radius:2px; }
+  .gauge-bar i{ display:block; height:100%; width:0; background:var(--accent); box-shadow:0 0 8px rgba(110,168,255,0.4); transition:width 0.2s, background 0.2s; }
+
+  .orch{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.5; color:var(--dim); padding:8px 11px; margin-bottom:10px;
+    border-left:3px solid var(--accent); background:rgba(2,6,12,0.5); border-radius:0 8px 8px 0; }
+  .orch b{ color:var(--text); font-weight:600; } .orch .o-front{ color:var(--bluehot); } .orch .o-low{ color:var(--hot); }
+
+  /* run lanes — feedstock flows into the run; drift + lock timer live AT the run */
+  .lanes-head{ font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dimmer); margin:4px 0 8px; }
+  .lane{ background:rgba(6,16,28,0.55); border:1px solid var(--line); border-top:2px solid var(--rc); border-radius:11px;
+    padding:7px 10px 8px; margin-bottom:8px; transition:box-shadow 0.2s, border-color 0.2s; }
+  .lane.front{ border-color:rgba(169,207,255,0.6); box-shadow:0 0 16px rgba(110,168,255,0.16); }
+  .lane.low{ border-top-color:var(--hot); }
+  .lane-lab{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .lane-lab .rsig{ width:22px; height:22px; object-fit:contain; }
+  .lane-lab .rnm{ font-size:14px; font-weight:600; letter-spacing:0.04em; color:var(--rc); }
+  .rbadge{ font-size:10px; letter-spacing:0.06em; padding:2px 7px; border-radius:3px; font-weight:600; }
+  .rbadge.b-front{ color:#04070d; background:var(--bluehot); box-shadow:0 0 10px rgba(110,168,255,0.5); }
+  .rbadge.b-low{ color:var(--hot); border:1px solid var(--hot); }
+  .rbadge.b-hold{ color:var(--dimmer); }
+  .lane-lab .ldash{ flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
+  .rtrend{ font-family:'IBM Plex Mono',monospace; font-size:14px; } .rtrend.up{ color:var(--good); } .rtrend.dn{ color:var(--hot); }
+
+  .pipe{ display:flex; align-items:stretch; gap:6px; }
+  .stock{ display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1px; min-width:66px;
+    padding:5px 5px; border-radius:9px; border:1px solid var(--line); background:rgba(0,0,0,0.24); }
+  .stock img{ width:20px; height:20px; object-fit:contain; }
+  .stock .sglyph{ font-size:16px; font-weight:700; }
+  .stock .sv{ font-size:14px; font-family:'IBM Plex Mono',monospace; font-weight:500; }
+  .stock .sl{ font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--dim); }
+  .stock .sdraw{ font-size:9px; font-family:'IBM Plex Mono',monospace; color:var(--dimmer); }
+  .stock.blocked{ border-color:rgba(255,177,92,0.55); }
+  .flow{ align-self:center; width:34px; height:22px; position:relative; flex:none; }
+  .flow svg{ width:100%; height:100%; overflow:visible; }
+  .flow .track{ stroke:var(--rc); stroke-width:2; opacity:0.26; }
+  .flow .pulse{ stroke:var(--fc); stroke-width:2.4; stroke-dasharray:5 9; opacity:calc(0.25 + 0.75*var(--thru,0));
+    animation:flowmove 0.9s linear infinite; filter:drop-shadow(0 0 4px var(--fc)); }
+  .flow.idle .pulse{ animation:none; opacity:0.1; }
+  .flow.blocked .pulse{ stroke:var(--hot); stroke-dasharray:2 4; animation-duration:2s; }
+  @keyframes flowmove{ to{ stroke-dashoffset:-14; } }
+  @media (prefers-reduced-motion:reduce){ .flow .pulse{ animation:none; } }
+
+  .run-node{ flex:1; min-width:0; display:grid; grid-template-columns:1fr auto; grid-template-rows:auto auto auto; gap:2px 10px;
+    padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:var(--panel); box-shadow:inset 0 1px 0 rgba(169,207,255,0.05); }
+  .run-cap{ font-family:'IBM Plex Mono',monospace; font-size:23px; font-weight:500; color:var(--rc); line-height:1.05; }
+  .run-cap small{ font-size:11px; color:var(--dim); margin-left:3px; font-family:'Rajdhani'; }
+  .run-cap .net{ font-family:'IBM Plex Mono',monospace; font-size:12px; margin-left:6px; }
+  .run-cap .net.up{ color:var(--good); } .run-cap .net.dn{ color:var(--hot); }
+  .run-sub{ grid-column:1/3; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--dim); }
+  .run-sub .rst-front{ color:var(--bluehot); } .run-sub .rst-low{ color:var(--hot); }
+  .wind-fc{ grid-column:1/3; width:100%; height:15px; display:block; background:rgba(2,6,12,0.45); border:1px solid rgba(110,168,255,0.1); border-radius:4px; }
+  .fc-wind{ fill:none; stroke-width:1.6; opacity:0.9; }
+  .fc-share{ stroke:rgba(255,255,255,0.5); stroke-width:1; stroke-dasharray:3 2; }
+  .lock-btn{ grid-row:1/3; grid-column:2; align-self:center; min-width:96px; padding:8px 10px; border-radius:9px; cursor:pointer;
+    background:var(--panel-2); border:1px solid var(--edge); color:var(--text); font-family:'Rajdhani'; font-size:12px; font-weight:600; letter-spacing:0.04em; text-align:center;
+    box-shadow:inset 0 1px 0 rgba(169,207,255,0.07); }
+  .lock-btn:hover:not(:disabled){ border-color:var(--accent); background:#122238; }
+  .lock-btn:active:not(:disabled){ transform:translateY(1px); }
+  .lock-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .lock-btn.active{ border-color:var(--bluehot); color:var(--bluehot); box-shadow:0 0 12px rgba(110,168,255,0.3); }
+  .lock-btn .lk-cost{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--capability); font-weight:400; margin-top:2px; }
+
+  /* right — the goal */
+  .goal{ background:linear-gradient(180deg,rgba(20,34,58,0.7),rgba(8,16,28,0.82)); border:1px solid rgba(110,168,255,0.32);
+    border-radius:14px; padding:14px; text-align:center; }
+  .goal img.gs{ width:70px; height:70px; object-fit:contain; filter:drop-shadow(0 0 12px rgba(110,168,255,0.4)); }
+  .goal .gname{ font-size:15px; letter-spacing:0.07em; margin:6px 0 2px; color:#eef5ff; }
+  .goal .gsub{ font-size:12px; color:var(--dim); font-style:italic; margin-bottom:12px; }
+  .meter{ height:12px; border-radius:6px; background:rgba(2,6,12,0.6); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5); border:1px solid rgba(110,168,255,0.18); }
+  .meter i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--bluehot)); transition:width 0.25s; box-shadow:0 0 8px rgba(110,168,255,0.5); }
+  .meter-lab{ font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--dim); margin:6px 0 12px; }
+  .advance{ width:100%; font-size:14px; letter-spacing:0.06em; font-weight:600; padding:13px; border-radius:11px; cursor:pointer;
+    color:#04120e; border:1px solid var(--good); background:linear-gradient(180deg,#a6ffdc,#5fe0b4); box-shadow:0 0 16px rgba(130,255,200,0.28); }
+  .advance:disabled{ opacity:0.32; cursor:not-allowed; box-shadow:none; filter:grayscale(0.35); }
+  .goal.ready{ border-color:var(--good); box-shadow:0 0 26px rgba(130,255,200,0.28); }
+  .goal.ready .advance{ animation:advPulse 1.5s ease-in-out infinite; }
+  @keyframes advPulse{ 50%{ box-shadow:0 0 28px rgba(130,255,200,0.8); } }
+  @media (prefers-reduced-motion:reduce){ .goal.ready .advance{ animation:none; } }
+  .mini-gauge{ margin-top:14px; text-align:left; }
+
+  /* floating +N, tooltips, toasts */
+  #fx{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+  .float{ position:absolute; font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600; animation:floatUp 0.9s ease-out forwards; text-shadow:0 1px 3px #000; }
+  @keyframes floatUp{ to{ transform:translateY(-34px); opacity:0; } }
+  #tip{ position:fixed; z-index:70; max-width:300px; padding:10px 12px; border-radius:9px; background:rgba(4,9,16,0.97);
+    border:1px solid var(--edge); font-size:13px; line-height:1.45; color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.1s; }
+  #tip.show{ opacity:1; } #tip i{ color:var(--dim); } #tip b{ color:var(--bluehot); }
+  #toasts{ position:fixed; right:16px; bottom:16px; z-index:65; display:flex; flex-direction:column; gap:8px; width:330px; max-width:80vw; }
+  .toast{ background:rgba(6,14,24,0.96); border:1px solid var(--accent); border-radius:11px; padding:11px 13px; animation:toastIn 0.35s ease; }
+  .toast.ev{ border-color:var(--hot); } .toast.brk{ border-color:var(--good); }
+  .toast .th{ font-size:12px; letter-spacing:0.07em; color:var(--accent); margin-bottom:3px; font-weight:600; }
+  .toast.ev .th{ color:var(--hot); } .toast.brk .th{ color:var(--good); }
+  .toast .tb{ font-size:13px; color:var(--text); }
+  @keyframes toastIn{ from{ transform:translateX(20px); opacity:0; } }
+
+  /* dev overlay + debug */
+  #dev{ position:fixed; left:14px; bottom:14px; z-index:80; display:none; flex-direction:column; gap:7px;
+    background:rgba(2,6,12,0.92); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  #dev.show{ display:flex; } #dev .row{ display:flex; gap:6px; } #dev button{ font-family:inherit; font-size:12px; padding:5px 9px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--dim); cursor:pointer; }
+  #dev button.on{ color:var(--accent); border-color:var(--accent); }
+  #dbg{ position:fixed; left:14px; bottom:150px; z-index:79; display:none; font-family:'IBM Plex Mono',monospace; font-size:11px; line-height:1.5;
+    color:#cfe2ff; background:rgba(2,6,12,0.82); border:1px solid rgba(110,168,255,0.35); border-radius:8px; padding:8px 10px; white-space:pre; pointer-events:none; }
+  #dbg.show{ display:block; } #dbg b{ color:var(--accent); }
+  .note{ text-align:center; color:var(--dimmer); font-size:12px; margin-top:22px; font-style:italic; }
+</style>
+</head>
+<body class="theme-4">
+<div class="wrap">
+  <div class="rail" id="rail"></div>
+  <header class="era">
+    <img class="sig" src="assets/era4-sigil.png" alt="">
+    <h1>Deep</h1><span class="sub">steer compute against the drift</span>
+    <span class="phase" id="phase">Compute Fabric</span>
+  </header>
+
+  <div class="board">
+    <!-- LEFT: provision + steering -->
+    <div class="col-left">
+      <div class="col-head">Provision the fabric</div>
+      <button class="verb" id="buyNode">
+        <span class="vname">Build Compute Node</span>
+        <span class="vyield" id="nodeYield"></span>
+        <span class="vcost" id="nodeCost"></span>
+      </button>
+
+      <div class="col-head">Supply bus — feed the runs</div>
+      <div id="supply"></div>
+
+      <div class="col-head">Steering tools</div>
+      <button class="steer-btn" id="stabBtn" data-tip="<b>Stabilizer</b><br><i>A calmer optimization landscape.</i><br>Permanently reduces how hard the drift bites every run. Stacks up to 5.">
+        <span class="st-nm">STABILIZER</span><span class="st-lvl" id="stabLvl"></span>
+        <span class="st-eff" id="stabEff"></span>
+        <span class="st-cost" id="stabCost"></span>
+      </button>
+      <div class="lc-note">Lock a run (freeze it so it can't drift) from the button on each run below.</div>
+    </div>
+
+    <!-- CENTER: the fabric -->
+    <div class="col-center">
+      <div class="col-head">The Fabric — three runs drift; route the budget to counter the wind</div>
+      <div class="fabric">
+        <div class="inst-head"><span class="inst-title">THE&nbsp;FABRIC</span><span class="inst-sub">balanced is never optimal — steer</span><span class="heat-led ok" id="heatLed"></span></div>
+        <div class="event-banner" id="eventBanner">holding course — watch the wind</div>
+        <div class="mixer-wrap">
+            <div class="dial-lab">Compute allocation · drag to route</div>
+            <div class="tri-mixer" id="triMixer">
+              <svg class="tri-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <radialGradient id="triGV" cx="50%" cy="0%" r="92%"><stop offset="0%" stop-color="#54d2ff" stop-opacity="0.20"/><stop offset="60%" stop-color="#54d2ff" stop-opacity="0"/></radialGradient>
+                  <radialGradient id="triGL" cx="0%" cy="100%" r="92%"><stop offset="0%" stop-color="#b58cff" stop-opacity="0.20"/><stop offset="60%" stop-color="#b58cff" stop-opacity="0"/></radialGradient>
+                  <radialGradient id="triGR" cx="100%" cy="100%" r="92%"><stop offset="0%" stop-color="#6fe6a8" stop-opacity="0.20"/><stop offset="60%" stop-color="#6fe6a8" stop-opacity="0"/></radialGradient>
+                </defs>
+                <polygon points="50,7 7,92 93,92" fill="url(#triGV)"/>
+                <polygon points="50,7 7,92 93,92" fill="url(#triGL)"/>
+                <polygon points="50,7 7,92 93,92" fill="url(#triGR)"/>
+                <line class="tri-feed" id="feed-vision" x1="50" y1="9" x2="50" y2="63.7"/>
+                <line class="tri-feed" id="feed-language" x1="9" y1="90" x2="50" y2="63.7"/>
+                <line class="tri-feed" id="feed-reasoning" x1="91" y1="90" x2="50" y2="63.7"/>
+                <polygon class="tri-outline" points="50,7 7,92 93,92"/>
+                <circle class="tri-balanced" cx="50" cy="63.7" r="1.4"/>
+              </svg>
+              <span class="tri-corner tc-v">VISION <b id="pct-vision"></b></span>
+              <span class="tri-corner tc-l">LANG <b id="pct-language"></b></span>
+              <span class="tri-corner tc-r">REASON <b id="pct-reasoning"></b></span>
+              <span class="tri-bal-lab">balanced</span>
+              <div class="tri-handle" id="triHandle"></div>
+            </div>
+        </div>
+        <div class="orch" id="orch"></div>
+        <div class="lanes-head">The three runs — each draws its own feedstock; the lock timer lives here</div>
+        <div id="lanes"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: the goal -->
+    <div class="col-right">
+      <div class="col-head">The goal</div>
+      <div class="goal" id="goal">
+        <img class="gs" src="assets/era4-sigil.png" alt="">
+        <div class="gname">A generally-capable model</div>
+        <div class="gsub">breadth beats specialization</div>
+        <div class="meter"><i id="breadthMeter"></i></div>
+        <div class="meter-lab" id="breadthLab"></div>
+        <button class="advance" id="advance" disabled>ADVANCE → FOUNDATION</button>
+        <div class="mini-gauge">
+          <div class="gauge-lab" style="margin-top:6px">RUN CAPABILITY (geo-mean)</div>
+          <div class="meter-lab" id="runsRead" style="margin:4px 0 0"></div>
+        </div>
+      </div>
+      <div class="col-head" style="margin-top:14px">Fabric state</div>
+      <div class="fabstate">
+        <div class="gauges">
+          <div><div class="gauge-lab">CAPABILITY <span class="gv" id="capV"></span></div><div class="gauge-bar"><i id="capGauge"></i></div></div>
+          <div><div class="gauge-lab">COMPUTE <span class="gv" id="computeV"></span></div><div class="gauge-bar"><i id="computeGauge"></i></div></div>
+          <div data-tip="<i>Concentrating compute to fight drift heats the fabric.</i><br>A hot fabric throttles ALL output. Rhythm: concentrate to counter the wind, then ease toward balanced to cool."><div class="gauge-lab">HEAT <span class="gv" id="heatV"></span></div><div class="gauge-bar"><i id="heatGauge"></i></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">EMERGENCE v3 — Deep slice (Flow Board prototype). ` toggles dev · #seed loads a mid-game state. A paradigm test, not the final build.</div>
+</div>
+
+<div id="fx"></div>
+<div id="tip"></div>
+<div id="toasts"></div>
+<div id="dev"></div>
+<div id="dbg"></div>
+<audio id="music" src="assets/music-cobalt-furnace.mp3" loop preload="none"></audio>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmt = n => { n=+n||0; const a=Math.abs(n);
+    if(a>=1e6) return (n/1e6).toFixed(2)+'M'; if(a>=1e3) return (n/1e3).toFixed(2)+'K';
+    if(a>=100) return n.toFixed(0); if(a>=10) return n.toFixed(1); if(a===0) return '0'; return n.toFixed(a<1?2:1); };
+  const esc = s => String(s).replace(/"/g,'&quot;');
+  // build-once / update-in-place: only touch the DOM when the value actually changed (Rule #1) — this kills BOTH
+  // the dead-click bug AND the "jittery, stuff appearing/disappearing" reflow the player complained about in Deep.
+  const setTxt = (el,t)=>{ if(el && el._t!==t){ el.textContent=t; el._t=t; } };
+  const setHTML= (el,h)=>{ if(el && el._h!==h){ el.innerHTML=h; el._h=h; } };
+  const setDis = (el,d)=>{ if(el && el.disabled!==d) el.disabled=d; };
+  const setAttr= (el,a,v)=>{ if(el && el.getAttribute(a)!==String(v)) el.setAttribute(a,v); };
+  const SAVE_KEY = 'emergence_v3_deep';
+
+  // ---------- tunables (ported verbatim from CFG.e4; supply numbers ported from the earlier-era producers) ----------
+  const CFG = { tickMs:100,
+    // Compute Nodes (built from Silicon — reach-back to Origins)
+    nodeCost:45, nodeGrowth:1.21, nodeCompute:0.7,
+    // Capability
+    capGain:0.0011, capRate:0.9, chainPerFoundry:0.03, breadthGate:0.78,
+    // steer-against-the-drift
+    allocMin:0.05, driftFreq:0.16, driftDemand:0.55, driftBite:0.0045,
+    feedstock:{ vision:'data', reasoning:'insight', language:'knowledge' }, feedPerShare:0.35,
+    // heat (the cost of fighting drift)
+    heatRise:8, heatBase:0.34, cooling:2.5, heatWarn:58, heatThrottle:88, throttleWarm:0.94, throttleHot:0.76,
+    // telegraphed events
+    eventGap:26, eventDur:13, eventWarn:3, shiftDrop:0.03, shiftDemand:1.8, breakthroughMult:2.2, momentumAfter:6,
+    // steering tools (spend Capability)
+    stabilizerCost:140, stabilizerCut:0.13, stabilizerMax:5, lockCost:90, lockGrowth:1.35, lockDur:28,
+    domains:[ {k:'vision',label:'Vision'}, {k:'language',label:'Language'}, {k:'reasoning',label:'Reasoning'} ],
+    // ---- supply producers: a self-contained port of the living-supply-chain reach-back ----
+    // (In the full game these are the humming Origins/Statistical stacks. Here each is one producer node you can build
+    //  to keep a blocked run fed — the reach-back mechanic intact: run blocked -> build more of its feedstock's supply.)
+    foundryCost:60, foundryGrowth:1.20, foundryRate:0.8,          // Silicon (count also lifts Capability — RR5)
+    datasetCost:30, datasetGrowth:1.16, datasetYield:1.2,         // Data     -> feeds Vision
+    modelCost:90,  modelGrowth:1.20, modelRate:0.6,               // Insight  -> feeds Reasoning
+    scriptoriumCost:45, scriptoriumGrowth:1.19, scriptoriumRate:1.1, // Knowledge -> feeds Language
+    seedNodes:4, seedSilicon:600, seedData:200, seedInsight:150, seedKnowledge:150,
+  };
+  const PH = { vision:0, language:2.094, reasoning:4.189 };
+  const RUNCOL = { vision:'#54d2ff', language:'#b58cff', reasoning:'#6fe6a8' };
+  const FEEDLBL = { data:'Data', insight:'Insight', knowledge:'Knowledge' };
+  const HUE = { compute:'#a9cfff', capability:'#6ea8ff', data:'#54d2ff', insight:'#6fe6a8', knowledge:'#e0a93f', silicon:'#a9d8ce' };
+  const ICON = { node:'assets/icon-node.png', vision:'assets/e4-vision.png', language:'assets/e4-language.png', reasoning:'assets/e4-reasoning.png',
+    silicon:'assets/icon-silicon.png', knowledge:'assets/icon-knowledge.png', data:'assets/e3-dataset.png',
+    foundry:'assets/icon-foundry.png', scriptorium:'assets/icon-scriptorium.png' };
+  const GLYPH = { compute:'⚡', capability:'◈', insight:'✦', model:'✧', data:'◉' };
+
+  // supply producer descriptors (the "more to buy")
+  const SUPPLY = [
+    { key:'foundry',     name:'Foundry',     out:'silicon',   rate:CFG.foundryRate,     cost:CFG.foundryCost,     growth:CFG.foundryGrowth,     res:'silicon', icon:ICON.foundry,     tip:'<b>Foundry</b> (Origins reach-back)<br><i>Metal and knowledge, fused into Silicon.</i><br>+Silicon/s. Each Foundry also lifts Capability +3% (the supply chain compounds).' },
+    { key:'dataset',     name:'Dataset',     out:'data',      rate:CFG.datasetYield,    cost:CFG.datasetCost,     growth:CFG.datasetGrowth,     res:'silicon', icon:ICON.data,        tip:'<b>Dataset</b> (Statistical reach-back)<br><i>Observations, curated.</i><br>+Data/s. Data feeds the <b>Vision</b> run.' },
+    { key:'model',       name:'Fit Engine',  out:'insight',   rate:CFG.modelRate,       cost:CFG.modelCost,       growth:CFG.modelGrowth,       res:'data',    glyph:GLYPH.model,     tip:'<b>Fit Engine</b> (Statistical reach-back)<br><i>Experiments distilled into ideas.</i><br>+Insight/s (built from Data). Insight feeds the <b>Reasoning</b> run.' },
+    { key:'scriptorium', name:'Scriptorium', out:'knowledge', rate:CFG.scriptoriumRate, cost:CFG.scriptoriumCost, growth:CFG.scriptoriumGrowth, res:'silicon', icon:ICON.scriptorium, tip:'<b>Scriptorium</b> (Origins reach-back)<br><i>Marks made meaningful.</i><br>+Knowledge/s. Knowledge feeds the <b>Language</b> run.' },
+  ];
+  const SUPMAP = Object.fromEntries(SUPPLY.map(s=>[s.key,s]));
+
+  // ---------- state ----------
+  function fresh(){ return {
+    node:0, vision:0, language:0, reasoning:0, alloc:{ vision:1, language:1, reasoning:1 }, capability:0,
+    heat:0, event:null, eventNext:null, eventT:12,
+    stabilizer:0, locksBought:0, locks:{ vision:0, language:0, reasoning:0 }, fedT:{ vision:0, language:0, reasoning:0 },
+    foundry:0, dataset:0, model:0, scriptorium:0,
+    silicon:0, data:0, insight:0, knowledge:0,
+    t:0, speed:1, dev:false, started:false, done:false,
+  }; }
+  let S = fresh();
+
+  // ---------- run recorder (lite) ----------
+  const REC = { v:1, events:[], dead:0 };
+  let lastAction='';
+  function rec(ev, extra){ if(REC.events.length>6000) REC.events.shift(); if(ev[0]!=='@') lastAction=ev;
+    REC.events.push(Object.assign({ gt:+S.t.toFixed(1), wt:Date.now() }, extra||{}, { ev })); }
+
+  // ---------- gross-flow accumulator (drives feedstock connector animation) ----------
+  const FLOW = { silicon:{in:0,out:0}, data:{in:0,out:0}, insight:{in:0,out:0}, knowledge:{in:0,out:0} };
+  const fIn =(k,a)=>{ if(FLOW[k]) FLOW[k].in+=a; };
+  const fOut=(k,a)=>{ if(FLOW[k]) FLOW[k].out+=a; };
+
+  const breadth = ()=> Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning));
+
+  // ---------- production (ported Deep slice + self-contained supply) ----------
+  function produce(dt){
+    for(const k in FLOW){ FLOW[k].in=0; FLOW[k].out=0; }
+    // supply producers (the feedstock economy) — build more to unblock a starved run
+    if(S.foundry>0){     const a=S.foundry*CFG.foundryRate*dt;         S.silicon+=a;   fIn('silicon',a); }
+    if(S.dataset>0){     const a=S.dataset*CFG.datasetYield*dt;        S.data+=a;      fIn('data',a); }
+    if(S.model>0){       const a=S.model*CFG.modelRate*dt;             S.insight+=a;   fIn('insight',a); }
+    if(S.scriptorium>0){ const a=S.scriptorium*CFG.scriptoriumRate*dt; S.knowledge+=a; fIn('knowledge',a); }
+
+    // ---- ERA 4 core — STEER AGAINST THE DRIFT (ported verbatim) ----
+    if(S.node>0){
+      const doms=CFG.domains, t=S.t||0;
+      const computeRate=S.node*CFG.nodeCompute, compute=computeRate*dt;
+      const throttle = S.heat>=CFG.heatThrottle ? CFG.throttleHot : (S.heat>=CFG.heatWarn ? CFG.throttleWarm : 1);
+      const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1; let maxShare=0;
+      for(const d of doms){ const k=d.k, frac=(S.alloc[k]||0)/tw; if(frac>maxShare) maxShare=frac;
+        if(S.locks[k]>0){ S.locks[k]=Math.max(0, S.locks[k]-dt); continue; } // locked run: frozen (can't drift, can't climb, draws nothing)
+        const share=compute*frac;
+        const res=CFG.feedstock[k], need=share*CFG.feedPerShare; let feedMult=1;
+        if(need>0){ if(S[res]>=need){ S[res]-=need; fOut(res,need); } else { feedMult = need>0?S[res]/need:0; fOut(res,S[res]); S[res]=0; } }
+        const wind = 0.5+0.5*Math.sin(t*CFG.driftFreq + PH[k]);
+        const driftBite = CFG.driftBite*Math.max(0.35, 1 - S.stabilizer*CFG.stabilizerCut);
+        const evShift = !!(S.event && S.event.type==='shift' && S.event.run===k);
+        const demand = CFG.driftDemand*wind*(evShift?CFG.shiftDemand:1);
+        const shortfall = Math.max(0, demand - frac);
+        S.fedT[k] = shortfall<=0 ? S.fedT[k]+dt : 0;
+        const momentum = S.fedT[k]>=CFG.momentumAfter ? 0.5 : 1;
+        const erode = driftBite*shortfall*momentum*(0.3+0.7*S[k])*computeRate*dt;
+        const evM = (S.event && S.event.run===k && S.event.type==='breakthrough') ? S.event.mult : 1;
+        const gain = CFG.capGain*share*(1-S[k])*feedMult*throttle*evM;
+        S[k]=Math.max(0, Math.min(1, S[k] + gain - erode));
+      }
+      const conc=Math.max(0, maxShare-CFG.heatBase);
+      S.heat=Math.max(0,Math.min(110, S.heat + (CFG.heatRise*conc - CFG.cooling)*dt));
+      const br=breadth();
+      S.capability += br*compute*CFG.capRate*throttle*(1+CFG.chainPerFoundry*(S.foundry||0));
+      // exogenous events (telegraph -> land -> dwell -> clear)
+      S.eventT-=dt;
+      if(!S.event && !S.eventNext && S.eventT<=CFG.eventWarn){
+        let hiK=doms[0].k, loK=doms[0].k; for(const d of doms){ if(S[d.k]>S[hiK]) hiK=d.k; if(S[d.k]<S[loK]) loK=d.k; }
+        const shift = (Math.floor(t/(CFG.eventGap+CFG.eventDur)) % 2)===0;
+        S.eventNext = { type: shift?'shift':'breakthrough', run: shift?hiK:loK };
+      }
+      if(S.eventT<=0){
+        if(S.event){ S.event=null; S.eventT=CFG.eventGap; }
+        else { const nx = S.eventNext || { type:'shift', run:doms[0].k }; const lbl=domLabel(nx.run);
+          if(nx.type==='shift'){ S.event={type:'shift', run:nx.run, mult:1}; S[nx.run]=Math.max(0, S[nx.run]-CFG.shiftDrop);
+            toast('DRIFT SQUALL · '+lbl, 'This run now demands far more — pour compute in until it passes.', 'ev'); }
+          else { S.event={type:'breakthrough', run:nx.run, mult:CFG.breakthroughMult};
+            toast('BREAKTHROUGH · '+lbl, 'Clean gradient — concentrate here, eat the heat, ease off after.', 'brk'); }
+          S.eventNext=null; S.eventT=CFG.eventDur;
+        }
+      }
+    }
+  }
+  const domLabel = k => (CFG.domains.find(d=>d.k===k)||{}).label||k;
+
+  // ---------- buy math ----------
+  const unitCost=(base,growth,count)=> Math.floor(base*Math.pow(growth,count));
+  const nodeCost=()=> unitCost(CFG.nodeCost, CFG.nodeGrowth, S.node);
+  const canNode=()=> S.silicon>=nodeCost();
+  function buyNode(){ if(!canNode()) return; S.silicon-=nodeCost(); S.node++; rec('buy:node'); playClick(); refresh(); }
+  const supCost=(s)=> unitCost(s.cost, s.growth, S[s.key]);
+  const canSup=(s)=> S[s.res]>=supCost(s);
+  function buySup(key){ const s=SUPMAP[key]; if(!canSup(s)) return; S[s.res]-=supCost(s); S[s.key]++; rec('buy:'+key); playClick(); refresh(); }
+
+  // ---------- steering tools (spend Capability — the buttons feed the mechanic) ----------
+  const stabilizerCost=()=> Math.round(CFG.stabilizerCost + S.stabilizer*60); // linear (ported)
+  const lockCost=()=> Math.round(CFG.lockCost*Math.pow(CFG.lockGrowth, S.locksBought||0));
+  function buyStabilizer(){ const c=stabilizerCost(); if(S.stabilizer>=CFG.stabilizerMax || S.capability<c) return;
+    S.capability-=c; S.stabilizer++; rec('stabilizer:'+S.stabilizer); playClick();
+    toast('Stabilizer ↑', 'Drift reduced '+Math.round(S.stabilizer*CFG.stabilizerCut*100)+'% — the wind bites less.'); refresh(); }
+  function lockRun(k){ const c=lockCost(); if(S.capability<c || S.locks[k]>0) return;
+    S.capability-=c; S.locks[k]=CFG.lockDur; S.locksBought=(S.locksBought||0)+1; rec('lock:'+k); playClick();
+    toast('Run locked · '+domLabel(k), 'Frozen for '+CFG.lockDur+'s — it can\'t drift while you steer the others.'); refresh(); }
+
+  function advance(){ if(breadth()<CFG.breadthGate || S.done) return; S.done=true; rec('advance'); playClick();
+    toast('BREADTH REACHED', 'A generally-capable model. In the full game this hands off to Foundation — where recursion courts emergence.'); refresh(); }
+
+  // ---------- the triangular mixer (ported) + the DRAG FIX ----------
+  const TRI={ V:{x:0.5,y:0.07}, L:{x:0.07,y:0.92}, R:{x:0.93,y:0.92} };
+  function setAllocFromXY(fx,fy){
+    const A=TRI.V,B=TRI.L,C=TRI.R, det=(B.y-C.y)*(A.x-C.x)+(C.x-B.x)*(A.y-C.y);
+    let wv=((B.y-C.y)*(fx-C.x)+(C.x-B.x)*(fy-C.y))/det;
+    let wl=((C.y-A.y)*(fx-C.x)+(A.x-C.x)*(fy-C.y))/det;
+    let wr=1-wv-wl; const MIN=CFG.allocMin;
+    wv=Math.max(MIN,Math.max(0,wv)); wl=Math.max(MIN,Math.max(0,wl)); wr=Math.max(MIN,Math.max(0,wr));
+    const s=wv+wl+wr; S.alloc={vision:wv/s, language:wl/s, reasoning:wr/s};
+  }
+  function mixerHandleXY(){ const a=S.alloc, s=((a.vision||0)+(a.language||0)+(a.reasoning||0))||1;
+    const v=(a.vision||0)/s, l=(a.language||0)/s, r=(a.reasoning||0)/s;
+    return { x:v*TRI.V.x+l*TRI.L.x+r*TRI.R.x, y:v*TRI.V.y+l*TRI.L.y+r*TRI.R.y }; }
+
+  // ---------- verbs / floats ----------
+  function floatNum(txt,color,x,y){ const el=document.createElement('div'); el.className='float'; el.textContent=txt; el.style.color=color; el.style.left=(x-10)+'px'; el.style.top=y+'px'; $('fx').appendChild(el); setTimeout(()=>el.remove(),900); }
+
+  // ---------- sound ----------
+  let actx=null; const ac=()=>actx||(actx=new (window.AudioContext||window.webkitAudioContext)());
+  function playClick(){ try{ const ctx=ac(),t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(520,t); o.frequency.exponentialRampToValueAtTime(240,t+0.06);
+    g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.1); o.start(t); o.stop(t+0.11); }catch(e){} }
+
+  // ---------- toasts (event dwell 8s, logged) ----------
+  function toast(head,body,kind){ const el=document.createElement('div'); el.className='toast'+(kind?' '+kind:'');
+    el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>'; const box=$('toasts'); box.appendChild(el);
+    rec('@toast',{head});
+    while(box.children.length>3) box.removeChild(box.firstChild);
+    setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, (kind==='ev'||kind==='brk')?8000:4800); }
+
+  // ---------- structure (build ONCE) ----------
+  const RAIL = [ ['compute','Compute'],['capability','Capability'],['data','Data'],['insight','Insight'],['knowledge','Knowledge'],['silicon','Silicon'] ];
+  function railChip(k,label){ const ic=ICON[k]; const inner = ic ? '<img src="'+ic+'">' : '<span style="color:'+HUE[k]+'">'+(GLYPH[k]||'')+'</span>';
+    return '<div class="chip" data-tip="'+esc(RESTIP[k]||'')+'"><span class="cdot" style="background:'+HUE[k]+'22;border:1px solid '+HUE[k]+'55">'+inner+'</span>'+
+      '<span class="cbody"><span class="clab">'+label+'</span><span class="cval" id="rv-'+k+'" style="color:'+HUE[k]+'">0</span></span><span class="cps" id="rp-'+k+'"></span></div>'; }
+  const RESTIP = {
+    compute:'<i>Raw processing, poured into training.</i><br>Produced by Compute Nodes; routed to the three runs by the mixer.',
+    capability:'<i>What the system can actually do.</i><br>Accrues from geometric-mean breadth × compute. Spent on steering tools.',
+    data:'<i>Observations.</i><br>Feeds the <b>Vision</b> run. Made by Datasets.',
+    insight:'<i>Training ideas.</i><br>Feeds the <b>Reasoning</b> run. Made by Fit Engines.',
+    knowledge:'<i>Symbols and meaning.</i><br>Feeds the <b>Language</b> run. Made by Scriptoria.',
+    silicon:'<i>Sand, taught to carry thought.</i><br>Builds Compute Nodes and the supply stack. Made by Foundries.',
+  };
+
+  function connector(){ return '<div class="flow" id="FLOWID"><svg viewBox="0 0 34 22" preserveAspectRatio="none">'+
+    '<line class="track" x1="2" y1="11" x2="32" y2="11"/><line class="pulse" x1="2" y1="11" x2="32" y2="11"/></svg></div>'; }
+
+  function buildLanes(){
+    let h='';
+    for(const d of CFG.domains){ const k=d.k, feed=CFG.feedstock[k], fic=ICON[feed], col=RUNCOL[k];
+      const fstockInner = fic ? '<img src="'+fic+'">' : '<span class="sglyph" style="color:'+HUE[feed]+'">'+(GLYPH[feed]||'')+'</span>';
+      h+='<div class="lane" id="lane-'+k+'" style="--rc:'+col+'">'+
+        '<div class="lane-lab"><img class="rsig" src="'+ICON[k]+'"><span class="rnm">'+d.label+'</span>'+
+          '<span class="rbadge" id="badge-'+k+'"></span><span class="ldash"></span><span class="rtrend" id="trend-'+k+'"></span></div>'+
+        '<div class="pipe">'+
+          '<div class="stock" id="fstk-'+k+'" data-tip="'+esc('<i>'+FEEDLBL[feed]+' feeds '+d.label+'.</i><br>A starved run is <b>blocked</b> — build more '+FEEDLBL[feed]+' supply in the left column.')+'">'+
+            fstockInner+'<div class="sv" id="fstkv-'+k+'" style="color:'+HUE[feed]+'">0</div><div class="sl">'+FEEDLBL[feed]+'</div><div class="sdraw" id="fdraw-'+k+'"></div></div>'+
+          connector().replace('FLOWID','flow-'+k).replace('--fc','x')+ // placeholder; style set below
+          '<div class="run-node">'+
+            '<div class="run-cap"><span id="cap-'+k+'">0</span><small>% cap</small><span class="net" id="net-'+k+'"></span></div>'+
+            '<button class="lock-btn" id="lock-'+k+'" data-lock="'+k+'"></button>'+
+            '<div class="run-sub" id="rsub-'+k+'"></div>'+
+            '<svg class="wind-fc" id="wind-'+k+'" viewBox="0 0 100 22" preserveAspectRatio="none" data-tip="'+esc('<i>The wind ahead (~12s).</i><br>The colored line is this run\'s <b>demand</b>; the dashed line is the <b>share</b> you feed it. Where demand rises above the dash, it starves — steer before the crossing.')+'">'+
+              '<polyline class="fc-wind" id="windline-'+k+'" style="stroke:'+col+'" points=""/>'+
+              '<line class="fc-share" id="shareline-'+k+'" x1="0" y1="11" x2="100" y2="11"/></svg>'+
+          '</div>'+
+        '</div></div>';
+    }
+    $('lanes').innerHTML=h;
+    // set the flow connector color per lane (feedstock hue)
+    for(const d of CFG.domains){ const f=$('flow-'+d.k); if(f) f.style.setProperty('--fc', HUE[CFG.feedstock[d.k]]); }
+    // wire lock buttons
+    document.querySelectorAll('[data-lock]').forEach(b=> b.onclick=()=>lockRun(b.getAttribute('data-lock')));
+  }
+
+  function buildSupply(){
+    let h='';
+    for(const s of SUPPLY){ const ic=s.icon; const inner = ic ? '<img src="'+ic+'">' : '<span class="sglyph" style="color:'+HUE[s.out]+';background:'+HUE[s.out]+'22;border:1px solid '+HUE[s.out]+'55">'+(s.glyph||'')+'</span>';
+      h+='<button class="side-btn" id="sup-'+s.key+'" data-supbuy="'+s.key+'" data-tip="'+esc(s.tip)+'">'+inner+
+        '<span class="sb-nm">'+s.name+'</span><span class="sb-cnt" id="supc-'+s.key+'">0</span>'+
+        '<span class="sb-out" id="supo-'+s.key+'"></span><span class="sb-cost" id="supx-'+s.key+'"></span></button>';
+    }
+    $('supply').innerHTML=h;
+    document.querySelectorAll('[data-supbuy]').forEach(b=> b.onclick=()=>buySup(b.getAttribute('data-supbuy')));
+  }
+
+  function render(){ // structural: rail + supply + lanes (built once; refresh() does per-tick values)
+    $('rail').innerHTML = RAIL.map(r=>railChip(r[0],r[1])).join('') + '<div class="rail-right"><button class="rail-btn" id="musicBtn">♪ music</button></div>';
+    $('musicBtn').onclick=toggleMusic;
+    buildSupply(); buildLanes(); refresh();
+  }
+
+  // ---------- per-tick refresh (update-in-place) ----------
+  const RATES = {};
+  function updWind(k, share, evShiftActive){
+    const t=S.t||0; let pts='';
+    for(let i=0;i<=20;i++){ const tau=i*0.6, evOn=evShiftActive && tau<S.eventT;
+      const wDem=CFG.driftDemand*(0.5+0.5*Math.sin((t+tau)*CFG.driftFreq+PH[k]))*(evOn?CFG.shiftDemand:1);
+      pts+=(i*5)+','+(21-Math.min(1,wDem/0.6)*19).toFixed(1)+' '; }
+    const sy=(21-Math.min(1,(share||0)/0.6)*19).toFixed(1);
+    setAttr($('windline-'+k),'points',pts.trim());
+    const sl=$('shareline-'+k); if(sl){ setAttr(sl,'y1',sy); setAttr(sl,'y2',sy); }
+  }
+  function connGlow(k, thru, blocked){ const f=$('flow-'+k); if(!f) return;
+    f.style.setProperty('--thru', Math.max(0,Math.min(1,thru)).toFixed(2));
+    if(f.classList.contains('blocked')!==!!blocked) f.classList.toggle('blocked', !!blocked);
+    if(f.classList.contains('idle')!==(thru<0.02 && !blocked)) f.classList.toggle('idle', thru<0.02 && !blocked); }
+
+  function refresh(){
+    const doms=CFG.domains, t=S.t||0;
+    const computeRate=S.node*CFG.nodeCompute;
+    const tw=doms.reduce((a,d)=>a+(S.alloc[d.k]||0),0)||1;
+    const throttle = S.heat>=CFG.heatThrottle ? CFG.throttleHot : (S.heat>=CFG.heatWarn ? CFG.throttleWarm : 1);
+    // rail
+    const railVal = { compute:computeRate, capability:S.capability, data:S.data, insight:S.insight, knowledge:S.knowledge, silicon:S.silicon };
+    for(const [k] of RAIL){ setTxt($('rv-'+k), fmt(railVal[k])+(k==='compute'?'/s':''));
+      const ps=$('rp-'+k); if(ps){ if(k==='compute'){ setTxt(ps, S.node+' nodes'); const cl='cps zero'; if(ps.className!==cl) ps.className=cl; }
+        else { const rt=RATES[k]||0; setTxt(ps,(rt>=0?'+':'')+fmt(rt)+'/s'); const cl='cps '+(rt>0.005?'pos':rt<-0.005?'neg':'zero'); if(ps.className!==cl) ps.className=cl; } } }
+    // node verb
+    const nc=nodeCost(), ncan=canNode();
+    setTxt($('nodeYield'), '+'+fmt(CFG.nodeCompute)+' compute/s each');
+    setHTML($('nodeCost'), '×'+S.node+' built · next <b>'+fmt(nc)+' Silicon</b>');
+    $('buyNode').classList.toggle('can', ncan);
+    // supply
+    for(const s of SUPPLY){ const c=supCost(s), can=canSup(s);
+      setTxt($('supc-'+s.key), String(S[s.key]));
+      setHTML($('supo-'+s.key), '+<b>'+fmt(S[s.key]*s.rate)+'</b> '+(FEEDLBL[s.out]||cap1(s.out))+'/s');
+      setHTML($('supx-'+s.key), 'next <b>'+fmt(c)+' '+cap1(s.res)+'</b>');
+      const btn=$('sup-'+s.key); if(btn) btn.classList.toggle('can', can); }
+    // per-run compute
+    const info={}, share={};
+    for(const d of doms){ const k=d.k; share[k]=(S.alloc[k]||0)/tw;
+      const wind=0.5+0.5*Math.sin(t*CFG.driftFreq+PH[k]);
+      const evShift=!!(S.event&&S.event.type==='shift'&&S.event.run===k);
+      const evBreak=!!(S.event&&S.event.type==='breakthrough'&&S.event.run===k);
+      const demand=CFG.driftDemand*wind*(evShift?CFG.shiftDemand:1);
+      const shortfall=Math.max(0, demand - share[k]);
+      const driftBite=CFG.driftBite*Math.max(0.35, 1 - S.stabilizer*CFG.stabilizerCut);
+      const erodeRate=driftBite*shortfall*(0.3+0.7*S[k])*computeRate;
+      const res=CFG.feedstock[k], need=share[k]*computeRate*CFG.feedPerShare, blocked=need>0 && S[res] < need*0.6, thinning=need>0 && !blocked && S[res] < need*3;
+      const gainRate=CFG.capGain*share[k]*computeRate*(1-S[k])*(blocked?(need>0?S[res]/need:0):1)*(evBreak?CFG.breakthroughMult:1)*throttle;
+      const locked=S.locks[k]>0;
+      info[k]={ wind, shortfall, erodeRate, blocked, thinning, evBreak, evShift, res, need, net:locked?0:(gainRate-erodeRate), locked };
+    }
+    // mixer handle + feed lines + vertex %
+    const hx=mixerHandleXY(), th=$('triHandle'); if(th){ th.style.left=(hx.x*100)+'%'; th.style.top=(hx.y*100)+'%';
+      const mr=Math.round(84*share.vision+181*share.language+111*share.reasoning),
+            mg=Math.round(210*share.vision+140*share.language+230*share.reasoning),
+            mbb=Math.round(255*share.vision+255*share.language+168*share.reasoning);
+      const bc='rgb('+mr+','+mg+','+mbb+')'; if(th._bc!==bc){ th.style.background=bc; th.style.boxShadow='0 0 16px '+bc+', 0 2px 4px rgba(0,0,0,0.5)'; th._bc=bc; } }
+    for(const d of doms){ const k=d.k; const ln=$('feed-'+k); if(ln){ setAttr(ln,'x2',(hx.x*100).toFixed(1)); setAttr(ln,'y2',(hx.y*100).toFixed(1)); ln.style.strokeOpacity=(0.1+0.9*share[k]).toFixed(2); }
+      setTxt($('pct-'+k), Math.round(share[k]*100)+'%'); }
+    // lanes
+    for(const d of doms){ const k=d.k, i=info[k];
+      setTxt($('fstkv-'+k), fmt(S[CFG.feedstock[k]]));
+      setTxt($('fdraw-'+k), (i.need>0?'−'+fmt(share[k]*computeRate*CFG.feedPerShare)+'/s':''));
+      const fstk=$('fstk-'+k); if(fstk) fstk.classList.toggle('blocked', i.blocked);
+      connGlow(k, share[k], i.blocked);
+      setTxt($('cap-'+k), (S[k]*100).toFixed(0));
+      const net=$('net-'+k); if(net){ const up=i.net>=0; setTxt(net, (i.locked?'frozen':(up?'+':'−')+fmt(Math.abs(i.net)*100)+'/s')); const cl='net '+(i.locked?'':(up?'up':'dn')); if(net.className!==cl) net.className=cl; }
+      const tr=$('trend-'+k); if(tr){ setTxt(tr, i.locked?'■':(i.net>=0?'▲':'▼')); const cl='rtrend '+(i.net>=0?'up':'dn'); if(tr.className!==cl) tr.className=cl; }
+      // status + badge
+      let st, badge='';
+      if(i.locked){ st='<span class="rst-front">locked '+Math.ceil(S.locks[k])+'s</span>'; }
+      else if(i.evBreak){ st='<span class="rst-front">breakthrough — push now</span>'; badge='<span class="rbadge b-front">BREAKTHROUGH</span>'; }
+      else if(i.blocked){ st='<span class="rst-low">blocked · low '+cap1(i.res)+'</span>'; badge='<span class="rbadge b-low">BLOCKED</span>'; }
+      else if(i.evShift){ st='<span class="rst-low">drift squall — re-feed</span>'; badge='<span class="rbadge b-low">DRIFT</span>'; }
+      else if(i.net<0){ st='<span class="rst-low">drifting down — steer here</span>'; badge='<span class="rbadge b-low">DRIFT</span>'; }
+      else if(i.thinning){ st=cap1(i.res)+' thinning'; }
+      else { st='holding'; badge='<span class="rbadge b-hold">HOLDING</span>'; }
+      setHTML($('rsub-'+k), 'share '+Math.round(share[k]*100)+'% · '+st);
+      setHTML($('badge-'+k), badge);
+      const lane=$('lane-'+k); if(lane){ const cls='lane'+(i.evBreak?' front':'')+((i.blocked||i.evShift||i.net<0)?' low':''); if(lane.className!==cls) lane.className=cls; }
+      // lock button (the cap timer AT the run)
+      const lb=$('lock-'+k); if(lb){ const lc=lockCost();
+        if(i.locked){ setHTML(lb, '🔒 '+Math.ceil(S.locks[k])+'s'); lb.classList.add('active'); setDis(lb,true); }
+        else { setHTML(lb, 'LOCK<span class="lk-cost">'+fmt(lc)+' Cap</span>'); lb.classList.remove('active'); setDis(lb, S.capability<lc); } }
+      updWind(k, share[k], i.evShift);
+    }
+    // gauges
+    const cg=$('capGauge'); if(cg) cg.style.width=Math.min(100,(S.capability/2000)*100)+'%'; setTxt($('capV'), fmt(S.capability));
+    const cog=$('computeGauge'); if(cog) cog.style.width=Math.min(100,(computeRate/40)*100)+'%'; setTxt($('computeV'), fmt(computeRate)+'/s');
+    const hstate=S.heat>=CFG.heatThrottle?'THROTTLING':(S.heat>=CFG.heatWarn?'WARM':'STABLE');
+    const hg=$('heatGauge'); if(hg){ hg.style.width=Math.min(100,S.heat/CFG.heatThrottle*100)+'%'; hg.style.background=S.heat>=CFG.heatThrottle?'var(--danger)':(S.heat>=CFG.heatWarn?'var(--hot)':'rgba(110,168,255,0.55)'); }
+    setTxt($('heatV'), Math.round(S.heat)+' · '+hstate);
+    const led=$('heatLed'); if(led){ const cls='heat-led '+(S.heat>=CFG.heatThrottle?'hot':(S.heat>=CFG.heatWarn?'warm':'ok')); if(led.className!==cls) led.className=cls; }
+    // orchestration line — the live "what to do now"
+    const dl=k=>domLabel(k);
+    const breakR=doms.find(d=>info[d.k].evBreak), blockedR=doms.filter(d=>info[d.k].blocked && !info[d.k].locked),
+          driftD=doms.filter(d=>info[d.k].net<0 && !info[d.k].blocked && !info[d.k].evBreak && !info[d.k].locked);
+    const parts=[];
+    if(breakR) parts.push('<b class="o-front" style="color:'+RUNCOL[breakR.k]+'">'+dl(breakR.k)+'</b> breakthrough — push it now');
+    blockedR.forEach(d=> parts.push('<b class="o-low">'+dl(d.k)+'</b> blocked — build more '+cap1(info[d.k].res)+' supply'));
+    if(driftD.length) parts.push(driftD.map(d=>'<b style="color:'+RUNCOL[d.k]+'">'+dl(d.k)+'</b>').join(' &amp; ')+(driftD.length>1?' are':' is')+' drifting — steer there');
+    if(S.heat>=CFG.heatWarn) parts.push('<b class="o-low">heat '+hstate.toLowerCase()+'</b> — ease toward balanced to cool');
+    if(!parts.length) parts.push('holding course — watch the wind shift');
+    setHTML($('orch'), parts.join(' · '));
+    // event banner (dwells the full duration; reserved height = no reflow)
+    const eb=$('eventBanner'); let eh='holding course — watch the wind', ec='';
+    if(S.event && S.event.type==='shift'){ ec='shift'; eh='⚠ DRIFT SQUALL · <b>'+dl(S.event.run)+'</b> demands far more — pour compute in ('+Math.ceil(S.eventT)+'s)'; }
+    else if(S.event && S.event.type==='breakthrough'){ ec='brk'; eh='✦ BREAKTHROUGH · <b>'+dl(S.event.run)+'</b> has clean gradient — concentrate, eat the heat ('+Math.ceil(S.eventT)+'s)'; }
+    else if(S.eventNext){ ec='warn'; eh='▲ '+(S.eventNext.type==='shift'?'SHIFT FORMING':'BREAKTHROUGH FORMING')+' on <b>'+dl(S.eventNext.run)+'</b> — pre-position ('+Math.ceil(Math.max(0,S.eventT))+'s)'; }
+    const cls='event-banner'+(ec?' '+ec:''); if(eb.className!==cls) eb.className=cls; setHTML(eb, '<span>'+eh+'</span>'); // wrap: a flex container strips whitespace around inline <b>, so keep the text one flex item
+    // steering: stabilizer
+    const stb=$('stabBtn'); if(stb){ const maxed=S.stabilizer>=CFG.stabilizerMax, sc=stabilizerCost();
+      setTxt($('stabLvl'), 'Lv'+S.stabilizer+(maxed?' · max':'/'+CFG.stabilizerMax));
+      setTxt($('stabEff'), S.stabilizer>0 ? '−'+Math.round(S.stabilizer*CFG.stabilizerCut*100)+'% drift on every run' : 'calms the wind on every run');
+      setHTML($('stabCost'), maxed?'maxed out':'next <b>'+fmt(sc)+' Capability</b>');
+      setDis(stb, maxed || S.capability<sc); }
+    // goal
+    const br=breadth(), ready=br>=CFG.breadthGate && !S.done;
+    const gm=$('breadthMeter'); if(gm) gm.style.width=Math.min(100, br/CFG.breadthGate*100)+'%';
+    setTxt($('breadthLab'), (br*100).toFixed(1)+'% / '+(CFG.breadthGate*100).toFixed(0)+'% breadth');
+    setHTML($('runsRead'), doms.map(d=>'<span style="color:'+RUNCOL[d.k]+'">'+(S[d.k]*100).toFixed(0)+'%</span>').join(' · ')+(S.foundry>0?'<br><span style="color:var(--dimmer)">'+S.foundry+' foundries → +'+Math.round(CFG.chainPerFoundry*S.foundry*100)+'% cap</span>':''));
+    const adv=$('advance'); setDis(adv, !ready); setTxt(adv, S.done?'ADVANCED ✓':'ADVANCE → FOUNDATION');
+    $('goal').classList.toggle('ready', ready);
+    if(S.dev) updateDbg();
+  }
+  const cap1 = s => s.charAt(0).toUpperCase()+s.slice(1);
+
+  // ---------- tick ----------
+  let _last=Date.now();
+  function tick(){ const now=Date.now(); let real=(now-_last)/1000; _last=now; if(real>0.5) real=0.5;
+    const dt=real*S.speed; S.t+=dt; S.started=true;
+    const before={ capability:S.capability, data:S.data, insight:S.insight, knowledge:S.knowledge, silicon:S.silicon };
+    produce(dt);
+    if(dt>0) for(const k in before) RATES[k]=(S[k]-before[k])/dt;
+    refresh();
+  }
+
+  // ---------- tooltips ----------
+  const tip=$('tip'); let tipEl=null;
+  function placeTip(e){ const m=15; let x=e.clientX+m,y=e.clientY+m; const w=tip.offsetWidth,h=tip.offsetHeight;
+    if(x+w>innerWidth-8)x=e.clientX-w-m; if(y+h>innerHeight-8)y=innerHeight-h-8; if(x<8)x=8; if(y<8)y=8; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+  document.addEventListener('mouseover',e=>{ const t=e.target.closest?e.target.closest('[data-tip]'):null; if(t&&t!==tipEl){ tipEl=t; tip.innerHTML=t.getAttribute('data-tip'); tip.classList.add('show'); placeTip(e); } });
+  document.addEventListener('mousemove',e=>{ if(tipEl) placeTip(e); });
+  document.addEventListener('mouseout',e=>{ if(tipEl){ const to=e.relatedTarget; if(!to||!(to.closest&&to.closest('[data-tip]'))){ tip.classList.remove('show'); tipEl=null; } } });
+
+  // ---------- dead-click telemetry ----------
+  const ACTIONABLE='button,input,a,.side-btn,.steer-btn,.verb,.rail-btn,.tri-mixer,.chip,.stock,.lock-btn';
+  document.addEventListener('pointerdown',e=>{ if(!S.started) return; const t=e.target;
+    if(t&&t.closest&&t.closest(ACTIONABLE)) return; REC.dead++; rec('@deadclick',{x:Math.round(e.clientX),y:Math.round(e.clientY)}); },true);
+
+  // ---------- the mixer drag: SNAP to pointer (fixes "the circle follows my mouse / doesn't go where I click") ----------
+  function wireMixer(){ const tm=$('triMixer'); if(!tm) return; let drag=false;
+    const upd=e=>{ const r=tm.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left, cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+      setAllocFromXY(Math.max(0,Math.min(1,cx/r.width)), Math.max(0,Math.min(1,cy/r.height))); refresh(); };
+    tm.onpointerdown=e=>{ drag=true; tm.classList.add('dragging'); if(tm.setPointerCapture){ try{tm.setPointerCapture(e.pointerId);}catch(_){} } playClick(); upd(e); rec('alloc'); };
+    tm.onpointermove=e=>{ if(drag) upd(e); };
+    tm.onpointerup=tm.onpointercancel=()=>{ drag=false; tm.classList.remove('dragging'); }; }
+
+  // ---------- music ----------
+  let musicOn=false;
+  function toggleMusic(){ musicOn=!musicOn; const m=$('music'); if(musicOn){ m.volume=0.38; m.play().catch(()=>{}); $('musicBtn').style.color='var(--accent)'; } else { m.pause(); $('musicBtn').style.color=''; } }
+  addEventListener('pointerdown',()=>{ if(musicOn){ const m=$('music'); if(m.paused) m.play().catch(()=>{}); } },{once:true});
+
+  // ---------- dev overlay ----------
+  function updateDbg(){ const o=$('dbg'); if(!o) return;
+    o.innerHTML='<b>DEEP</b>  t=<b>'+Math.floor(S.t)+'</b>s  nodes <b>'+S.node+'</b>  heat '+Math.round(S.heat)+'\nbreadth <b>'+(breadth()*100).toFixed(1)+'%</b>/'+(CFG.breadthGate*100)+'  cap '+fmt(S.capability)+'\nV '+(S.vision*100).toFixed(0)+' L '+(S.language*100).toFixed(0)+' R '+(S.reasoning*100).toFixed(0)+'\nlast: <b>'+(lastAction||'—')+'</b>  dead: <b>'+REC.dead+'</b>'; }
+  function renderDev(){ if(!S.dev) return; $('dev').innerHTML='<div class="row">'+[1,3,10,50].map(s=>'<button data-s="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div>'+
+    '<div class="row"><button data-grant>+res</button><button data-cap>+cap</button><button data-newgame>reset</button><button data-dl>run json</button></div>';
+    $('dev').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ S.speed=+b.dataset.s; renderDev(); });
+    $('dev').querySelector('[data-grant]').onclick=()=>{ S.silicon+=1000; S.data+=1000; S.insight+=1000; S.knowledge+=1000; refresh(); };
+    $('dev').querySelector('[data-cap]').onclick=()=>{ S.capability+=1000; refresh(); };
+    $('dev').querySelector('[data-newgame]').onclick=newGame;
+    $('dev').querySelector('[data-dl]').onclick=downloadRun; }
+  function toggleDev(on){ S.dev=on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); $('dbg').classList.toggle('show',S.dev); if(S.dev){ renderDev(); updateDbg(); } }
+  addEventListener('keydown',e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
+  function runJSON(){ return JSON.stringify({ ...REC, t:+S.t.toFixed(1), breadth:+breadth().toFixed(3), done:S.done }); }
+  function downloadRun(){ try{ const b=new Blob([runJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='emergence-v3-deep-run.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },400); toast('RUN DOWNLOADED','emergence-v3-deep-run.json is in Downloads.'); }catch(e){} }
+  function newGame(){ try{ localStorage.setItem(SAVE_KEY+'_lastrun', runJSON()); }catch(e){} S=fresh(); seedStart(); REC.events.length=0; REC.dead=0; save(); render(); toast('RESET','Fresh Deep run.'); }
+
+  // ---------- save ----------
+  function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({S, t:Date.now()})); }catch(e){} }
+  function load(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d&&d.S){ S=Object.assign(fresh(),d.S); S.alloc=Object.assign({vision:1,language:1,reasoning:1},d.S.alloc||{}); S.locks=Object.assign({vision:0,language:0,reasoning:0},d.S.locks||{}); S.fedT=Object.assign({vision:0,language:0,reasoning:0},d.S.fedT||{}); return true; } }catch(e){} return false; }
+  setInterval(save,5000); addEventListener('beforeunload',save);
+
+  // seed the opening state (openEra(4) equivalent + a starting supply trickle so the reach-back isn't instantly blocked)
+  function seedStart(){ S.node=CFG.seedNodes; S.silicon=CFG.seedSilicon; S.data=CFG.seedData; S.insight=CFG.seedInsight; S.knowledge=CFG.seedKnowledge;
+    S.foundry=2; S.dataset=3; S.model=2; S.scriptorium=2; S.alloc={vision:1,language:1,reasoning:1}; }
+
+  // ---------- wire + boot ----------
+  $('buyNode').onclick=buyNode;
+  $('stabBtn').onclick=buyStabilizer;
+  $('advance').onclick=advance;
+
+  const hadSave=load();
+  if(!hadSave) seedStart();
+  if(location.hash.indexOf('seed')>=0){ // mid-game state for screenshots (nodes built, runs drifting, some capability)
+    S.node=14; S.foundry=3; S.dataset=6; S.model=4; S.scriptorium=4;
+    S.silicon=1350; S.data=420; S.insight=140; S.knowledge=280;
+    S.vision=0.55; S.language=0.34; S.reasoning=0.62; S.capability=520; S.heat=41; S.stabilizer=1;
+    S.alloc={vision:0.30, language:0.50, reasoning:0.20}; // leaning into a starving Language run
+    S.event={type:'shift', run:'reasoning', mult:1}; S.eventT=9; S.eventNext=null; S.started=true;
+  }
+  render();
+  wireMixer();
+  setInterval(tick, CFG.tickMs);
+})();
+</script>
+</body>
+</html>

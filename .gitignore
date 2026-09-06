@@ -12,3 +12,6 @@ emergence-v3-single.html
 
 # playtest recordings (large videos) — never committed by policy
 KittyCapture/
+
+# v4 packaged artifact (EMG_SHELL=emergence-v4.html EMG_KIT=v4-kit node tools/build-single.js)
+emergence-v4-single.html

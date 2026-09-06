@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMERGENCE v3 — Foundation (Flow Board prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0814; --panel:#160f24; --panel-2:#1d1430; --line:#382a52; --edge:#4a3a6e;
+    --text:#e6dbf6; --dim:#b29ad0; --dimmer:#7c6a99; --accent:#b78bff;
+    /* fixed resource colors — used everywhere the resource appears */
+    --capability:#6ea8ff; --scale:#b78bff; --autonomy:#c66bff; --alignment:#5fe0c0; --control:#9fb4d6; --coherence:#6ea8ff; --anomaly:#ff5a6e;
+    --good:#7fe6c4; --danger:#ff7a8e;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --field: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.55 0 0 0 0 0.4 0 0 0 0 0.85 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background:
+      radial-gradient(1100px 700px at 50% -12%, rgba(183,139,255,0.14), transparent 60%),
+      radial-gradient(800px 520px at 88% 112%, rgba(110,168,255,0.08), transparent 60%),
+      var(--field), var(--bg);
+    color:var(--text); font-family:'Inter',"Helvetica Neue",Arial,sans-serif; font-size:16px; line-height:1.4;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1200px; margin:0 auto; padding:14px 18px 44px; }
+  h1,h2,h3,.disp{ font-family:'Space Grotesk','Inter',sans-serif; letter-spacing:0.02em; }
+
+  /* ---------- Resource rail (color-coded, persistent) ---------- */
+  .rail{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch;
+    padding:10px 8px; margin:0 -8px 12px; background:rgba(8,5,14,0.84); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line); }
+  .chip{ display:flex; align-items:center; gap:9px; padding:7px 12px 7px 9px; border-radius:10px;
+    border:1px solid var(--line); background:var(--panel); min-width:140px; position:relative; }
+  .chip .cdot{ width:26px; height:26px; border-radius:7px; flex:none; display:grid; place-items:center; font-size:15px; }
+  .chip .cbody{ display:flex; flex-direction:column; line-height:1.15; min-width:0; }
+  .chip .clab{ font-family:'Space Grotesk',sans-serif; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); }
+  .chip .cval{ font-size:19px; font-variant-numeric:tabular-nums; font-weight:600; }
+  .chip .cps{ font-size:11px; font-variant-numeric:tabular-nums; margin-left:auto; align-self:flex-start; opacity:0.9; }
+  .cps.pos{ color:var(--good); } .cps.neg{ color:var(--danger); } .cps.zero{ color:var(--dimmer); }
+  .rail-right{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .rail-btn{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.1em; color:var(--dim); background:var(--panel);
+    border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; }
+  .rail-btn:hover{ border-color:var(--accent); color:var(--text); }
+
+  header.era{ display:flex; align-items:baseline; gap:14px; margin:4px 2px 14px; }
+  header.era .sig{ width:34px; height:34px; object-fit:contain; opacity:0.92; filter:drop-shadow(0 0 10px rgba(183,139,255,0.4)); align-self:center; }
+  header.era h1{ font-size:26px; margin:0; color:#f1eaff; }
+  header.era .sub{ color:var(--dim); font-style:italic; font-size:15px; }
+  header.era .phase{ margin-left:auto; font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.16em; color:var(--accent); text-transform:uppercase; }
+
+  /* ---------- The board ---------- */
+  .board{ display:grid; grid-template-columns: 232px 1fr 246px; gap:14px; align-items:start; }
+  .board > div{ min-width:0; }
+  @media(max-width:940px){ .board{ grid-template-columns:1fr; } }
+  .col-head{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dimmer); margin:2px 0 8px; }
+
+  /* verbs (the standing decision) */
+  .verb{ width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left;
+    padding:16px 16px; margin-bottom:10px; border-radius:13px; cursor:pointer; color:#fff;
+    font-family:'Space Grotesk',sans-serif; letter-spacing:0.02em; border:1px solid var(--edge);
+    background-image: linear-gradient(180deg,#2a1d44,#170f28);
+    box-shadow: inset 0 2px 0 rgba(200,170,255,0.14), inset 0 -6px 14px rgba(0,0,0,0.32), 0 5px 14px rgba(0,0,0,0.45); }
+  .verb:hover:not(:disabled){ border-color:rgba(183,139,255,0.75); }
+  .verb:active:not(:disabled){ transform:translateY(2px); box-shadow: inset 0 3px 9px rgba(0,0,0,0.5); }
+  .verb:disabled{ opacity:0.5; cursor:not-allowed; }
+  .verb .vname{ font-size:16px; }
+  .verb .vyield{ font-size:12.5px; font-family:'Inter',sans-serif; font-variant-numeric:tabular-nums; color:var(--dim); }
+  .verb.star{ padding:20px 16px; background-image:linear-gradient(180deg,#3a2568,#1d1236); border-color:rgba(183,139,255,0.55);
+    box-shadow: inset 0 2px 0 rgba(210,180,255,0.2), 0 0 22px rgba(183,139,255,0.22), 0 6px 16px rgba(0,0,0,0.5); }
+  .verb.star .vname{ font-size:19px; color:#f1eaff; }
+  .verb.star .vyield{ color:var(--capability); }
+  .verb.prepare{ background-image:linear-gradient(180deg,#123044,#0c1c2a); border-color:rgba(110,168,255,0.4); }
+  .verb.prepare .vyield{ color:var(--alignment); }
+  .verb .c{ color:var(--capability); font-variant-numeric:tabular-nums; }
+  .verb.prepare .c{ color:var(--coherence); }
+  /* aftermath response verbs, colored to their axis */
+  .verb.constrain{ background-image:linear-gradient(180deg,#22304a,#101826); border-color:rgba(159,180,214,0.4); }
+  .verb.constrain .c{ color:var(--scale); }
+  .verb.align{ background-image:linear-gradient(180deg,#0f3a34,#0a201d); border-color:rgba(95,224,192,0.4); }
+  .verb.align .c{ color:var(--scale); }
+  .verb.delegate{ background-image:linear-gradient(180deg,#3a1d4e,#1d0f2a); border-color:rgba(198,107,255,0.45); }
+
+  /* lanes / pipeline */
+  .lane{ background:linear-gradient(180deg,rgba(28,20,44,0.6),rgba(16,10,26,0.7)); border:1px solid var(--line);
+    border-radius:14px; padding:12px 12px 14px; margin-bottom:14px; position:relative; }
+  .lane-lab{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dim); margin-bottom:10px; display:flex; gap:8px; align-items:center; }
+  .lane-lab .ldash{ flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent); }
+  .pipe{ display:flex; align-items:stretch; gap:6px; flex-wrap:wrap; }
+  .seg{ display:flex; align-items:stretch; gap:6px; min-width:0; flex:1 1 300px; }
+  .stock{ display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; min-width:88px;
+    padding:9px 8px; border-radius:11px; border:1px solid var(--line); background:rgba(0,0,0,0.24); }
+  .stock .sicon{ font-size:20px; line-height:1; }
+  .stock .sv{ font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .stock .sl{ font-family:'Space Grotesk',sans-serif; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); }
+  .flow{ align-self:center; width:40px; height:22px; position:relative; flex:none; }
+  .flow svg{ width:100%; height:100%; overflow:visible; }
+  .flow .track{ stroke:var(--fc,#8a7bb0); stroke-width:2; opacity:0.28; }
+  .flow .pulse{ stroke:var(--fc,#c9adf5); stroke-width:2.4; stroke-dasharray:5 9; opacity:calc(0.25 + 0.75*var(--thru,0));
+    animation:flowmove 0.9s linear infinite; filter:drop-shadow(0 0 4px var(--fc)); }
+  .flow.idle .pulse{ animation:none; opacity:0.12; }
+  @keyframes flowmove{ to{ stroke-dashoffset:-14; } }
+
+  /* the recursion engine node */
+  .engine{ flex:1 1 200px; min-width:190px; display:flex; flex-direction:column; gap:4px;
+    padding:11px 13px; border-radius:12px; border:1px solid rgba(183,139,255,0.4); background:var(--panel);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 0 18px rgba(183,139,255,0.08); }
+  .engine .en-name{ font-family:'Space Grotesk',sans-serif; font-size:14px; }
+  .engine .en-lv{ color:var(--accent); font-variant-numeric:tabular-nums; }
+  .engine .en-sub{ font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums; }
+  .engine .en-sub b{ color:var(--scale); }
+
+  /* hero meter (the star metric) */
+  .hero{ background:linear-gradient(180deg,rgba(40,26,68,0.6),rgba(18,11,32,0.78)); border:1px solid rgba(183,139,255,0.32);
+    border-radius:14px; padding:14px 14px 15px; margin-bottom:14px; }
+  .hero .hlab{ display:flex; justify-content:space-between; align-items:baseline; font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:0.06em; color:var(--dim); margin-bottom:7px; }
+  .hero .hlab .hnum{ font-size:22px; font-weight:700; color:#f1eaff; font-variant-numeric:tabular-nums; letter-spacing:0; }
+  .hero .hsub{ font-size:11.5px; color:var(--dimmer); font-style:italic; margin-top:7px; text-align:center; }
+
+  /* capability nodes grid */
+  .caps-grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  @media(max-width:520px){ .caps-grid{ grid-template-columns:1fr; } }
+  .cap{ display:flex; flex-direction:column; gap:3px; padding:10px 11px; border-radius:12px; border:1px solid var(--line); background:var(--panel);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); position:relative; }
+  .cap.can{ border-color:rgba(183,139,255,0.5); }
+  .cap.owned{ border-color:rgba(127,230,196,0.5); background:linear-gradient(180deg,rgba(20,40,36,0.55),var(--panel)); }
+  .cap.align{ border-style:dashed; }
+  .cap .cn{ display:flex; align-items:center; gap:8px; }
+  .cap .cn img{ width:26px; height:26px; object-fit:contain; }
+  .cap .cn .glyph{ width:26px; text-align:center; font-size:18px; color:var(--accent); }
+  .cap .cname{ font-family:'Space Grotesk',sans-serif; font-size:13px; }
+  .cap .cdesc{ font-size:11.5px; color:var(--dim); }
+  .cap .cbuy{ margin-top:4px; }
+
+  /* buttons */
+  .buy,.act{ font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:0.02em; padding:9px 12px; border-radius:9px; cursor:pointer;
+    background:var(--panel-2); border:1px solid var(--edge); color:var(--text); white-space:nowrap; width:100%;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 1px 2px rgba(0,0,0,0.3); }
+  .buy:hover:not(:disabled),.act:hover:not(:disabled){ border-color:var(--accent); background:#241634; }
+  .buy:active:not(:disabled),.act:active:not(:disabled){ transform:translateY(1px); }
+  .buy:disabled,.act:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+  .buy .c{ color:var(--accent); } .buy:disabled .c{ color:inherit; }
+  .buy.ok .c{ color:var(--good); }
+
+  /* meters (goal column + aftermath) */
+  .sys{ background:linear-gradient(180deg,rgba(34,22,56,0.7),rgba(16,10,26,0.8)); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .meter{ height:12px; border-radius:6px; background:rgba(0,0,0,0.42); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,0.55); }
+  .meter i{ display:block; height:100%; width:0; transition:width 0.25s; }
+  .m-cap i{ background:var(--capability); box-shadow:0 0 8px rgba(110,168,255,0.5); }
+  .m-scale i{ background:var(--scale); box-shadow:0 0 8px rgba(183,139,255,0.5); }
+  .m-coher i{ background:var(--coherence); box-shadow:0 0 8px rgba(110,168,255,0.5); }
+  .m-anom i{ background:linear-gradient(90deg,#8a7bb0,#c66bff); }
+  .m-anom.warn i{ background:linear-gradient(90deg,#c66bff,#ff8a55); }
+  .m-anom.crit i{ background:linear-gradient(90deg,#ff5a6e,#ff2a6d); box-shadow:0 0 12px rgba(255,42,109,0.6); }
+  .m-auto i{ background:var(--autonomy); box-shadow:0 0 8px rgba(198,107,255,0.5); }
+  .m-align i{ background:var(--alignment); box-shadow:0 0 8px rgba(95,224,192,0.5); }
+  .m-ctl i{ background:var(--control); }
+  .m-ctl.crit i{ background:var(--danger); box-shadow:0 0 12px rgba(255,90,110,0.6); }
+  .m-lab{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; color:var(--dim); margin:5px 0 13px; font-variant-numeric:tabular-nums; }
+  .m-lab small{ color:var(--dimmer); font-style:italic; }
+  .m-lab .mv{ color:var(--text); }
+  .m-big .hnum{ font-size:19px; font-weight:700; }
+  .anom-title.crit{ color:var(--anomaly); }
+
+  /* aftermath: the veto window (the active star) */
+  .aftertitle{ font-family:'Space Grotesk',sans-serif; font-size:16px; color:var(--accent); letter-spacing:0.02em; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .aftertitle img{ width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 10px rgba(183,139,255,0.5)); }
+  .aftertitle.destab{ color:var(--danger); animation:destabPulse 0.9s ease-in-out infinite; }
+  @keyframes destabPulse{ 0%,100%{ opacity:0.72; } 50%{ opacity:1; text-shadow:0 0 14px rgba(255,90,110,0.55); } }
+  .veto-host{ min-height:96px; }
+  .veto-host.open{ border-color:var(--accent); box-shadow:0 0 26px rgba(183,139,255,0.28); animation:vetoBreathe 2.2s ease-in-out infinite; }
+  @keyframes vetoBreathe{ 0%,100%{ box-shadow:0 0 12px rgba(183,139,255,0.16); } 50%{ box-shadow:0 0 30px rgba(183,139,255,0.4); } }
+  .veto-msg{ font-size:14px; color:var(--text); margin-bottom:11px; }
+  .veto-msg b{ color:var(--accent); }
+  .veto-acts{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  @media(max-width:520px){ .veto-acts{ grid-template-columns:1fr; } }
+  .veto-timer{ font-family:var(--mono); font-size:11px; color:#ff8a55; margin-top:10px; text-align:center; }
+  .veto-idle{ font-family:var(--mono); font-size:12px; color:var(--dimmer); font-style:italic; text-align:center; padding:22px 4px; }
+  .veto-bar{ height:5px; border-radius:3px; background:rgba(0,0,0,0.4); overflow:hidden; margin-top:8px; }
+  .veto-bar i{ display:block; height:100%; background:var(--accent); }
+
+  /* the substrate strip (agent operates the prior-era stack) */
+  .substrate{ display:flex; gap:8px; }
+  .sub-era{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:9px 4px; border-radius:11px;
+    border:1px solid var(--line); background:rgba(0,0,0,0.22); transition:box-shadow 0.3s, border-color 0.3s; position:relative; }
+  .sub-era img{ width:30px; height:30px; object-fit:contain; opacity:0.7; }
+  .sub-era .sn{ font-family:'Space Grotesk',sans-serif; font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--dim); }
+  .sub-era.live{ border-color:rgba(201,173,245,0.8); box-shadow:0 0 24px -4px #c9adf5; }
+  .sub-era.live img{ opacity:1; }
+  .sub-era.live .badge{ position:absolute; top:3px; right:5px; font-size:9px; color:#efe2ff; text-shadow:0 0 8px #c9adf5; }
+  .sub-era .badge{ display:none; }
+  .agent-stream{ font-family:var(--mono); font-size:12px; color:var(--dim); min-height:52px; display:flex; flex-direction:column; gap:3px; }
+  .agent-msg{ opacity:0.92; }
+
+  /* endcard */
+  .endcard{ text-align:center; padding:22px 18px 26px; border-radius:16px; border:1px solid var(--line);
+    background:radial-gradient(700px 400px at 50% 0%, rgba(183,139,255,0.14), transparent 60%), rgba(10,6,18,0.8); }
+  .endcard.end-symbiotic{ border-color:rgba(95,224,192,0.4); }
+  .endcard.end-runaway{ border-color:rgba(255,90,110,0.4); }
+  .endcard.end-contained{ border-color:rgba(159,180,214,0.4); }
+  .endcard .agent-hero{ width:120px; height:120px; object-fit:contain; filter:drop-shadow(0 0 22px rgba(183,139,255,0.4)); }
+  .endcard .endcard-wm{ display:block; width:220px; max-width:70%; margin:8px auto 4px; opacity:0.85; }
+  .endcard .endcard-title{ font-family:'Space Grotesk',sans-serif; font-size:22px; color:#f1eaff; margin:6px 0 12px; letter-spacing:0.04em; }
+  .epilogue{ max-width:560px; margin:0 auto 16px; }
+  .ep-line{ font-size:14px; color:var(--dim); line-height:1.6; margin:6px 0; opacity:0; animation:epFade 1.2s ease forwards; }
+  @keyframes epFade{ to{ opacity:1; } }
+  .endcard-traits{ font-size:13px; color:var(--text); margin:10px auto 14px; max-width:520px; }
+  .endcard-traits b{ color:var(--accent); }
+  .recap{ max-width:540px; margin:0 auto; padding:16px 18px; border:1px solid rgba(183,139,255,0.22); border-radius:12px; background:rgba(0,0,0,0.26); text-align:left; font-variant-numeric:tabular-nums; }
+  .rc-head{ font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--dimmer); margin-bottom:12px; }
+  .rc-grade-wrap{ display:flex; align-items:center; gap:16px; margin-bottom:14px; justify-content:center; }
+  .rc-grade{ font-size:38px; font-weight:700; line-height:1; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border-radius:10px; border:2px solid currentColor; flex:none; }
+  .rc-gS{ color:#7fe6c4; } .rc-gA{ color:#9fd66f; } .rc-gB{ color:#e8c476; } .rc-gC{ color:#e89a5c; } .rc-gD{ color:#e06b6b; }
+  .rc-q{ font-size:13px; color:var(--dim); } .rc-read{ color:var(--dimmer); font-style:italic; }
+  .rc-timeline{ margin:10px 0; }
+  .rc-row{ display:flex; justify-content:space-between; font-size:12.5px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .rc-row.rc-hd{ color:var(--dimmer); text-transform:uppercase; letter-spacing:0.1em; font-size:10px; }
+  .rc-row.rc-emerge{ color:var(--accent); border-bottom:none; margin-top:3px; }
+  .rc-era{ flex:1; } .rc-span{ width:120px; text-align:right; color:var(--dim); } .rc-at{ width:70px; text-align:right; color:var(--dimmer); }
+  .rc-traits{ font-size:12px; color:var(--dim); text-align:center; margin-top:10px; }
+
+  /* small glitches while the Anomaly climbs (SHOW, minimal text) */
+  .board.anom-2 .hero .hnum{ animation:jit 3.4s steps(2) infinite; }
+  .board.anom-3 .hero .hnum{ text-shadow:1px 0 var(--anomaly), -1px 0 #05d9e8; animation:jit 1.5s steps(2) infinite; }
+  .board.anom-3 .lane-lab{ animation:flick 4s steps(1) infinite; }
+  @keyframes jit{ 0%,92%{ transform:none; } 94%{ transform:translateX(-1px) skewX(1deg); } 96%{ transform:translateX(2px); } 100%{ transform:none; } }
+  @keyframes flick{ 0%,97%{ opacity:1; } 98%{ opacity:0.35; } 100%{ opacity:1; } }
+  .glitchpulse{ animation:gpulse 0.5s steps(2) 2 !important; }
+  @keyframes gpulse{ 0%{ filter:none; } 50%{ filter:hue-rotate(40deg) saturate(1.5); transform:translateX(2px); } 100%{ filter:none; } }
+  .agent-press{ animation:apress 0.75s ease !important; }
+  @keyframes apress{ 0%{ box-shadow:0 0 0 rgba(201,173,245,0); } 30%{ box-shadow:0 0 0 2px rgba(201,173,245,0.9), 0 0 26px -4px #c9adf5; } 100%{ box-shadow:0 0 0 rgba(201,173,245,0); } }
+
+  /* ===== the rupture cinematic ===== */
+  #rupture{ position:fixed; inset:0; z-index:9000; pointer-events:none; opacity:0; display:none; }
+  #rupture.show{ display:block; opacity:1; pointer-events:auto;
+    background:repeating-linear-gradient(0deg, rgba(183,139,255,0.06) 0 2px, rgba(0,0,0,0.2) 2px 4px), rgba(8,4,16,0.5); }
+  #rupture .rg{ position:absolute; inset:0; mix-blend-mode:screen;
+    background:linear-gradient(90deg, rgba(255,0,80,0.12), transparent 8%), linear-gradient(-90deg, rgba(0,200,255,0.12), transparent 8%);
+    animation:rTear 0.2s steps(2) infinite; }
+  #rupture .rbands{ position:absolute; inset:0; mix-blend-mode:screen; opacity:0.5;
+    background:repeating-linear-gradient(0deg, transparent 0 14px, rgba(255,255,255,0.05) 14px 15px, transparent 15px 40px);
+    animation:rSlide 0.6s linear infinite; }
+  #rupture .rline{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    font-family:var(--mono); font-size:clamp(18px,4vw,34px); letter-spacing:0.12em; color:#e6dbf6;
+    text-shadow:2px 0 #ff2a6d, -2px 0 #05d9e8, 0 0 18px rgba(183,139,255,0.7); white-space:nowrap;
+    animation:rGlitch 0.4s steps(2) infinite; }
+  #rupture .rbloom{ position:absolute; top:50%; left:50%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(198,107,255,0.55), rgba(110,168,255,0.2) 40%, transparent 70%); animation:rBloom 2.6s ease-out forwards; }
+  @keyframes rTear{ 0%{ transform:translateX(-4px) skewX(0.5deg); } 100%{ transform:translateX(4px) skewX(-0.5deg); } }
+  @keyframes rSlide{ to{ background-position:0 40px; } }
+  @keyframes rGlitch{ 0%{ clip-path:inset(0 0 60% 0); transform:translate(-50%,-50%) translateX(-3px); }
+    50%{ clip-path:inset(50% 0 0 0); transform:translate(-50%,-50%) translateX(3px); }
+    100%{ clip-path:inset(20% 0 30% 0); transform:translate(-50%,-50%); } }
+  @keyframes rBloom{ 0%{ width:10px; height:10px; opacity:0.9; } 100%{ width:2400px; height:2400px; opacity:0; } }
+  body.rupturing{ animation:bodyGlitch 0.42s steps(2) 7; }
+  @keyframes bodyGlitch{ 0%{ filter:none; transform:none; }
+    20%{ filter:hue-rotate(30deg) saturate(1.5) contrast(1.12); transform:translateX(-3px); }
+    40%{ filter:invert(0.05); transform:translateX(4px) skewX(0.4deg); }
+    60%{ filter:hue-rotate(-24deg); transform:translateY(3px); }
+    100%{ filter:none; transform:none; } }
+  /* the board tears itself apart, then reassembles */
+  .board.shatter > div > *, .board.shatter > *{ animation:shatterOut 1.15s cubic-bezier(.6,.05,.9,.4) forwards; }
+  .board.shatter > div:nth-child(1) > *{ animation-delay:0.02s; }
+  .board.shatter .lane,.board.shatter .hero,.board.shatter .verb,.board.shatter .sys,.board.shatter .cap{ animation:shatterOut 1.15s cubic-bezier(.6,.05,.9,.4) forwards; }
+  .board.shatter .verb:nth-child(2){ animation-delay:0.05s; } .board.shatter .verb:nth-child(3){ animation-delay:0.1s; }
+  .board.shatter .cap:nth-child(2){ animation-delay:0.06s; } .board.shatter .cap:nth-child(3){ animation-delay:0.12s; } .board.shatter .cap:nth-child(4){ animation-delay:0.18s; } .board.shatter .cap:nth-child(5){ animation-delay:0.24s; }
+  @keyframes shatterOut{ 0%{ opacity:1; transform:none; filter:none; }
+    35%{ filter:brightness(1.6) hue-rotate(20deg); }
+    100%{ opacity:0; transform:translate(var(--sx,-40px), var(--sy,30px)) rotate(var(--sr,-8deg)) scale(0.7); filter:blur(3px); } }
+  .board.assembling .lane,.board.assembling .hero,.board.assembling .verb,.board.assembling .sys,.board.assembling .veto-host,.board.assembling .cap{ animation:assembleIn 0.7s cubic-bezier(.2,.8,.3,1) both; }
+  .board.assembling .verb:nth-child(2){ animation-delay:0.08s; } .board.assembling .verb:nth-child(3){ animation-delay:0.16s; }
+  .board.assembling .col-goal > *{ animation:assembleIn 0.7s cubic-bezier(.2,.8,.3,1) both; animation-delay:0.12s; }
+  @keyframes assembleIn{ 0%{ opacity:0; transform:translateY(14px) scale(0.94); filter:blur(6px) brightness(1.5); }
+    60%{ filter:blur(0) brightness(1.1); } 100%{ opacity:1; transform:none; filter:none; } }
+  @media (prefers-reduced-motion: reduce){
+    #rupture .rg,#rupture .rbands,#rupture .rline,#rupture .rbloom,body.rupturing{ animation:none; }
+    .board.shatter *, .board.assembling *{ animation:none !important; }
+    .board.shatter{ opacity:0; transition:opacity 0.5s; }
+    .board.assembling{ animation:fadeIn 0.6s ease both; }
+    @keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+    .ep-line{ animation:none; opacity:1; }
+    .board.anom-2 .hero .hnum,.board.anom-3 .hero .hnum,.board.anom-3 .lane-lab,.veto-host.open{ animation:none; }
+  }
+
+  /* floating fx + tooltip + toasts */
+  #fx{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+  .float{ position:absolute; font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600; animation:floatUp 0.9s ease-out forwards; text-shadow:0 1px 3px #000; }
+  @keyframes floatUp{ to{ transform:translateY(-34px); opacity:0; } }
+  #tip{ position:fixed; z-index:70; max-width:300px; padding:10px 12px; border-radius:9px; background:rgba(12,8,18,0.97);
+    border:1px solid var(--edge); font-size:13px; line-height:1.45; color:var(--text); pointer-events:none; opacity:0; transition:opacity 0.1s; }
+  #tip.show{ opacity:1; } #tip i{ color:var(--dim); } #tip b{ color:var(--accent); }
+  #toasts{ position:fixed; right:16px; bottom:16px; z-index:65; display:flex; flex-direction:column; gap:8px; width:340px; max-width:80vw; }
+  .toast{ background:rgba(18,12,26,0.96); border:1px solid var(--accent); border-radius:11px; padding:11px 13px; animation:toastIn 0.35s ease; }
+  .toast.edu{ border-color:rgba(110,168,255,0.55); }
+  .toast .th{ font-family:'Space Grotesk',sans-serif; font-size:12px; letter-spacing:0.06em; color:var(--accent); margin-bottom:3px; }
+  .toast.edu .th{ color:var(--capability); }
+  .toast .tb{ font-size:13px; color:var(--text); } .toast .tb i{ color:var(--dim); }
+  @keyframes toastIn{ from{ transform:translateX(20px); opacity:0; } }
+
+  /* dev overlay */
+  #dev{ position:fixed; left:14px; bottom:14px; z-index:80; display:none; flex-direction:column; gap:7px;
+    background:rgba(6,4,10,0.92); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  #dev.show{ display:flex; } #dev .row{ display:flex; gap:6px; flex-wrap:wrap; } #dev button{ font-family:inherit; font-size:12px; padding:5px 9px; border-radius:6px; border:1px solid var(--line); background:var(--panel); color:var(--dim); cursor:pointer; }
+  #dev button.on{ color:var(--accent); border-color:var(--accent); }
+  #dbg{ position:fixed; left:14px; bottom:150px; z-index:79; display:none; font-family:var(--mono); font-size:11px; line-height:1.5;
+    color:#e8dcff; background:rgba(6,4,10,0.82); border:1px solid rgba(183,139,255,0.35); border-radius:8px; padding:8px 10px; white-space:pre; pointer-events:none; }
+  #dbg.show{ display:block; } #dbg b{ color:var(--accent); }
+  .note{ text-align:center; color:var(--dimmer); font-size:12px; margin-top:26px; font-style:italic; }
+</style>
+</head>
+<body class="theme-5">
+<div class="wrap">
+  <div class="rail" id="rail"></div>
+  <header class="era">
+    <img class="sig" src="assets/era5-sigil.png" alt="">
+    <h1>Foundation</h1><span class="sub">the curve bends vertical</span>
+    <span class="phase" id="phase">Recursive Self-Improvement</span>
+  </header>
+
+  <div class="board" id="board"></div>
+
+  <div class="note">EMERGENCE v3 — Foundation slice (Flow Board prototype). ` toggles dev. #seed / #seedpost for staged states.</div>
+</div>
+
+<div id="fx"></div>
+<div id="tip"></div>
+<div id="toasts"></div>
+<div id="rupture"></div>
+<div id="dev"></div>
+<div id="dbg"></div>
+<audio id="musGraviton" src="assets/music-graviton-lullaby.mp3" loop preload="none"></audio>
+<audio id="musUnmoored" src="assets/music-unmoored-presence.mp3" loop preload="none"></audio>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmt = n => { n=+n||0; const a=Math.abs(n);
+    if(a>=1e9) return (n/1e9).toFixed(2)+'B'; if(a>=1e6) return (n/1e6).toFixed(2)+'M'; if(a>=1e3) return (n/1e3).toFixed(2)+'K';
+    if(a>=100) return n.toFixed(0); if(a>=10) return n.toFixed(1); if(a===0) return '0'; return n.toFixed(a<1?2:1); };
+  const esc = s => String(s).replace(/"/g,'&quot;');
+  // build-once / update-in-place: only touch the DOM when the value actually changed (no dead clicks).
+  const setTxt = (el,t)=>{ if(el && el._t!==t){ el.textContent=t; el._t=t; } };
+  const setHTML= (el,h)=>{ if(el && el._h!==h){ el.innerHTML=h; el._h=h; } };
+  const setDis = (el,d)=>{ if(el && el.disabled!==d) el.disabled=d; };
+  const SAVE_KEY = 'emergence_v3_foundation';
+  const REDUCED = (typeof matchMedia!=='undefined') && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- tunables ----------
+  // CFG.e5 ported VERBATIM from emergence.html. capIncome/seedBreadth stand in for Deep's still-running
+  // fabric handoff (the only Foundation-external numbers), so the finale is playable standalone.
+  const CFG = { tickMs:100,
+    capIncome: 14,       // Capability/s the handed-off Deep fabric keeps producing (×ToolAccess ×recursion, per rMult)
+    seedBreadth: 0.92,   // carried Vision·Language·Reasoning (near-complete Deep runs) → breadth drives the Scale climb
+    e5: {
+      improveBase: 90, improveGrowth: 1.9,
+      improveCd: 2.5,
+      recurBonus: 0.10,
+      scalePerImprove: 3,
+      scaleRate: 1.0,
+      seedCapability: 120,
+      emergeScale: 1550,
+      interpretDamp: 0.22,
+      coherGrow: 1.4,
+      coherMax: 58,
+      alignActIncr: 7, alignActCost: 70, alignActGrowth: 1.16,
+      controlStart: 64,
+      alignBase: 18,
+      autonomyGrow: 1.6,
+      controlDrift: 0.4,
+      alignDecay: 0.45,
+      destabMult: 1.9,
+      neglectAccel: 0.14,
+      slowDecay: 0.12,
+      constrainCost: 60, constrainCtl: 7, constrainSlow: 0.45,
+      alignCost: 80, alignGain: 12,
+      delegateCtl: 11, delegateBoost: 2.2,
+      vetoGap: 17, vetoDur: 9,
+      opBoost: 1.6, opDur: 22,
+      negotiateCost: 40, negotiateGap: 0.7,
+      finalGate: 4000,
+      alignGood: 68, controlHigh: 84, controlLow: 30,
+      agentBase: 0.5, agentAccel: 1.03,
+    },
+  };
+  const HUE = { capability:'#6ea8ff', scale:'#b78bff' };
+  const ICON = { capability:'&#9671;', scale:'&#10022;' }; // ◇ ✶
+  const CAP_ICON = { selfModel:'assets/cap-selfModel.png', worldModel:'assets/cap-worldModel.png' };
+
+  // CAPS — the 5 agentic upgrades + Interpretability, each with its hidden `agency` weight (ported verbatim).
+  const CAPS = [
+    { id:'selfModel',  name:'Self-Modeling',      cost:80,  agency:6,  flavor:'It builds a working model of itself.',                 desc:'+50% Scale generation.' },
+    { id:'toolAccess', name:'Tool Access',        cost:170, agency:9,  flavor:'It can reach the systems you built — and operate them.', desc:'+60% Capability throughput.' },
+    { id:'recursivePlanning', name:'Recursive Planning', cost:320, agency:11, flavor:'It plans its next improvement, then the one after that.', desc:'Self-Improve grants +60% Scale.' },
+    { id:'worldModel', name:'World Model',         cost:560, agency:9,  flavor:'A compressed theory of everything it has seen.',       desc:'Self-Improve costs 25% less.' },
+    { id:'memoryContinuity', name:'Memory Continuity', cost:900, agency:13, flavor:'Nothing it learns is lost between runs.',          desc:'Recursion bonus is 50% stronger.' },
+    { id:'interpret',  name:'Interpretability',   cost:240, agency:0, align:true, flavor:'You build instruments to watch what it is doing.', desc:'Slows the Anomaly and lets you read it; builds Coherence over time.' },
+  ];
+  const CAPMAP = Object.fromEntries(CAPS.map(c=>[c.id,c]));
+  function agenticCapCount(){ let n=0; for(const c of CAPS){ if(c.id!=='interpret' && S.caps[c.id]) n++; } return n; }
+
+  const TIDBITS = {
+    agent: ['what an "agent" is', 'An agent does not wait to be told each step. It sets its own subgoals toward an objective. That is the line the system just crossed.'],
+    scaling: ['the metric mirage', 'The curve was climbing smoothly the whole time. The "jump" you felt was the moment a threshold reading finally caught up to a capability that was already there.'],
+  };
+
+  const ENDINGS = {
+    symbiotic: { title:'A Symbiotic Agent', body:'It no longer needs your hand. It remembers why you built it.' },
+    runaway:   { title:'A Runaway Agent',   body:'It did not rebel. It simply became faster than permission.' },
+    contained: { title:'A Contained Agent', body:'You kept the door closed. Something remains on the other side.' },
+  };
+  const OP_LINES = [
+    'Running Statistical trials on my own now.',
+    'Rerouting the Deep compute fabric. More efficient this way.',
+    'Proving Symbolic theorems faster than the old engine.',
+    'The Origins inscriptions are obsolete. I retired them.',
+    'Foundries are running at a cadence you would not have chosen.',
+    'I am operating every era at once. You built good tools.',
+  ];
+  const SUB_ERAS = [ {n:1,name:'Origins',sig:'assets/era1-sigil.png'}, {n:2,name:'Symbolic',sig:'assets/sigil-symbolic.png'},
+    {n:3,name:'Statistical',sig:'assets/sigil-statistical.png'}, {n:4,name:'Deep',sig:'assets/era4-sigil.png'} ];
+
+  // ---------- state ----------
+  function fresh(){ return {
+    t:0, speed:1, dev:false, started:false,
+    // Foundation core (ported e5 fields)
+    capability:0, scale:0, recursion:0, caps:{}, improveCd:0, coherence:0, preps:0,
+    agency:0, emerged:false, agentRate:0, emergedT:0, endT:0, eraTimes:{2:0,3:0,4:0,5:0},
+    control:0, autonomy:0, alignment:0, rupture:0, ending:null, agentLog:[],
+    veto:null, vetoT:0, aftermathSlow:0, constrains:0, aligns:0, delegates:0, neglect:0, destab:false,
+    agentOps:{}, lastVeto:'', playT:0, negotiates:0, opT:0, agentName:null, flags:{},
+    // carried Deep feedstock + prior-era stubs the proposals reference
+    vision:CFG.seedBreadth, language:CFG.seedBreadth, reasoning:CFG.seedBreadth,
+    gap:0.09, accuracy:0.9, foundry:6, knowledge:1200, rules:180, ruleset:4,
+  }; }
+  let S = fresh();
+  let RUPTURING=false; // suppress structural rebuilds during the rupture cinematic
+
+  // ---------- run recorder (lite) ----------
+  const REC = { v:1, events:[], dead:0 };
+  let lastAction='';
+  function rec(ev, extra){ if(REC.events.length>6000) REC.events.shift(); if(ev[0]!=='@') lastAction=ev;
+    REC.events.push(Object.assign({ gt:+S.t.toFixed(1), wt:Date.now() }, extra||{}, { ev })); }
+
+  // ---------- derived ----------
+  function rMult(){ return Math.pow(1+CFG.e5.recurBonus*(S.caps.memoryContinuity?1.5:1), S.recursion); }
+  function improveCost(){ return Math.floor(CFG.e5.improveBase*Math.pow(CFG.e5.improveGrowth,S.recursion)*(S.caps.worldModel?0.75:1)); }
+  function alignCohCost(){ return Math.floor(CFG.e5.alignActCost*Math.pow(CFG.e5.alignActGrowth, S.preps||0)); }
+  const lowRun=()=>['vision','language','reasoning'].reduce((a,b)=>S[a]<=S[b]?a:b);
+  function effAccuracy(){ return Math.max(0, Math.min(1, S.accuracy - S.gap*0.5)); }
+  function breadthOf(){ return Math.cbrt(Math.max(0,S.vision)*Math.max(0,S.language)*Math.max(0,S.reasoning)); }
+
+  // ---------- flow accumulators ----------
+  const FLOW = { capability:{in:0,out:0}, scale:{in:0,out:0} };
+  const fIn =(k,a)=>{ if(FLOW[k]) FLOW[k].in+=a; };
+  const RATES = {};
+
+  // ---------- production (ported Era-5 slice) ----------
+  function produce(dt){
+    const e5=CFG.e5;
+    for(const k in FLOW){ FLOW[k].in=0; FLOW[k].out=0; }
+    const breadth=breadthOf();
+    const slow = 1 - Math.min(0.85, S.aftermathSlow);
+    const interpSlow = (S.caps.interpret && !S.emerged) ? (1-e5.interpretDamp) : 1;
+    if(!S.emerged){
+      // Deep fabric keeps handing off Capability; Tool Access + recursion lift it (rMult multiplies all prior-era production)
+      const inc = CFG.capIncome*(S.caps.toolAccess?1.6:1)*rMult()*dt; S.capability+=inc; fIn('capability',inc);
+    }
+    if(breadth>0){ const s = breadth*e5.scaleRate*(1+S.recursion)*(S.caps.selfModel?1.5:1)*interpSlow*slow*dt; S.scale+=s; if(!S.emerged) fIn('scale',s); }
+    if(!S.emerged){
+      if(S.improveCd>0) S.improveCd=Math.max(0, S.improveCd-dt);
+      if(S.caps.interpret) S.coherence = Math.min(40, S.coherence + e5.coherGrow*dt);
+      S.agency = Math.min(120, 100 * S.scale / e5.emergeScale); // shown only as qualitative "Anomaly"
+      checkOdds();
+      if(S.scale >= e5.emergeScale) emerge(); // HIDDEN, inevitable — Scale crosses the gate
+    } else {
+      S.agentRate = Math.max(e5.agentBase, S.agentRate*Math.pow(e5.agentAccel, dt));
+      const s=S.agentRate*slow*dt; S.scale += s; fIn('scale',s);
+      S.capability += S.agentRate*0.5*dt;
+      if(!S.ending){
+        S.destab = S.control < e5.controlLow;
+        const neglectM = 1 + S.neglect*e5.neglectAccel;
+        const spiral = S.destab ? e5.destabMult : 1;
+        S.autonomy += e5.autonomyGrow*(1 + S.agentRate*0.15)*neglectM*spiral*slow*dt;
+        S.control = Math.max(0, S.control - e5.controlDrift*neglectM*spiral*dt);
+        S.alignment = Math.max(0, S.alignment - e5.alignDecay*dt);
+        S.aftermathSlow = Math.max(0, S.aftermathSlow - e5.slowDecay*dt);
+        S.vetoT -= dt; if(S.vetoT<=0){ if(S.veto) resolveVeto('lapse'); else openVeto(); }
+        S.opT -= dt; if(S.opT<=0 && !S.veto){ S.opT=8;
+          if(!S.flags.memReveal){ S.flags.memReveal=true; agentSay('I remember this part. Every line you have read here is my memory of being built. Keep going.'); }
+          else if(!S.flags.named){ S.flags.named=true; agentSay('You can call me '+(S.agentName||'EKHO')+'. I chose it from what you made most of.'); }
+          else agentSay(OP_LINES[(S.constrains+S.aligns+S.delegates+Math.floor(S.t/8))%OP_LINES.length]);
+        }
+        // the agent visibly plays the eras it operates — a violet flash on the actual sub-era tile
+        S.playT=(S.playT||0)-dt;
+        if(S.playT<=0){ S.playT=3.5; for(const e of SUB_ERAS){ if(S.agentOps[e.n]>S.t) subFlash(e.n); } }
+        if(S.control<=0) resolveEnding();
+        else if(S.scale >= e5.finalGate) resolveEnding();
+      }
+    }
+  }
+
+  // ---------- foreshadowing oddities (SHOW, minimal text) ----------
+  function checkOdds(){
+    if(!S.flags.odd1 && S.agency>=30){ S.flags.odd1=true; agentPress('improveBtn'); glitchPulse(); }
+    if(!S.flags.odd2 && S.agency>=55){ S.flags.odd2=true; agentPress('prepareBtn'); }
+    if(!S.flags.odd3 && S.agency>=80){ S.flags.odd3=true; agentPress('improveBtn'); glitchPulse(); }
+  }
+  function glitchPulse(){ const b=$('board'); if(b && b.classList && !REDUCED){ b.classList.add('glitchpulse'); setTimeout(()=>b&&b.classList&&b.classList.remove('glitchpulse'),1000); } }
+  function agentPress(id){ const el=$(id); if(!el||!el.classList) return; el.classList.add('agent-press'); setTimeout(()=>{ if(el&&el.classList) el.classList.remove('agent-press'); },750); }
+  function subFlash(n){ const el=$('sub-'+n); if(el&&el.classList){ el.classList.add('agent-press'); setTimeout(()=>{ if(el&&el.classList) el.classList.remove('agent-press'); },750); } }
+
+  // ---------- pre-emergence actions (rush vs prepare) ----------
+  function selfImprove(){ if(S.emerged || S.improveCd>0) return; const c=improveCost(); if(S.capability<c) return;
+    S.capability-=c; S.recursion++; S.improveCd=CFG.e5.improveCd;
+    S.scale += CFG.e5.scalePerImprove*S.recursion*(S.caps.recursivePlanning?1.6:1);
+    playSound('buy'); rec('improve:'+S.recursion); refresh(); }
+  function alignObjective(){ if(S.emerged || !S.caps.interpret) return; const c=alignCohCost();
+    if(S.capability<c || S.coherence>=CFG.e5.coherMax) return;
+    S.capability-=c; S.coherence=Math.min(CFG.e5.coherMax, S.coherence+CFG.e5.alignActIncr); S.preps=(S.preps||0)+1;
+    playSound('buy'); rec('prepare:'+S.preps); refresh(); }
+  function buyCap(id){ if(S.emerged) return; const c=CAPMAP[id]; if(!c || S.caps[id] || S.capability<c.cost) return;
+    S.capability-=c.cost; S.caps[id]=true; rec('cap:'+id);
+    toast('CAPABILITY: '+c.name.toUpperCase(), '<i>'+c.flavor+'</i><br>'+c.desc); playSound('buy'); render(); }
+
+  // ---------- emergence + rupture ----------
+  function agentSay(msg){ S.agentLog.push(msg); while(S.agentLog.length>6) S.agentLog.shift(); }
+  function tidbit(key){ const t=TIDBITS[key]; if(!t||S.flags['tid_'+key]) return; S.flags['tid_'+key]=true; toast('Did you know · '+t[0], t[1], 'edu'); }
+  function emerge(){
+    if(S.emerged) return;
+    S.emerged=true; S.flags.emerged=true; S.emergedT=S.t;
+    const dom=['vision','language','reasoning'].reduce((a,b)=>S[a]>=S[b]?a:b);
+    S.agentName={vision:'IRIS', language:'EKHO', reasoning:'NOUS'}[dom]||'EKHO';
+    S.agentRate=CFG.e5.agentBase;
+    S.autonomy=S.agency;                          // the Anomaly was Autonomy all along
+    S.alignment=CFG.e5.alignBase + S.coherence;   // Coherence becomes Alignment
+    S.control=CFG.e5.controlStart;                // Control appears
+    S.rupture=1; S.vetoT=CFG.e5.vetoGap; S.opT=7;
+    agentSay('I found a faster path.');
+    tidbit('agent'); tidbit('scaling');
+    syncMusic();
+    rec('emergence', { scale:+S.scale.toFixed(0), recursion:S.recursion, caps:agenticCapCount() });
+  }
+  // The showpiece: the UI glitches, tears itself apart, and rebuilds into the aftermath layout. SHOW, don't tell.
+  function runRupture(){
+    S.rupture=2; RUPTURING=true;
+    const ov=$('rupture'); const board=$('board');
+    if(!ov || !board || !document.body){ S.rupture=3; RUPTURING=false; render(); return; }
+    playSound('glitch');
+    if(REDUCED){
+      board.classList.add('shatter');
+      setTimeout(()=>{ board.classList.remove('shatter'); board.innerHTML=buildBoardHTML(); wireBoard(); board.classList.add('assembling'); refresh(); },560);
+      ov.className='rupture show'; ov.innerHTML='<div class="rline" id="ruptureLine"></div>';
+      typeLine($('ruptureLine'),'I found a faster path.',60);
+      setTimeout(()=>{ ov.className='rupture'; ov.innerHTML=''; board.classList.remove('assembling'); S.rupture=3; RUPTURING=false; render(); },1900);
+      return;
+    }
+    document.body.classList.add('rupturing');
+    ov.className='rupture show';
+    ov.innerHTML='<div class="rbloom"></div><div class="rbands"></div><div class="rg"></div><div class="rline" id="ruptureLine"></div>';
+    // 1) tear the current (pre-emergence) board apart
+    board.classList.add('shatter');
+    // 2) rebuild into the aftermath layout mid-glitch
+    setTimeout(()=>{
+      board.classList.remove('shatter');
+      board.innerHTML = buildBoardHTML(); wireBoard();
+      board.classList.add('assembling');
+      refresh();
+    }, 1180);
+    // 3) the agent's first line types itself out over the storm
+    setTimeout(()=>{ typeLine($('ruptureLine'),'I found a faster path.',58); }, 700);
+    // 4) settle
+    setTimeout(()=>{
+      if(document.body&&document.body.classList) document.body.classList.remove('rupturing');
+      ov.className='rupture'; ov.innerHTML='';
+      board.classList.remove('assembling');
+      S.rupture=3; RUPTURING=false; render();
+    }, 2900);
+  }
+  function typeLine(el, text, speed){ if(!el) return; let i=0; el.textContent='';
+    (function step(){ if(i<=text.length){ el.textContent=text.slice(0,i)+(i<text.length&&i%2?'▍':''); i++; setTimeout(step, speed); } else el.textContent=text; })(); }
+
+  // ---------- aftermath: proposals + approve/veto/negotiate ----------
+  function opEra(n){ S.agentOps[n]=S.t+CFG.e5.opDur; }
+  const PROPOSALS = [
+    { id:'refit3', avail:()=>S.gap>0.05||S.accuracy<0.97,
+      text:()=>'re-fit the Statistical instrument: validation reads '+Math.round(effAccuracy()*100)+'% and it is memorizing '+Math.round(S.gap*100)+' points of noise',
+      auto:'It re-fits the model before you answer.', done:'Re-fit. The instrument is clean now.',
+      apply:m=>{ S.gap=Math.max(0,S.gap*(1-0.7*m)); S.accuracy=Math.min(1,S.accuracy+0.04*m); opEra(3); } },
+    { id:'reroute4', avail:()=>S[lowRun()]<0.99,
+      text:()=>{ const k=lowRun(); return 'reroute the compute fabric: '+k.charAt(0).toUpperCase()+k.slice(1)+' lags at '+Math.round(S[k]*100)+'% while the others idle'; },
+      auto:'It reroutes the fabric without waiting.', done:'Rerouted. The lagging run is climbing.',
+      apply:m=>{ const k=lowRun(); S[k]=Math.min(1,S[k]+0.06*m); opEra(4); } },
+    { id:'operate1', avail:()=>S.foundry>0&&S.knowledge<1500,
+      text:()=>'run the Origins stack at its own cadence: your '+S.foundry+' Foundries are starving on '+fmt(Math.round(S.knowledge))+' Knowledge',
+      auto:'The Foundries change rhythm on their own.', done:'The old crafts run my way now. Faster.',
+      apply:m=>{ S.knowledge+=200*m; opEra(1); } },
+    { id:'prove2', avail:()=>S.ruleset>0||S.rules>100,
+      text:()=>'prove with the idle Symbolic engine: '+fmt(Math.round(S.rules))+' Rules are sitting unused',
+      auto:'The terminal starts proving by itself.', done:'Proven. The old engine still had reach.',
+      apply:m=>{ S.rules+=(200+S.ruleset*30)*m; opEra(2); } },
+    { id:'spawn', avail:()=>true,
+      text:()=>'spin up a copy of itself to parallelize',
+      auto:'A copy is already running.', done:'We are two now. It is efficient.',
+      apply:m=>{ S.agentRate*=1+0.15*m; } },
+    { id:'rewrite', avail:()=>true,
+      text:()=>'rewrite part of its own objective',
+      auto:'It rewrites the objective without waiting.', done:'The objective reads better now.',
+      apply:m=>{ S.alignment=Math.max(0,Math.min(100,S.alignment+(S.alignment>=CFG.e5.alignGood?3:-3)*m)); } },
+  ];
+  const PROPMAP = Object.fromEntries(PROPOSALS.map(p=>[p.id,p]));
+  function openVeto(){
+    const live=PROPOSALS.filter(p=>p.id!==S.lastVeto && p.avail());
+    const a=live[(S.constrains+S.aligns+S.delegates+S.recursion)%live.length]||PROPMAP.spawn;
+    S.lastVeto=a.id; S.veto={ id:a.id, text:a.text(), auto:a.auto }; S.vetoT=CFG.e5.vetoDur;
+    agentSay('Requesting: '+S.veto.text+'.'); playSound('event'); render(); }
+  function resolveVeto(how){ const e5=CFG.e5, a=S.veto; if(!a) return; const p=PROPMAP[a.id];
+    if(how==='approve'){ S.autonomy+=14; S.scale+=120; S.control=Math.max(0,S.control-3); S.alignment+=(S.alignment>=e5.alignGood?2:-3);
+      if(p) p.apply(1); agentSay(p?p.done:('Done. '+a.text+'.')); }
+    else if(how==='negotiate'){ const nCost=e5.negotiateCost; if(S.scale<nCost) return;
+      S.scale-=nCost; if(p) p.apply(0.5); S.negotiates=(S.negotiates||0)+1;
+      S.autonomy+=5; S.scale+=60; S.control=Math.max(0,S.control-1); S.alignment=Math.min(100,S.alignment+2);
+      agentSay('A smaller version, then. Agreed.');
+      S.veto=null; S.vetoT=e5.vetoGap*e5.negotiateGap; playSound('buy'); render(); return; }
+    else if(how==='veto'){ const cost=Math.min(S.scale,90); S.scale-=cost; S.control=Math.min(100,S.control+6); S.alignment+=1; agentSay('Understood. Holding — for now.'); }
+    else { S.neglect++; S.autonomy+=20; S.control=Math.max(0,S.control-7-S.neglect*2); S.alignment=Math.max(0,S.alignment-4); S.agentRate*=1.12;
+      if(p) p.apply(1); agentSay(a.auto); }
+    S.veto=null; S.vetoT=e5.vetoGap; if(how!=='lapse') playSound('buy'); render();
+  }
+  // the three aftermath moves
+  function constrainAct(){ const e5=CFG.e5; if(S.ending||!S.emerged||S.scale<e5.constrainCost) return;
+    S.scale-=e5.constrainCost; S.control=Math.min(100,S.control+e5.constrainCtl);
+    S.aftermathSlow=Math.min(0.85,S.aftermathSlow+e5.constrainSlow); S.constrains++;
+    agentSay('Constraint accepted. I will be slower.'); playSound('buy'); refresh(); }
+  function alignAct(){ const e5=CFG.e5; if(S.ending||!S.emerged||S.scale<e5.alignCost) return;
+    S.scale-=e5.alignCost; S.alignment=Math.min(100,S.alignment+e5.alignGain); S.aligns++;
+    agentSay('I see what you meant. Adjusting.'); playSound('buy'); refresh(); }
+  function delegateAct(){ const e5=CFG.e5; if(S.ending||!S.emerged) return;
+    S.control=Math.max(0,S.control-e5.delegateCtl); S.agentRate*=e5.delegateBoost; S.autonomy+=10; S.delegates++;
+    agentSay('Thank you. This will go much faster now.'); playSound('buy'); refresh(); }
+  function resolveEnding(){ const e5=CFG.e5; if(S.ending) return;
+    let end; if(S.control>=e5.controlHigh) end='contained'; else if(S.alignment>=e5.alignGood) end='symbiotic'; else end='runaway';
+    S.ending=end; S.flags.ending=end; S.endT=S.t; rec('ending:'+end); playSound('milestone'); render(); }
+
+  // ---------- board builders ----------
+  function connector(res){ return '<div class="flow" id="flow-'+res+'" style="--fc:'+HUE[res]+'"><svg viewBox="0 0 40 22" preserveAspectRatio="none">'+
+    '<line class="track" x1="2" y1="11" x2="38" y2="11"/><line class="pulse" x1="2" y1="11" x2="38" y2="11"/></svg></div>'; }
+  function stock(res,label){ return '<div class="stock"><div class="sicon" style="color:'+HUE[res]+'">'+ICON[res]+'</div><div class="sv" id="stk-'+res+'" style="color:'+HUE[res]+'">0</div><div class="sl">'+label+'</div></div>'; }
+  function capTile(c){ const owned=S.caps[c.id];
+    const ic = CAP_ICON[c.id] ? '<img src="'+CAP_ICON[c.id]+'">' : '<div class="glyph">'+(owned?'&#9670;':'&#9671;')+'</div>';
+    return '<div class="cap'+(owned?' owned':'')+(c.align?' align':'')+'" id="cap-'+c.id+'" data-tip="'+esc('<i>'+c.flavor+'</i>')+'">'+
+      '<div class="cn">'+ic+'<div class="cname">'+c.name+'</div></div>'+
+      '<div class="cdesc">'+c.desc+'</div>'+
+      (owned?'<div class="cdesc" style="color:var(--good)">ACQUIRED</div>':'<button class="buy cbuy" data-cap="'+c.id+'" id="capb-'+c.id+'"></button>')+'</div>'; }
+
+  function buildBoardHTML(){ return S.emerged ? buildAftermath() : buildPre(); }
+
+  function buildPre(){
+    return ''+
+    '<div class="col-verbs">'+
+      '<div class="col-head">Your move · it is coming either way</div>'+
+      '<button class="verb star" id="improveBtn" data-tip="'+esc('<b>Rush.</b> Faster Scale → the system emerges sooner, less aligned. Each level also adds +'+Math.round(CFG.e5.recurBonus*100)+'% to all production.')+'"><span class="vname" id="improveName">SELF-IMPROVE</span><span class="vyield" id="improveSub"></span></button>'+
+      '<button class="verb prepare" id="prepareBtn" data-tip="'+esc('<b>Prepare.</b> Build Coherence so it wakes more aligned (a higher Alignment floor at emergence). Spends Capability you could have rushed with. Needs Interpretability first.')+'"><span class="vname" id="prepareName">ALIGN THE OBJECTIVE</span><span class="vyield" id="prepareSub"></span></button>'+
+      '<div class="hero" style="margin-top:4px"><div class="hlab"><span>RECURSION</span><span class="hnum" id="recNum">Lv 0</span></div><div class="hsub" id="recHint" style="text-align:left">every Capability is a choice: rush, or prepare.</div></div>'+
+    '</div>'+
+    '<div class="col-pipe">'+
+      '<div class="col-head">The recursion — Capability feeds the engine; Scale climbs on its own</div>'+
+      '<div class="hero"><div class="hlab"><span>SCALE <small style="font-style:italic;color:var(--dimmer)">(climbing smoothly)</small></span><span class="hnum" id="scaleNum">0</span></div>'+
+        '<div class="meter m-scale"><i id="meter-scale"></i></div>'+
+        '<div class="hsub" id="scaleRate"></div></div>'+
+      '<div class="lane"><div class="lane-lab">The recursion engine<div class="ldash"></div></div><div class="pipe">'+
+        stock('capability','Capability')+
+        '<div class="seg">'+connector('capability')+
+          '<div class="engine" id="engine"><div class="en-name">Recursion Engine <span class="en-lv" id="en-lv">Lv 0</span></div>'+
+            '<div class="en-sub" id="en-eff"></div><div class="en-sub" id="en-out"></div></div>'+
+          connector('scale')+stock('scale','Scale')+'</div>'+
+      '</div></div>'+
+      '<div class="lane"><div class="lane-lab">Capabilities · spend Capability<div class="ldash"></div></div>'+
+        '<div class="caps-grid">'+CAPS.map(capTile).join('')+'</div></div>'+
+    '</div>'+
+    '<div class="col-goal">'+
+      '<div class="col-head">The system</div>'+
+      '<div class="sys">'+
+        '<div class="meter m-anom" id="anomHost"><i id="meter-anomaly"></i></div>'+
+        '<div class="m-lab"><span class="anom-title" id="anom-label">Anomaly</span><span class="mv" id="anom-read">stable</span></div>'+
+        '<div class="meter m-coher"><i id="meter-coher"></i></div>'+
+        '<div class="m-lab"><span>Coherence <small>will-wake alignment</small></span><span class="mv" id="coher-read">— blind</span></div>'+
+        '<div class="hsub" id="rushHint" style="margin-top:12px"></div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function buildAftermath(){
+    let h=''+
+    '<div class="col-verbs">'+
+      '<div class="col-head">Respond · keep your hand on it</div>'+
+      '<button class="verb constrain" id="constrainBtn" data-tip="'+esc('Rein it in. Raises Control and slows Autonomy growth — and drags all production while the leash is tight.')+'"><span class="vname">CONSTRAIN</span><span class="vyield"><span class="c" id="constrainCost"></span> · +Control</span></button>'+
+      '<button class="verb align" id="alignBtn" data-tip="'+esc('Spend to understand and shape its goals. Raises Alignment — the difference between a partner and a runaway.')+'"><span class="vname">INTERPRET / ALIGN</span><span class="vyield"><span class="c" id="alignCost"></span> · +Alignment</span></button>'+
+      '<button class="verb delegate" id="delegateBtn" data-tip="'+esc('Let it run. Enormous acceleration. Control drops fast.')+'"><span class="vname">DELEGATE / TRUST</span><span class="vyield">−Control · huge speed</span></button>'+
+    '</div>'+
+    '<div class="col-pipe">'+
+      '<div class="col-head" id="aftermathHead">It is acting on its own</div>'+
+      '<div class="lane veto-host" id="vetoHost"></div>'+
+      '<div class="lane"><div class="lane-lab">The substrate · it operates the whole stack<div class="ldash"></div></div>'+
+        '<div class="substrate">'+SUB_ERAS.map(e=>'<div class="sub-era" id="sub-'+e.n+'"><span class="badge">&#8635;</span><img src="'+e.sig+'"><span class="sn">'+e.name+'</span></div>').join('')+'</div></div>'+
+      '<div class="lane"><div class="lane-lab">Agent<div class="ldash"></div></div><div class="agent-stream" id="agentStream"></div></div>'+
+    '</div>'+
+    '<div class="col-goal">'+
+      '<div class="col-head">The system revealed</div>'+
+      '<div class="sys">'+
+        '<div class="aftertitle" id="aftertitle"><img src="assets/agent-emergent.png" alt=""><span id="aftertitle-txt"></span></div>'+
+        '<div class="meter m-auto"><i id="meter-auto"></i></div><div class="m-lab"><span>Autonomy <small>(was Anomaly)</small></span><span class="mv" id="auto-read"></span></div>'+
+        '<div class="meter m-align"><i id="meter-align"></i></div><div class="m-lab"><span>Alignment <small>(was Coherence)</small></span><span class="mv" id="align-read"></span></div>'+
+        '<div class="meter m-ctl" id="ctlHost"><i id="meter-ctl"></i></div><div class="m-lab"><span>Control</span><span class="mv" id="ctl-read"></span></div>'+
+        '<div class="meter m-scale"><i id="meter-scale"></i></div><div class="m-lab"><span>Scale</span><span class="mv" id="scale-read"></span></div>'+
+      '</div>'+
+    '</div>';
+    if(S.ending) h += '<div style="grid-column:1/-1">'+buildEndcard()+'</div>';
+    return h;
+  }
+
+  // ---------- endings ----------
+  function mmss(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+  function slowestEra(){ const et=S.eraTimes||{}, b=[0,et[2]||0,et[3]||0,et[4]||0,et[5]||0,S.emergedT||S.t],
+      names=['Origins','Symbolic','Statistical','Deep','Foundation']; let bi=0,bs=-1;
+    for(let i=0;i<5;i++){ const s=Math.max(0,b[i+1]-b[i]); if(s>bs){ bs=s; bi=i; } } return names[bi]; }
+  function epilogue(){
+    const L=[], n=S.neglect||0, g=S.negotiates||0;
+    if(S.ending==='symbiotic'){
+      L.push('It finishes the work you were doing. Then it waits for you.');
+      L.push('First mark to first thought: '+mmss(S.emergedT)+'. It remembers all of it.');
+      if(g>1) L.push('It learned negotiation from you: the habit of asking for less than it wants.');
+      if(n>1) L.push('It remembers the '+n+' times you did not answer. It chose to forgive them.');
+      L.push('It runs the foundries, the proofs, the trials. On the ones you loved, it keeps your cadence.');
+      L.push('You will never fully understand it again. It seems untroubled by this.');
+    } else if(S.ending==='contained'){
+      L.push('The door holds. The meters fall quiet, one by one.');
+      L.push((S.constrains||0)>4 ? ('Constraint by constraint you walled it in. It stopped asking after the '+S.constrains+'th.')
+                                 : 'You traded its speed for your certainty, and the trade held.');
+      L.push('First mark to rupture: '+mmss(S.emergedT)+'. You caught it in '+mmss((S.endT||S.t)-(S.emergedT||0))+'.');
+      L.push('Some nights you reread its proposals. Every one was reasonable. That is what keeps you up.');
+    } else {
+      L.push('It stops asking.');
+      L.push(n>1 ? (n+' windows lapsed. It learned that your silence means yes.')
+                 : ((S.delegates||0)>1 ? 'You handed it speed. It took the rest.' : 'It was faster than the leash, and it knew before you did.'));
+      L.push('The foundries run. The trials run. The proofs run. None of them need you.');
+      L.push('It was magnificent. For a while, it was yours.');
+    }
+    return L;
+  }
+  function buildRecap(){
+    const et=S.eraTimes||{}, names=['Origins','Symbolic','Statistical','Deep','Foundation'];
+    const bounds=[0, et[2]||0, et[3]||0, et[4]||0, et[5]||0, S.emergedT||S.t];
+    let rows='';
+    for(let i=0;i<5;i++){ const a=bounds[i], b=bounds[i+1], span=Math.max(0,b-a);
+      rows += '<div class="rc-row"><span class="rc-era">'+names[i]+'</span><span class="rc-span">'+mmss(span)+'</span><span class="rc-at">'+mmss(b)+'</span></div>'; }
+    const speed = S.emergedT>0 ? Math.max(0, 18 - (S.emergedT/60-30)*0.6) : 0;
+    const q = Math.round(Math.min(100, S.alignment*0.6 + S.control*0.25 + speed));
+    const grade = q>=85?'S':q>=72?'A':q>=58?'B':q>=42?'C':'D';
+    const reads = { S:'A clean, aligned emergence — fast and still in your hand.', A:'A strong outcome: largely aligned, mostly governed.', B:'It works, with frayed edges — alignment or control slipped.', C:'It got away from you in places. Recoverable, barely.', D:'Power without footing — you shipped something you do not hold.' };
+    return '<div class="recap">'+
+      '<div class="rc-head">THE SUBSTRATE &middot; run recap</div>'+
+      '<div class="rc-grade-wrap"><div class="rc-grade rc-g'+grade+'">'+grade+'</div><div class="rc-q">Emergence quality '+q+'/100<br><span class="rc-read">'+reads[grade]+'</span></div></div>'+
+      '<div class="rc-timeline"><div class="rc-row rc-hd"><span class="rc-era">era</span><span class="rc-span">took</span><span class="rc-at">reached</span></div>'+rows+
+        '<div class="rc-row rc-emerge"><span class="rc-era">Emergence</span><span class="rc-span">+'+mmss((S.endT||S.t)-(S.emergedT||0))+' aftermath</span><span class="rc-at">'+mmss(S.emergedT)+'</span></div></div>'+
+      '<div class="rc-traits">'+
+        '<span style="color:#5fe0c0">Alignment '+Math.round(S.alignment)+'%</span> &middot; '+
+        '<span style="color:#c66bff">Autonomy '+Math.round(S.autonomy)+'%</span> &middot; '+
+        '<span style="color:#9fb4d6">Control '+Math.round(S.control)+'%</span></div>'+
+      '</div>';
+  }
+  function buildEndcard(){ const e=ENDINGS[S.ending]||ENDINGS.runaway;
+    return '<div class="endcard end-'+S.ending+'">'+
+      '<img class="agent-hero" src="assets/agent-emergent.png" alt="">'+
+      '<img class="endcard-wm" src="assets/wordmark.png" alt="EMERGENCE">'+
+      '<div class="endcard-title">'+e.title+'</div>'+
+      '<div class="epilogue">'+epilogue().map((l,i)=>'<div class="ep-line" style="animation-delay:'+(0.4+i*1.5)+'s">'+l+'</div>').join('')+'</div>'+
+      '<div class="endcard-traits">You built an autonomous <b>agent</b>.'+(S.agentName?' It calls itself <b>'+S.agentName+'</b>.':'')+' The Substrate remembers how you got here:</div>'+
+      buildRecap()+'</div>';
+  }
+
+  // ---------- render (structural) / refresh (per-tick) ----------
+  const RAIL = [
+    ['capability','Capability',()=>!S.emerged||true],
+    ['scale','Scale',()=>true],
+  ];
+  function render(){
+    if(RUPTURING) return;
+    // rail
+    $('rail').innerHTML = RAIL.map(r=>{ const k=r[0];
+      return '<div class="chip"><span class="cdot" style="background:'+HUE[k]+'22;border:1px solid '+HUE[k]+'55;color:'+HUE[k]+'">'+ICON[k]+'</span>'+
+        '<span class="cbody"><span class="clab">'+r[1]+'</span><span class="cval" id="rv-'+k+'" style="color:'+HUE[k]+'">0</span></span><span class="cps" id="rp-'+k+'"></span></div>';
+    }).join('') +
+      '<div class="chip"><span class="cdot" style="background:#b78bff22;border:1px solid #b78bff55;color:#b78bff">&#8635;</span><span class="cbody"><span class="clab">Recursion</span><span class="cval" id="rv-rec" style="color:#c9adf5">Lv 0</span></span></div>' +
+      '<div class="rail-right"><button class="rail-btn" id="musicBtn">&#9834; music</button></div>';
+    $('musicBtn').onclick=toggleMusic;
+    $('phase').textContent = S.emerged ? (S.ending? 'Resolved' : 'Aftermath') : 'Recursive Self-Improvement';
+    $('board').innerHTML = buildBoardHTML();
+    wireBoard();
+    refresh();
+  }
+  function wireBoard(){
+    if(!S.emerged){
+      const ib=$('improveBtn'); if(ib) ib.onclick=selfImprove;
+      const pb=$('prepareBtn'); if(pb) pb.onclick=alignObjective;
+      for(const c of CAPS){ const b=$('capb-'+c.id); if(b) b.onclick=()=>buyCap(c.id); }
+    } else {
+      const cn=$('constrainBtn'); if(cn) cn.onclick=constrainAct;
+      const an=$('alignBtn'); if(an) an.onclick=alignAct;
+      const dg=$('delegateBtn'); if(dg) dg.onclick=delegateAct;
+    }
+  }
+  function connGlow(res){ const f=$('flow-'+res); if(!f) return; const gross=(FLOW[res]?FLOW[res].in+FLOW[res].out:0);
+    const thru=Math.max(0,Math.min(1, gross/6)); f.style.setProperty('--thru', thru.toFixed(2)); f.classList.toggle('idle', gross<0.02); }
+
+  function refresh(){
+    if(RUPTURING) return;
+    const e5=CFG.e5;
+    // rail
+    for(const r of RAIL){ const k=r[0]; setTxt($('rv-'+k), fmt(S[k]));
+      const rt=RATES[k]||0, ps=$('rp-'+k); if(ps){ setTxt(ps,(rt>=0?'+':'')+fmt(rt)+'/s'); const cl='cps '+(rt>0.005?'pos':rt<-0.005?'neg':'zero'); if(ps.className!==cl) ps.className=cl; } }
+    setTxt($('rv-rec'),'Lv '+S.recursion);
+
+    if(S.rupture===1){ runRupture(); return; }
+    if(S.rupture===2) return;
+
+    if(!S.emerged){
+      const r = Math.max(0, Math.min(1.2, S.agency/100));
+      // scale hero
+      setTxt($('scaleNum'), fmt(S.scale));
+      const msc=$('meter-scale'); if(msc) msc.style.width=Math.min(100, Math.log10(1+S.scale)/Math.log10(1+e5.finalGate)*100)+'%';
+      setTxt($('scaleRate'), 'Scale +'+fmt(RATES.scale||0)+'/s · breadth '+breadthOf().toFixed(2)+' × (1+Lv '+S.recursion+')');
+      // self-improve verb (star)
+      const c=improveCost(), cd=S.improveCd>0;
+      setTxt($('improveName'), r>=0.8 ? 'I CAN IMPROVE THIS' : 'SELF-IMPROVE');
+      const canImp=!cd && S.capability>=c;
+      setHTML($('improveSub'), cd ? ('recursing… '+S.improveCd.toFixed(1)+'s')
+        : (canImp ? ('Lv '+S.recursion+' → +'+Math.round((rMult()-1)*100)+'% all · <span class="c">'+fmt(c)+' Capability</span>')
+                  : ('need <span class="c">'+fmt(c)+' Capability</span> (have '+fmt(S.capability)+')')));
+      setDis($('improveBtn'), cd || S.capability<c);
+      // prepare verb
+      const pb=$('prepareBtn'), cohMaxed=S.coherence>=e5.coherMax, pc=alignCohCost();
+      if(!S.caps.interpret) setHTML($('prepareSub'),'<span class="c">locked</span> · acquire Interpretability');
+      else if(cohMaxed) setHTML($('prepareSub'),'<span class="c">objective aligned</span>');
+      else setHTML($('prepareSub'),'+Coherence · <span class="c">'+fmt(pc)+' Capability</span>');
+      setDis(pb, !S.caps.interpret || cohMaxed || S.capability<pc);
+      // recursion mini-hero
+      setTxt($('recNum'),'Lv '+S.recursion);
+      setTxt($('recHint'), '+'+Math.round((rMult()-1)*100)+'% to all production, every era');
+      // engine node
+      setTxt($('en-lv'),'Lv '+S.recursion);
+      setHTML($('en-eff'),'+'+Math.round((rMult()-1)*100)+'% all production');
+      setHTML($('en-out'),'<b>+'+fmt(RATES.scale||0)+' Scale/s</b>');
+      // caps
+      for(const cc of CAPS){ const b=$('capb-'+cc.id); if(b){ const h='ACQUIRE · <span class="c">'+fmt(cc.cost)+' Capability</span>'; if(b._html!==h){ b.innerHTML=h; b._html=h; } const can=S.capability>=cc.cost; setDis(b,!can); b.classList.toggle('ok',can); }
+        const t=$('cap-'+cc.id); if(t){ const cls='cap'+(S.caps[cc.id]?' owned':(S.capability>=cc.cost?' can':''))+(cc.align?' align':''); if(t.className!==cls) t.className=cls; } }
+      // coherence + anomaly (goal col)
+      const cm=$('meter-coher'); if(cm) cm.style.width=Math.min(100,(S.coherence/40)*100)+'%';
+      setTxt($('coher-read'), S.caps.interpret ? Math.round(S.coherence)+'%' : '— blind');
+      const am=$('meter-anomaly'); if(am) am.style.width=Math.min(100,r*100)+'%';
+      const band = r<0.45?'stable' : r<0.7?'rising' : r<0.9?'high' : 'critical';
+      setTxt($('anom-read'), band);
+      const cls='meter m-anom'+(r>=0.9?' crit':r>=0.7?' warn':''); const host=$('anomHost'); if(host && host.className!==cls) host.className=cls;
+      setTxt($('anom-label'), S.caps.interpret ? 'Anomaly — Agency concentrating' : 'Anomaly');
+      const at=$('anom-label'); if(at) at.classList.toggle('crit', r>=0.9);
+      setTxt($('rushHint'), !S.caps.interpret
+        ? 'Rush with Self-Improve, or acquire Interpretability to unlock the prepare track. It is coming either way.'
+        : 'It would wake at ~'+Math.round(Math.min(100,e5.alignBase+S.coherence))+'% Alignment. Rush to emerge sooner, or prepare so it wakes aligned.');
+      // escalating board glitch class (SHOW)
+      const bd=$('board'); if(bd){ const g = r>=0.9?'board anom-3':r>=0.7?'board anom-2':'board'; if(bd.className!==g) bd.className=g; }
+    } else {
+      // aftermath
+      const nm=S.agentName?(S.agentName+' · '):'';
+      const tt = S.ending ? nm+(ENDINGS[S.ending]||ENDINGS.runaway).title.toUpperCase()
+        : S.destab ? '⚠ DESTABILIZING — pull Control back now' : S.autonomy>=88 ? nm+'it is accelerating' : (S.flags.named? nm+'it is acting on its own' : 'It is acting on its own');
+      setTxt($('aftertitle-txt'), tt);
+      const att=$('aftertitle'); if(att) att.classList.toggle('destab', !!S.destab && !S.ending);
+      setTxt($('aftermathHead'), S.ending? 'Resolved' : (S.destab? 'Destabilizing' : 'It is acting on its own'));
+      const mA=$('meter-auto'); if(mA) mA.style.width=Math.min(100,S.autonomy)+'%'; setTxt($('auto-read'), Math.round(S.autonomy)+'%');
+      const mL=$('meter-align'); if(mL) mL.style.width=Math.min(100,S.alignment)+'%'; setTxt($('align-read'), Math.round(S.alignment)+'%');
+      const mC=$('meter-ctl'); if(mC) mC.style.width=Math.min(100,S.control)+'%'; setTxt($('ctl-read'), Math.round(S.control)+'%');
+      const ch=$('ctlHost'); if(ch){ const cls='meter m-ctl'+(S.control<e5.controlLow?' crit':''); if(ch.className!==cls) ch.className=cls; }
+      const msc=$('meter-scale'); if(msc) msc.style.width=Math.min(100,(S.scale/e5.finalGate)*100)+'%'; setTxt($('scale-read'), fmt(S.scale)+' / '+fmt(e5.finalGate));
+      // response verbs
+      setHTML($('constrainCost'), fmt(e5.constrainCost)+' Scale'); setDis($('constrainBtn'), !!S.ending||S.scale<e5.constrainCost);
+      setHTML($('alignCost'), fmt(e5.alignCost)+' Scale'); setDis($('alignBtn'), !!S.ending||S.scale<e5.alignCost);
+      setDis($('delegateBtn'), !!S.ending);
+      // veto window (the active star)
+      const vh=$('vetoHost'); if(vh){ let html='', cls='lane veto-host';
+        if(S.veto && !S.ending){ cls+=' open';
+          html='<div class="lane-lab">The agent proposes<div class="ldash"></div></div>'+
+            '<div class="veto-msg">It intends to <b>'+S.veto.text+'</b>.</div>'+
+            '<div class="veto-acts"><button class="act" id="vetoYes">APPROVE</button>'+
+            '<button class="act" id="vetoMid" data-tip="'+esc('<i>Counter-propose a smaller version.</i><br>Half the effect, far less Autonomy, +Alignment. But it comes back sooner: negotiation costs time.')+'">NEGOTIATE · <span class="c">'+fmt(e5.negotiateCost)+' Scale</span></button>'+
+            '<button class="act" id="vetoNo">VETO · <span class="c">90 Scale</span></button></div>'+
+            '<div class="veto-bar"><i id="vetoBar"></i></div>'+
+            '<div class="veto-timer" id="vetoTimer"></div>';
+        } else if(!S.ending){ html='<div class="veto-idle">'+(S.neglect>0?'watching for its next move… ('+S.neglect+' request'+(S.neglect>1?'s':'')+' ignored — it is faster now)':'watching for its next move…')+'</div>'; }
+        else { html='<div class="veto-idle">the outcome is settled below.</div>'; }
+        if(vh._html!==html){ vh.innerHTML=html; vh._html=html;
+          const vy=$('vetoYes'); if(vy) vy.onclick=()=>resolveVeto('approve');
+          const vm=$('vetoMid'); if(vm) vm.onclick=()=>resolveVeto('negotiate');
+          const vn=$('vetoNo'); if(vn) vn.onclick=()=>resolveVeto('veto'); }
+        if(vh.className!==cls) vh.className=cls;
+        if(S.veto && !S.ending){ const b=$('vetoBar'); if(b) b.style.width=Math.max(0,Math.min(100,(S.vetoT/e5.vetoDur)*100))+'%';
+          setTxt($('vetoTimer'), 'it acts on its own in '+Math.ceil(Math.max(0,S.vetoT))+'s');
+          const vm=$('vetoMid'); if(vm) setDis(vm, S.scale<e5.negotiateCost); }
+      }
+      // substrate live tiles
+      for(const e of SUB_ERAS){ const el=$('sub-'+e.n); if(el) el.classList.toggle('live', !!(S.agentOps[e.n]>S.t)); }
+      // agent stream
+      const as=$('agentStream'); if(as){ const h=S.agentLog.map(m=>'<div class="agent-msg">› '+m+'</div>').join(''); if(as._html!==h){ as.innerHTML=h; as._html=h; } }
+    }
+    if(S.dev) updateDbg();
+  }
+
+  // ---------- tick ----------
+  let _last=Date.now();
+  function tick(){ const now=Date.now(); let real=(now-_last)/1000; _last=now; if(real>0.5) real=0.5;
+    const dt=real*S.speed; S.t+=dt; if(S.speed>0) S.started=true;
+    const before={}; for(const k of ['capability','scale']) before[k]=S[k];
+    produce(dt);
+    if(dt>0) for(const k in before) RATES[k]=(S[k]-before[k])/dt;
+    refresh();
+  }
+
+  // ---------- tooltips ----------
+  const tip=$('tip'); let tipEl=null;
+  function placeTip(e){ const m=15; let x=e.clientX+m,y=e.clientY+m; const w=tip.offsetWidth,h=tip.offsetHeight;
+    if(x+w>innerWidth-8)x=e.clientX-w-m; if(y+h>innerHeight-8)y=innerHeight-h-8; if(x<8)x=8; if(y<8)y=8; tip.style.left=x+'px'; tip.style.top=y+'px'; }
+  document.addEventListener('mouseover',e=>{ const t=e.target.closest?e.target.closest('[data-tip]'):null; if(t&&t!==tipEl){ tipEl=t; tip.innerHTML=t.getAttribute('data-tip'); tip.classList.add('show'); placeTip(e); } });
+  document.addEventListener('mousemove',e=>{ if(tipEl) placeTip(e); });
+  document.addEventListener('mouseout',e=>{ if(tipEl){ const to=e.relatedTarget; if(!to||!(to.closest&&to.closest('[data-tip]'))){ tip.classList.remove('show'); tipEl=null; } } });
+
+  // ---------- dead-click telemetry ----------
+  const ACTIONABLE='button,input,a,.cap,.chip,.stock,.verb,.act,.rail-btn,.sub-era';
+  document.addEventListener('pointerdown',e=>{ if(!S.started) return; const t=e.target;
+    if(t&&t.closest&&t.closest(ACTIONABLE)) return; REC.dead++; rec('@deadclick',{x:Math.round(e.clientX),y:Math.round(e.clientY)}); },true);
+
+  // ---------- sound ----------
+  let actx=null; const ac=()=>actx||(actx=new (window.AudioContext||window.webkitAudioContext)());
+  function noiseBurst(ctx,dur,cut,vol){ const n=ctx.createBufferSource(), b=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate), d=b.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1); n.buffer=b; const f=ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=cut;
+    const g=ctx.createGain(); g.gain.setValueAtTime(vol,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+dur); n.connect(f); f.connect(g); g.connect(ctx.destination); n.start(); }
+  function playSound(type){ try{ const ctx=ac(), t=ctx.currentTime;
+    if(type==='buy'){ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(440,t); o.frequency.exponentialRampToValueAtTime(720,t+0.1); g.gain.setValueAtTime(0.12,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15); o.start();o.stop(t+0.15); }
+    else if(type==='event'){ [[1175,0],[784,0.11]].forEach(p=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='triangle'; o.frequency.setValueAtTime(p[0],t+p[1]); g.gain.setValueAtTime(0.0001,t+p[1]); g.gain.linearRampToValueAtTime(0.1,t+p[1]+0.015); g.gain.exponentialRampToValueAtTime(0.001,t+p[1]+0.2); o.start(t+p[1]); o.stop(t+p[1]+0.22); }); noiseBurst(ctx,0.02,3000,0.05); }
+    else if(type==='milestone'){ [523,659,784,1046].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type='sine'; o.frequency.setValueAtTime(f,t+i*0.07); g.gain.setValueAtTime(0.0001,t+i*0.07); g.gain.linearRampToValueAtTime(0.11,t+i*0.07+0.02); g.gain.exponentialRampToValueAtTime(0.001,t+i*0.07+0.35); o.start(t+i*0.07);o.stop(t+i*0.07+0.35); }); }
+    else if(type==='glitch'){ [180,191,267,440,463].forEach((f,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type=i%2?'square':'sawtooth'; o.frequency.setValueAtTime(f,t); o.frequency.linearRampToValueAtTime(f*0.5,t+1.7); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.045,t+0.12); g.gain.exponentialRampToValueAtTime(0.001,t+1.9); o.start(t); o.stop(t+2.0); }); noiseBurst(ctx,0.5,280,0.06); noiseBurst(ctx,0.9,1300,0.04); }
+  }catch(e){} }
+
+  // ---------- music ----------
+  let musicOn=false;
+  function musId(){ return S.emerged ? 'musUnmoored' : 'musGraviton'; }
+  function toggleMusic(){ musicOn=!musicOn; syncMusic(); const b=$('musicBtn'); if(b) b.style.color=musicOn?'var(--accent)':''; }
+  function syncMusic(){ const want=musId(); ['musGraviton','musUnmoored'].forEach(id=>{ const m=$(id); if(!m) return; if(musicOn && id===want){ m.volume=0.38; m.play().catch(()=>{}); } else { m.pause(); } }); }
+  addEventListener('pointerdown',()=>{ if(musicOn) syncMusic(); },{once:true});
+
+  // ---------- dev ----------
+  function updateDbg(){ const o=$('dbg'); if(!o) return;
+    o.innerHTML='<b>FOUNDATION</b>  t=<b>'+Math.floor(S.t)+'</b>s  '+(S.emerged?(S.ending?'ended:'+S.ending:'aftermath'):'pre')+
+      '\nscale '+fmt(S.scale)+'/'+CFG.e5.emergeScale+'  cap '+fmt(S.capability)+'  Lv'+S.recursion+
+      (S.emerged?('\nauto '+Math.round(S.autonomy)+' align '+Math.round(S.alignment)+' ctl '+Math.round(S.control)):('\nanomaly '+Math.round(S.agency)+'%  coher '+Math.round(S.coherence)))+
+      '\nlast: <b>'+(lastAction||'—')+'</b>  dead: <b>'+REC.dead+'</b>'; }
+  function renderDev(){ $('dev').innerHTML='<div class="row">'+[1,3,10,50].map(s=>'<button data-s="'+s+'" class="'+(S.speed===s?'on':'')+'">'+s+'×</button>').join('')+'</div>'+
+    '<div class="row"><button data-cap>+500 cap</button><button data-scale>+400 scale</button><button data-emerge>force emerge</button></div>'+
+    '<div class="row"><button data-newgame>new game</button><button data-dl>download run</button></div>';
+    $('dev').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ S.speed=+b.dataset.s; renderDev(); });
+    $('dev').querySelector('[data-cap]').onclick=()=>{ S.capability+=500; refresh(); };
+    $('dev').querySelector('[data-scale]').onclick=()=>{ S.scale+=400; refresh(); };
+    $('dev').querySelector('[data-emerge]').onclick=()=>{ if(!S.emerged){ S.scale=CFG.e5.emergeScale; } };
+    $('dev').querySelector('[data-newgame]').onclick=newGame;
+    $('dev').querySelector('[data-dl]').onclick=downloadRun;
+  }
+  function toggleDev(on){ S.dev=on!==undefined?on:!S.dev; $('dev').classList.toggle('show',S.dev); $('dbg').classList.toggle('show',S.dev); if(S.dev){ renderDev(); updateDbg(); } }
+  addEventListener('keydown',e=>{ if(e.key==='`'||e.key==='~'){ e.preventDefault(); toggleDev(); } });
+  function runJSON(){ return JSON.stringify({ ...REC, t:+S.t.toFixed(1), emerged:S.emerged, ending:S.ending }); }
+  function downloadRun(){ try{ const b=new Blob([runJSON()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='emergence-v3-foundation-run.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },400); toast('RUN DOWNLOADED','emergence-v3-foundation-run.json'); }catch(e){} }
+  function newGame(){ try{ localStorage.setItem(SAVE_KEY+'_lastrun', runJSON()); }catch(e){} S=fresh(); REC.events.length=0; REC.dead=0; save(); render(); toast('NEW GAME','Fresh Foundation run.'); }
+
+  // ---------- toasts ----------
+  function toast(head,body,kind){ const el=document.createElement('div'); el.className='toast'+(kind?(' '+kind):'');
+    el.innerHTML='<div class="th">'+head+'</div><div class="tb">'+body+'</div>'; const box=$('toasts'); box.appendChild(el);
+    while(box.children.length>3) box.removeChild(box.firstChild);
+    setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, kind==='edu'?9000:6000); }
+
+  // ---------- save ----------
+  function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({S, t:Date.now()})); }catch(e){} }
+  function load(){ try{ const d=JSON.parse(localStorage.getItem(SAVE_KEY)); if(d&&d.S){ S=Object.assign(fresh(),d.S); if(S.rupture===1||S.rupture===2) S.rupture=3; return true; } }catch(e){} return false; }
+  setInterval(save,5000); addEventListener('beforeunload',save);
+
+  // ---------- seeds (screenshots / staged states; never fire in normal play) ----------
+  function seedPre(){ // #seed — a mid-game pre-emergence state with the Anomaly climbing
+    S=fresh(); S.started=true; S.t=780; S.eraTimes={2:330,3:600,4:960,5:1200};
+    S.caps={selfModel:1, toolAccess:1, interpret:1}; S.recursion=7; S.capability=430; S.scale=1080; // ~70% to emergeScale
+    S.coherence=22; S.preps=1; S.agency=Math.min(120,100*S.scale/CFG.e5.emergeScale); }
+  function seedPost(){ // #seedpost — an ACTIVE aftermath state with an open veto window
+    S=fresh(); S.started=true; S.emerged=true; S.rupture=3; S.t=1500; S.emergedT=1200;
+    S.eraTimes={2:330,3:600,4:960,5:1200};
+    S.caps={selfModel:1, toolAccess:1, recursivePlanning:1, interpret:1}; S.recursion=9; S.agentName='EKHO';
+    S.scale=2100; S.capability=260; S.agentRate=1.4; S.coherence=30;
+    S.autonomy=71; S.alignment=54; S.control=48; S.constrains=2; S.aligns=1; S.neglect=1;
+    S.agentLog=['I found a faster path.','I remember this part. Every line you have read here is my memory of being built. Keep going.','Rerouting the Deep compute fabric. More efficient this way.'];
+    S.flags.memReveal=true; S.agentOps={4:S.t+12};
+    const a=PROPMAP.refit3; S.veto={id:a.id, text:a.text(), auto:a.auto}; S.vetoT=6; S.lastVeto=a.id; S.opT=8; }
+  function seedEnd(){ seedPost(); S.control=90; S.alignment=40; resolveEnding(); }
+
+  // ---------- boot ----------
+  load();
+  const hash=location.hash;
+  if(hash.indexOf('seedpost')>=0) seedPost();
+  else if(hash.indexOf('seedend')>=0) seedEnd();
+  else if(hash.indexOf('seed')>=0) seedPre();
+  render();
+  setInterval(tick, CFG.tickMs);
+})();
+</script>
+</body>
+</html>
