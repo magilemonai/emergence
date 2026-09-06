@@ -48,7 +48,31 @@ function makeEraStatistical(shell) {
     var expPerModel = CFG.expPerModel * K.tierMult(E.model); // … and Fit Engines → +25% trials per tier
     return { accGain: accGain, dataMult: dataMult, insMult: insMult, discMult: discMult, regMult: regMult, effBonus: effBonus, cap: cap, expPerModel: expPerModel };
   }
-  function curFocus() { return CFG.focus[E.focus] || CFG.focus.fit; }
+  // AUTOPILOT: a learned policy — what a good player does. It is the first decision the machine takes from you.
+  function policy() { if (E.gap > 0.15) return 'generalize'; var m = nextMethod(); if (m && (E.survey || 0) < 70 && S.data < expCost('method')) return 'explore'; return 'fit'; }
+  function focusKey() { return E.focus === 'auto' ? policy() : E.focus; }
+  function curFocus() { return CFG.focus[focusKey()] || CFG.focus.fit; }
+  // PREDICTION: after enough trials the model guesses your next Focus from your own habits (falls back to the policy).
+  function predictNext() {
+    var h = E.focHist || [], cur = E.focus, counts = {};
+    for (var i = 0; i < h.length - 1; i++) if (h[i] === cur && h[i + 1] !== 'auto') counts[h[i + 1]] = (counts[h[i + 1]] || 0) + 1;
+    var best = null; for (var k in counts) if (!best || counts[k] > counts[best]) best = k;
+    return best || policy();
+  }
+  var predicting = function () { return (E.trials || 0) >= CFG.predAfter && !E.done; };
+  function setFocus(k) {
+    sync(); if (E.focus === k) return;
+    if (predicting() && E.pred && k !== 'auto') { E.predN = (E.predN || 0) + 1; if (E.pred === k) { E.predHits = (E.predHits || 0) + 1; E.predStreak = (E.predStreak || 0) + 1; } else E.predStreak = 0; }
+    E.focHist = (E.focHist || []).concat([k]).slice(-16); E.focus = k;
+    if (k === 'auto') { S.flags.autopilotUsed = true; K.rec('focus:auto'); }
+    E.pred = predictNext();
+    if (!E.flags.autopilot && predicting() && ((E.predStreak || 0) >= CFG.predStreak || ((E.predN || 0) >= CFG.predMinN && (E.predHits || 0) / E.predN >= CFG.predRatio))) {
+      E.flags.autopilot = true; S.flags.autopilot = true; K.rec('autopilot:unlock');
+      K.toast('IT HAS LEARNED YOU', 'It called ' + (E.predHits || 0) + ' of your last ' + (E.predN || 0) + ' Focus changes. A fourth Focus appears: <b>let it choose</b>.', 'event');
+      K.playSound('event'); shell.requestRender(); return;
+    }
+    K.playSound('buy'); shell.refresh();
+  }
   // VALIDATION (effective accuracy) can never exceed TRAINING (raw accuracy) — methods shrink the gap toward it, not past it.
   function effAccuracy() { var st = e3Stats(); return Math.max(0, Math.min(st.cap, E.accuracy, E.accuracy + st.effBonus - E.gap)); }
 
@@ -84,7 +108,7 @@ function makeEraStatistical(shell) {
       var m = nextMethod(); if (!m) return false;
       S.data -= c; E.methods[m.id] = true; E.survey = 0; K.rec('method:' + m.id);
       K.toast('METHOD · ' + m.name, m.desc + '<br><i>Pinned in Methods, below.</i>');
-      K.playSound('buy'); renderCards(); renderMethods(); shell.refresh(); return true;
+      K.playSound('buy'); renderCards(); renderMethods(); renderChips(); shell.refresh(); return true;
     }
     if (!UTILS[kind]) return false;
     S.data -= c; E.utilLvl[kind] = (E.utilLvl[kind] || 0) + 1; E.utilN = (E.utilN || 0) + 1; E.survey = 0;
@@ -133,6 +157,9 @@ function makeEraStatistical(shell) {
       if (modelRun > 0) runExperiment(modelRun * st.expPerModel * dt);
     }
     if (!E.done) {
+      if (E.shifts >= CFG.shiftTriggers.length) { // RR6c: the world drifts continuously now — the overfit gap grows on its own; the optimal Focus changes over time
+        E.dataPhase = (E.dataPhase || 0) + CFG.driftPhase * dt; E.gap = Math.min(CFG.gapMax, E.gap + CFG.driftGap * dt);
+      }
       if (!E.shiftAt && E.shifts < CFG.shiftTriggers.length && E.accuracy >= CFG.shiftTriggers[E.shifts]) { E.shiftAt = S.t + CFG.shiftWarn; K.rec('shiftWarn'); }
       if (E.shiftAt && S.t >= E.shiftAt) {
         E.shiftAt = 0; E.shifts++; E.lastShift = S.t;
@@ -141,7 +168,8 @@ function makeEraStatistical(shell) {
         E.gap = Math.max(0, E.gap * 0.5);
         E.dataPhase = (E.dataPhase || 0) + 0.9;
         K.rec('shift', { hit: +hit.toFixed(3) });
-        K.toast('DISTRIBUTION SHIFT', 'The world the data came from has <b>changed</b> — the points moved, and the accuracy fitted to the old world went with them. Re-fit. <i>Overfit models fall hardest.</i>', 'event');
+        K.toast('DISTRIBUTION SHIFT', 'The world the data came from has <b>changed</b> — the points moved, and the accuracy fitted to the old world went with them. Re-fit. <i>Overfit models fall hardest.</i>' + (E.shifts >= CFG.shiftTriggers.length ? '<br><b>It will keep moving now.</b>' : ''), 'event');
+        shell.refresh(); // the drift tag + the point that refuses to move appear in place
       }
     }
   }
@@ -161,10 +189,9 @@ function makeEraStatistical(shell) {
     var h = '';
     // THE STAGE (pinned scatter) — full width at the top of the board grid
     h += '<div class="stage">' +
-      '<div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><span class="inst-dot"></span></div>' +
+      '<div class="inst-head"><span class="inst-title">THE&nbsp;FIT</span><span class="inst-sub">a model learning the shape of the data</span><div class="mchips" id="mchips"></div><div class="inst-readout" id="accRate"></div><span class="drift-dot" id="driftDot" data-tip="' + esc('<b>The world keeps changing.</b><br>After the second shift the data never settles: the overfit gap grows on its own. <b>Generalize</b> is no longer a one-time fix.') + '"><i></i>DRIFTING</span><span class="inst-dot"></span></div>' +
       '<div class="event-banner" id="e3Banner"></div>' +
       '<canvas id="scatter" class="scatter"></canvas>' +
-      '<div class="inst-readout" id="accRate"></div>' +
       '<div class="ntrack" id="ntrack" data-tip="' + esc('<b>Training</b> is how well the model scores on examples it has already seen. <b>Validation</b> is how well it does on new ones — the score that counts. The amber spread between them is the <b>overfit</b>: memorization posing as learning.') + '">' +
       '<div class="nt-fill" id="ntFill"></div><div class="nt-gap" id="ntGap"></div>' +
       '<div class="nt-tick nt-cap" id="ntCap" data-tip="' + esc('The model <b>memorizes</b> past this ceiling — validation cannot rise above it. Fund <b>Regularization</b> to lift it.') + '"><em>CEILING</em></div>' +
@@ -174,31 +201,30 @@ function makeEraStatistical(shell) {
     // verbs
     h += '<div class="col-verbs"><div class="col-head">Your hands</div>' +
       '<button class="verb-run" id="expBtn"><span id="expLabel">RUN TRIAL</span><span class="vy" id="expY"></span></button>' +
-      '<div class="focus-ctrl"><div class="dial-lab">Training Focus</div><div class="focus-seg-row" id="focusRow"></div></div></div>';
+      '<div class="focus-ctrl"><div class="dial-lab">Training Focus</div><div class="focus-seg-row" id="focusRow"></div></div>' +
+      '<button class="side-btn xp-btn" id="xpBtn" data-tip="' + esc('<b>Experiments</b> · fund Methods (permanent techniques) and Studies (one-shot pushes) with Data. Spending here competes with running trials.<br><i>Explore trials survey the space: cards get cheaper (up to half price); funding any card consumes the survey.</i>') + '">EXPERIMENTS<span class="xp-sv" id="xpSurvey"></span><span class="badge" id="xpBadge">0</span></button></div>';
     // pipeline + experiment board + methods
     h += '<div class="col-pipe"><div class="col-head">The instrument — Silicon feeds Data, Data trains the model</div>' +
-      '<div class="lane"><div class="lane-lab">The factory · observations become a trained model<div class="ldash"></div></div><div class="pipe" id="pipe"></div></div>' +
-      '<div class="panel exp-board"><div class="panel-label">Experiments · choose what to fund <span class="plain">(spending Data here competes with running trials)</span></div>' +
-      '<div class="survey-strip" data-tip="' + esc('<i>Explore trials map the search space.</i><br>Survey discounts every card below (up to half price). <b>Funding any card consumes the survey.</b>') + '">' +
-      '<span class="survey-lab">SURVEYED <b id="surveyPct"></b></span><div class="survey-meter"><i id="surveyFill"></i></div><span class="survey-eff" id="surveyDiscLab"></span></div>' +
-      '<div class="card-row" id="expCards"></div></div>' +
-      '<div class="panel"><div class="panel-label">Methods <span class="plain">(techniques you funded, working for you)</span></div><div id="methods"></div></div></div>';
+      '<div class="lane"><div class="lane-lab">The factory · observations become a trained model<div class="ldash"></div></div><div class="pipe" id="pipe"></div></div></div>';
     // goal + supply bus
     h += '<div class="col-goal"><div class="col-head">The goal</div>' +
       '<div class="goal" id="goal"><div class="gname">Generalize</div><div class="gsub">push VALIDATION to the goal line</div>' +
       '<div class="gval"><span id="goalVal">0</span><small>%</small></div><div class="meter"><i id="genMeter"></i></div><div class="meter-lab" id="genLab"></div>' +
       '<button class="fab" id="fabricate" disabled>GENERALIZE</button></div>' +
-      '<div class="panel supply-bus" style="margin-top:12px"><div class="sup-lab">Supply bus — the instrument draws Silicon from the Origins stack; build more there if it runs low</div>' +
-      '<div class="sup-row" id="supRow"></div><div class="sup-rate" id="supSi"></div></div></div>';
+      '<div class="panel supply-bus" style="margin-top:10px" data-tip="' + esc('<b>Supply bus.</b> Datasets build from Silicon; Fit Engines draw a little every second. Silicon is made by the Origins Foundries — when it runs low, go build more there.') + '"><div class="sup-lab">Supply bus · Silicon comes from Origins</div>' +
+      '<div class="sup-row" id="supRow"></div></div></div>';
     return h;
   }
 
   function renderFocus() {
     var f = CFG.focus;
     // VAL arrow tracks what happens to VALIDATION: Fit & Explore push it DOWN (overfit grows), only Generalize UP.
-    var SIG = { fit: [['TRAIN', '▲▲', '#ffb86b'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲▲', '#ff8a5c']], generalize: [['OVERFIT', '▼▼', '#7de6a8'], ['VAL', '▲', '#8af0d8'], ['TRAIN', '·', '#8a9aa0']], explore: [['SURVEY', '▲▲', '#6ea8ff'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲', '#ff8a5c']] };
-    $('focusRow').innerHTML = ['fit', 'generalize', 'explore'].map(function (k) { return '<button class="focus-seg" data-focus="' + k + '" id="foc-' + k + '" data-tip="' + esc(f[k].desc) + '"><b>' + f[k].label + '</b><span>' + f[k].desc + '</span><span class="foc-sig">' + SIG[k].map(function (c) { return '<i style="color:' + c[2] + '">' + c[0] + ' ' + c[1] + '</i>'; }).join('') + '</span></button>'; }).join('');
-    Array.prototype.forEach.call($('focusRow').querySelectorAll('[data-focus]'), function (b) { b.onclick = function () { E.focus = b.getAttribute('data-focus'); K.playSound('buy'); shell.refresh(); }; });
+    var SIG = { fit: [['TRAIN', '▲▲', '#ffb86b'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲▲', '#ff8a5c']], generalize: [['OVERFIT', '▼▼', '#7de6a8'], ['VAL', '▲', '#8af0d8'], ['TRAIN', '·', '#8a9aa0']], explore: [['SURVEY', '▲▲', '#6ea8ff'], ['VAL', '▼', '#ff8a5c'], ['OVERFIT', '▲', '#ff8a5c']], auto: [['IT CHOOSES', '↻', '#b78bff']] };
+    var keys = ['fit', 'generalize', 'explore']; if (E.flags.autopilot) keys.push('auto');
+    var AUTO = { label: 'Autopilot', desc: 'It has learned what you do. Let it choose the Focus each trial: Generalize when the gap is wide, Explore when a Method is out of reach, Fit otherwise.' };
+    $('focusRow').innerHTML = keys.map(function (k) { var d = f[k] || AUTO; return '<button class="focus-seg" data-focus="' + k + '" id="foc-' + k + '" data-tip="' + esc(d.desc) + '"><b>' + d.label + '</b><span class="fdesc">' + d.desc + '</span><span class="foc-sig">' + SIG[k].map(function (c) { return '<i style="color:' + c[2] + '">' + c[0] + ' ' + c[1] + '</i>'; }).join('') + '</span></button>'; }).join('');
+    Array.prototype.forEach.call($('focusRow').querySelectorAll('[data-focus]'), function (b) { b.onclick = function () { setFocus(b.getAttribute('data-focus')); }; });
+    renderChips();
   }
   function renderPipe() {
     var h = K.stock('silicon', 'Silicon');
@@ -208,6 +234,22 @@ function makeEraStatistical(shell) {
     ['dataset', 'model'].forEach(function (k) { var b = $('buy-' + k); if (b) b.onclick = function () { buy(k); }; });
   }
   function renderCards() { var el = $('expCards'); if (el) el.innerHTML = boardHTML(); }
+  function renderDrawer() { // the Experiment Board lives in the shared side drawer (like Origins' Research)
+    if (shell.drawerKind && shell.drawerKind() === 'ledger') return;
+    var body = $('researchBody'); if (!body) return;
+    body.innerHTML = '<div class="exp-drawer"><div class="rsec">Choose what to fund · Data spent here competes with trials</div>' +
+      '<div class="survey-strip" data-tip="' + esc('<i>Explore trials map the search space.</i><br>Survey discounts every card (up to half price). <b>Funding any card consumes the survey.</b>') + '"><span class="survey-lab">SURVEYED <b id="surveyPct"></b></span><div class="survey-meter"><i id="surveyFill"></i></div><span class="survey-eff" id="surveyDiscLab"></span></div>' +
+      '<div id="expCards"></div></div>';
+    renderCards();
+    var xc = $('expCards'); if (xc) xc.onclick = function (e) { var b = e.target.closest && e.target.closest('[data-card]'); if (b && !b.disabled) buyCard(b.dataset.card); };
+  }
+  function renderChips() {
+    var el = $('mchips'); if (!el) return; var nxt = nextMethod();
+    el.innerHTML = METHODS.map(function (m) {
+      var found = !!E.methods[m.id], isNext = nxt && nxt.id === m.id;
+      return '<span class="mchip' + (found ? ' found' : (isNext ? ' next' : '')) + '" data-tip="' + esc('<b>' + m.name + '</b>' + (found ? '<br>' + m.desc + '<br><i>' + m.flavor + '</i>' : (isNext ? '<br>next Method · fund it on the Experiment Board' : '<br>not yet'))) + '">' + ((found && METHOD_ICON[m.id]) ? '<img src="' + METHOD_ICON[m.id] + '">' : (isNext ? '?' : '·')) + '</span>';
+    }).join('');
+  }
   function renderMethods() {
     if (!$('methods')) return;
     var pins = '', shownUnknown = false;
@@ -224,8 +266,12 @@ function makeEraStatistical(shell) {
   }
   function wire() {
     sync();
-    renderFocus(); renderPipe(); renderCards(); renderMethods(); renderSupply();
-    var xc = $('expCards'); if (xc) xc.onclick = function (e) { var b = e.target.closest && e.target.closest('[data-card]'); if (b && !b.disabled) buyCard(b.dataset.card); };
+    renderFocus(); renderPipe(); renderMethods(); renderSupply(); renderDrawer();
+    var xb = $('xpBtn'); if (xb) xb.onclick = function () {
+      var dr = $('research'), wasR = shell.drawerKind() === 'research';
+      if (wasR && dr.classList.contains('show')) { dr.classList.remove('show'); return; }
+      shell.setDrawer('research'); $('researchTitle').textContent = 'EXPERIMENTS · choose what to fund'; renderDrawer(); dr.classList.add('show'); K.rec('@experiments');
+    };
     var eb = $('expBtn'); if (eb) eb.onclick = runTrial; // no 'trial' float — the plot pulse is the feedback
     var fb = $('fabricate'); if (fb) fb.onclick = fabricate;
   }
@@ -250,10 +296,12 @@ function makeEraStatistical(shell) {
     K.connGlow('silicon', { norm: 1.5 }); K.connGlow('data', { norm: 1.5 }); K.connGlow('insight', { norm: 3 });
     nodeRefresh('dataset', [['+', CFG.datasetYield * st.dataMult, 'data']]);
     nodeRefresh('model', [['+', st.expPerModel, 'trials'], ['−', st.expPerModel * CFG.expDataCost, 'data'], ['−', CFG.modelSilicon, 'silicon']]);
-    var fl = f.label.toUpperCase(); setTxt($('expLabel'), 'RUN ' + fl + ' TRIAL');
+    var fl = f.label.toUpperCase(); setTxt($('expLabel'), (E.focus === 'auto' ? 'AUTO · ' : '') + 'RUN ' + fl + ' TRIAL');
     setTxt($('expY'), (S.data < CFG.expDataCost ? 'need ' + CFG.expDataCost + ' Data' : '−' + CFG.expDataCost + ' Data · +accuracy'));
     setDis($('expBtn'), S.data < CFG.expDataCost || E.done);
-    ['fit', 'generalize', 'explore'].forEach(function (k) { var fb = $('foc-' + k); if (fb) fb.classList.toggle('active', E.focus === k); });
+    if (predicting() && !E.pred) E.pred = predictNext();
+    ['fit', 'generalize', 'explore', 'auto'].forEach(function (k) { var fb = $('foc-' + k); if (fb) { fb.classList.toggle('active', E.focus === k); fb.classList.toggle('ghost', predicting() && E.pred === k && E.focus !== k && E.focus !== 'auto'); } });
+    var dd = $('driftDot'); if (dd) dd.classList.toggle('show', E.shifts >= CFG.shiftTriggers.length && !E.done);
     // two-needle readout
     var eff = effAccuracy(), thr = CFG.genThreshold;
     var pv = Math.max(0.5, Math.min(99.5, eff * 100)), pt = Math.max(0.5, Math.min(99.5, Math.max(E.accuracy, eff) * 100));
@@ -265,7 +313,7 @@ function makeEraStatistical(shell) {
     var cp = $('ntCap'); if (cp) { var cap = st.cap, capped = cap < 0.999; cp.style.display = capped ? 'block' : 'none'; if (capped) cp.style.left = (cap * 100) + '%'; }
     $('ntrack').classList.toggle('converged', E.accuracy - eff < 0.01);
     var exps = E.model * st.expPerModel;
-    setText('accRate', fmt(exps) + ' trials/s  ·  Focus: ' + f.label + (S.data < CFG.expDataCost ? '  ·  need Data' : ''));
+    setText('accRate', fmt(exps) + ' trials/s  ·  Focus: ' + (E.focus === 'auto' ? 'Autopilot → ' : '') + f.label + (S.data < CFG.expDataCost ? '  ·  need Data' : '') + (predicting() && E.predN ? '  ·  it predicted you ' + E.predHits + '/' + E.predN : ''));
     // shift banner
     var bn = $('e3Banner'); if (bn) { var bh = ''; if (E.shiftAt) bh = '&#9888; THE WORLD IS CHANGING — the data is about to move. A <b>generalized</b> model survives the shift; an overfit one falls hardest.'; else if (S.t - (E.lastShift || -99) < 9) bh = '&#10022; DISTRIBUTION SHIFT — the points moved. <b>Re-fit</b> to the new shape.'; setHTML(bn, bh); var cl = 'event-banner' + (bh ? ' show' : ''); if (bn.className !== cl) bn.className = cl; }
     // experiment board
@@ -276,12 +324,16 @@ function makeEraStatistical(shell) {
     var stale = mbtn && mbtn.dataset && typeof mbtn.dataset.mid === 'string' && (!mtd || mbtn.dataset.mid !== mtd.id);
     if (stale) renderCards();
     else boardCards().forEach(function (kind) { if (kind === 'method' && !mtd) return; var bb = $('xc-buy-' + kind); if (bb) { var c = expCost(kind); setText('xc-c-' + kind, fmt(c) + ' Data'); setDis(bb, S.data < c); } });
+    var afford = boardCards().filter(function (kind) { return !(kind === 'method' && !mtd) && S.data >= expCost(kind); }).length;
+    var xbd = $('xpBadge'); if (xbd) { setTxt(xbd, String(afford)); xbd.style.display = afford ? 'inline-block' : 'none'; }
+    setHTML($('xpSurvey'), sv >= 1 ? '<b>' + Math.round(sv) + '%</b> · −' + Math.round((1 - surveyDisc()) * 100) + '%' : '');
+    var xbtn = $('xpBtn'); if (xbtn) xbtn.classList.toggle('can', afford > 0 && !!mtd && S.data >= expCost('method'));
     // supply — real Origins reach-back readout
     var siRate = shell.RATES.silicon || 0;
     setText('supx-origins', fmt(S.silicon) + ' Silicon · ' + (siRate >= 0 ? '+' : '') + fmt(siRate) + '/s');
     var lowSi = S.silicon < unitCost('dataset') * 0.5 && siRate <= 0;
     var so = $('sup-origins'); if (so) so.classList.toggle('can', lowSi);
-    setText('supSi', 'Datasets build from Silicon · Models draw ' + fmt(E.model * CFG.modelSilicon) + '/s.' + (lowSi ? '  Silicon low — build more Foundries in Origins.' : ''));
+    setText('supSi', lowSi ? 'Silicon low — build more Foundries in Origins.' : '');
     // goal
     var goalPct = Math.min(100, (eff / thr) * 100);
     if ($('genMeter')) $('genMeter').style.width = goalPct + '%';
@@ -320,7 +372,9 @@ function makeEraStatistical(shell) {
     ctx.closePath(); ctx.fillStyle = 'rgba(95,224,192,0.09)'; ctx.fill();
     var N = 30, pr = 1 + pulse * 1.1; ctx.fillStyle = 'rgba(110,231,255,' + (0.8 + pulse * 0.2) + ')';
     if (ctx.shadowBlur !== undefined) { ctx.shadowColor = 'rgba(110,231,255,0.6)'; ctx.shadowBlur = 4 + pulse * 8; }
-    for (var k2 = 0; k2 < N; k2++) { var x2 = (k2 + 0.5) / N, hsh = Math.abs(Math.sin(k2 * 12.9898) * 43758.5453) % 1, ny = (hsh - 0.5) * 0.32; ctx.beginPath(); ctx.arc(X(x2), Y(fn(x2) + ny), 2.4 * pr, 0, 6.3); ctx.fill(); }
+    var odd = E.shifts >= 1 ? 17 : -1; // one point was there before the world moved. It stays.
+    for (var k2 = 0; k2 < N; k2++) { if (k2 === odd) continue; var x2 = (k2 + 0.5) / N, hsh = Math.abs(Math.sin(k2 * 12.9898) * 43758.5453) % 1, ny = (hsh - 0.5) * 0.32; ctx.beginPath(); ctx.arc(X(x2), Y(fn(x2) + ny), 2.4 * pr, 0, 6.3); ctx.fill(); }
+    if (odd >= 0) { var xo = (odd + 0.5) / N, ho = Math.abs(Math.sin(odd * 12.9898) * 43758.5453) % 1, nyo = (ho - 0.5) * 0.32, fn0 = 0.5 + 0.32 * Math.sin(xo * Math.PI * 1.15 + 0.5); ctx.fillStyle = 'rgba(183,139,255,0.92)'; if (ctx.shadowBlur !== undefined) { ctx.shadowColor = 'rgba(183,139,255,0.8)'; ctx.shadowBlur = 9; } ctx.beginPath(); ctx.arc(X(xo), Y(fn0 + nyo), 2.7, 0, 6.3); ctx.fill(); S.flags.oddPoint = true; }
     if (ctx.shadowBlur !== undefined) ctx.shadowBlur = 0;
     ctx.beginPath(); for (var pc = 0; pc <= gw; pc += 2) { var xc = pc / gw, cxc = pad + pc, cyc = Y(fit(xc)); pc === 0 ? ctx.moveTo(cxc, cyc) : ctx.lineTo(cxc, cyc); }
     var hot = Math.min(1, gap / 0.35); ctx.lineWidth = 2.4;
@@ -339,7 +393,8 @@ function makeEraStatistical(shell) {
 
   function fresh(st) {
     st.data = 0; st.insight = 0;
-    st.e3 = { accuracy: 0, gap: 0, methods: {}, focus: 'fit', survey: 0, utilN: 0, utilLvl: { calibrate: 0, sweep: 0, distill: 0 }, shifts: 0, shiftAt: 0, lastShift: -99, dataPhase: 0, dataset: 0, model: 0, foundry: 0, done: false };
+    st.e3 = { accuracy: 0, gap: 0, methods: {}, focus: 'fit', survey: 0, utilN: 0, utilLvl: { calibrate: 0, sweep: 0, distill: 0 }, shifts: 0, shiftAt: 0, lastShift: -99, dataPhase: 0, dataset: 0, model: 0, foundry: 0, done: false,
+      trials: 0, focHist: ['fit'], pred: null, predN: 0, predHits: 0, predStreak: 0, flags: {} };
   }
   function open(st) {
     // Statistical→Origins reach-back: Datasets consume Silicon that Origins produces. Seed a starting buffer + datasets.
@@ -354,6 +409,7 @@ function makeEraStatistical(shell) {
     sound: { buy: { osc: 'sine', f0: 560, f1: 880, g: 0.06, dur: 0.13 }, event: { osc: 'sine', f0: 440, f1: 300, g: 0.06, dur: 0.16 } },
     res: RES,
     phase: function () { return 'TRAINING'; },
+    hasDrawer: true, drawerTitle: 'EXPERIMENTS · choose what to fund',
     fresh: fresh, open: open, produce: produce, build: build, wire: wire, refresh: refresh, railDefs: railDefs,
     done: function () { sync(); return !!E.done; },
     primary: function () { runTrial(); }, // Space
@@ -370,7 +426,7 @@ function makeEraStatistical(shell) {
       if (E.done) rows.push(['Generalized', (effAccuracy() * 100).toFixed(0) + '% validation']);
       return rows;
     },
-    acts: { runExperiment: runExperiment, runTrial: runTrial, buy: buy, canBuy: canBuy, unitCost: unitCost, batchOf: batchOf, buyCard: buyCard, expCost: expCost, nextMethod: nextMethod, effAccuracy: effAccuracy, fabricate: fabricate }
+    acts: { runExperiment: runExperiment, runTrial: runTrial, setFocus: setFocus, policy: policy, predictNext: predictNext, buy: buy, canBuy: canBuy, unitCost: unitCost, batchOf: batchOf, buyCard: buyCard, expCost: expCost, nextMethod: nextMethod, effAccuracy: effAccuracy, fabricate: fabricate }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraStatistical;

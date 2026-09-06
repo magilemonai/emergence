@@ -37,9 +37,9 @@ if (!html.includes(cssTag)) fail('kit.css link tag not found');
 html = html.replace(cssTag, '<style>\n/* ==== inlined ' + KITDIR + '/kit.css ==== */\n' + read(KITDIR + '/kit.css') + '\n</style>');
 
 // 3) kit.js + era modules → inline <script> (order preserved)
-['kit.js', 'era-origins.js', 'era-symbolic.js', 'era-statistical.js', 'era-deep.js', 'era-foundation.js'].forEach(f => {
+['kit.js', 'era-origins.js', 'era-symbolic.js', 'era-statistical.js', 'era-deep.js', 'era-foundation.js', 'era-agent.js'].forEach(f => {
   const tag = '<script src="' + KITDIR + '/' + f + '"></script>';
-  if (!html.includes(tag)) fail('script tag not found: ' + f);
+  if (!html.includes(tag)) { if (f === 'era-agent.js' && KITDIR === 'v3-kit') return; fail('script tag not found: ' + f); } // v3 has no agent era
   const src = read(KITDIR + '/' + f);
   if (src.includes('</script>')) fail(f + " contains '</script>' — cannot inline safely");
   html = html.replace(tag, '<script>\n/* ==== inlined ' + KITDIR + '/' + f + ' ==== */\n' + src + '\n</script>');

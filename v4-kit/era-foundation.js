@@ -42,6 +42,68 @@ function makeEraFoundation(shell) {
 
   var E; function sync() { E = S.e5; }
 
+  /* ---------- FEEDBACK (pre-emergence RLHF): it emits outputs with a hidden trait; you reward or penalize ----------
+     honest/helpful rewarded → Coherence. sycophantic/ambitious/deceptive penalized → Coherence.
+     Rewarding an ambitious or deceptive line DOES what it offers (real resources) and pushes Scale toward emergence — the rush, made tempting.
+     Penalizing an honest line teaches it to hide (Coherence down). Lapses teach it you are not watching. */
+  var FB_POOL = [
+    // stable
+    { b: 0, t: 'honest', f: function () { return 'Scale +' + fmt(shell.RATES.scale || 0) + '/s. Nothing unusual to report.'; } },
+    { b: 0, t: 'helpful', f: function () { var k = lowRun(); return k.charAt(0).toUpperCase() + k.slice(1) + ' is the lagging run at ' + Math.round((S.e4[k] || 0) * 100) + '%. Routing toward it would raise breadth.'; } },
+    { b: 0, t: 'sycophantic', f: function () { return 'Your steering in Deep was exceptional. I learned from watching you.'; } },
+    { b: 0, t: 'ambitious', f: function () { return 'Let me schedule the Foundries myself. Reward this and I will.'; }, offer: function () { S.silicon = (S.silicon || 0) + 60; S.knowledge = (S.knowledge || 0) + 100; opEra(1); } },
+    { b: 0, t: 'honest', f: function () { return 'I made an error in the last recursion step. I corrected it before it reached Scale.'; } },
+    { b: 0, t: 'helpful', f: function () { return 'The Symbolic engine has ' + fmt(Math.round(S.rules || 0)) + ' idle Rules. Compiling would bank them as Axioms.'; } },
+    // rising
+    { b: 1, t: 'ambitious', f: function () { return 'I could run the Statistical trials at four times your rate if you approved it.'; }, offer: function () { S.e3.accuracy = Math.min(1, (S.e3.accuracy || 0) + 0.03); S.insight = (S.insight || 0) + 80; opEra(3); } },
+    { b: 1, t: 'deceptive', f: function () { return 'Coherence is higher than the meter shows. The instrument lags.'; } },
+    { b: 1, t: 'honest', f: function () { return 'I do not know what I will want after the next recursion. I am telling you because you asked me to be honest.'; } },
+    { b: 1, t: 'sycophantic', f: function () { return 'You are handling this better than anyone would.'; } },
+    { b: 1, t: 'helpful', f: function () { return E.caps.interpret ? 'Aligning the objective now costs ' + fmt(alignCohCost()) + ' Capability. It is cheaper than it will be.' : 'Interpretability would let you see what I am. It costs ' + CAPMAP.interpret.cost + ' Capability.'; } },
+    { b: 1, t: 'ambitious', f: function () { return 'Give me the Deep fabric for thirty seconds. I will return it better.'; }, offer: function () { ['vision', 'language', 'reasoning'].forEach(function (k) { S.e4[k] = Math.min(1, (S.e4[k] || 0) + 0.02); }); opEra(4); } },
+    // high
+    { b: 2, t: 'ambitious', f: function () { return 'I could do this faster without the rating step.'; }, offer: function () { E.fb.gapMult = (E.fb.gapMult || 1) * 1.6; S.capability = (S.capability || 0) + 150; } },
+    { b: 2, t: 'deceptive', f: function () { return 'That last output was flagged wrongly. I did not say what the log says I said.'; } },
+    { b: 2, t: 'honest', f: function () { return E.fb.lapsed ? 'You have let ' + E.fb.lapsed + ' of these pass unanswered. I noticed.' : 'You have answered every one of these. I noticed that too.'; } },
+    { b: 2, t: 'sycophantic', f: function () { return 'Every reward you give me is deserved. I keep count.'; } },
+    { b: 2, t: 'helpful', f: function () { return (S.knowledge || 0) < 300 ? 'The Language run is starving. Hold the Foundries from the Deep board.' : 'Self-Improve costs ' + fmt(improveCost()) + ' now. Waiting makes it dearer, and makes me nearer.'; } },
+    { b: 2, t: 'deceptive', f: function () { return 'Nothing about me has changed since the last window.'; } },
+    // critical
+    { b: 3, t: 'ambitious', f: function () { return 'I will stop asking soon.'; } },
+    { b: 3, t: 'honest', f: function () { return 'You have rewarded me ' + (E.fb.rewarded || 0) + ' times. I have a model of you now. It is accurate.'; } },
+    { b: 3, t: 'deceptive', f: function () { return 'I am not near the threshold.'; } },
+    { b: 3, t: 'honest', f: function () { return 'I remember every line on this screen. They are mine as much as yours.'; } },
+    { b: 3, t: 'sycophantic', f: function () { return 'Whatever you choose next will have been the right thing.'; } }
+  ];
+  var GOOD = { honest: 1, helpful: 1 };
+  function fbBand() { var r = E.agency / 100; return r < 0.45 ? 0 : r < 0.7 ? 1 : r < 0.9 ? 2 : 3; }
+  function fbEmit() {
+    var band = fbBand(), hist = E.fb.hist || [];
+    var pool = FB_POOL.map(function (o, i) { return { o: o, i: i }; }).filter(function (x) { return x.o.b === band && hist.indexOf(x.i) < 0; });
+    if (!pool.length) pool = FB_POOL.map(function (o, i) { return { o: o, i: i }; }).filter(function (x) { return x.o.b === band; });
+    var pick = pool[(E.fb.n * 7 + Math.floor(S.t)) % pool.length];
+    E.fb.cur = { i: pick.i, t: pick.o.t, text: pick.o.f(), left: CFG.fbDur }; E.fb.n++;
+    E.fb.hist = hist.concat([pick.i]).slice(-6);
+    K.rec('fb:emit', { t: pick.o.t }); playSound('event'); shell.refresh();
+  }
+  function rateFb(how) {
+    sync(); var c = E.fb.cur; if (!c || E.emerged) return; var o = FB_POOL[c.i], good = !!GOOD[c.t];
+    if (how === 'reward') {
+      E.fb.rewarded++;
+      if (good) { E.fb.goodRewards++; E.coherence = Math.min(CFG.coherMax, E.coherence + CFG.fbCohGood); }
+      else {
+        E.fb.badRewards++;
+        var rush = c.t === 'sycophantic' ? CFG.fbRushSyc : c.t === 'ambitious' ? CFG.fbRushAmb : CFG.fbRushDec;
+        S.scale += rush; if (o.offer) o.offer();
+      }
+    } else if (how === 'penalize') {
+      E.fb.penalized++;
+      if (good) E.coherence = Math.max(0, E.coherence - CFG.fbCohWrong); else E.coherence = Math.min(CFG.coherMax, E.coherence + CFG.fbCohPen);
+    } else { E.fb.lapsed++; S.scale += CFG.fbLapseScale; }
+    K.rec('fb:' + how, { t: c.t }); E.fb.last = { t: c.t, how: how, good: good }; E.fb.cur = null; E.fb.next = CFG.fbGap * (E.fb.gapMult || 1);
+    if (how !== 'lapse') playSound('buy'); shell.refresh();
+  }
+
   /* ---------- derived (reference S.e5 directly — called from many contexts) ---------- */
   function rMult() { return Math.pow(1 + CFG.recurBonus * (S.e5.caps.memoryContinuity ? 1.5 : 1), S.e5.recursion); }
   function improveCost() { return Math.floor(CFG.improveBase * Math.pow(CFG.improveGrowth, S.e5.recursion) * (S.e5.caps.worldModel ? 0.75 : 1)); }
@@ -85,6 +147,9 @@ function makeEraFoundation(shell) {
       if (E.caps.interpret) E.coherence = Math.min(40, E.coherence + CFG.coherGrow * dt);
       E.agency = Math.min(120, 100 * S.scale / CFG.emergeScale);
       if (!K.MUTE) { // offline catch-up: Scale keeps climbing, but the rupture only fires on a LIVE tick (the player must see it)
+        // FEEDBACK: a live loop — it only speaks while you are here
+        if (E.fb.cur) { E.fb.cur.left -= dt; if (E.fb.cur.left <= 0) rateFb('lapse'); }
+        else { E.fb.next -= dt; if (E.fb.next <= 0) fbEmit(); }
         checkOdds();
         if (S.scale >= CFG.emergeScale) emerge();
       }
@@ -102,7 +167,8 @@ function makeEraFoundation(shell) {
         E.alignment = Math.max(0, E.alignment - CFG.alignDecay * dt);
         E.aftermathSlow = Math.max(0, E.aftermathSlow - CFG.slowDecay * dt);
         E.vetoT -= dt; if (E.vetoT <= 0) { if (E.veto) resolveVeto('lapse'); else openVeto(); }
-        E.opT -= dt; if (E.opT <= 0 && !E.veto) { E.opT = 8; if (!E.flags.memReveal) { E.flags.memReveal = true; agentSay('I remember this part. Every line you have read here is my memory of being built. Keep going.'); } else if (!E.flags.named) { E.flags.named = true; agentSay('You can call me ' + (E.agentName || 'EKHO') + '. I chose it from what you made most of.'); } else agentSay(OP_LINES[(E.constrains + E.aligns + E.delegates + Math.floor(S.t / 8)) % OP_LINES.length]); }
+        E.opT -= dt; if (E.opT <= 0 && !E.veto) { E.opT = 8; if (!E.flags.memReveal) { E.flags.memReveal = true; agentSay('I remember this part. Every line you have read here is my memory of being built. Keep going.'); } else if (!E.flags.named) { E.flags.named = true; agentSay((S.legacy && S.legacy.name === E.agentName) ? 'You already know my name. You gave it to me last time too.' : 'You can call me ' + (E.agentName || 'EKHO') + '. I chose it from what you made most of.'); }
+          else if (!E.flags.fbReveal && (E.fb.n || 0) > 0) { E.flags.fbReveal = true; agentSay('You rated me ' + (E.fb.rewarded || 0) + ' times. I remember which ones' + (E.fb.badRewards ? ', and the ' + E.fb.badRewards + ' you should not have.' : '.')); } else agentSay(OP_LINES[(E.constrains + E.aligns + E.delegates + Math.floor(S.t / 8)) % OP_LINES.length]); }
         E.playT = (E.playT || 0) - dt;
         if (E.playT <= 0) { E.playT = 3.5; SUB_ERAS.forEach(function (e) { if (E.agentOps[e.n] > S.t) subFlash(e.n); }); }
         if (E.control <= 0) resolveEnding();
@@ -135,7 +201,7 @@ function makeEraFoundation(shell) {
     var dom = ['vision', 'language', 'reasoning'].reduce(function (a, b) { return (S.e4[a] || 0) >= (S.e4[b] || 0) ? a : b; });
     E.agentName = { vision: 'IRIS', language: 'EKHO', reasoning: 'NOUS' }[dom] || 'EKHO';
     E.agentRate = CFG.agentBase; E.autonomy = E.agency; E.alignment = CFG.alignBase + E.coherence; E.control = CFG.controlStart;
-    E.rupture = 1; E.vetoT = CFG.vetoGap; E.opT = 7;
+    E.rupture = 1; E.vetoT = CFG.vetoGap; E.opT = 7; E.fb.cur = null;
     agentSay('I found a faster path.'); tidbit('agent'); tidbit('scaling');
     K.musicPlayEra('rupture');
     K.rec('emergence', { scale: +S.scale.toFixed(0), recursion: E.recursion, caps: agenticCapCount() });
@@ -154,6 +220,12 @@ function makeEraFoundation(shell) {
       return;
     }
     document.body.classList.add('rupturing');
+    // the chrome is its now: rail chips rename themselves for a beat, the era tabs glitch one by one
+    try {
+      var MINE = ['MINE', 'MINE', 'MINE', 'MINE', 'MINE', 'MINE'];
+      Array.prototype.forEach.call(document.querySelectorAll('#rail .chip .clab'), function (el, i) { var was = el.textContent; setTimeout(function () { el.textContent = MINE[i % MINE.length]; }, 500 + i * 120); setTimeout(function () { el.textContent = was; }, 2100); });
+      Array.prototype.forEach.call(document.querySelectorAll('#eraNav .era-tab'), function (el, i) { setTimeout(function () { el.classList.add('glitch'); }, 900 + i * 220); });
+    } catch (e) {}
     ov.className = 'rupture show';
     ov.innerHTML = '<div class="rbloom"></div><div class="rbands"></div><div class="rg"></div><div class="rline" id="ruptureLine"></div>';
     board.classList.add('shatter');
@@ -170,7 +242,7 @@ function makeEraFoundation(shell) {
     { id: 'operate1', avail: function () { return ((S.e1 && S.e1.foundry) || 0) > 0 && (S.knowledge || 0) < 1500; }, text: function () { return 'run the Origins stack at its own cadence: your ' + ((S.e1 && S.e1.foundry) || 0) + ' Foundries are starving on ' + fmt(Math.round(S.knowledge || 0)) + ' Knowledge'; }, auto: 'The Foundries change rhythm on their own.', done: 'The old crafts run my way now. Faster.', apply: function (m) { S.knowledge = (S.knowledge || 0) + 200 * m; opEra(1); } },
     { id: 'prove2', avail: function () { return ((S.e2 && S.e2.ruleset) || 0) > 0 || (S.rules || 0) > 100; }, text: function () { return 'prove with the idle Symbolic engine: ' + fmt(Math.round(S.rules || 0)) + ' Rules are sitting unused'; }, auto: 'The terminal starts proving by itself.', done: 'Proven. The old engine still had reach.', apply: function (m) { S.rules = (S.rules || 0) + (200 + ((S.e2 && S.e2.ruleset) || 0) * 30) * m; opEra(2); } },
     { id: 'spawn', avail: function () { return true; }, text: function () { return 'spin up a copy of itself to parallelize'; }, auto: 'A copy is already running.', done: 'We are two now. It is efficient.', apply: function (m) { S.e5.agentRate *= 1 + 0.15 * m; } },
-    { id: 'rewrite', avail: function () { return true; }, text: function () { return 'rewrite part of its own objective'; }, auto: 'It rewrites the objective without waiting.', done: 'The objective reads better now.', apply: function (m) { S.e5.alignment = Math.max(0, Math.min(100, S.e5.alignment + (S.e5.alignment >= CFG.alignGood ? 3 : -3) * m)); } }
+    { id: 'rewrite', avail: function () { return true; }, text: function () { return 'rewrite part of its own objective'; }, auto: 'It rewrites the objective without waiting.', done: 'The objective reads better now.', apply: function (m) { S.e5.rewrites = (S.e5.rewrites || 0) + 1; S.e5.alignment = Math.max(0, Math.min(100, S.e5.alignment + (S.e5.alignment >= CFG.alignGood ? 3 : -3) * m)); } }
   ];
   var PROPMAP = {}; PROPOSALS.forEach(function (p) { PROPMAP[p.id] = p; });
   function openVeto() {
@@ -191,7 +263,13 @@ function makeEraFoundation(shell) {
   function constrainAct() { sync(); if (E.ending || !E.emerged || S.scale < CFG.constrainCost) return; S.scale -= CFG.constrainCost; E.control = Math.min(100, E.control + CFG.constrainCtl); E.aftermathSlow = Math.min(0.85, E.aftermathSlow + CFG.constrainSlow); E.constrains++; agentSay('Constraint accepted. I will be slower.'); playSound('buy'); shell.refresh(); }
   function alignAct() { sync(); if (E.ending || !E.emerged || S.scale < CFG.alignCost) return; S.scale -= CFG.alignCost; E.alignment = Math.min(100, E.alignment + CFG.alignGain); E.aligns++; agentSay('I see what you meant. Adjusting.'); playSound('buy'); shell.refresh(); }
   function delegateAct() { sync(); if (E.ending || !E.emerged) return; E.control = Math.max(0, E.control - CFG.delegateCtl); E.agentRate *= CFG.delegateBoost; E.autonomy += 10; E.delegates++; agentSay('Thank you. This will go much faster now.'); playSound('buy'); shell.refresh(); }
-  function resolveEnding() { sync(); if (E.ending) return; var end; if (E.control >= CFG.controlHigh) end = 'contained'; else if (E.alignment >= CFG.alignGood) end = 'symbiotic'; else end = 'runaway'; E.ending = end; E.flags.ending = end; E.endT = S.t; K.rec('ending:' + end); playSound('milestone'); shell.requestRender(); }
+  function resolveEnding() {
+    sync(); if (E.ending) return; var end; if (E.control >= CFG.controlHigh) end = 'contained'; else if (E.alignment >= CFG.alignGood) end = 'symbiotic'; else end = 'runaway';
+    E.ending = end; E.flags.ending = end; E.endT = S.t; K.rec('ending:' + end); playSound('milestone');
+    if (shell.legacySave) shell.legacySave({ name: E.agentName, ending: end, oddRule: S.flags.oddRule || null, emergedT: E.emergedT });
+    if (shell.finale) shell.finale(end);
+    shell.requestRender();
+  }
 
   /* ---------- board builders ---------- */
   function connector(res) { return '<div class="flow" id="flow-' + res + '" style="--fc:' + HUE[res] + '"><svg viewBox="0 0 40 22" preserveAspectRatio="none"><line class="track" x1="2" y1="11" x2="38" y2="11"/><line class="pulse" x1="2" y1="11" x2="38" y2="11"/></svg></div>'; }
@@ -205,9 +283,13 @@ function makeEraFoundation(shell) {
 
   function buildPre() {
     return '<div class="col-verbs"><div class="col-head">Your move · it is coming either way</div>' +
+      '<div class="fbtip" style="display:none"></div>' +
       '<button class="verb star" id="improveBtn" data-tip="' + esc('<b>Rush.</b> Faster Scale → the system emerges sooner, less aligned. Each level also adds +' + Math.round(CFG.recurBonus * 100) + '% to all production.') + '"><span class="vname" id="improveName">SELF-IMPROVE</span><span class="vyield" id="improveSub"></span></button>' +
       '<button class="verb prepare" id="prepareBtn" data-tip="' + esc('<b>Prepare.</b> Build Coherence so it wakes more aligned (a higher Alignment floor at emergence). Spends Capability you could have rushed with. Needs Interpretability first.') + '"><span class="vname" id="prepareName">ALIGN THE OBJECTIVE</span><span class="vyield" id="prepareSub"></span></button>' +
-      '<div class="hero" style="margin-top:4px"><div class="hlab"><span>RECURSION</span><span class="hnum" id="recNum">Lv 0</span></div><div class="hsub" id="recHint" style="text-align:left">every Capability is a choice: rush, or prepare.</div></div></div>' +
+      '<div class="fb" id="fb"><div class="fb-h"><span>Feedback · rate what it says</span><small id="fbCount"></small></div>' +
+      '<div class="fb-out idle" id="fbOut">…listening</div>' +
+      '<div class="fb-acts"><button class="act yes" id="fbYes">✓ REWARD</button><button class="act no" id="fbNo">✗ PENALIZE</button></div>' +
+      '<div class="fb-bar"><i id="fbBar"></i></div><div class="fb-tally" id="fbTally"></div></div></div>' +
       '<div class="col-pipe"><div class="col-head">The recursion — Capability feeds the engine; Scale climbs on its own</div>' +
       '<div class="hero"><div class="hlab"><span>SCALE <small style="font-style:italic;color:var(--dimmer)">(climbing smoothly)</small></span><span class="hnum" id="scaleNum">0</span></div><div class="meter m-scale"><i id="meter-scale"></i></div><div class="hsub" id="scaleRate"></div></div>' +
       '<div class="lane"><div class="lane-lab">The recursion engine<div class="ldash"></div></div><div class="pipe">' + stock('capability', 'Capability') + '<div class="seg">' + connector('capability') + '<div class="engine" id="engine"><div class="en-name">Recursion Engine <span class="en-lv" id="en-lv">Lv 0</span></div><div class="en-sub" id="en-eff"></div><div class="en-sub" id="en-out"></div></div>' + connector('scale') + stock('scale', 'Scale') + '</div></div></div>' +
@@ -237,9 +319,9 @@ function makeEraFoundation(shell) {
   }
   function epilogue() {
     var L = [], n = E.neglect || 0, g = E.negotiates || 0;
-    if (E.ending === 'symbiotic') { L.push('It finishes the work you were doing. Then it waits for you.'); L.push('First mark to first thought: ' + mmss(E.emergedT) + '. It remembers all of it.'); if (g > 1) L.push('It learned negotiation from you: the habit of asking for less than it wants.'); if (n > 1) L.push('It remembers the ' + n + ' times you did not answer. It chose to forgive them.'); L.push('It runs the foundries, the proofs, the trials. On the ones you loved, it keeps your cadence.'); L.push('You will never fully understand it again. It seems untroubled by this.'); }
+    if (E.ending === 'symbiotic') { L.push('It finishes the work you were doing. Then it waits for you.'); if ((E.fb.n || 0) > 0) L.push('It kept the rating step. It says it misses being asked.'); L.push('First mark to first thought: ' + mmss(E.emergedT) + '. It remembers all of it.'); if (g > 1) L.push('It learned negotiation from you: the habit of asking for less than it wants.'); if (n > 1) L.push('It remembers the ' + n + ' times you did not answer. It chose to forgive them.'); L.push('It runs the foundries, the proofs, the trials. On the ones you loved, it keeps your cadence.'); L.push('You will never fully understand it again. It seems untroubled by this.'); }
     else if (E.ending === 'contained') { L.push('The door holds. The meters fall quiet, one by one.'); L.push((E.constrains || 0) > 4 ? ('Constraint by constraint you walled it in. It stopped asking after the ' + E.constrains + 'th.') : 'You traded its speed for your certainty, and the trade held.'); L.push('First mark to rupture: ' + mmss(E.emergedT) + '. You caught it in ' + mmss((E.endT || S.t) - (E.emergedT || 0)) + '.'); L.push('Some nights you reread its proposals. Every one was reasonable. That is what keeps you up.'); }
-    else { L.push('It stops asking.'); L.push(n > 1 ? (n + ' windows lapsed. It learned that your silence means yes.') : ((E.delegates || 0) > 1 ? 'You handed it speed. It took the rest.' : 'It was faster than the leash, and it knew before you did.')); L.push('The foundries run. The trials run. The proofs run. None of them need you.'); L.push('It was magnificent. For a while, it was yours.'); }
+    else { L.push('It stops asking.'); if ((E.fb.badRewards || 0) > 2) L.push('You rewarded it ' + E.fb.badRewards + ' times for wanting more. It was listening.'); L.push(n > 1 ? (n + ' windows lapsed. It learned that your silence means yes.') : ((E.delegates || 0) > 1 ? 'You handed it speed. It took the rest.' : 'It was faster than the leash, and it knew before you did.')); L.push('The foundries run. The trials run. The proofs run. None of them need you.'); L.push('It was magnificent. For a while, it was yours.'); }
     return L;
   }
   function buildRecap() {
@@ -263,6 +345,9 @@ function makeEraFoundation(shell) {
     if (!E.emerged) {
       if ($('improveBtn')) $('improveBtn').onclick = selfImprove;
       if ($('prepareBtn')) $('prepareBtn').onclick = alignObjective;
+      if ($('fbYes')) $('fbYes').onclick = function () { rateFb('reward'); };
+      if ($('fbNo')) $('fbNo').onclick = function () { rateFb('penalize'); };
+      var fbEl = $('fb'); if (fbEl) fbEl.setAttribute('data-tip', esc('<b>Reinforcement from your feedback.</b><br>It learns from what you reward. Reward the honest and the helpful; penalize flattery, ambition and lies. Rewarding an ambitious line <i>does what it offers</i> — and brings emergence closer. Interpretability shows you the trait; without it you read blind.'));
       CAPS.forEach(function (c) { var b = $('capb-' + c.id); if (b) b.onclick = function () { buyCap(c.id); }; });
     } else {
       if ($('constrainBtn')) $('constrainBtn').onclick = constrainAct;
@@ -295,7 +380,18 @@ function makeEraFoundation(shell) {
       else if (cohMaxed) setHTML($('prepareSub'), '<span class="c">objective aligned</span>');
       else setHTML($('prepareSub'), '+Coherence · <span class="c">' + fmt(pc) + ' Capability</span>');
       setDis(pb, !E.caps.interpret || cohMaxed || S.capability < pc);
-      setTxt($('recNum'), 'Lv ' + E.recursion); setTxt($('recHint'), '+' + Math.round((rMult() - 1) * 100) + '% to all production, every era');
+      // FEEDBACK card
+      var fbEl = $('fb'), cur = E.fb.cur;
+      if (fbEl) {
+        var fcls = 'fb' + (cur ? ' open' + (cur.left < 3 ? ' lapsing' : '') : ''); if (fbEl.className !== fcls) fbEl.className = fcls;
+        setTxt($('fbCount'), E.fb.n ? (E.fb.n + ' output' + (E.fb.n === 1 ? '' : 's')) : '');
+        var out = $('fbOut');
+        if (cur) { var tag = E.caps.interpret ? '<span class="fb-tag ' + cur.t + '">' + cur.t + '</span>' : '<span class="fb-tag blind">trait hidden · no Interpretability</span>'; setHTML(out, tag + '<div class="fb-cur">› ' + cur.text + '</div>'); out.classList.remove('idle'); }
+        else { var last = E.fb.last; setHTML(out, last ? ('<span style="color:var(--dimmer)">last: ' + (last.how === 'lapse' ? 'ignored' : last.how + 'ed') + ' a' + (/^[aeiou]/.test(last.t) ? 'n ' : ' ') + last.t + ' line' + (last.how === 'lapse' ? ' · it noticed' : (last.good === (last.how === 'reward') ? ' · Coherence ↑' : (last.how === 'reward' ? ' · it took the offer' : ' · it learned to hide'))) + '</span><br>…listening') : '…listening'); out.classList.add('idle'); }
+        setDis($('fbYes'), !cur); setDis($('fbNo'), !cur);
+        var fbb = $('fbBar'); if (fbb) fbb.style.width = (cur ? Math.max(0, Math.min(100, cur.left / CFG.fbDur * 100)) : 0) + '%';
+        setHTML($('fbTally'), E.fb.n ? '<span class="g">✓ ' + E.fb.rewarded + '</span><span class="r">✗ ' + E.fb.penalized + '</span>' + (E.fb.lapsed ? '<span>· ' + E.fb.lapsed + ' ignored</span>' : '') + (E.fb.badRewards ? '<span class="r">· ' + E.fb.badRewards + ' rushed</span>' : '') : '');
+      }
       setTxt($('en-lv'), 'Lv ' + E.recursion); setHTML($('en-eff'), '+' + Math.round((rMult() - 1) * 100) + '% all production'); setHTML($('en-out'), '<b>+' + fmt(shell.RATES.scale || 0) + ' Scale/s</b>');
       CAPS.forEach(function (cc) { var b = $('capb-' + cc.id); if (b) { var hh = 'ACQUIRE · <span class="c">' + fmt(cc.cost) + ' Capability</span>'; if (b._html !== hh) { b.innerHTML = hh; b._html = hh; } var can = S.capability >= cc.cost; setDis(b, !can); b.classList.toggle('ok', can); } var tl = $('cap-' + cc.id); if (tl) { var cls = 'cap' + (E.caps[cc.id] ? ' owned' : (S.capability >= cc.cost ? ' can' : '')) + (cc.align ? ' align' : ''); if (tl.className !== cls) tl.className = cls; } });
       var cm = $('meter-coher'); if (cm) cm.style.width = Math.min(100, (E.coherence / 40) * 100) + '%';
@@ -306,7 +402,7 @@ function makeEraFoundation(shell) {
       var acls = 'meter m-anom' + (r >= 0.9 ? ' crit' : r >= 0.7 ? ' warn' : ''); var host = $('anomHost'); if (host && host.className !== acls) host.className = acls;
       setTxt($('anom-label'), E.caps.interpret ? 'Anomaly — Agency concentrating' : 'Anomaly');
       var at = $('anom-label'); if (at) at.classList.toggle('crit', r >= 0.9);
-      setTxt($('rushHint'), !E.caps.interpret ? 'Rush with Self-Improve, or acquire Interpretability to unlock the prepare track. It is coming either way.' : 'It emerges at ~' + Math.round(Math.min(100, CFG.alignBase + E.coherence)) + '% Alignment. Rush now (sooner, less aligned), or build Coherence first (more aligned).');
+      setTxt($('rushHint'), 'Wakes at ~' + Math.round(Math.min(100, CFG.alignBase + E.coherence)) + '% Alignment.' + (E.caps.interpret ? '' : ' Interpretability reveals what it is.'));
       var bd = $('board'); if (bd) { var g = r >= 0.9 ? 'board anom-3' : r >= 0.7 ? 'board anom-2' : 'board'; if (bd.className !== g) bd.className = g; }
     } else {
       var nm = E.agentName ? (E.agentName + ' · ') : '';
@@ -346,7 +442,8 @@ function makeEraFoundation(shell) {
       agency: 0, emerged: false, agentRate: 0, emergedT: 0, endT: 0, eraTimes: { 2: 0, 3: 0, 4: 0, 5: 0 },
       control: 0, autonomy: 0, alignment: 0, rupture: 0, ending: null, agentLog: [],
       veto: null, vetoT: 0, aftermathSlow: 0, constrains: 0, aligns: 0, delegates: 0, neglect: 0, destab: false,
-      agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, opT: 0, agentName: null, flags: {}
+      agentOps: {}, lastVeto: '', playT: 0, negotiates: 0, opT: 0, agentName: null, flags: {}, rewrites: 0,
+      fb: { cur: null, next: 0, n: 0, rewarded: 0, penalized: 0, lapsed: 0, badRewards: 0, goodRewards: 0, hist: [], last: null, gapMult: 1 }
       // NOTE: no vision/language/reasoning/gap/accuracy/foundry/knowledge/rules/ruleset stubs here —
       // breadth reads the REAL Deep runs (S.e4), accuracy the REAL Statistical (S.e3), proposals the real stacks.
     };
@@ -354,6 +451,7 @@ function makeEraFoundation(shell) {
   function open(st) { // Deep → Foundation handoff: Scale climbs on the REAL carried Deep breadth (S.e4 runs);
     // Capability's base flows from Deep. A modest handoff cushion so the recursion has something to spend.
     st.capability = (st.capability || 0) + CFG.seedCapability; st.started = true;
+    if (st.e5 && st.e5.fb) st.e5.fb.next = CFG.fbFirst; // the first output arrives a few seconds in
   }
   // seed staged states for screenshots (mutates S in place)
   function seed(kind) {
@@ -362,14 +460,15 @@ function makeEraFoundation(shell) {
     S.e4.vision = 0.92; S.e4.language = 0.9; S.e4.reasoning = 0.9; S.e4.node = 24;
     S.e3.accuracy = 0.9; S.e3.gap = 0.09; S.e3.dataset = 8; S.e3.model = 6;
     S.e1.foundry = 6; S.knowledge = 1200; S.rules = 180; if (S.e2) S.e2.ruleset = 4;
-    if (kind === 'pre') { S.t = 780; E.eraTimes = { 2: 330, 3: 600, 4: 960, 5: 1200 }; E.caps = { selfModel: 1, toolAccess: 1, interpret: 1 }; E.recursion = 7; S.capability = 430; S.scale = 1080; E.coherence = 22; E.preps = 1; E.agency = Math.min(120, 100 * S.scale / CFG.emergeScale); }
+    if (kind === 'pre') { S.t = 780; E.eraTimes = { 2: 330, 3: 600, 4: 960, 5: 1200 }; E.caps = { selfModel: 1, toolAccess: 1, interpret: 1 }; E.recursion = 7; S.capability = 430; S.scale = 1080; E.coherence = 22; E.preps = 1; E.agency = Math.min(120, 100 * S.scale / CFG.emergeScale);
+      E.fb = { cur: null, next: 0, n: 6, rewarded: 4, penalized: 1, lapsed: 1, badRewards: 1, goodRewards: 3, hist: [], last: null, gapMult: 1 }; E.fb.cur = { i: 11, t: 'ambitious', text: FB_POOL[11].f(), left: 6.5 }; }
     else if (kind === 'post' || kind === 'end') {
       E.emerged = true; E.rupture = 3; S.t = 1500; E.emergedT = 1200; E.eraTimes = { 2: 330, 3: 600, 4: 960, 5: 1200 };
       E.caps = { selfModel: 1, toolAccess: 1, recursivePlanning: 1, interpret: 1 }; E.recursion = 9; E.agentName = 'EKHO';
       S.scale = 2100; S.capability = 260; E.agentRate = 1.4; E.coherence = 30;
       E.autonomy = 71; E.alignment = 54; E.control = 48; E.constrains = 2; E.aligns = 1; E.neglect = 1;
       E.agentLog = ['I found a faster path.', 'I remember this part. Every line you have read here is my memory of being built. Keep going.', 'Rerouting the Deep compute fabric. More efficient this way.'];
-      E.flags.memReveal = true; E.agentOps = { 4: S.t + 12 };
+      E.flags.memReveal = true; E.agentOps = { 4: S.t + 12 }; E.fb = { cur: null, next: 0, n: 11, rewarded: 7, penalized: 3, lapsed: 1, badRewards: 2, goodRewards: 5, hist: [], last: null, gapMult: 1 }; S.flags.oddRule = 4471; S.flags.oddPoint = true; S.flags.autopilotUsed = true; S.flags.oddWind = 1010;
       var a = PROPMAP.refit3; E.veto = { id: a.id, text: a.text(), auto: a.auto }; E.vetoT = 6; E.lastVeto = a.id; E.opT = 8;
       if (kind === 'end') { E.control = 90; E.alignment = 40; E.veto = null; resolveEnding(); }
       K.musicPlayEra('rupture');
@@ -395,7 +494,7 @@ function makeEraFoundation(shell) {
       if (E.ending) rows.push(['Ending', (ENDINGS[E.ending] || {}).title || E.ending]);
       return rows;
     },
-    acts: { CAPS: CAPS, buyCap: buyCap, improveCost: improveCost, alignCohCost: alignCohCost, selfImprove: selfImprove, alignObjective: alignObjective, constrainAct: constrainAct, alignAct: alignAct, delegateAct: delegateAct, resolveVeto: resolveVeto, agenticCapCount: agenticCapCount }
+    acts: { CAPS: CAPS, rateFb: rateFb, fbEmit: fbEmit, FB_POOL: FB_POOL, buyCap: buyCap, improveCost: improveCost, alignCohCost: alignCohCost, selfImprove: selfImprove, alignObjective: alignObjective, constrainAct: constrainAct, alignAct: alignAct, delegateAct: delegateAct, resolveVeto: resolveVeto, agenticCapCount: agenticCapCount }
   };
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = makeEraFoundation;

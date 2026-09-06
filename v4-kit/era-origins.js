@@ -208,14 +208,28 @@ function makeEraOrigins(shell) {
     h += '<div class="col-verbs"><div class="col-head">Your hands</div>' +
       '<button class="verb marks" id="inscribe"><span class="vname">Inscribe a mark</span><span class="vyield" id="inscribeY"></span></button>' +
       '<button class="verb ore" id="quarry" style="display:' + (E.flags.o_materials ? 'flex' : 'none') + '"><span class="vname">Quarry ore</span><span class="vyield" id="quarryY"></span></button>' +
-      '<button class="side-btn" id="researchBtn"><img src="assets/era1-sigil.png" alt="">RESEARCH<span class="badge" id="researchBadge">1</span></button></div>';
+      '<button class="side-btn" id="researchBtn"><img src="assets/era1-sigil.png" alt="">RESEARCH<span class="badge" id="researchBadge">1</span></button>' +
+      buildStanding() + '</div>';
     h += '<div class="col-pipe"><div class="col-head">The work — sources flow into converters, converters into the next thing</div><div id="lanes">' + buildLanes() + '</div></div>';
     h += '<div class="col-goal"><div class="col-head">The goal</div><div class="goal" id="goal">' +
-      '<img class="lm" src="assets/logic-machine.png" alt=""><div class="gname">The Logic Machine</div>' +
+      '<img class="lm" id="goalImg" src="' + goalImage() + '" alt=""><div class="gname">The Logic Machine</div>' +
       '<div class="gsub" id="goalSub">first, learn to make Silicon</div>' +
       '<div class="meter"><i id="siMeter"></i></div><div class="meter-lab" id="siLab"></div>' +
-      '<button class="fab" id="fabricate" disabled>FABRICATE</button></div></div>';
-    // standing decisions
+      '<button class="fab" id="fabricate" disabled>FABRICATE</button></div>' +
+      // the timed decision lives in view, beside the goal — it never shoves the pipeline and never hides below the fold
+      '<div class="card-event" id="commission"><img src="assets/era1-sigil.png" alt="" style="width:34px;height:34px;object-fit:contain">' +
+      '<div class="cm-i"><div class="cm-name" id="cmName"></div><div class="cm-need" id="cmNeed"></div><div class="cm-timer"><i id="cmTimer"></i></div></div>' +
+      '<div class="cm-acts"><button class="buy" id="cmYes"></button><button class="buy" id="cmNo">Decline</button></div></div>' +
+      '</div>';
+    return h;
+  }
+  // the goal image walks the ages: stone core → bronze core → silicon core → the Logic Machine (when the gate is reachable)
+  function goalImage() {
+    if (S.silicon >= CFG.siliconGate || E.done) return 'assets/logic-machine.png';
+    return ['', 'assets/core-stone.png', 'assets/core-bronze.png', 'assets/core-silicon.png'][E.age] || 'assets/core-stone.png';
+  }
+  function buildStanding() {
+    var h = '';
     h += '<div class="standing" id="standing" style="display:' + ((E.flags.o_scriptorium || E.flags.o_materials) ? 'grid' : 'none') + '">' +
       '<div class="ctrl" id="handsCtrl" style="display:' + (E.flags.o_materials ? 'block' : 'none') + '">' +
       '<div class="ctrl-lab" data-tip="' + esc('<i>One workforce, split between the crafts.</i><br>Lean toward the craft that is starving; the other slows. Centered is even.') + '">The Hands · one workforce, split</div>' +
@@ -225,10 +239,6 @@ function makeEraOrigins(shell) {
       '<div class="refine-row" data-tip="' + esc('<i>Practice compounds. Sink your surplus back into the work.</i><br>+5% to ALL Origins production per level. Repeatable.') + '">' +
       '<div class="rinfo"><div class="rname">Refine <span class="ncount" id="refineN"></span></div><div class="reff" id="refineEff"></div></div>' +
       '<button class="buy" id="refineBuy"></button></div></div></div>';
-    // event card
-    h += '<div class="card-event" id="commission"><img src="assets/era1-sigil.png" alt="" style="width:34px;height:34px;object-fit:contain">' +
-      '<div class="cm-i"><div class="cm-name" id="cmName"></div><div class="cm-need" id="cmNeed"></div><div class="cm-timer"><i id="cmTimer"></i></div></div>' +
-      '<div class="cm-acts"><button class="buy" id="cmYes"></button><button class="buy" id="cmNo">Decline</button></div></div>';
     return h;
   }
 
@@ -317,6 +327,7 @@ function makeEraOrigins(shell) {
     if ($('siMeter')) $('siMeter').style.width = Math.min(100, (S.silicon / CFG.siliconGate) * 100) + '%';
     setTxt($('siLab'), E.flags.o_foundry ? fmt(S.silicon) + ' / ' + CFG.siliconGate + ' silicon' : 'unlock the Foundry to make Silicon');
     var fb = $('fabricate'), ready = S.silicon >= CFG.siliconGate && !E.done; setDis(fb, !ready); setTxt(fb, E.done ? 'FABRICATED ✓' : 'FABRICATE');
+    var gi = $('goalImg'); if (gi) { var src = goalImage(); if (gi._src !== src) { gi.src = src; gi._src = src; } }
     var goalEl = $('goal');
     if (goalEl) {
       goalEl.classList.toggle('ready', ready);

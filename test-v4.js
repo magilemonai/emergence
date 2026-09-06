@@ -32,6 +32,7 @@ const makeEraSymbolic = require('./v4-kit/era-symbolic.js');
 const makeEraStatistical = require('./v4-kit/era-statistical.js');
 const makeEraDeep = require('./v4-kit/era-deep.js');
 const makeEraFoundation = require('./v4-kit/era-foundation.js');
+const makeEraAgent = require('./v4-kit/era-agent.js');
 
 // ---- mock shell (mirrors emergence-v3-unified.html) ----
 const S = {}; const RATES = {};
@@ -42,13 +43,17 @@ const shell = {
   save: function () {}, navTo: function (n) { S.era = n; },
   era: function (n) { return ERAS[n]; },
   refresh: function () {}, requestRender: function () { renderCount++; },
-  buyN: function () { return S.buyN || 1; }, drawerKind: function () { return 'research'; }, setDrawer: function () {}
+  buyN: function () { return S.buyN || 1; }, drawerKind: function () { return 'research'; }, setDrawer: function () {},
+  finale: function (k) { finales.push(k); }, legacySave: function (o) { legacy = Object.assign({}, legacy || { runs: 0 }, o, { runs: ((legacy && legacy.runs) || 0) + 1 }); },
+  agentName: function () { return S.e5 && S.e5.agentName; }, recStats: function () { return { perMin: 0, dead: 0, total: 0 }; }
 };
+let finales = []; let legacy = null;
 const ORDER = [1, 2, 3, 4, 5];
 const ERAS = {
   1: makeEraOrigins(shell), 2: makeEraSymbolic(shell), 3: makeEraStatistical(shell),
   4: makeEraDeep(shell), 5: makeEraFoundation(shell)
 };
+ERAS[6] = makeEraAgent(shell); // the agent's tab (not in ORDER: produces nothing)
 const RES = {}; ORDER.forEach(function (n) { const r = ERAS[n].res || {}; for (const k in r) RES[k] = r[k]; });
 KIT.setRes(RES);
 const POOL = []; ORDER.forEach(function (n) { (ERAS[n].pool || []).forEach(function (k) { if (POOL.indexOf(k) < 0) POOL.push(k); }); });
@@ -58,7 +63,8 @@ function clearObj(o) { for (const k in o) if (o.hasOwnProperty(k)) delete o[k]; 
 function freshAll() { clearObj(S); S.maxEra = 1; S.era = 1; S.t = 0; S.speed = 1; S.started = false; S.flags = {}; S.buyN = 1; ORDER.forEach(function (n) { ERAS[n].fresh(S); }); }
 function tick(dt) {
   KIT.flowReset(); const before = {}; POOL.forEach(function (k) { before[k] = S[k] || 0; });
-  ORDER.forEach(function (n) { if (n <= S.maxEra && ERAS[n].produce) ERAS[n].produce(dt); });
+  const op = (S.e5 && S.e5.emerged) ? 1.6 : 1; // mirrors the shell: operated eras run faster after emergence
+  ORDER.forEach(function (n) { if (n <= S.maxEra && ERAS[n].produce) ERAS[n].produce(n < 5 ? dt * op : dt); });
   if (dt > 0) POOL.forEach(function (k) { RATES[k] = ((S[k] || 0) - before[k]) / dt; });
   S.t += dt;
 }
