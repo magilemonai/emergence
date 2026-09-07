@@ -81,6 +81,14 @@ export const DEEP_SCENES = {
     run(sim, 2);
   },
 
+  // the Vision riser runs dry: the pipe mouth blinks red, the lane and the plate go red with it
+  'deep-starved': (sim) => {
+    const E = fabric(sim, { nodes: 14, v: 0.5, l: 0.44, r: 0.46, av: 0.6, al: 0.2, ar: 0.2, eventT: 40 });
+    if (!E) return;
+    sim.state.stocks.data = 0.2;
+    run(sim, 0.6);
+  },
+
   // zoomed out: the column so far, with the Deep risers running through the floors
   'deep-overview': (sim) => { fabric(sim, { nodes: 12 }); }
 };
