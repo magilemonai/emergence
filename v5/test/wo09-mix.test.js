@@ -110,7 +110,10 @@ export async function run(t) {
   t.eq(a.music, true, 'the persisted music choice is read at boot');
   t.eq(a.vol.bed, 0.15, 'the bed level comes from the v3 key');
   t.eq(a.vol.sfx, 0.6, 'the sfx level comes from the v3 key');
-  t.eq(a.vol.voices, 0.15, 'the voices knob defaults to the bed level');
+  t.eq(a.vol.voices, 0.8, 'the voices knob defaults near its designed peak');
+  const b = createAudio({ sim: sim, world: null, doc: fakeDoc(), win: {}, store: fakeStore({ [KEY_VOICES]: '0.35' }), base: '../assets/' });
+  t.eq(b.vol.voices, 0.35, 'a persisted voices knob is read back');
+  t.eq(b.music, false, 'music stays off when nothing was persisted');
   a.tick(0.016); a.sfx('buy'); a.setBed(3); a.rupture();
   t.eq(a.started, false, 'driving the api before start stays silent');
   t.eq(a.start(), false, 'start reports failure when the runtime has no AudioContext');

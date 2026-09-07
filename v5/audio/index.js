@@ -51,9 +51,11 @@ export function createAudio(opts) {
   const doc = o.doc || (typeof document !== 'undefined' ? document : null);
   const store = o.store || (win && win.localStorage) || { getItem() { return null; }, setItem() {} };
 
+  // bed is a direct element volume (v4 semantics, so Cody's persisted 0.15 still means 0.15).
+  // voices and sfx are 0..1 multipliers over a designed peak, so their defaults sit near the top.
   const vol = {
     bed: readNum(store, KEY_BED, 0.15),
-    voices: readNum(store, KEY_VOICES, readNum(store, KEY_BED, 0.15)),
+    voices: readNum(store, KEY_VOICES, 0.8),
     sfx: readNum(store, KEY_SFX, 1)
   };
   let on = false;
