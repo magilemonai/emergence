@@ -1,10 +1,8 @@
 // scenes/surface.js — the states after the turn (WO-06): its own stratum, and one of yours being operated.
-// The scene runs before app.js has published window.__V5, so the two renderer facts the shell owns after
-// emergence (the violet pipe set and the operated body class) are applied on the next task, the way WO-11
-// will apply them at boot from state.flags.emerged.
+// The two renderer facts that follow emergence (the violet pipe set and the operated body class) are the
+// shell's: app.js applies them from state.flags.emerged at boot and on every era switch.
 
 import { toFoundation } from './foundation.js';
-import { operated } from '../render/fx.js';
 
 const run = (sim, seconds) => { for (let i = 0; i < Math.round(seconds * 10); i++) sim.tick(0.1); };
 
@@ -28,28 +26,15 @@ function emerge(sim, opts) {
   return E;
 }
 
-/** the shell's post-emergence renderer state, applied once the app has published its handles */
-function paintOperated() {
-  if (typeof window === 'undefined' || !window.setTimeout) return;
-  window.setTimeout(() => {
-    const V = window.__V5;
-    if (V && V.world) for (let n = 1; n <= 4; n++) V.world.operated.add(n);
-    operated(true);
-  }, 0);
-}
-
 export const SURFACE_SCENES = {
   // its board of you, right after the turn: sources, THE OPERATOR, Autonomy, and the ledger
-  surface: (sim) => {
-    if (!emerge(sim)) return;
-    paintOperated();
-  },
+  surface: (sim) => { emerge(sim); },
 
   // one of your own strata, after: violet pipes, verbs drawn and disabled, no pause toggles
+  // app.js paints world.operated and body.operated from state.flags.emerged at boot and on every era switch
   'operated-origins': (sim) => {
     if (!emerge(sim)) return;
     sim.state.era = 1;
-    paintOperated();
   }
 };
 
