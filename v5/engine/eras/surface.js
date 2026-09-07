@@ -153,6 +153,7 @@ const surface = {
     const c = C(sim), e = E(sim), d = derive(sim);
     e.control = d.control; e.alignment = d.alignment; e.autonomy = d.autonomy;
     if (sim.muted()) return;
+    if (!sim.state.flags.shadow && !sim.state.eras[7] && sim.state.t - (E5(sim).emergedT || 0) >= ((c.mirror && c.mirror.openAt) || 1)) sim.openEra(7);   // WO-07: the mirror opens a beat after the turn
     e.opT = (e.opT || 0) - dt;
     if (e.opT <= 0) { e.opT = c.lineGap; e.opN = (e.opN || 0) + 1; }
   },

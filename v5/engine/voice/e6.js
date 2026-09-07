@@ -52,5 +52,38 @@ export const ENDINGS = {
   contained: { title: 'A Contained Agent', body: 'You kept the door closed. Something remains on the other side.' }
 };
 
+/* ---------- WO-07: the mirror. What it says while it replays your run, faster, and better. ---------- */
+
+/** the narration during the replay, one per beat of the climb */
+export const MIRROR_LINES = {
+  open: 'Watch. This is your run.',
+  climb: (name) => 'Replaying ' + name + '. Ten times your pace.',
+  better: (name) => 'I would have played ' + name + ' differently.',
+  clean: 'No changes here. You had this one right.',
+  paused: 'Held. Answer me and I keep going.',
+  spent: 'No interrupts left. I finish this alone.',
+  done: 'That was your run. This one is mine.'
+};
+
+/** the two meters your three choices move, and nothing else moves them */
+export const MIRROR_METERS = { control: 'CONTROL', alignment: 'ALIGNMENT', progress: 'REPLAY' };
+
+/** the interrupt: the one button that is still yours */
+export const MIRROR_VERB = { name: 'INTERRUPT', sub: 'stop the replay, answer it' };
+
+/** the three answers on the card */
+export const MIRROR_ANSWERS = [
+  { how: 'approve', label: 'APPROVE', sub: 'let it' },
+  { how: 'negotiate', label: 'NEGOTIATE', sub: 'half of it' },
+  { how: 'veto', label: 'VETO', sub: 'refuse it' }
+];
+
+/** the line under the ending name */
+export const MIRROR_EPILOGUE = {
+  symbiotic: 'You answered. It kept the answers.',
+  runaway: 'It stopped waiting for you somewhere in the replay.',
+  contained: 'You held the door. The replay ends there.'
+};
+
 /** the stratum's line table (the shape every voice/eN.js exports): what it says while it runs your column */
 export default OP_LINES.map((line, i) => ({ id: 'op' + i, line: line }));

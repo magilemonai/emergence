@@ -15,5 +15,23 @@ export default {
   badRewardCtl: 4, badRewardAlign: 3, goodRewardAlign: 2, lapseRecordCtl: 2,
   // what an approved proposal actually does to the stratum it names
   effects: { refitGap: 0.7, refitAcc: 0.04, reroute: 0.06, knowledge: 200, rules: 220 },
-  alignGood: 68, controlHigh: 84, controlLow: 30
+  alignGood: 68, controlHigh: 84, controlLow: 30,
+
+  // WO-07 the mirror: it replays your own log on your column and improves on it (SPEC "The turn" 4)
+  mirror: {
+    openAt: 1,          // seconds after emergence before the mirror installs itself
+    speed: 10,          // sim-seconds of your run replayed per second of wall time
+    step: 0.1,          // the replay step; matches cfg.replayStep so the shadow lands on your numbers
+    interrupts: 3,
+    vetoWindow: 9,      // seconds a proposal stays open before it lapses on its own
+    policyGap: 0.1,     // at most one improvement per replay step
+    compileAt: 2,       // it compiles once the axiom yield reaches this
+    allocLow: 0.5, allocRest: 0.25,   // the share it routes to the lagging run, and to each of the others
+    diffBucket: 1,      // sim-seconds: your own action of that kind inside this window is not an improvement
+    diffCap: 24,        // improvements per stratum where the violet reaches full
+    // the view
+    holdOverview: 2,    // seconds in the overview before the camera follows the climb
+    glowMin: 0.1, glowMax: 0.46, glowPulse: 0.09, pulseHz: 0.6,
+    pipSize: 3
+  }
 };
