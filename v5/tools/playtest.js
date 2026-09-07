@@ -211,6 +211,7 @@ const mmss = (sec) => { const s = Math.max(0, Math.round(sec || 0)); return Stri
       else if (s.dom.drawer && loops % 3 === 0) await click('.dr-x', 0, 'close drawer');
       else if (!s.dom.drawer && (s.stocks.data || 0) > 400) await clickText('.side-btn', '/experiment/i', 'experiments');
       await build(s, ['model', 'dataset'], { model: 16, dataset: 22 });
+      if (loops % 4 === 0) await clickText('.e3-fdy', '/foundry/i', 'supply');   // the bus sells the Origins Foundry in Silicon; a starving player presses it
       const nM = Object.keys(E.methods || {}).length;
       const want = nM < 4 && (E.survey || 0) < 95 && (s.stocks.data || 0) < 400 ? 'explore' : ((E.gap || 0) > 0.18 ? 'generalize' : 'fit');
       const idx = await ev(`(function(){var l=document.querySelectorAll(".e3-seg");for(var i=0;i<l.length;i++)if(new RegExp(${JSON.stringify(want)},"i").test(l[i].textContent))return i;return -1;})()`);
