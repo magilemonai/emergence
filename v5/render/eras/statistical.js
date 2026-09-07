@@ -10,8 +10,8 @@ import { STRATA, alpha } from '../palette.js';
 import { stratumTop } from '../../engine/types.js';
 import {
   stats, effAccuracy, expCost, nextMethod, boardCards, surveyDisc, predicting,
-  focusKey, HIDDEN_PLATES, PLOT_RECT, TRACK_RECT
-  foundrySupplyCost,
+  focusKey, HIDDEN_PLATES, PLOT_RECT, TRACK_RECT,
+  foundrySupplyCost
 } from '../../engine/eras/statistical.js';
 
 /** the world rect the instrument occupies: the plot band plus the track under it */
