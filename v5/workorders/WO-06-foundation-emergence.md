@@ -33,6 +33,18 @@ voice tables 5 and 6, cfg `e5`/`e6`, scenes (`found-early`, `found-feedback`, `f
   from the log, dead clicks, pausable: no) → Autonomy; its four verbs drawn disabled ("not yours") that light when a
   proposal of that kind is open; its goal = your Control inverted; its ledger.
 
+## Pure exports + names the acceptance test uses (`v5/test/wo06-foundation.test.js`)
+`foundation.FB_POOL` (the array of `{b, t, f, offer?}`), `foundation.layout` (verbs include `improve`, `align`),
+`foundation.done`; `surface.ledgerRows(sim)` → `[[label, value, cls?], …]`, `surface.layout`, `surface.height`.
+Node ids (5): `scale.store`, `recursion` (converter capability → scale, count = recursion level + 1, rate from cfg);
+(6): `operator` (converter kind, count 1, tags ['you']), `autonomy.store`. Actions (5): `rate {how:'reward'|'penalize'}`,
+`cap {id}`, `align`, `improve`, `buy`, `pause`. Era state (5): `fb {cur,next,n,rewarded,penalized,lapsed,badRewards,
+goodRewards,hist,last,gapMult}`, `caps`, `coherence`, `preps`, `recursion`, `agency`, `emerged`, `agentName`,
+`emergedT`, `legacyLine` (the naming line when the legacy name repeats). `state.flags.emerged`.
+Emergence: `sim.openEra(6)`; the SIM applies the operated cadence (lower strata tick at `cfg.e6.operated` = 1.6× dt
+after emergence — implement in foundation.tick by calling the graph pass an extra fractional step for eras < 5, or
+propose the engine hook; the test only checks the outcome).
+
 ## Acceptance
 `node v5/test.js` green (wo06: feedback effects per trait; lapse; mute; emergence at threshold; naming; era 6 installs
 on emerge; ledger rows reflect flags/log). Scenes shot + READ (rupture-mid is captured 0.8s into the fx via
