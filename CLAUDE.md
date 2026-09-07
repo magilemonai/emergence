@@ -37,10 +37,11 @@ strata (a logged `visit`: the view switches, the camera follows, and you can go 
 supply bus does the same), Space/Q verbs, R drawer, Esc settings. **Live routing is OFF:** root `index.html` has
 `V5_ENABLED = false`; flipping it makes `?v=5` route to `v5/index.html`. **Push only when Cody says.**
 
-**Pacing (bot ceiling / human-cadence driver at 3× before the jump fix):** Origins 1.7m/5.8m · Symbolic 4.8m/5.5m ·
-Statistical 9.4m/14.5m (the driver starved Silicon with no way back; fixed by real jumps) · Deep 13.2m/10.7m ·
-emergence 17.3m/45.0m. Foundation's threshold is 900 (v4 1550) because Scale is earned through a real converter now.
-A fresh driver run after the fix is the next read; then Cody's hands.
+**Pacing (human-cadence driver on the real UI, run 4 / bot ceiling):** Origins 7.0m/1.7m · Symbolic 6.2m/3.1m ·
+Statistical 7.0m/4.6m · Deep 5.9m/3.8m · Foundation 5.9m/4.1m → **emergence 32:08** (bot 17.3m), 6 dead clicks, 0 errors.
+SPEC targets 6·6·6·8·8 = 34m + 3m mirror. Statistical needed two fixes to get there: real strata jumps, and a Silicon-priced
+build-here Foundry in its supply bus (Deep's shape). Foundation's threshold is 900 (v4 1550) because Scale is earned through
+a real converter now. Next read: Cody's hands.
 
 **Design rulings Fable made by eye (all pinned in STATUS):** plates need ≥ 80 world units of pipe between them
 (the Symbolic order's anchors hid every pipe); the feedback window lives in the world, and the recursion field is

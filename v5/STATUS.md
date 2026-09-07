@@ -33,11 +33,13 @@
 Run 1 (before jumps): 5.8 · 5.5 · 14.5 · 10.7 · 8.5 → emergence 45.0m. Run 2 (jumps): 5.8 · 5.4 · 13.3 · 10.9 · 8.6 → 43.9m.
 Run 3 (a metal-priced Foundry row the driver could never afford): Statistical 20.6m. Ruling: Statistical's supply bus sells the
 Origins Foundry build-here in SILICON with Deep's price shape (`cfg.e3.supply.foundry`, action `supply`), because a starved
-Origins (marks 0, ore 0 at 7 min) makes metal unreachable from above. Run 4 pending. The bot ceiling is 17.3m; SPEC targets
-sum to 34m + 3m mirror. Cody's hands decide the rest.
+Origins (marks 0, ore 0 at 7 min) makes metal unreachable from above. **Run 4 (Silicon-priced Foundry row, the driver
+presses it like Deep's bus): 7.0 · 6.2 · 7.0 · 5.9 · 5.9 → emergence 32:08, 6 dead clicks, 0 errors, Foundries 2 → 8 through
+Statistical, Silicon never at zero.** SPEC targets sum to 34m + 3m mirror; the bot ceiling is 17.3m. Cody's hands decide the rest.
 
 ## Running right now (2026-09-07)
-Nothing. Every order is merged; the arc exists end to end on main. Fable's pass: playtest run 4 reading, then done. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
+Nothing. Every order is merged, Fable's pass is complete, and the human-cadence run reaches emergence at 32:08 with 0
+errors. Waiting on Cody: play it (v5/index.html, or flip V5_ENABLED in index.html for ?v=5), record, rule on pacing, ship. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
 
 Fable's pass so far: plate BUILD label keeps its count under a multiplier (glyph) DONE; dead-click counter → `flags.dead` (pinned as UI telemetry) DONE; run-2 title-card subtitle from voice/legacy.js DONE; installLegacyFx synced on era change DONE. Package DONE: `EMG_V5=1 node tools/build-single.js emergence-v5-single.html` → 760 KB, boots origins-bronze / surface / endcard-symbiotic with ERRORS none (gitignored). Root gate `node test.js` green (v3 92 + v4 160 + freshness). Left: full-arc play on the real UI with WO-13's playtest driver; pacing read from its bot; the mobile statement to Cody (v5 is desktop-first by the standing ruling; the endcard and receipt stack under 900px; v5/index.html pins viewport width=1280).
 
