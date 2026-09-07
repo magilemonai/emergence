@@ -1,0 +1,62 @@
+/* render/eras/endcard.css — the endcard, over the overview (WO-08). The column stays visible behind it. */
+.ecd {
+  position: fixed; inset: 0; z-index: 120; display: flex; justify-content: center; align-items: flex-start;
+  overflow-y: auto; overscroll-behavior: contain; padding: 0;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(18,12,30,0.82) 0%, rgba(5,3,10,0.93) 66%, rgba(3,2,6,0.97) 100%);
+  color: #f4efff; font-family: 'Inter', system-ui, sans-serif;
+  opacity: 0; transition: opacity 0.62s ease;
+}
+.ecd.show { opacity: 1; }
+.ecd-col { width: 100%; max-width: 880px; padding: 26px 26px 30px; display: flex; flex-direction: column; gap: 14px; }
+
+.ecd-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.ecd-sig { font-size: 26px; line-height: 1; color: #b78bff; text-shadow: 0 0 24px currentColor; }
+.ecd-title { font-size: 30px; font-weight: 600; letter-spacing: 0.01em; line-height: 1.1; }
+.ecd-body { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13.5px; color: #a494c4; }
+
+.ecd-ep { display: flex; flex-direction: column; gap: 6px; padding: 12px 0 4px; border-top: 1px solid #2a1f3d; }
+.ecd-ep div { font-size: 14.5px; line-height: 1.5; color: #d3c8e8; opacity: 0; animation: ecdIn 0.8s ease forwards; }
+@keyframes ecdIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+.ecd-built { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.04em; color: #8b7cad; }
+
+.ecd-recap { display: grid; grid-template-columns: 132px 1fr; gap: 16px; align-items: start;
+  padding: 13px 15px; border-radius: 13px; border: 1px solid #2a1f3d; background: rgba(12,8,22,0.66); }
+.ecd-grade { display: grid; place-items: center; gap: 3px; }
+.ecd-g { width: 74px; height: 74px; border-radius: 18px; display: grid; place-items: center;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 38px; color: #06040c;
+  background: var(--gh, #b78bff); box-shadow: 0 0 26px rgba(183,139,255,0.35); }
+.ecd-q { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #c9adf5; font-variant-numeric: tabular-nums; }
+.ecd-read { font-size: 12.5px; line-height: 1.45; color: #a494c4; text-align: center; }
+
+.ecd-rows { display: flex; flex-direction: column; gap: 2px; }
+.ecd-row { display: grid; grid-template-columns: 1fr 74px 74px; gap: 8px; align-items: center;
+  padding: 4px 8px; border-radius: 7px; border-left: 3px solid var(--hue, #b78bff); background: rgba(255,255,255,0.02); }
+.ecd-row span { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ecd-row .ecd-era { color: #d7ccec; letter-spacing: 0.1em; font-size: 11px; }
+.ecd-row .ecd-took { color: #f4efff; text-align: right; }
+.ecd-row .ecd-at { color: #8b7cad; text-align: right; }
+.ecd-row.ecd-hd { border-left-color: transparent; background: none; }
+.ecd-row.ecd-hd span { color: #6d5f8a; font-size: 10px; letter-spacing: 0.22em; }
+.ecd-meters { display: flex; gap: 14px; flex-wrap: wrap; padding-top: 7px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+
+.ecd-foot { display: flex; gap: 12px; align-items: center; padding-top: 4px; }
+.ecd-btn { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; letter-spacing: 0.18em;
+  color: #f4efff; padding: 12px 20px; border-radius: 11px; cursor: pointer;
+  background: linear-gradient(#241a3a, #120c1e); border: 1px solid #4a3a6e;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07); }
+.ecd-btn:hover { border-color: #b78bff; box-shadow: 0 0 18px rgba(183,139,255,0.24); }
+.ecd-btn.ecd-again { background: linear-gradient(#3a2a5e, #1a1230); border-color: #6a55a0; }
+
+@media (max-width: 900px) {
+  .ecd-col { padding: 16px 14px 22px; gap: 11px; }
+  .ecd-title { font-size: 23px; }
+  .ecd-recap { grid-template-columns: 1fr; gap: 11px; }
+  .ecd-row { grid-template-columns: 1fr 62px 62px; }
+  .ecd-foot { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ecd { transition: none; }
+  .ecd-ep div { animation: none; opacity: 1; }
+}
