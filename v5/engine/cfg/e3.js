@@ -4,7 +4,7 @@
 export default {
   datasetCost: 30, datasetGrowth: 1.16, datasetYield: 1.2,
   // v5: a Dataset is a converter now, so the Silicon it eats is a real pipe from Origins (v4 spent it only at build)
-  datasetSilicon: 0.03,
+  datasetSilicon: 0.12,
   modelCost: 90, modelGrowth: 1.2, expPerModel: 0.3,
   modelSilicon: 0.05, expDataCost: 4, accGain: 0.0026, insightPerExp: 2,
   gapGrow: 0.0023, gapReduce: 0.0046, gapMax: 0.6,
@@ -33,7 +33,7 @@ export default {
   methods: [
     { id: 'regression', name: 'Regression', flavor: 'A line drawn through the noise.', mech: 'Trials raise accuracy 40% faster.' },
     { id: 'features', name: 'Feature Engineering', flavor: 'Asking the data better questions.', mech: 'Datasets yield 50% more Data.' },
-    { id: 'regularization', name: 'Regularization', flavor: 'Prefer the simpler explanation.', mech: 'Halves the overfit gap twice as fast and lifts the ceiling.' },
+    { id: 'regularization', name: 'Regularization', flavor: 'Prefer the simpler explanation.', mech: 'Cuts the overfit gap 2× faster and lifts the ceiling.' },
     { id: 'clustering', name: 'Clustering', flavor: 'Like finds like.', mech: 'The survey fills 60% faster.' },
     { id: 'bayesian', name: 'Bayesian Inference', flavor: 'Belief, updated by evidence.', mech: 'Each trial yields 80% more Insight.' },
     { id: 'ensembles', name: 'Ensembles', flavor: 'A crowd of guesses, wiser than any one.', mech: '+12% effective accuracy.' }

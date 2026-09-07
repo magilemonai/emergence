@@ -30,12 +30,12 @@ const CSS = `
 .verb[data-v="trial"] .vyield { order: 2; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .e3-dial { position: relative; padding: 8px 10px 9px; border-radius: 11px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.24); }
 .e3-dhead { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
-.e3-dlab { flex: 1; font-family: var(--era-font); font-size: 9.5px; letter-spacing: 0.13em; color: var(--dimmer); }
+.e3-dlab { flex: 1; font-family: var(--era-font); font-size: 9.5px; letter-spacing: 0.13em; color: var(--dimmer); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .e3-auto { padding: 3px 8px; border-radius: 999px; cursor: pointer; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
   color: #c9adf5; background: rgba(183, 139, 255, 0.09); border: 1px solid rgba(183, 139, 255, 0.45); }
 .e3-auto.on { color: #14101c; background: #c9adf5; border-color: #c9adf5; }
 .e3-auto[hidden] { display: none; }
-.e3-segs { display: flex; flex-direction: column; gap: 7px; }
+.e3-segs { display: flex; flex-direction: column; gap: 7px; padding-top: 3px; }
 .e3-seg { position: relative; display: flex; align-items: baseline; gap: 7px; width: 100%; padding: 8px 10px; border-radius: 9px; cursor: pointer; text-align: left;
   color: var(--text); background: var(--panel-2); border: 1px solid var(--edge); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
 .e3-seg:hover { border-color: var(--accent); }
@@ -65,12 +65,12 @@ const CSS = `
 .e3-smeter i { display: block; height: 100%; width: 0; background: #6ea8ff; }
 .e3-sdisc { font-family: var(--mono); font-size: 10.5px; color: var(--good); font-variant-numeric: tabular-nums; }
 .e3-cards { padding: 11px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; align-content: start; }
-.e3-card { display: flex; flex-direction: column; gap: 4px; padding: 9px 10px 10px; border-radius: 11px; border: 1px solid var(--line); background: var(--panel); }
+.e3-card { display: flex; flex-direction: column; gap: 5px; padding: 9px 10px 10px; border-radius: 11px; border: 1px solid var(--line); background: var(--panel); }
 .e3-card.method { border-color: color-mix(in srgb, var(--good) 55%, transparent); }
 .e3-cn { display: flex; align-items: baseline; gap: 6px; font-family: var(--era-font); font-size: 12.5px; }
 .e3-ct { padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.1em; color: #04121a; background: var(--good); }
 .e3-clv { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--dimmer); }
-.e3-cd { flex: 1; min-height: 30px; font-size: 11.5px; line-height: 1.28; color: var(--dim); }
+.e3-cd { flex: 1 0 auto; min-height: 44px; font-size: 11.5px; line-height: 1.3; color: var(--dim); }
 @media (prefers-reduced-motion: reduce) { .e3-ghost { transition: none; } }
 `;
 
@@ -207,9 +207,11 @@ export function createStatisticalView(opts) {
       return;
     }
 
-    // the chamber: grid, axes, then the true shape the model is chasing
+    // the chamber: one pane of glass over the plot and the track under it
     pctx.fillStyle = alpha('#04121a', 0.55);
-    pctx.fillRect(0, 0, PLOT.w, PLOT.h);
+    pctx.fillRect(0, 0, BAND.w, BAND.h);
+    pctx.strokeStyle = alpha(pal.accent, 0.16); pctx.lineWidth = 1;
+    pctx.strokeRect(0.5, 0.5, BAND.w - 1, BAND.h - 1);
     pctx.strokeStyle = alpha(pal.accent, 0.07); pctx.lineWidth = 1;
     for (let i = 1; i < 8; i++) { const gx = PAD + (PLOT.w - PAD * 2) * i / 8; pctx.beginPath(); pctx.moveTo(gx, PAD); pctx.lineTo(gx, PLOT.h - PAD); pctx.stroke(); }
     for (let j = 1; j < 5; j++) { const gy = PAD + (PLOT.h - PAD * 2) * j / 5; pctx.beginPath(); pctx.moveTo(PAD, gy); pctx.lineTo(PLOT.w - PAD, gy); pctx.stroke(); }
@@ -354,7 +356,7 @@ export function createStatisticalView(opts) {
     const auto = !!e.flags.autopilot;
     if (autoBtn.hidden === auto) autoBtn.hidden = !auto;
     setCls(autoBtn, 'e3-auto' + (e.focus === 'auto' ? ' on' : ''));
-    setTxt(dLab, e.predN ? 'FOCUS · CALLED ' + e.predHits + '/' + e.predN : 'TRAINING FOCUS');
+    setTxt(dLab, e.predN ? 'CALLED ' + e.predHits + '/' + e.predN : 'TRAINING FOCUS');
 
     // EXPERIMENTS: the badge names METHOD only when the Method is actually affordable
     const mtd = nextMethod(sim), mCost = expCost(sim, 'method'), methodOk = !!mtd && sim.stock('data') >= mCost;

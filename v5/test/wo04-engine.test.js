@@ -143,4 +143,14 @@ export async function run(t) {
   const live = sim.snapshot();
   t.ok(live.eras[3].trials > 0, 'the replay fixture ran trials');
   t.ok(typeof live.eras[3].accuracy === 'number' && isFinite(live.eras[3].accuracy), 'accuracy stays finite through the arc');
+
+  /* ---------- the view module must not touch the document at import time ---------- */
+  const view = await import('../render/eras/statistical.js');
+  t.ok(typeof view.createView === 'function' && typeof view.createStatisticalView === 'function', 'the Statistical view imports clean outside a browser');
+
+  /* ---------- the layout keeps the instrument, the plates and the HUD columns apart ---------- */
+  const A = statistical.layout.anchors;
+  for (const id of Object.keys(A)) t.ok(A[id].x >= 240 || id === 'dataset', 'anchor clears the verb column: ' + id);
+  for (const id of Object.keys(A)) t.ok(A[id].y >= 40 && A[id].y <= 660, 'anchor sits inside the stratum: ' + id);
+  t.ok(A.dataset.x + 96 < 400, 'the Datasets pipe end takes the LEFT riser channel, clear of the Data lane');
 }

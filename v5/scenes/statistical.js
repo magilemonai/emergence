@@ -79,6 +79,9 @@ export const STATISTICAL_SCENES = {
     run(sim, 12);
   },
 
+  // the drawer open on a working board (the app opens it for any scene named "research")
+  'stat-research': (sim) => { running(sim, { data: 2600, datasets: 20, models: 14, acc: 0.62, gap: 0.16, survey: 44, trials: 210, methods: ['regression', 'features'] }); },
+
   // zoomed out: the instrument reads as a glowing band in the column
   'stat-overview': (sim) => { running(sim, { data: 2200, datasets: 20, models: 14, acc: 0.7, gap: 0.12, survey: 52, trials: 240 }); }
 };

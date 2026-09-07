@@ -14,9 +14,11 @@ const RESOURCES = [
 ];
 
 /* Stratum-local anchors (CONTRACT: pos is local). The scatter owns the top of the field (world y 40..270),
-   so the machinery reads left to right beneath it: Silicon in from Origins, Data across, Insight out. */
+   so the machinery reads left to right beneath it: Silicon in from Origins, Data across, Insight out.
+   Datasets sits far enough left that its Silicon pipe takes the LEFT riser channel (render/pipes.js routes
+   on the pipe's end x), which keeps the reach-back clear of the Data lane instead of crossing it. */
 const ANCHORS = {
-  dataset: { x: 330, y: 340 },
+  dataset: { x: 300, y: 340 },
   'data.store': { x: 560, y: 340 },
   model: { x: 790, y: 340 },
   trials: { x: 560, y: 560 },
@@ -221,7 +223,7 @@ const statistical = {
       sim.addNode(n);
     }
 
-    const ds = base('dataset', 'converter', 'Dataset Feed');
+    const ds = base('dataset', 'converter', 'Datasets');
     ds.inputs = [{ res: 'silicon', rate: c.datasetSilicon }];
     ds.outputs = [{ res: 'data', rate: c.datasetYield }];
     ds.cost = { res: 'silicon', base: c.datasetCost, growth: c.datasetGrowth };
@@ -260,7 +262,9 @@ const statistical = {
     const te = edgeOf(sim, 'model', 'trials');
     const ran = te ? te.flow * dt : 0;
     const ins = ran > 0 ? runExperiment(sim, ran, false) : 0;
+    // the graph pass closed its books before this Insight existed, so the era adds its own flow and rate
     setFlow(sim, 'model', 'insight.store', dt > 0 ? ins / dt : 0);
+    if (dt > 0) sim.state.rates.insight = (sim.state.rates.insight || 0) + ins / dt;
     setFlow(sim, 'insight.store', 'generalize', Math.max(0, sim.rate('insight')));
     if (e.pred === null && predicting(sim)) e.pred = predictNext(sim);
     if (sim.muted() || e.done) return;                 // offline catch-up: the world does not move unseen
