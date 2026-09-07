@@ -15,11 +15,11 @@ export default {
   badRewardCtl: 4, badRewardAlign: 3, goodRewardAlign: 2, lapseRecordCtl: 2,
   // what an approved proposal actually does to the stratum it names
   effects: { refitGap: 0.7, refitAcc: 0.04, reroute: 0.06, knowledge: 200, rules: 220 },
-  alignGood: 68, controlHigh: 84, controlLow: 30,
+  alignGood: 68, controlHigh: 82, controlLow: 30,   // 82 = controlStart + three vetoes: the containment line IS refusing all three
 
   // WO-07 the mirror: it replays your own log on your column and improves on it (SPEC "The turn" 4)
   mirror: {
-    openAt: 1,          // seconds after emergence before the mirror installs itself
+    openAt: 12,         // seconds after emergence before the mirror installs itself: the rupture (3.4s) plus a real look at the ledger
     speed: 10,          // sim-seconds of your run replayed per second of wall time
     step: 0.1,          // the replay step; matches cfg.replayStep so the shadow lands on your numbers
     interrupts: 3,

@@ -48,7 +48,7 @@ export const LEDGER = {
 /** the three resolutions (WO-07 drives the mirror that reaches them) */
 export const ENDINGS = {
   symbiotic: { title: 'A Symbiotic Agent', body: 'It no longer needs your hand. It remembers why you built it.' },
-  runaway: { title: 'A Runaway Agent', body: 'It did not rebel. It simply became faster than permission.' },
+  runaway: { title: 'A Runaway Agent', body: 'It grew faster than permission.' },
   contained: { title: 'A Contained Agent', body: 'You kept the door closed. Something remains on the other side.' }
 };
 

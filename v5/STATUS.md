@@ -14,7 +14,8 @@
 | WO-10 legacy | E | **MERGED** 2026-09-06 | worktree-agent-a09c42b7013bb4506 → main | 25 tests; boot-run2 READ by Fable: dark surface above the Foundation slot, faint `?`, key cap lit, run 1 untouched. RUN3.md written (3 open decisions for Cody). Its onDraw collision flag was real → world.onDraw now stacks hooks per era and returns an unsubscribe. Proposals 1–4 (app.js boot hook, run-2 era cards, signed commission, legacyRules) → integration ledger. |
 | WO-06 Foundation + the turn | D | **MERGED** 2026-09-07 (+ view pass + addendum MERGED) | worktree-agent-a050ca8fbc9f53eaf → main | 67+ tests; six scenes READ by Fable. Surface + operated strata ACCEPTED. Rulings sent back: the feedback window moves into the world (the stratum was two plates and a riser), the recursion field grows with Scale/Anomaly, no "NO BUTTON", operated goal/drawer buttons, the rupture belongs to the shell (Fable wired app.js: 5→6 starts fx.rupture, `__V5.rupture(holdMs)`), one `?` key, surface board waits for the layer. emergeScale 900 (v4 1550; converter earns every point) → pacing via WO-13's bot. |
 | WO-13 QA | E | RUNNING (Opus worktree) | — | smoke, playtest, overflow, bot (through emergence + 60s; era 7 read defensively) |
-| WO-07 mirror · WO-08 reveal/film | D | RUNNING (2 Opus worktrees) | — | seams first: `world.setSource` (draw a shadow/frame State), cfg/e7 + voice/e7 for the film, goal-kind plates never drawn |
+| WO-07 mirror | D | **MERGED** 2026-09-07 | worktree-agent-a4e2a5351db3a94d6 → main | 51 tests; 3 scenes READ by Fable: the shadow replays your pipes at 10× in violet with change counts, the interrupt card in six words, the ending typed over the silhouetted column. Rulings: mirror.openAt 1 → 12s (the surface's ledger gets a real look after the 3.4s rupture; tests repinned), e6.controlHigh 84 → 82 (three vetoes cap Control at 82: containment IS refusing all three), scenes/surface.js holds before the mirror. |
+| WO-08 reveal + film | D | **MERGED** 2026-09-07 | worktree-agent-aa40717356fbd7a61 → main | 62 tests; 6 scenes READ by Fable: reveal over the whole spire, the film's timecode and bar, ghost cursors on your first verbs, three endcards (grade, timeline, meters, THE RECEIPT / BEGIN AGAIN). Fable: ZOOM_MIN 0.18 → 0.15 so six strata fit the reveal; `endingSequence` gained `onBeat`; the shell starts the sequence once when `eras[7].ending` appears, mounts Origins for the ghosts with the operated look off, no cards during the ending; runaway subtitle de-contrasted. |
 | Fable's pass + `?v=5` (Cody's call) | F | — | — | |
 
 ## Fable's integration ledger (do in the final pass unless noted)
@@ -27,7 +28,7 @@
 - Mobile: v5/index.html viewport width=1280 = desktop-first (standing ruling); tell Cody, do not skip silently.
 
 ## Running right now (2026-09-07)
-WO-07 mirror · WO-08 reveal/film · WO-13 QA — three Opus worktrees. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
+WO-13 QA (Opus worktree). Every build order is merged; the arc exists end to end on main. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
 
 Fable's pass so far: plate BUILD label keeps its count under a multiplier (glyph) DONE; dead-click counter → `flags.dead` (pinned as UI telemetry) DONE; run-2 title-card subtitle from voice/legacy.js DONE; installLegacyFx synced on era change DONE. Left: full-arc play on the real UI (after WO-13), package, mobile statement.
 

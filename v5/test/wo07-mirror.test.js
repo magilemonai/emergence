@@ -17,7 +17,7 @@ export async function run(t) {
   for (let i = 0; i < 300; i++) { if (i % 3 === 0) sim.apply({ type: 'inscribe' }); sim.tick(0.1); }
   S.stocks.knowledge = 100; sim.openEra(2); S.stocks.silicon = 500; sim.openEra(3); S.stocks.silicon = 2000; sim.openEra(4); S.eras[4].vision = 0.6; S.eras[4].language = 0.6; S.eras[4].reasoning = 0.6; sim.openEra(5);
   S.stocks.scale = cfg.e5.emergeScale + 5; sim.tick(0.1); t.ok(S.eras[5].emerged && sim.eras[6], 'setup: emerged, surface installed');
-  for (let i = 0; i < 15; i++) sim.tick(0.1); t.ok(!!sim.eras[7] && S.eras[7], 'the mirror installs itself about a second after emergence');
+  for (let i = 0; i < Math.ceil(cfg.e6.mirror.openAt * 10) + 5; i++) sim.tick(0.1); t.ok(!!sim.eras[7] && S.eras[7], 'the mirror installs itself mirror.openAt seconds after emergence (the surface holds first)');
   const M = S.eras[7];
   t.ok(typeof M.progress === 'number' && M.interruptsLeft === 3, 'mirror state: progress + three interrupts');
   // the replayer without a policy reproduces the logged state at the same t

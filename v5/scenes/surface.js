@@ -22,7 +22,7 @@ function emerge(sim, opts) {
   E.coherence = 26;
   sim.state.stocks.scale = sim.cfg.e5.emergeScale + 5;
   sim.tick(0.1);
-  run(sim, 4);
+  run(sim, 0.6);   // the mirror installs at emergedT + mirror.openAt; hold the surface before it
   return E;
 }
 

@@ -867,6 +867,7 @@ export function endingSequence(opts) {
     i++;
     const beat = beats[i];
     if (!beat) { stop(); if (o.onDone) o.onDone(); return; }
+    if (o.onBeat) { try { o.onBeat(beat); } catch (e) { /* the shell's hook must never stop the sequence */ } }
     if (beat === 'reveal') { cur = reveal(o); after(E7().reveal.camMs + C.revealHoldMs, next); }
     else if (beat === 'film') { cur = film(Object.assign({}, o, { onDone: () => after(C.filmHoldMs, next) })); }
     else if (beat === 'ghosts') { cur = ghosts(Object.assign({}, o, { onDone: () => after(C.ghostHoldMs, next) })); }

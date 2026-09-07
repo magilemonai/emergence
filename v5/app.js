@@ -10,7 +10,7 @@ import { createWorld } from './render/world.js';
 import { createHud } from './render/hud.js';
 import { SCENES } from './scenes/scenes.js';
 import { STRATA } from './render/palette.js';
-import { titleCard, rupture as fxRupture, operated as fxOperated } from './render/fx.js';
+import { titleCard, rupture as fxRupture, operated as fxOperated, endingSequence as fxEnding } from './render/fx.js';
 import VOICE from './engine/voice.js';
 
 export const ERA_FILES = ['origins', 'symbolic', 'statistical', 'deep', 'foundation', 'surface', 'mirror'];
@@ -268,11 +268,29 @@ async function boot() {
       startRupture(null);
     } else {
       world.lockTo(n, plan.lockAnimate);
-      if (plan.lockAnimate || !scene) showTitle(n);           // a screenshot scene boots without the card over it
+      if ((plan.lockAnimate || !scene) && !endingRun) showTitle(n);   // a screenshot scene boots without the card over it; the ending has no cards
     }
     if (audio) audio.setBed(n);
     if (view && view.sync) view.sync();
     return plan;
+  }
+
+  /* ---------- the ending: reveal → film → ghosts → endcard, once, when the mirror resolves (SPEC The turn 5) ---------- */
+  let endingRun = null, ghostsBeat = false;
+  function startEnding(ending) {
+    if (endingRun) return endingRun;
+    const which = ending || (sim.state.eras[7] && sim.state.eras[7].ending) || sim.state.flags.ending || 'contained';
+    try {
+      endingRun = fxEnding({
+        world: world, hud: hud, sim: sim, ending: which, reduced: reduced, doc: doc,
+        onBeat: (beat) => {
+          if (beat === 'ghosts') { ghostsBeat = true; curEra = 0; switchEra(1); }     // your first minute plays on your bedrock
+          else if (ghostsBeat) { ghostsBeat = false; syncOperated(curEra); }
+        },
+        onDone: () => { checkEnding(); }
+      }) || { cancel() {} };
+    } catch (e) { endingRun = { cancel() {} }; }
+    return endingRun;
   }
 
   /* ---------- the turn: the shell starts the rupture and keeps the operated look in step with the state ---------- */
@@ -285,7 +303,7 @@ async function boot() {
     return ruptureFx;
   }
   function syncOperated(n) {
-    const emerged = !!(sim.state.flags && sim.state.flags.emerged);
+    const emerged = !!(sim.state.flags && sim.state.flags.emerged) && !ghostsBeat;   // the ghosts replay YOUR hands: no operated look
     if (emerged) for (let k = 1; k <= 4; k++) world.operated.add(k);
     try { fxOperated(emerged && n >= 1 && n <= 4, doc); } catch (e) { }
   }
@@ -368,7 +386,9 @@ async function boot() {
     last = now;
     if (!paused) {
       sim.tick(dt);
-      if (sim.state.era !== curEra) { switchEra(sim.state.era); if (legacyFx && legacyFx.sync) { try { legacyFx.sync(); } catch (e) { } } }
+      const e7 = sim.state.eras && sim.state.eras[7];
+      if (!scene && !endingRun && ((e7 && e7.ending) || sim.state.flags.ending)) startEnding((e7 && e7.ending) || sim.state.flags.ending);   // screenshot scenes drive the fx themselves
+      if (!endingRun && sim.state.era !== curEra) { switchEra(sim.state.era); if (legacyFx && legacyFx.sync) { try { legacyFx.sync(); } catch (e) { } } }
       sinceSave += dt;
       if (sinceSave >= AUTOSAVE_S) { sinceSave = 0; save(); }
       checkEnding();
@@ -389,6 +409,7 @@ async function boot() {
   }
   win.__V5 = {
     rupture: startRupture,        // (holdMs?) starts the world event and freezes it at holdMs for a screenshot
+    ending: startEnding,          // (ending?) runs reveal → film → ghosts → endcard once
     sim, world, hud, get view() { return view; }, scene, settle, applyScene, eras, buy,
     save, restart, switchEra, setPaused, get paused() { return paused; }, get audio() { return audio; },
     holdSave: (b) => { resetting = !!b; return resetting; },   // tools freeze persistence while they doctor a save

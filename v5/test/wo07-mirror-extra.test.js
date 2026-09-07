@@ -28,7 +28,7 @@ function toMirror(sim, opts) {
   e5.fb.goodRewards = o.good || 0; e5.fb.badRewards = o.bad || 0; e5.fb.lapsed = o.lapsed || 0;
   S.stocks.scale = cfg.e5.emergeScale + 5;
   sim.tick(0.1);
-  for (let i = 0; i < 15; i++) sim.tick(0.1);
+  for (let i = 0; i < Math.ceil(cfg.e6.mirror.openAt * 10) + 5; i++) sim.tick(0.1);   // the surface holds mirror.openAt seconds first
   return S.eras[7];
 }
 

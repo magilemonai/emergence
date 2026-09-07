@@ -8,7 +8,7 @@ import { STRATA, BORDER_BLEND, blend, stratumHue, resHue, alpha, OPERATED_HUE } 
 import { route, drawPipe } from './pipes.js';
 import { drawNodeGlyph, createPlates } from './nodes.js';
 
-export const ZOOM_MIN = 0.18, ZOOM_MAX = 1.4;
+export const ZOOM_MIN = 0.15, ZOOM_MAX = 1.4;   // 0.15 lets a six-stratum column fit 1280x800 in the reveal (needs 0.163)
 export const LOD_PLATE = 0.6, LOD_SILHOUETTE = 0.25;
 export const FIT_MARGIN = 50;     // world px of breathing room around a locked stratum
 export const LOCK_MS = 400;
