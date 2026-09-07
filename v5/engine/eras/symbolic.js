@@ -273,7 +273,9 @@ const symbolic = {
 
   /** the handoff: carried Knowledge becomes the starting Rules, and the riser keeps drawing it live */
   open(sim) {
-    const n = Math.round(sim.stock('knowledge') * (C(sim).seedFromKnowledge || 1));
+    let n = Math.round(sim.stock('knowledge') * (C(sim).seedFromKnowledge || 1));
+    // run 2: rules you did not write are already in the bank when the stratum opens (SPEC The turn §6)
+    if (sim.state.flags.run2) n += C(sim).legacyRules || 0;
     sim.state.stocks.rules += n;
     E(sim).term = [];
     term(sim, 'boot', { n: n });

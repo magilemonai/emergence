@@ -11,6 +11,7 @@ export default {
   contraAt: [3000, 12000, 30000], contraSlow: 0.6, contraBonus: 0.06,
   seedFromKnowledge: 1,
   oddRule: 4471,
+  legacyRules: 40,          // run 2: rules present at open that nobody wrote
 
   // v5: a ruleset is a converter, so its fuel and its reach-back are real ports
   rulesPerRuleset: 0.6,        // Rules burned per Ruleset per second

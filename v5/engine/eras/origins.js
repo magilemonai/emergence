@@ -186,7 +186,10 @@ function commissionTick(sim, dt) {
     metal: grossOf(sim, 'smelter') * c.commCapHalf, knowledge: grossOf(sim, 'scriptorium') * c.commCapHalf
   };
   const need = Math.ceil(Math.max(def.base, (cap[def.res] || 0) * c.commMult));
-  e.comm = { i: (e.commN - 1) % c.comms.length, res: def.res, need: need, t: c.commDur };
+  // run 2: the commission arrives signed with the name the last run gave the agent (SPEC The turn §6)
+  const L = sim.state.legacy;
+  const signed = sim.state.flags.run2 && L && L.name ? String(L.name) : null;
+  e.comm = { i: (e.commN - 1) % c.comms.length, res: def.res, need: need, t: c.commDur, signed: signed };
 }
 
 /* ---------- the module ---------- */

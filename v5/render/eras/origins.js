@@ -220,7 +220,7 @@ export function createOriginsView(opts) {
       setCls(comm, 'comm show');
       setHTML(cmNeed, '<b>' + fmt(e.comm.need) + '</b> ' + e.comm.res);
       setStyle(cmNeed, 'color', hue);
-      setTxt(cmName, def.name);
+      setTxt(cmName, def.name + (e.comm.signed ? ' · ' + e.comm.signed : ''));
       setTxt(cmRew, rewardOf(def.reward));
       setStyle(cmFill, 'width', Math.max(0, (e.comm.t / c.commDur) * 100).toFixed(1) + '%');
       const afford = (st.stocks[e.comm.res] || 0) >= e.comm.need;
