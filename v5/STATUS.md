@@ -27,8 +27,17 @@
 - Run-2 alterations (WO-10 proposals, exact): (1) app.js boot: read localStorage[LEGACY_KEY] in try/catch → createSim({legacy}) AND applyToFresh(sim.state, legacy) before first render; after world.setHud(hud) call installLegacyFx({world, sim, doc}) and its sync() on era change; at the ending write fromRun(sim.state, sim.state.legacy). (2) Title cards: when flags.run2 the subtitle reads from legacy (v4: name + ' remembers', 'run N'); words in engine/voice. (3) DONE: Origins commission signed '· NAME' on run 2 (engine + view, test wo10-run2). (4) DONE: cfg.e2.legacyRules = 40 rules in the bank when Symbolic opens on run 2. Wire `fx.operated`/`world.operated` + body class into the shell's era switch after WO-11.
 - Mobile: v5/index.html viewport width=1280 = desktop-first (standing ruling); tell Cody, do not skip silently.
 
+| WO-13 QA | E | **MERGED** 2026-09-07 | worktree-agent-a5470d97217881684 → main | bot (12 checks; Origins 1.7m · Symbolic 4.8m · Statistical 9.4m · Deep 13.2m · emergence 17.3m, 0 starvation), smoke 62, overflow 39 scenes, playtest driver. Its three findings fixed by Fable: strata jumps are a logged `visit` that switches the view (keys 1–6, the Statistical bus); the gated Ruleset BUILD is disabled at the source and Symbolic's goal `ready` mirrors `prove.can` (115 → 6 dead clicks); the Deep drawer opens over the fabric. Also: every parameterized action now publishes a `menu`. |
+
+## Pacing on the real UI (human-cadence driver, 3–4×)
+Run 1 (before jumps): 5.8 · 5.5 · 14.5 · 10.7 · 8.5 → emergence 45.0m. Run 2 (jumps): 5.8 · 5.4 · 13.3 · 10.9 · 8.6 → 43.9m.
+Run 3 (a metal-priced Foundry row the driver could never afford): Statistical 20.6m. Ruling: Statistical's supply bus sells the
+Origins Foundry build-here in SILICON with Deep's price shape (`cfg.e3.supply.foundry`, action `supply`), because a starved
+Origins (marks 0, ore 0 at 7 min) makes metal unreachable from above. Run 4 pending. The bot ceiling is 17.3m; SPEC targets
+sum to 34m + 3m mirror. Cody's hands decide the rest.
+
 ## Running right now (2026-09-07)
-WO-13 QA (Opus worktree). Every build order is merged; the arc exists end to end on main. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
+Nothing. Every order is merged; the arc exists end to end on main. Fable's pass: playtest run 4 reading, then done. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
 
 Fable's pass so far: plate BUILD label keeps its count under a multiplier (glyph) DONE; dead-click counter → `flags.dead` (pinned as UI telemetry) DONE; run-2 title-card subtitle from voice/legacy.js DONE; installLegacyFx synced on era change DONE. Package DONE: `EMG_V5=1 node tools/build-single.js emergence-v5-single.html` → 760 KB, boots origins-bronze / surface / endcard-symbiotic with ERRORS none (gitignored). Root gate `node test.js` green (v3 92 + v4 160 + freshness). Left: full-arc play on the real UI with WO-13's playtest driver; pacing read from its bot; the mobile statement to Cody (v5 is desktop-first by the standing ruling; the endcard and receipt stack under 900px; v5/index.html pins viewport width=1280).
 
