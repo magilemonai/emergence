@@ -83,7 +83,8 @@ v5/
   `test/perf.test.js` in node for the sim, and by `tools/shoot.js --perf` in headless for the frame).
 
 ## Save / legacy / routing
-- Save: `localStorage['emergence_v5'] = {v:1, state, wall}`; `state.log` is capped at 12,000 actions (the film
-  and the mirror sample it). Legacy: `localStorage['emergence_v5_legacy']` (name, ending, oddRule, runs, firstMinute
+- Save: `localStorage['emergence_v5'] = {v:1, state, wall}`. The engine never truncates `state.log` (replay
+  exactness); the SAVE layer (WO-11) caps what it persists at 12,000 actions by keeping the first 600 (the film's
+  opening + the first minute) and a stride-sampled remainder, and the film/mirror sample from that. Legacy: `localStorage['emergence_v5_legacy']` (name, ending, oddRule, runs, firstMinute
   = the first 60s of the log).
 - Route: `index.html` at the repo root gains `?v=5 → v5/index.html` (WO-11). v3 default, v4 at `?v=4` stay.

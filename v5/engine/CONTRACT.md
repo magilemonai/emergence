@@ -19,10 +19,11 @@ const sim = createSim({ cfg, eras: [origins, symbolic, ...], seed: 12345, legacy
 | `sim.rng()` | `() => number` | mulberry32 on `state.rng.s`; the ONLY randomness in the engine |
 | `sim.snapshot()` / `sim.restore(s)` | deep copy in/out | structuredClone-equivalent (JSON safe: no functions in State) |
 | `sim.replay(seed, log, until?)` | `(seed:number, log:Action[], until?:number) => State` | rebuilds from a fresh sim by ticking 0.1s steps and applying logged actions at their `t`; result must equal the live state (test-enforced) |
+| `sim.addResource(def)` | `ResourceDef` | registers a resource (bank + rate start at 0); eras call it in `install` before their store node |
 | `sim.addNode(def)` / `sim.removeNode(id)` | `NodeDef` | eras build the graph; adding rebuilds edges |
 | `sim.node(id)` / `sim.stock(res)` / `sim.rate(res)` | accessors | `rate` = net per second over the last tick |
 | `sim.setMult(nodeId, key, value)` | multiplier registry | effective rate = base × Π `node.mult[*]` |
-| `sim.openEra(n)` | installs era n if not installed; sets `era`/`maxEra`; calls `eras[n].open(sim)` | the handoff seam |
+| `sim.openEra(n)` | installs era n if not installed; sets `era`/`maxEra`; calls `eras[n].open(sim)` ONCE (first install only, never on a return trip) | the handoff seam |
 | `sim.goal(era?)` | `=> {progress:0..1, ready:boolean, label:string}` | from the era's `goal(sim)` |
 | `sim.voice(era?)` | `=> string|null` | the machine's current line for that stratum |
 | `sim.muted()` / `sim.setMuted(b)` | offline catch-up flag | live-only systems skip while muted |

@@ -67,7 +67,7 @@ export async function run(t) {
   S.stocks.marks = 0.2; sim.tick(0.5);
   t.near(S.stocks.know, 0.5 + 0.35, 1e-6, 'starved converter draws proportionally (0.2 marks + 0.5 from the scribe over the tick → limited)');
   // multipliers
-  sim.setMult('scribe', 'milestone', 1.25); S.stocks.marks = 0; sim.tick(1); t.near(S.stocks.marks, 1.25 - 0, 0.02, 'setMult: effective rate = base × Π mult (scriptorium eats what it can)');
+  sim.setMult('scribe', 'milestone', 1.25); sim.apply({ type: 'pause', node: 'scriptorium', on: true }); S.stocks.marks = 0; sim.tick(1); t.near(S.stocks.marks, 1.25 * 0.5, 1e-9, 'setMult: effective rate = base × Π mult (0.5s clamped tick, converter paused)'); sim.apply({ type: 'pause', node: 'scriptorium', on: false });
   // pause
   sim.apply({ type: 'pause', node: 'scriptorium', on: true }); S.stocks.marks = 0; S.stocks.know = 0; sim.tick(1); t.near(S.stocks.know, 0, 1e-9, 'paused converter produces nothing');
   sim.apply({ type: 'pause', node: 'scriptorium', on: false });
