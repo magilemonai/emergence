@@ -1,19 +1,53 @@
 # EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-09-06 (v4 "The Substrate Remembers" BUILT
-> beside the live v3; v3 archived in full; v4 awaits Cody's playtest + ship call).
+> keep it current as the game evolves. Last updated 2026-09-07 (v5 "The Substrate" BUILT end to end under v5/,
+> local only; v4 live behind ?v=4; v3 live by default; both archived in full).
 
-## ⭐⭐ v5 "The Substrate" — the ground-up rebuild, spec'd + orchestrated (started 2026-09-06)
+## ⭐⭐ v5 "The Substrate" — BUILT end to end, local only (2026-09-07)
 
 Cody bought into the "sublime" direction (one zoomable canvas object; five strata stacked upward; pipes with
 particles; one graph economy; text rises with intelligence; it learns you; the mirror, the reveal, the film, the
-receipt; run 2 remembers). **Everything lives under `v5/`**, additive: `v5/SPEC.md` (vision + design bible),
-`v5/ARCHITECTURE.md`, `v5/GUARDRAILS.md` (rules for executing agents), `v5/ORCHESTRATION.md` (how Fable runs Opus
-5 work orders: contracts + tests first, one order = one agent = one worktree, owned files, hard acceptance),
-`v5/engine/CONTRACT.md` + `types.js` (frozen), `v5/workorders/WO-00..13`, `v5/test.js` (runner; acceptance tests
-are written by the orchestrator BEFORE each order), `v5/tools/shoot.js`. **`v5/STATUS.md` is the ledger — read it
-first to resume.** Phase A (engine + renderer) was launched on Opus 5 in worktrees this session.
+receipt; run 2 remembers). **Everything lives under `v5/`**, additive to v3/v4. **Every work order (WO-00..13) is
+MERGED on main**; the arc exists from the first mark to the receipt: Origins → Symbolic → Statistical → Deep →
+Foundation → the rupture (a world event) → the surface (its flow board of you) → the mirror (12s later: it replays
+your log at 10×, three interrupts, endings from choices) → reveal → film → ghosts → endcard → THE RECEIPT / BEGIN
+AGAIN → run 2 remembers (dark surface, `?` key, signed commission, rules nobody wrote, cards subtly wrong).
+
+**Read first to resume:** `v5/STATUS.md` (the ledger: every order, ruling, and Fable's integration list), then
+`v5/SPEC.md` (vision), `v5/ARCHITECTURE.md`, `v5/engine/CONTRACT.md` ("Pinned semantics" holds every ruling: pos
+stratum-local, Edge.starved, rail rates NET, replay = seed + logged actions, `visit` jumps, setCadence, flags.dead,
+NodeDef locked/hidden/gated, menus on every parameterized action). Orchestration rules: `v5/ORCHESTRATION.md` +
+`v5/GUARDRAILS.md`; how it was run: memory `emergence-v5-orchestration`.
+
+**Verification arsenal (all green 2026-09-07):**
+| What | Command |
+|---|---|
+| The v5 suite (10,753 checks: engine, every stratum, mirror, film, legacy, receipt, shell, lint, perf, the progression bot) | `node v5/test.js [filter]` |
+| Any scene at 1280×800 + PROBE/ERRORS (39 scenes: origins-*, symbolic-*, stat-*, deep-*, foundation-*, rupture-mid, surface, operated-origins, mirror-*, reveal, film-mid, ghosts, endcard-*, receipt, boot-run2) | `node v5/tools/shoot.js <scene> out.png [--file artifact] [--perf]` |
+| Real-UI smoke (62 DOM checks through the arc, fails on any console error) | `node v5/tools/smoke.js` |
+| Overflow ledger (every scene, two sizes, must be 0) | `node v5/tools/overflow.js` |
+| Human-cadence playtest on the real UI (screens per beat, run.json, dead clicks) | `node v5/tools/playtest.js --speed 3 --out <dir>` |
+| Shell probe (save/reload, offline, pause, era switch; modular + artifact) | `node v5/tools/probe-shell.js` |
+| Package one file (760 KB, gitignored) | `EMG_V5=1 node tools/build-single.js emergence-v5-single.html` |
+| Root gate (v3 92 + v4 160 + v3 artifact freshness) still | `node test.js` |
+
+**Playing it:** open `v5/index.html` locally (ES modules: serve or open via the shoot tool's file mode). Keys 1–6 jump
+strata (a logged `visit`: the view switches, the camera follows, and you can go back and build; the Statistical
+supply bus does the same), Space/Q verbs, R drawer, Esc settings. **Live routing is OFF:** root `index.html` has
+`V5_ENABLED = false`; flipping it makes `?v=5` route to `v5/index.html`. **Push only when Cody says.**
+
+**Pacing (bot ceiling / human-cadence driver at 3× before the jump fix):** Origins 1.7m/5.8m · Symbolic 4.8m/5.5m ·
+Statistical 9.4m/14.5m (the driver starved Silicon with no way back; fixed by real jumps) · Deep 13.2m/10.7m ·
+emergence 17.3m/45.0m. Foundation's threshold is 900 (v4 1550) because Scale is earned through a real converter now.
+A fresh driver run after the fix is the next read; then Cody's hands.
+
+**Design rulings Fable made by eye (all pinned in STATUS):** plates need ≥ 80 world units of pipe between them
+(the Symbolic order's anchors hid every pipe); the feedback window lives in the world, and the recursion field is
+Foundation's weather; no goal button on Foundation; the rupture belongs to the shell; the surface holds 12s before
+the mirror; one Control threshold (82); six strata fit the reveal (ZOOM_MIN 0.15); goal-kind nodes never draw a plate;
+risers scale particle density with length. **Mobile:** v5 is desktop-first by the standing ruling (viewport pinned at
+1280; endcard/receipt stack under 900px). Flagged, not skipped silently.
 
 ## ⭐ RESUME HERE — v4 "The Substrate Remembers" (built 2026-09-06, live behind ?v=4)
 
