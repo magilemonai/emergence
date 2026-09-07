@@ -62,12 +62,35 @@ export function filmPlan(log, seed, n, opts) {
   const total = Math.max(0, Math.round(end / step));            // ticks of the rebuilt run, the live loop's own step
   const sim = createSim({ cfg: cfg, eras: o.eras || [], seed: seed, legacy: o.legacy || null });
 
+  // when each stratum first shows up in the record. A real run opens every stratum through a logged action or a
+  // tick threshold, so these calls are no-ops there; a state that was poked open (a scene, a doctored save) still
+  // grows its column in the film, at the moment the record first touched it.
+  const opens = [];
+  for (const a of acts) {
+    const n = typeof a.era === 'number' ? a.era : 0;
+    if (n < 2) continue;
+    if (opens[n] === undefined || a.t < opens[n]) opens[n] = a.t;
+  }
+  let opened = 1;
+  /** strata stack: reaching stratum n means every stratum under it is already there (app.js restores the same way) */
+  function openUpTo(n) {
+    while (opened < n) {
+      opened++;
+      try { sim.openEra(opened); } catch (e) { /* a stratum the film cannot rebuild is one it does not draw */ }
+    }
+  }
+
   const out = [];
   let ticks = 0, ai = 0, next = 0;
   const markAt = (i) => Math.round((i * total) / Math.max(1, count - 1));
 
-  /** apply every logged action this step boundary owns, then capture whatever frames land on it */
+  /** open whatever strata the record has reached, apply this boundary's actions, capture the frames on it */
   function settle() {
+    for (let n = opens.length - 1; n >= 2; n--) {
+      if (opens[n] === undefined || opens[n] > sim.state.t) continue;
+      openUpTo(n);
+      break;
+    }
     while (ai < acts.length && acts[ai].t <= sim.state.t) { sim.apply(acts[ai]); ai++; }
     while (next < count && markAt(next) <= ticks) { out.push(snapshot(sim.state)); next++; }
   }

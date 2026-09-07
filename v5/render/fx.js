@@ -475,8 +475,8 @@ const END_CSS = `
 .rv-body { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; letter-spacing: 0.06em;
   color: #a494c4; opacity: 0; transition: opacity 0.9s ease; text-align: center; max-width: 640px; }
 .rv-body.on { opacity: 1; }
-.fm { position: fixed; left: 0; right: 0; bottom: 8vh; z-index: 90; pointer-events: none; display: flex;
-  flex-direction: column; align-items: center; gap: 12px; }
+.fm { position: fixed; left: 0; right: 0; top: 5vh; z-index: 90; pointer-events: none; display: flex;
+  flex-direction: column; align-items: center; gap: 10px; }
 .fm-line { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.2em;
   color: #c9adf5; text-shadow: 0 2px 18px rgba(0,0,0,0.9); }
 .fm-clock { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 26px; font-variant-numeric: tabular-nums;
@@ -628,6 +628,24 @@ export function reveal(opts) {
 }
 
 /**
+ * frameGrowth(world, doc, hi): the film's own framing. The bedrock sits on the bottom edge of the viewport and
+ * the column grows up into the empty space above it, so the first mark is never clipped and the last stratum
+ * arrives in frame. The overview centres instead, which cuts a six-stratum column at both ends.
+ */
+function frameGrowth(world, doc, hi) {
+  const de = doc.documentElement || { clientWidth: 1280, clientHeight: 800 };
+  const h = de.clientHeight || 800;
+  const bottom = stratumTop(1) + STRATUM_H;
+  const span = bottom - stratumTop(hi);
+  const cam = world.camera;
+  const zoom = Math.max(0.18, Math.min(0.55, (h * 0.96) / span));
+  cam.zoom = zoom;
+  cam.x = WORLD_W / 2;
+  cam.y = bottom - (h / zoom) / 2;
+  return zoom;
+}
+
+/**
  * film({world, hud, sim, reduced, doc, onDone}): twelve seconds of the run, precomputed once from the log and
  * played back through world.setSource. The precompute runs in rAF-sized slices behind a progress ring, so the
  * main thread never stalls; the sim is never re-run per frame. Returns { hold(ms), cancel(), get frame() }.
@@ -664,6 +682,7 @@ export function film(opts) {
   let idx = 0, raf = 0, ready = false, done = false, playAt = 0;
   const clock = heldClock(win);
   world.overview(false);
+  frameGrowth(world, doc, topStratum(sim));
   world.setSource(() => plan.frames[idx] || null);
 
   function showRing(k) {
@@ -766,7 +785,8 @@ export function ghosts(opts) {
   host.appendChild(line);
 
   const clock = heldClock(win);
-  const spans = acts.map((a, i) => ({ a: a, at: (a.t * 1000) / Math.max(0.001, C.speed), hand: i % cursors.length }));
+  // two hands, the way you played: one lives on the verbs, one works the board
+  const spans = acts.map((a) => ({ a: a, at: (a.t * 1000) / Math.max(0.001, C.speed), hand: a.node ? 1 : 0 }));
   const endMs = Math.min(C.maxMs, spans.length ? spans[spans.length - 1].at + C.moveMs * 2 : C.moveMs);
   const seen = [{ x: 0, y: 0, has: false }, { x: 0, y: 0, has: false }];
   let raf = 0, done = false;

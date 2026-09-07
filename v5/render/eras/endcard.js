@@ -106,7 +106,9 @@ export function createView(opts) {
   const col = el('ecd-col'); page.appendChild(col);
 
   const head = el('ecd-head');
-  const sig = el('ecd-sig'); setTxt(sig, '◉');
+  // the ending wears its own hue: what it became, before you read a word of it
+  const END_HUE = { symbiotic: STRATA[6].good, runaway: STRATA[6].danger, contained: STRATA[4].accent };
+  const sig = el('ecd-sig'); setTxt(sig, '◉'); sig.style.color = END_HUE[ending] || STRATA[6].tease;
   const title = el('ecd-title'); setTxt(title, text.title);
   head.appendChild(sig); head.appendChild(title);
   col.appendChild(head);

@@ -179,9 +179,9 @@ export async function run(t) {
   const gh = ghosts({ world: world, hud: hud, sim: sim, doc: doc });
   t.eq(world.locked, 1, 'ghosts: the camera drops to the bedrock for the replay');
   t.ok(gh.count > 0 && gh.cursors.length === 2, 'ghosts: two hands replay your first minute');
-  gh.hold(4000);
+  gh.hold(20000);
   doc.__step(16);
-  t.ok(gh.cursors.every((c) => /translate3d/.test(c.style.transform || '')), 'ghosts: both cursors are placed on the board');
+  t.ok(gh.cursors.every((c) => /translate3d\(\d/.test(c.style.transform || '')), 'ghosts: both hands are on the board (one on the verbs, one on the plates)');
   gh.cancel();
   t.ok(!hud.root.parentNode.children.some((c) => (c.className || '').indexOf('gh-') === 0), 'ghosts: cancel removes the cursors and the line');
 }

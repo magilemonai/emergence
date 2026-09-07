@@ -28,7 +28,7 @@ export default {
   },
 
   endcard: {
-    lineMs: 1250,         // between epilogue lines
+    lineMs: 520,           // between epilogue lines
     gradeCut: { S: 85, A: 72, B: 58, C: 42 },
     quality: { align: 0.6, control: 0.25, speedBase: 18, speedMin: 30, speedFall: 0.6 }
   },

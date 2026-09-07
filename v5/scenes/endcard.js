@@ -14,7 +14,7 @@ function firstMinute(sim) {
   for (let i = 0; i < 600; i++) {
     if (i % 7 === 0) sim.apply({ type: 'inscribe', era: 1 });
     if (i % 23 === 0) sim.apply({ type: 'quarry', era: 1 });
-    if (i % 90 === 0) { const b = sim.available(1).find((a) => a.type === 'buy' && a.node === 'scribe'); if (b) sim.apply(b); }
+    if (i % 45 === 0) { const b = sim.available(1).find((a) => a.type === 'buy' && a.node === 'scribe'); if (b) sim.apply(b); }
     if (i % 130 === 0) { const d = sim.available(1).find((a) => a.type === 'discover'); if (d) sim.apply(d); }
     sim.tick(0.1);
   }
@@ -57,6 +57,9 @@ const CHOICES = {
 export function seedRun(sim, ending) {
   firstMinute(sim);
   if (!toFoundation(sim, { cap: 2600 })) return false;
+  // toFoundation opens all five strata at once and aims Deep before you have touched Symbolic; a real record
+  // is in stratum order, so the seeded log keeps only the bedrock and the stretches below write the rest
+  sim.state.log = sim.state.log.filter((a) => !(a.era >= 2));
   stretch(sim, 2, 70);
   stretch(sim, 3, 70);
   stretch(sim, 4, 90);
@@ -113,7 +116,7 @@ export const ENDCARD_SCENES = {
   ghosts: (sim) => {
     if (!seedRun(sim, 'symbiotic')) return;
     sim.state.era = 1;                                   // the bedrock's own verbs, for the hands to press
-    afterBoot((V) => { ghosts(opts(V, 'symbiotic')).hold(9000); });
+    afterBoot((V) => { ghosts(opts(V, 'symbiotic')).hold(27100); });
   },
 
   'endcard-symbiotic': card('symbiotic'),
