@@ -2,7 +2,7 @@
 
 | Order | Phase | State | Branch / merge | Notes |
 |---|---|---|---|---|
-| WO-00 engine core | A | RUNNING (Opus, worktree) | — | acceptance: test/wo00-engine, perf, lint |
+| WO-00 engine core | A | **MERGED** 2026-09-06 | worktree-agent-ac54ca55335c8ef87 → main | 82 own tests; caught a bad assertion in the orchestrator's test (fixed) + a contract gap (`addResource`, now in CONTRACT). 0.006ms/tick. |
 | WO-01 renderer core | A | RUNNING (Opus, worktree) | — | acceptance: test/wo01-renderer + 5 bench scenes |
 | WO-02 Origins | B | ready (test written) | — | launches after A merges |
 | WO-03 Symbolic · WO-04 Statistical · WO-05 Deep · WO-09 audio · WO-11 shell | C | spec'd | — | parallel after B accepted |
