@@ -12,7 +12,10 @@ const URL_BASE = 'file://' + path.resolve(fileArg);
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9341 + Math.floor(Math.random() * 40);
 const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--window-size=1280,800',
-  `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--allow-file-access-from-files', 'about:blank']);
+  `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--mute-audio', '--allow-file-access-from-files', 'about:blank']);
+// kill the browser with us: a SIGTERM to this process must never leave a headless Chrome (and its audio) running
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { try { chrome.kill('SIGKILL'); } catch (e) { } process.exit(130); });
+process.on('exit', () => { try { chrome.kill('SIGKILL'); } catch (e) { } });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const checks = [];

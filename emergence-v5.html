@@ -1048,7 +1048,7 @@ __x.default = {
     milestones: [10, 25, 50, 100], milestoneBonus: 0.25,
     buyModes: [1, 10, 25],
     // your hand is a real pipe: a click pushes flow into the store, and it fades when you stop
-    handPulse: 1, handDecay: 1.6, handCap: 12,
+    handPulse: 1, handTau: 0.35, handFloor: 0.05, handCap: 12,   // the hand pipe reads presses per second: it fades in ~0.35s and snaps to nothing
     mult: { tally: 2, apprentice: 1.5, alphabet: 1.6, bronze: 1.6, wheelMiner: 1.8, wheelScribe: 0.8, numerals: 1.3, glass: 1.5 },
     comms: [
       { id: 'tablets', name: 'The temple asks for tablets', res: 'marks', base: 150, reward: 'rec', flavor: 'A season of prayers, recorded.' },
@@ -2809,8 +2809,10 @@ const origins = {
   tick(sim, dt) {
     const c = C(sim), e = E(sim);
     // your hand as a real pipe: each press pushes flow, and it fades the moment you stop
-    e.handFlow = Math.max(0, e.handFlow - dt * c.handDecay);
-    e.pickFlow = Math.max(0, e.pickFlow - dt * c.handDecay);
+    // the hand is a pipe only while you press: an exponential fade (tau) with a floor, so it matches the button, not a tail
+    const fade = Math.exp(-dt / c.handTau);
+    e.handFlow = e.handFlow * fade < c.handFloor ? 0 : e.handFlow * fade;
+    e.pickFlow = e.pickFlow * fade < c.handFloor ? 0 : e.pickFlow * fade;
     setFlow(sim, 'hand', 'marks.store', e.handFlow);
     setFlow(sim, 'pick', 'ore.store', e.pickFlow);
     // silicon walking to the machine is the goal, drawn as the flow it actually is

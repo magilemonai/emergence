@@ -15,7 +15,7 @@ export default {
     milestones: [10, 25, 50, 100], milestoneBonus: 0.25,
     buyModes: [1, 10, 25],
     // your hand is a real pipe: a click pushes flow into the store, and it fades when you stop
-    handPulse: 1, handDecay: 1.6, handCap: 12,
+    handPulse: 1, handTau: 0.35, handFloor: 0.05, handCap: 12,   // the hand pipe reads presses per second: it fades in ~0.35s and snaps to nothing
     mult: { tally: 2, apprentice: 1.5, alphabet: 1.6, bronze: 1.6, wheelMiner: 1.8, wheelScribe: 0.8, numerals: 1.3, glass: 1.5 },
     comms: [
       { id: 'tablets', name: 'The temple asks for tablets', res: 'marks', base: 150, reward: 'rec', flavor: 'A season of prayers, recorded.' },

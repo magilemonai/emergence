@@ -247,8 +247,10 @@ const origins = {
   tick(sim, dt) {
     const c = C(sim), e = E(sim);
     // your hand as a real pipe: each press pushes flow, and it fades the moment you stop
-    e.handFlow = Math.max(0, e.handFlow - dt * c.handDecay);
-    e.pickFlow = Math.max(0, e.pickFlow - dt * c.handDecay);
+    // the hand is a pipe only while you press: an exponential fade (tau) with a floor, so it matches the button, not a tail
+    const fade = Math.exp(-dt / c.handTau);
+    e.handFlow = e.handFlow * fade < c.handFloor ? 0 : e.handFlow * fade;
+    e.pickFlow = e.pickFlow * fade < c.handFloor ? 0 : e.pickFlow * fade;
     setFlow(sim, 'hand', 'marks.store', e.handFlow);
     setFlow(sim, 'pick', 'ore.store', e.pickFlow);
     // silicon walking to the machine is the goal, drawn as the flow it actually is

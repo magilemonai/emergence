@@ -20,7 +20,10 @@ const WATCH = '.rail, .rail-btn, .col, .verb, .goal, .fab, .drawer, .side-btn, .
 
 const sceneNames = (only ? [only] : Object.keys(SCENES)).filter((n) => !!SCENES[n]);
 const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--window-size=1440,900',
-  `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--allow-file-access-from-files', 'about:blank']);
+  `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--mute-audio', '--allow-file-access-from-files', 'about:blank']);
+// kill the browser with us: a SIGTERM to this process must never leave a headless Chrome (and its audio) running
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { try { chrome.kill('SIGKILL'); } catch (e) { } process.exit(130); });
+process.on('exit', () => { try { chrome.kill('SIGKILL'); } catch (e) { } });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {

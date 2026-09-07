@@ -23,8 +23,11 @@ const ACTIONABLE = ['.verb', '.plate .buy', '.plate .pause', '.side-btn', '.dr-x
 
 fs.mkdirSync(OUT, { recursive: true });
 const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--window-size=1280,800',
-  `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--allow-file-access-from-files',
+  `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--mute-audio', '--allow-file-access-from-files',
   '--no-first-run', '--no-default-browser-check', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', 'about:blank']);
+// kill the browser with us: a SIGTERM to this process must never leave a headless Chrome (and its audio) running
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { try { chrome.kill('SIGKILL'); } catch (e) { } process.exit(130); });
+process.on('exit', () => { try { chrome.kill('SIGKILL'); } catch (e) { } });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const t0 = Date.now(); const LOG = []; let shotN = 0; const beats = {};

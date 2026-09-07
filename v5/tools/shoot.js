@@ -7,7 +7,10 @@ const args = process.argv.slice(2); const scene = args[0] || 'boot'; const out =
 const fileArg = args.includes('--file') ? args[args.indexOf('--file') + 1] : 'v5/index.html'; const perf = args.includes('--perf');
 const url = 'file://' + path.resolve(fileArg) + '#scene=' + scene;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'; const PORT = 9281 + Math.floor(Math.random() * 40);
-const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--window-size=1280,800', `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--allow-file-access-from-files', 'about:blank']);
+const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--window-size=1280,800', `--remote-debugging-port=${PORT}`, '--remote-allow-origins=*', '--mute-audio', '--allow-file-access-from-files', 'about:blank']);
+// kill the browser with us: a SIGTERM to this process must never leave a headless Chrome (and its audio) running
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { try { chrome.kill('SIGKILL'); } catch (e) { } process.exit(130); });
+process.on('exit', () => { try { chrome.kill('SIGKILL'); } catch (e) { } });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   let target; for (let i = 0; i < 80; i++) { try { const l = await (await fetch(`http://127.0.0.1:${PORT}/json`)).json(); target = l.find(t => t.type === 'page' && t.webSocketDebuggerUrl); if (target) break; } catch (e) {} await sleep(250); }
