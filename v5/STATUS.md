@@ -10,6 +10,11 @@
 | WO-10 legacy · WO-12 receipt · WO-13 QA | E | spec'd | — | parallel |
 | Fable's pass + `?v=5` (Cody's call) | F | — | — | |
 
+## Running right now (launched 2026-09-06, session 2)
+WO-03 Symbolic · WO-04 Statistical · WO-05 Deep · WO-09 audio — four Opus worktrees. When they return: acceptance per
+ORCHESTRATION (scope diff, merge, `node v5/test.js`, shoot + READ scenes), then launch WO-06 (needs 03/04/05 merged) and
+WO-11 (needs the views). Tests for 06/07/08/10/12 already exist under v5/test/.
+
 ## How to resume (any session)
 1. `git status`, `git worktree list`, `git branch -a | grep -i wo` — find returned branches.
 2. For each returned order: `git diff --stat main..<branch>` (owned files only) → checkout the worktree, run
