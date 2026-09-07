@@ -441,7 +441,12 @@ const RULES = [
   'body.operated .verbs .verb{pointer-events:none;opacity:0.55;border-style:dashed}',
   'body.operated .verbs .verb .vkey{font-size:0;letter-spacing:0}',
   'body.operated .verbs .verb .vkey::after{content:"not yours";font-size:8.5px;letter-spacing:0.12em;color:var(--tease,#b78bff)}',
-  'body.operated .plate .pause{display:none}'
+  'body.operated .plate .pause{display:none}',
+  // the goal and the drawer toggles are drawn too, and are no more yours than the verbs are
+  'body.operated .goal .fab{pointer-events:none;opacity:0.5;border-style:dashed;filter:grayscale(0.7)}',
+  'body.operated .goal .fab::after{content:" · not yours";font-size:8.5px;letter-spacing:0.12em;color:var(--tease,#b78bff)}',
+  'body.operated .side-btn{pointer-events:none;opacity:0.5;border-style:dashed}',
+  'body.operated .side-btn .sb-l::after{content:" · not yours";font-size:8.5px;letter-spacing:0.12em;color:var(--tease,#b78bff)}'
 ].join('');
 function ensureStyleRupture(d) {
   if (d.getElementById('rx-style')) return;

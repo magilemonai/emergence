@@ -44,6 +44,21 @@ function untilOutput(sim, cap) {
   return E.fb.cur;
 }
 
+/**
+ * The turn is the shell's: app.js exposes window.__V5.rupture(holdMs), which starts the fx and freezes it on
+ * that beat. A scene runs before __V5 is published, so poll a few frames for the seam rather than guessing.
+ */
+function holdRupture(ms) {
+  if (typeof window === 'undefined' || !window.requestAnimationFrame) return;
+  let tries = 0;
+  const wait = () => {
+    const V = window.__V5;
+    if (V && typeof V.rupture === 'function') { V.rupture(ms); return; }
+    if (++tries < 20) window.requestAnimationFrame(wait);
+  };
+  window.requestAnimationFrame(wait);
+}
+
 export const FOUNDATION_SCENES = {
   // the ladder as it opens: RECURSION drinking Capability, the threshold meter barely lit
   'foundation-first': (sim) => {
@@ -75,15 +90,16 @@ export const FOUNDATION_SCENES = {
     run(sim, 1);
   },
 
-  // the turn itself: the view crosses the threshold and freezes the fx 0.8s in (render/eras/foundation.js)
+  // the turn itself: the shell runs the fx (window.__V5.rupture), and we freeze it 0.8s in for the shot
   'rupture-mid': (sim) => {
     const E = toFoundation(sim, { cap: 2600 });
     if (!E) return;
     for (const id of ['selfModel', 'toolAccess', 'recursivePlanning']) sim.apply({ type: 'cap', era: 5, id: id });
     for (let i = 0; i < 4; i++) { E.improveCd = 0; sim.apply({ type: 'improve', era: 5 }); }
     sim.state.flags.oddRule = 4471;
-    sim.state.stocks.scale = sim.cfg.e5.emergeScale - 20;
-    run(sim, 1);
+    sim.state.stocks.scale = sim.cfg.e5.emergeScale + 5;
+    sim.tick(0.1);                       // the tick crosses the threshold, exactly as it does in play
+    holdRupture(800);
   }
 };
 

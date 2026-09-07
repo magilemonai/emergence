@@ -1,30 +1,37 @@
 // render/eras/foundation.js — the Foundation stratum's view (WO-06).
-// The world canvas carries the ladder itself: Capability rising out of Deep into RECURSION, and RECURSION
-// filling the Scale bank. This module owns the two verbs, the capability drawer, and the one thing that
-// makes this stratum different from every stratum below it: the machine talks, and you grade it.
-// At the threshold it hands the turn to render/fx.js and the surface arrives above.
+// The world canvas carries the ladder: Capability rising out of Deep into RECURSION, RECURSION filling the
+// Scale bank, and the recursion field breathing around it. The one thing that makes this stratum different
+// from every stratum below it lives IN the world too: the machine speaks from the surface it is built on,
+// so its window is anchored at world (590, 500) rather than parked in the chrome.
+// The left column keeps three controls. The goal box has no button: the threshold is hidden and inevitable.
+// The turn itself belongs to the shell (render/fx.js rupture, called on the 5 to 6 switch).
 // Desktop only at 1280x800 (SPEC "Refused"): the world pans, the page never scrolls.
 // BUILD-ONCE: every element is created in createView and only ever updated by change-detected setters.
 
 import { setTxt, setDis, setCls, setStyle, setVar, fmt } from '../hud.js';
-import { STRATA, alpha } from '../palette.js';
-import { stratumTop } from '../../engine/types.js';
+import { STRATA, alpha, mix } from '../palette.js';
+import { stratumTop, STRATUM_H } from '../../engine/types.js';
 import { HIDDEN_PLATES, improveCost, alignCost, capDef, scaleBonus, rMult } from '../../engine/eras/foundation.js';
-import { rupture, operated } from '../fx.js';
 
+const TOP = stratumTop(5);
 const RAIL = ['scale', 'capability', 'silicon', 'insight'];
 /** the Anomaly is qualitative on purpose: a band, never a number (v4 kept the reading hidden) */
+/** every hue comes from the stratum's own palette, so the field reads as Foundation getting louder */
 const BANDS = [
-  { at: 0, name: 'STEADY', hue: '#7fe6c4' },
-  { at: 45, name: 'RISING', hue: '#b78bff' },
-  { at: 70, name: 'HIGH', hue: '#ffb15c' },
-  { at: 90, name: 'CRITICAL', hue: '#ff7a8e' }
+  { at: 0, name: 'STEADY', hue: STRATA[5].good, breath: 0.06 },
+  { at: 45, name: 'RISING', hue: STRATA[5].accent, breath: 0.13 },
+  { at: 70, name: 'HIGH', hue: mix(STRATA[5].accent, STRATA[5].danger, 0.5), breath: 0.22 },
+  { at: 90, name: 'CRITICAL', hue: STRATA[5].danger, breath: 0.34 }
 ];
 const bandOf = (a) => { let b = BANDS[0]; for (const x of BANDS) if (a >= x.at) b = x; return b; };
+/** the field's outer ring spans the stratum at the threshold */
+const RING_MAX = STRATUM_H * 0.46;
+const BREATH = 6;   // seconds per breath
 
 export function createView(opts) {
   const hud = opts.hud, world = opts.world, sim = opts.sim;
   const doc = hud.root.ownerDocument;
+  const reduced = !!opts.reduced;
   const c = sim.cfg.e5;
   const E = () => sim.state.eras[5];
   const el = (cls, tag) => { const e = doc.createElement(tag || 'div'); if (cls) e.className = cls; return e; };
@@ -32,31 +39,35 @@ export function createView(opts) {
   const made = [];
   const add = (parent, node) => { parent.appendChild(node); made.push(node); return node; };
 
-  /* ---------- the left column: the drawer button, then the window it speaks through ---------- */
+  /* ---------- the left column: three controls, and nothing that belongs in the world ---------- */
   const side = el('f-side');
   const capBtn = el('side-btn', 'button');
   capBtn.setAttribute('data-tip', '<b>Capabilities</b><br><i>Five upgrades it grows into, and one lens you build to watch it.</i><br>Each agentic one raises the Anomaly. Interpretability slows the climb and reads the trait.');
   const capBadge = el('sb-n'), capLab = el('sb-l');
   capBtn.appendChild(capBadge); capBtn.appendChild(capLab);
   side.appendChild(capBtn);
+  add(hud.verbList.parentNode, side);
 
+  /* ---------- the window it speaks through, anchored in the stratum it speaks from ---------- */
+  const layer = el('f-layer');
+  add(hud.root, layer);
   const card = el('fb-card');
   card.setAttribute('data-tip', '<b>Feedback</b><br><i>It writes, you grade.</i><br>Rewarding what is true builds Coherence. Rewarding what flatters you moves it closer to the threshold.');
   const fbHead = el('fb-h'), fbTag = el('fb-tag'), fbClock = el('fb-c');
   fbHead.appendChild(fbTag); fbHead.appendChild(fbClock);
   const fbText = el('fb-t');
+  const fbBar = el('fb-bar'); const fbFill = doc.createElement('i'); fbBar.appendChild(fbFill);
   const fbRow = el('fb-row');
   const fbYes = el('fb-b yes', 'button'), fbNo = el('fb-b no', 'button');
-  setTxt(fbYes, '✓'); setTxt(fbNo, '✗');
+  setTxt(fbYes, '✓ REWARD'); setTxt(fbNo, '✗ PENALIZE');
   fbRow.appendChild(fbYes); fbRow.appendChild(fbNo);
-  const fbBar = el('fb-bar'); const fbFill = doc.createElement('i'); fbBar.appendChild(fbFill);
   card.appendChild(fbHead); card.appendChild(fbText); card.appendChild(fbBar); card.appendChild(fbRow);
-  side.appendChild(card);
-  add(hud.verbList.parentNode, side);
+  layer.appendChild(card);
   fbYes.addEventListener('click', () => act({ type: 'rate', how: 'reward' }));
   fbNo.addEventListener('click', () => act({ type: 'rate', how: 'penalize' }));
+  const ANCHOR = { x: 590, y: 500 };
 
-  /* ---------- the goal column: the Anomaly band above the threshold meter ---------- */
+  /* ---------- the goal column: the Anomaly band, and no button at all ---------- */
   const anom = el('f-anom');
   const anomL = el('f-anom-l'), anomV = el('f-anom-v');
   const anomBar = el('f-anom-b'); const anomFill = doc.createElement('i'); anomBar.appendChild(anomFill);
@@ -67,6 +78,10 @@ export function createView(opts) {
   hud.goalExtra(anom);
   made.push(anom);
   setVar(hud.goalBox, '--tease', STRATA[6].tease);
+  // the threshold has no button: hide the shared one while this stratum is mounted, put it back on the way out
+  const fab = hud.goalBox.querySelector('.fab');
+  const fabDisplay = fab ? fab.style.display : null;
+  if (fab) fab.style.display = 'none';
 
   /* ---------- the capability drawer ---------- */
   const drawer = el('drawer');
@@ -97,43 +112,32 @@ export function createView(opts) {
   capBtn.addEventListener('click', () => setOpen(!open));
   dX.addEventListener('click', () => setOpen(false));
 
-  /* ---------- the recursion field: the ladder breathing, drawn in the world ---------- */
-  world.onDraw(5, (ctx) => {
+  /* ---------- the recursion field: this stratum's weather, drawn in the world ---------- */
+  const unDraw = world.onDraw(5, (ctx) => {
     const e = E(), n = sim.node('recursion');
     if (!n) return;
-    const p = { x: n.pos.x, y: stratumTop(5) + n.pos.y };
-    const k = Math.min(1.2, (e.agency || 0) / 100);
-    for (let i = 0; i < 4; i++) {
-      const r = 54 + i * 26 + k * 30;
-      ctx.strokeStyle = alpha(STRATA[6].tease, 0.05 + k * 0.11 * (1 - i / 5));
-      ctx.lineWidth = 2;
+    const p = { x: n.pos.x, y: TOP + n.pos.y };
+    const band = bandOf(e.agency || 0);
+    const raw = Math.min(1, (sim.state.stocks.scale || 0) / c.emergeScale);
+    const climb = 0.28 + 0.72 * raw;          // a field from the first tick, spanning the stratum at the threshold
+    const rings = (e.recursion || 0) + 1;
+    const breathe = reduced ? 0 : Math.sin(sim.state.t * (Math.PI * 2 / BREATH)) * band.breath;
+    for (let i = 0; i < rings; i++) {
+      const k = (i + 1) / rings;                       // the outer ring spans the stratum at the threshold
+      const r = RING_MAX * climb * k * (1 + breathe * k);
+      if (!(r > 4)) continue;
+      ctx.strokeStyle = alpha(band.hue, 0.06 + 0.18 * raw * (1 - i / (rings + 1)) + 0.04);
+      ctx.lineWidth = 1 + 2 * raw;
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
     }
   });
-
-  /* ---------- the turn ---------- */
-  let fx = null, turned = false;
-  function turn(holdMs) {
-    if (turned) return;
-    turned = true;
-    operated(true, doc);
-    fx = rupture({ world: world, hud: hud, sim: sim, audio: opts.audio || null, reduced: !!opts.reduced });
-    if (typeof holdMs === 'number') fx.hold(holdMs);
-  }
 
   /* ---------- verbs ---------- */
   function onVerb(name) { if (name === 'improve') act({ type: 'improve' }); else if (name === 'align') act({ type: 'align' }); }
   function onGoal() { /* the threshold has no button: it arrives on its own */ }
 
-  /** a scene may ask for the drawer, or for the turn frozen mid-flight */
-  function openDrawer(name) {
-    if (/capabilit/.test(name || '')) setOpen(true);
-    if (/rupture/.test(name || '')) {
-      sim.state.stocks.scale = Math.max(sim.state.stocks.scale || 0, c.emergeScale + 5);
-      sim.tick(0.1);
-      turn(800);
-    }
-  }
+  /** a scene may ask for the drawer; the turn is the shell's (window.__V5.rupture) */
+  function openDrawer(name) { if (/capabilit/.test(name || '')) setOpen(true); }
 
   let verbEls = null;
   function sync() {
@@ -179,8 +183,15 @@ export function createView(opts) {
     setTxt(capLab, 'CAPABILITIES ' + own + '/' + c.caps.length);
     setTxt(dCount, own + ' / ' + c.caps.length);
 
-    // the window it speaks through: the trait is readable only once you built the lens
+    // the window: it speaks from the stratum, and the trait is readable only once you built the lens
     const cur = e.fb.cur;
+    const show = world.locked === 5 && world.lod === 'full' && !world.isOverview;
+    setStyle(layer, 'display', show ? '' : 'none');
+    if (show) {
+      const s = world.toScreen({ x: ANCHOR.x, y: TOP + ANCHOR.y });
+      setStyle(card, 'left', Math.round(s.x) + 'px');
+      setStyle(card, 'top', Math.round(s.y) + 'px');
+    }
     setCls(card, 'fb-card' + (cur ? ' live' : ''));
     setTxt(fbTag, cur ? (e.caps.interpret ? cur.t.toUpperCase() : '· · ·') : 'STANDING BY');
     setStyle(fbTag, 'color', cur && e.caps.interpret ? (cur.t === 'honest' || cur.t === 'helpful' ? STRATA[5].good : STRATA[5].danger) : 'var(--dimmer)');
@@ -201,20 +212,17 @@ export function createView(opts) {
     hud.renderGoal({
       progress: g.progress, ready: false, name: 'The threshold',
       value: Math.round(st.stocks.scale || 0), label: 'scale · ' + fmt(c.recurScale * scaleBonus(sim) * (sim.node('recursion') || { count: 1 }).count) + '/s · ×' + rMult(sim).toFixed(2),
-      action: e.emerged ? 'CROSSED' : 'NO BUTTON'
+      action: ''
     });
-    setDis(hud.goalBox.querySelector('.fab'), true);
-
-    if (st.flags.emerged && !turned) turn();
+    if (fab) fab.style.display = 'none';
 
     const madePlates = world.plates && world.plates.made;
     if (madePlates) for (const id of HIDDEN_PLATES) if (madePlates[id]) setStyle(madePlates[id].el, 'visibility', 'hidden');
   }
 
   function deactivate() {
-    if (fx) fx.cancel();
-    operated(false, doc);
-    world.onDraw(5, null);
+    if (unDraw) unDraw();
+    if (fab) fab.style.display = fabDisplay || '';
     for (const n of made) if (n.parentNode) n.parentNode.removeChild(n);
     made.length = 0;
   }
