@@ -316,7 +316,7 @@ async function boot() {
   function syncOperated(n) {
     const emerged = !!(sim.state.flags && sim.state.flags.emerged) && !ghostsBeat;   // the ghosts replay YOUR hands: no operated look
     if (emerged) for (let k = 1; k <= 4; k++) world.operated.add(k);
-    try { fxOperated(emerged && n >= 1 && n <= 4, doc); } catch (e) { }
+    try { fxOperated(emerged && n >= 1 && n <= 5, doc); } catch (e) { }   // everything below the surface is its now (Foundation's verbs included)
   }
 
   function applyScene(name) {

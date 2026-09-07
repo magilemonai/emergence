@@ -208,11 +208,11 @@ const ok = (c, m, detail) => { if (c) { pass++; } else { fail++; fails.push(m + 
   ok(await ev('window.__V5.sim.state.flags.emerged === true'), 'the surface scene is past emergence');
   ok((await count('.s-ledger .s-row-l')) >= 2, 'the surface ledger has rows', await count('.s-ledger .s-row-l'));
   ok((await count('.s-op')) >= 1, 'THE OPERATOR is on the surface board');
-  ok(await ev('document.body.className.indexOf("operated")>=0'), 'the body carries the operated class');
+  ok(await ev('document.body.className.indexOf("operated")<0'), 'the surface itself is not operated (its verbs are its own)');
   ok(await ev('!!window.__V5.world.operated && window.__V5.world.operated.has(1) && window.__V5.world.operated.has(4)'), 'the lower strata are operated');
   await shot('surface');
-  await ev('window.__V5.world.lockTo(1,false)'); await sleep(400);
-  ok(await ev('document.body.className.indexOf("operated")>=0'), 'the operated look follows the camera down a stratum');
+  await ev('window.__V5.jump(1)'); await sleep(400);
+  ok(await ev('window.__V5.sim.state.era===1 && document.body.className.indexOf("operated")>=0'), 'a strata jump (key 1) switches the view and the operated look follows');
   await load('#scene=operated-origins');
   ok(await ev('window.__V5.sim.state.era===1 && document.body.className.indexOf("operated")>=0'), 'Origins after emergence is operated');
   ok((await ev('window.__V5.sim.state.cadence && window.__V5.sim.state.cadence[1] > 1')), 'the operated stratum runs at its cadence');
