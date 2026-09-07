@@ -1,0 +1,5 @@
+{
+  "type": "module",
+  "private": true,
+  "description": "EMERGENCE v5 — ES modules (the rest of the repo stays CommonJS)"
+}
