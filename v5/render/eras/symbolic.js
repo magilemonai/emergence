@@ -11,11 +11,10 @@ import { stratumTop } from '../../engine/types.js';
 import symbolic, {
   stats, proofCost, proofName, canProve, theoremItems, isLemma, treeDef,
   termLines, axiomGain, inferenceRate, rulesetGated,
-  THEOREM_GRID, TERMINAL_AT, HIDDEN_PLATES
+  THEOREM_GRID, TERMINAL_AT, TERMINAL_W, HIDDEN_PLATES
 } from '../../engine/eras/symbolic.js';
 
 const TOP = stratumTop(2);
-const CARD = { proof: 176, term: 330, th: 200 };
 const STYLE_ID = 'e2-css';
 
 const CSS = `
@@ -38,7 +37,7 @@ const CSS = `
 .e2-gate { transform: none; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-family: var(--mono, monospace); font-size: 9px; letter-spacing: 0.06em; color: var(--accent, #ffcd6b); border: 1px dashed var(--accent, #ffcd6b); background: var(--panel-2, #0d1f12); cursor: not-allowed; }
 
 /* the terminal: three lines of machine output, newest last, typed in */
-.e2-term { width: 330px; padding: 8px 11px 9px; border-radius: 10px; border: 1px solid var(--line, #1d3a26); background: rgba(0, 0, 0, 0.55); box-shadow: inset 0 0 24px rgba(141, 255, 183, 0.06); }
+.e2-term { width: ${TERMINAL_W}px; padding: 8px 11px 9px; border-radius: 10px; border: 1px solid var(--line, #1d3a26); background: rgba(0, 0, 0, 0.55); box-shadow: inset 0 0 24px rgba(141, 255, 183, 0.06); }
 .e2-term .tl { font-family: var(--mono, monospace); font-size: 12px; line-height: 1.5; color: var(--dim, #7bbd93); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .e2-term .tl.last { color: var(--good, #8dffb7); }
 .e2-term .tl.warn { color: var(--danger, #ff8a5c); }
@@ -211,11 +210,13 @@ export function createView(opts) {
     if (!locked0) { locked0 = true; if (world.locked !== 2) world.lockTo(2, false); }
 
     // rail: Knowledge stays on the rail because this stratum draws it up the riser
+    // net rates, like every chip in the game; a sink that drains a bank as fast as it fills reads zero here
+    // and carries its draw on its own card. Below the chip's own precision, show a clean zero.
+    const net = (r) => (Math.abs(r || 0) < 0.005 ? 0 : r);
     hud.setRail([
-      { id: 'knowledge', value: st.stocks.knowledge || 0, rate: st.rates.knowledge || 0 },
-      { id: 'rules', value: st.stocks.rules || 0, rate: st.rates.rules || 0 },
-      // the engine's gross emission, because an aimed proof drains the bank in the same tick it fills
-      { id: 'inference', value: st.stocks.inference || 0, rate: inferenceRate(sim) }
+      { id: 'knowledge', value: st.stocks.knowledge || 0, rate: net(st.rates.knowledge) },
+      { id: 'rules', value: st.stocks.rules || 0, rate: net(st.rates.rules) },
+      { id: 'inference', value: st.stocks.inference || 0, rate: net(st.rates.inference) }
     ].concat(e.flags.compile || st.stocks.axioms > 0 ? [{ id: 'axioms', value: st.stocks.axioms || 0, rate: 0 }] : []));
     setTxt(bulk, '×' + buy.n);
     setTxt(mapBtn, world.isOverview ? '⤢ BOARD' : '⤢ MAP');
@@ -277,7 +278,7 @@ export function createView(opts) {
       setTxt(pVal, fmt(acc) + ' / ' + fmt(cost));
       setTxt(pName, proofName(sim, id));
       setStyle(pFill, 'width', Math.min(100, acc / cost * 100).toFixed(1) + '%');
-      setTxt(pEta, rate > 0 ? '~' + Math.max(0, Math.ceil((cost - acc) / rate)) + 's' : 'no inference');
+      setTxt(pEta, rate > 0 ? fmt(rate) + '/s · ~' + Math.max(0, Math.ceil((cost - acc) / rate)) + 's' : 'no inference');
     } else {
       setCls(proof, 'e2-proof idle');
       setTxt(pVal, '0 ∴');

@@ -18,17 +18,19 @@ const RESOURCES = [
 /* Stratum-local anchors (CONTRACT: pos is local). One lane reads left to right along the top:
    the Rules bank feeds the Ruleset, the Ruleset emits Inference, the Inference bank feeds the proof. */
 const ANCHORS = {
-  'rules.store': { x: 300, y: 120 },
-  ruleset: { x: 500, y: 120 },
-  'inference.store': { x: 700, y: 120 },
-  proof: { x: 900, y: 120 },
-  daemon: { x: 300, y: 230 },
-  'axioms.store': { x: 500, y: 230 }
+  'rules.store': { x: 300, y: 130 },
+  ruleset: { x: 580, y: 130 },
+  daemon: { x: 300, y: 300 },
+  'inference.store': { x: 580, y: 300 },
+  proof: { x: 860, y: 300 },
+  'axioms.store': { x: 300, y: 470 }
 };
 
 /** the view anchors its own surfaces in the same stratum-local space */
-export const THEOREM_GRID = { x: 300, y: 390, dx: 220, dy: 118, cols: 3 };
-export const TERMINAL_AT = { x: 820, y: 236 };
+export const THEOREM_GRID = { x: 300, y: 600, dx: 240, dy: 118, cols: 3 };
+export const TERMINAL_AT = { x: 715, y: 470 };
+/** the terminal's width in SCREEN px (the plates are screen-sized too, so the world grid leaves room for it) */
+export const TERMINAL_W = 430;
 /** the proof sink wears the view's own progress card, so its default plate stays hidden */
 export const HIDDEN_PLATES = ['proof'];
 
@@ -82,9 +84,13 @@ export function treeVisible(sim, n) {
   const e = E(sim);
   return !e.tech[n.id] && n.req.every((r) => e.tech[r]) && (!n.reqAny || n.reqAny.some((r) => e.tech[r])) && !(n.excl && e.tech[n.excl]);
 }
-/** what the theorem grid shows right now: the two repeatable lemmas, then the open tree */
+/**
+ * What the theorem grid shows right now. One row of three tiles fits above the stratum floor, so the open tree
+ * leads (a doctrine fork must never be hidden) and the repeatable lemmas fill what is left.
+ */
 export function theoremItems(sim) {
-  return LEMMAS.concat(C(sim).tree.filter((n) => treeVisible(sim, n)).map((n) => n.id));
+  const open = C(sim).tree.filter((n) => treeVisible(sim, n)).map((n) => n.id);
+  return open.concat(LEMMAS).slice(0, C(sim).theoremSlots);
 }
 /** aim with no id picks the path before the lemmas, so a bot climbs the tree */
 function firstProvable(sim) {
