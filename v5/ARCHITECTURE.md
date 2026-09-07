@@ -93,7 +93,7 @@ scenes in `scenes/<name>.js` (exporting a default `{sceneName: fn(sim)}` object)
 ship `render/eras/<name>.css` (loaded by app.js by convention), may implement `openDrawer(sceneName)` (called for
 every scene so screenshots can open a drawer), and may draw inside the world canvas via `world.onDraw(era, fn(ctx,
 camera, viewport, lod))` (runs after pipes and glyphs, inside the world transform; several hooks may share an era and
-each call returns its own unsubscribe, which `deactivate()` must call). `world.operated` is a `Set` of era numbers whose pipes draw in the surface violet (`OPERATED_HUE`); the rupture fx fills it with 1..4 and run 2 may pre-fill it. `world.scene(name)` no longer
+each call returns its own unsubscribe, which `deactivate()` must call). `world.setSource(fn)` makes the canvas draw the State `fn()` returns (the mirror's shadow, a film frame) instead of the live one; `null` restores live. `world.operated` is a `Set` of era numbers whose pipes draw in the surface violet (`OPERATED_HUE`); the rupture fx fills it with 1..4 and run 2 may pre-fill it. `world.scene(name)` no longer
 reads a stratum digit from real scene names; the app locks to `sim.state.era`.
 
 ## Save / legacy / routing

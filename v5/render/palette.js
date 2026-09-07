@@ -56,6 +56,7 @@ export const STRATA = {
 
 /** resource hue + glyph registry (v4 values; icons stay optional so glyphs are always a valid fallback) */
 export const RES = {
+  autonomy: { hue: '#c66bff', glyph: '●', era: 6, flavor: 'What it does without asking.' },
   marks: { hue: '#e6d2a4', glyph: '‖', era: 1, flavor: 'The first attempt to hold a thought in place.' },
   ore: { hue: '#c08552', glyph: '◢', era: 1, flavor: 'The world before we reshaped it.' },
   knowledge: { hue: '#e0a93f', glyph: '≡', era: 1, flavor: 'Marks made meaningful.' },

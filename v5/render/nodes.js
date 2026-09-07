@@ -156,7 +156,7 @@ export function createPlates(layer, sim, opts) {
     count = 0;
     list.forEach(node => {
       const P = made[node.id] || make(node);
-      if (hide || node.locked || node.hidden) { setStyle(P.el, 'display', 'none'); return; }   // a locked node owns no plate (nothing is pre-laid)
+      if (hide || node.locked || node.hidden || node.kind === 'goal') { setStyle(P.el, 'display', 'none'); return; }   // locked: nothing pre-laid; goal: it lives in the HUD goal box, never as a plate
       const w = o.worldPos(node), s = o.toScreen(w);
       const on = s.x > -260 && s.x < viewport.w + 260 && s.y > -160 && s.y < viewport.h + 160;
       setStyle(P.el, 'display', on ? '' : 'none');

@@ -3,7 +3,9 @@
 /** @typedef {{ res:string, rate:number }} Port  per unit per second */
 /** @typedef {'source'|'converter'|'store'|'sink'|'goal'} NodeKind */
 /** @typedef {{ id:string, era:number, kind:NodeKind, name:string, res?:string, inputs:Port[], outputs:Port[], count:number, paused:boolean,
- *   pos:{x:number,y:number},   // STRATUM-LOCAL (x 0..1180, y 0..700 from the stratum top); world y = stratumTop(era) + pos.y cost?:{res:string, base:number, growth:number}, mult:{[k:string]:number}, tags:string[], flavor?:string, mech?:string }} NodeDef */
+ *   pos:{x:number,y:number},   // STRATUM-LOCAL (x 0..1180, y 0..700 from the stratum top); world y = stratumTop(era) + pos.y cost?:{res:string, base:number, growth:number}, mult:{[k:string]:number}, tags:string[], flavor?:string, mech?:string,
+ *   locked?:boolean,   // render-only: a locked node owns no plate and no glyph (nothing is pre-laid); eras flip it on unlock
+ *   hidden?:boolean }} NodeDef   // render-only: temporarily undrawn (the rupture hides era 6 until the layer arrives) */
 /** @typedef {{ from:string, to:string, res:string, flow:number, riser:boolean, starved:boolean }} Edge   starved = this input could not meet its demand in the last tick */
 /** @typedef {{ type:string, era?:number, t?:number, [k:string]:any }} Action */
 /** @typedef {{ v:number, seed:number, rng:{s:number}, t:number, era:number, maxEra:number, mute:boolean,
