@@ -53,6 +53,11 @@ const CSS = `
 .e3-badge[hidden] { display: none; }
 .e3-sup { margin-top: 10px; padding: 10px 11px; border-radius: 13px; border: 1px solid var(--line); background: var(--panel); }
 .e3-slab { font-family: var(--era-font); font-size: 9.5px; letter-spacing: 0.12em; color: var(--dimmer); margin-bottom: 6px; }
+.e3-fdy { display: flex; gap: 8px; align-items: baseline; width: 100%; margin-top: 6px; padding: 7px 10px; border-radius: 10px; cursor: pointer; text-align: left; font-family: var(--mono, monospace); font-size: 11px; color: var(--text, #e6f2ef); background: var(--panel-2, #0b1a1c); border: 1px solid var(--edge, #1f4a4a); }
+.e3-fdy:disabled { opacity: 0.5; cursor: default; }
+.e3-fnm { font-weight: 600; }
+.e3-fcnt { color: var(--dim, #8fb5b0); }
+.e3-fcost { margin-left: auto; color: var(--dimmer, #5f8a86); font-size: 10px; }
 .e3-sbtn { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 8px 10px; border-radius: 10px; cursor: pointer; text-align: left;
   color: var(--text); background: var(--panel-2); border: 1px solid var(--edge); }
 .e3-sbtn:hover { border-color: var(--accent); }
@@ -141,8 +146,17 @@ export function createStatisticalView(opts) {
   const supCost = el('e3-scost');
   supBtn.appendChild(supCost); supBtn.appendChild(supNm);
   sup.appendChild(supLab); sup.appendChild(supBtn);
+  // build-here: the Foundry that makes the Silicon this stratum runs on, bought where it stands in Origins (Deep's bus
+  // offers the same reach-back); its Silicon climbs the riser into your Datasets. The arrow still jumps you down.
+  const fdy = el('side-btn e3-fdy', 'button');
+  const fNm = el('e3-fnm'); setTxt(fNm, 'Foundry');
+  const fCnt = el('e3-fcnt'); const fCost = el('e3-fcost');
+  fdy.appendChild(fNm); fdy.appendChild(fCnt); fdy.appendChild(fCost);
+  fdy.setAttribute('data-tip', '<b>Foundry</b><br><i>Built where it stands, in Origins. Its Silicon climbs the riser to your Datasets.</i>');
+  sup.appendChild(fdy);
   hud.goalAside(sup);
   supBtn.addEventListener('click', () => { if (opts.jump && opts.jump(1)) return; world.lockTo(1, true); });   // go and build it: the view follows
+  fdy.addEventListener('click', () => sim.apply({ type: 'buy', era: 1, node: 'foundry', n: buy.n }));
   setVar(hud.goalBox, '--tease', STRATA[4].accent);          // the goal wakes in Deep's cobalt
 
   /* ---------- the EXPERIMENTS drawer: three cards, built once, retargeted in place ---------- */
@@ -305,7 +319,17 @@ export function createStatisticalView(opts) {
 
   /* ---------- per-frame update ---------- */
   let snapped = false;
+  function syncFoundry() {
+    const f = sim.node('foundry'), n = buy.n;
+    const a = { type: 'buy', era: 1, node: 'foundry', n: n };
+    let amount = Infinity; try { amount = sim.costOf ? sim.costOf('foundry', n) : Infinity; } catch (e) { amount = Infinity; }
+    const res = f && f.cost ? f.cost.res : '';
+    setTxt(fCnt, '×' + (f ? f.count : 0));
+    setTxt(fCost, isFinite(amount) && res ? fmt(amount) + ' ' + res + ' · BUILD' + (n > 1 ? ' ×' + n : '') : 'BUILD');
+    setDis(fdy, !(f && !f.locked) || !sim.can(a));
+  }
   function sync() {
+    syncFoundry();
     const e = E(), S = sim.state;
     if (!snapped) { snapped = true; if (!world.isOverview && world.locked !== 3) world.lockTo(3, false); }
 
