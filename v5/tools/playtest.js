@@ -126,13 +126,14 @@ const mmss = (sec) => { const s = Math.max(0, Math.round(sec || 0)); return Stri
     var live=function(el){if(!el||el.disabled||!el.textContent.trim())return false;var b=el.getBoundingClientRect(),cs=getComputedStyle(el);
       return b.width>2&&b.height>2&&+cs.opacity>0.1&&cs.visibility!=='hidden'&&cs.pointerEvents!=='none';};
     var firstOn=function(s){var l=d.querySelectorAll(s);for(var i=0;i<l.length;i++)if(live(l[i]))return i;return -1;};
+    var lastOn=function(s){var l=d.querySelectorAll(s);for(var i=l.length-1;i>=0;i--)if(live(l[i]))return i;return -1;};
     var o={era:S.era,maxEra:S.maxEra,t:S.t,emerged:!!S.flags.emerged,stocks:S.stocks,
       counts:{},plates:(function(){var out=[],l=d.querySelectorAll(".plate");for(var i=0;i<l.length;i++){var b=l[i].querySelector(".buy"),n=l[i].querySelector(".p-name");out.push({name:n?n.textContent:"",ok:live(b)});}return out;})(),
       names:(function(){var m={};for(var k in S.nodes)m[k]=S.nodes[k].name;return m;})(),
       dom:{plateBuy:firstOn(".plate .buy"),researchHot:!!d.querySelector(".side-btn .sb-n.hot"),dTile:firstOn(".drawer .d-tile .buy"),drawer:!!d.querySelector(".drawer.show"),
         fab:!(d.querySelector(".fab")||{disabled:true}).disabled, seg:q(".e3-seg"), segOn:(function(){var l=d.querySelectorAll(".e3-seg");for(var i=0;i<l.length;i++)if(l[i].className.indexOf("on")>=0)return i;return -1;})(),
         card:firstOn(".e3-card .buy"), aTile:firstOn(".a-tile .buy"), cTile:firstOn(".c-tile .buy"), tool:firstOn(".d-tool"),
-        side:q(".side-btn"), th:firstOn(".e2-th .buy"), contra:!!d.querySelector(".e2-contra.show"), comm:!!d.querySelector(".comm.show"),
+        side:q(".side-btn"), th:lastOn(".e2-th .buy"), contra:!!d.querySelector(".e2-contra.show"), comm:!!d.querySelector(".comm.show"),
         fbYes:!(d.querySelector(".fb-b.yes")||{disabled:true}).disabled, mixer:q(".mixer"), verbs:q(".verb"),
         respond:(function(){var l=d.querySelectorAll("#hud button"),o=[];for(var i=0;i<l.length;i++)if(!l[i].disabled&&/approve|negotiate|veto/i.test(l[i].textContent))o.push(i);return o.length;})()},
       e:{}};
@@ -197,7 +198,7 @@ const mmss = (sec) => { const s = Math.max(0, Math.round(sec || 0)); return Stri
     /* -------- Symbolic -------- */
     else if (s.era === 2 && !s.emerged) {
       if (s.dom.contra) { await beat('contradiction'); await click('.e2-contra .ca button', 0, 'resolve'); }
-      if (s.dom.th >= 0) await click('.e2-th .buy', s.dom.th, 'aim');
+      if (s.dom.th >= 0 && !(s.e[2] || {}).activeProof) await click('.e2-th .buy', s.dom.th, 'aim');
       await build(s, ['ruleset', 'daemon'], { ruleset: 30, daemon: 20 });
       for (let i = 0; i < 4; i++) await click('.verb', 0, 'write');
       if (s.dom.verbs > 1) await click('.verb', 1, 'compile');
@@ -206,7 +207,9 @@ const mmss = (sec) => { const s = Math.max(0, Math.round(sec || 0)); return Stri
     /* -------- Statistical -------- */
     else if (s.era === 3 && !s.emerged) {
       const E = s.e[3] || {};
-      if (s.dom.card >= 0 && (s.stocks.data || 0) > 400) await click('.e3-card .buy', s.dom.card, 'fund');
+      if (s.dom.drawer && s.dom.card >= 0 && (s.stocks.data || 0) > 400) await click('.e3-card .buy', s.dom.card, 'fund');
+      else if (s.dom.drawer && loops % 3 === 0) await click('.dr-x', 0, 'close drawer');
+      else if (!s.dom.drawer && (s.stocks.data || 0) > 400) await clickText('.side-btn', '/experiment/i', 'experiments');
       await build(s, ['model', 'dataset'], { model: 16, dataset: 22 });
       const nM = Object.keys(E.methods || {}).length;
       const want = nM < 4 && (E.survey || 0) < 95 && (s.stocks.data || 0) < 400 ? 'explore' : ((E.gap || 0) > 0.18 ? 'generalize' : 'fit');
