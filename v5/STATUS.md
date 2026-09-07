@@ -30,7 +30,7 @@
 ## Running right now (2026-09-07)
 WO-13 QA (Opus worktree). Every build order is merged; the arc exists end to end on main. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
 
-Fable's pass so far: plate BUILD label keeps its count under a multiplier (glyph) DONE; dead-click counter → `flags.dead` (pinned as UI telemetry) DONE; run-2 title-card subtitle from voice/legacy.js DONE; installLegacyFx synced on era change DONE. Left: full-arc play on the real UI (after WO-13), package, mobile statement.
+Fable's pass so far: plate BUILD label keeps its count under a multiplier (glyph) DONE; dead-click counter → `flags.dead` (pinned as UI telemetry) DONE; run-2 title-card subtitle from voice/legacy.js DONE; installLegacyFx synced on era change DONE. Package DONE: `EMG_V5=1 node tools/build-single.js emergence-v5-single.html` → 760 KB, boots origins-bronze / surface / endcard-symbiotic with ERRORS none (gitignored). Root gate `node test.js` green (v3 92 + v4 160 + freshness). Left: full-arc play on the real UI with WO-13's playtest driver; pacing read from its bot; the mobile statement to Cody (v5 is desktop-first by the standing ruling; the endcard and receipt stack under 900px; v5/index.html pins viewport width=1280).
 
 ## (earlier) Running (launched 2026-09-06, session 2)
 WO-03 Symbolic · WO-04 Statistical · WO-05 Deep · WO-09 audio — four Opus worktrees. When they return: acceptance per
