@@ -12,5 +12,9 @@ direct, no contrastive constructions).
 `v5/engine/receipt.js` (pure: `receipt(state)` → `{sections:[{era, title, stat, text}]}`), `v5/render/eras/receipt.js`
 (a DOM page shown after the endcard, with a "download as text" that builds a `.md` blob), `v5/test/wo12-*.test.js`.
 
+## Pure exports the acceptance test imports (`v5/test/wo12-receipt.test.js`)
+`engine/receipt.js`: `receipt(state)` → `{sections:[{era, title, stat, text}] (5), markdown}`; each text ≤ 60 words,
+each section carries a number from the run; no em-dashes, no contrastive constructions.
+
 ## Acceptance
 `node v5/test.js` green (receipt from a bot run has 5 sections, each ≤ 60 words, numbers present, lint clean).

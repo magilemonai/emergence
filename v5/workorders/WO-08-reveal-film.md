@@ -27,6 +27,11 @@ the click list with screen-anchor hints), `v5/render/fx.js` **reveal + film sect
 - Endcard: v4 content (title, epilogue lines, the recap table + grade) as a DOM card over the overview; a
   "begin again" button (writes legacy via WO-10's hook if present).
 
+## Pure exports the acceptance test imports (`v5/test/wo08-film.test.js`)
+`engine/film.js`: `frames(log, seed, n, {eras, cfg, chunk?})` → n snapshots `{t, nodes, stocks, edges}` spanning
+0..end (the last equals the live state); `firstMinute(log)` → the actions with `t ≤ 60`. Files: `v5/engine/film.js`,
+`v5/render/fx.js` (reveal + film sections), `v5/render/eras/endcard.js`, `v5/scenes/endcard.js`, `v5/test/wo08-*.test.js`.
+
 ## Acceptance
 `node v5/test.js` green (wo08: `frames` count and monotonic time; `firstMinute` returns ≤ 60s of actions; film
 precompute chunking never exceeds 16ms per chunk in node timing). Scenes shot + READ; perf ≤ 6ms while the film plays.

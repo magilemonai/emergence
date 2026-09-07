@@ -4,6 +4,19 @@
 `emergence-v4.html` boot IIFE (save scrub, offline catch-up via mute, Esc settings, pause pill, keys, era cards),
 `tools/build-single.js`, `index.html` (root switcher), `v5/app.js`.
 
+## What app.js already does (do not undo): discovers era modules + views by convention, mounts ONE view for
+`sim.state.era` at boot, keys Space/Q/R/1-6, a rAF loop, `window.__V5`, scenes via `#scene=`.
+## What you add
+1. **Live era switching**: on `openEra(n)` (a `sim` event or a per-frame check of `state.era`), call
+   `view.deactivate?.()`, clear era HUD content (`hud.clearEra()` — add to hud.js: empties verbList, removes goal
+   extras/asides, resets the rail), mount the new view (`activate?.()`), `world.lockTo(n, true)`, and show the
+   **title card** (`world.titleCard(n)`: sigil + name + subtitle in the stratum's font over 2.2s; fx.js title section).
+   Views that lack activate/deactivate are constructed fresh on each activation and their DOM removed on switch.
+2. **Save/load/offline**, **Esc settings** (pause, restart, three audio knobs via `audio/index.js` if present),
+   the `MAX` bulk mode (`buyN(node)` prices per node: rail toggle ×1/×10/×25/MAX), the legacy hooks (WO-10's
+   `fromRun` at ending, `applyToFresh` at boot), the packager v5 mode, the root `index.html` `?v=5` route behind
+   `V5_ENABLED = false`.
+
 ## Files you own
 `v5/app.js` (harden: versioned save `emergence_v5`, log cap 12,000, offline catch-up in 0.1s muted steps with the
 "WHILE YOU WERE AWAY" toast, Esc settings with pause + restart + three audio knobs, keys 1–6/Space/−/=/Esc, the

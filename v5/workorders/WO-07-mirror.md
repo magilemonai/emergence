@@ -25,6 +25,17 @@ block, voice table 6 additions, scenes (`mirror-replay`, `mirror-interrupt`, `mi
   interrupt button (big, three pips), the proposal card when open, and the agent's narration line; Control/Alignment
   as two bars that only move on your choices.
 
+## Pure exports the acceptance test imports (`v5/test/wo07-mirror.test.js`)
+`export default mirror` (EraModule id 7, height 700, installed by surface/foundation ~1s after emergence via
+`sim.openEra(7)`); `export function createReplayer(sim, {policy: null|'improve', speed})` → `{shadow, step(dt),
+runToEnd(), diff}` where `shadow` is a State rebuilt from `sim.state.seed` + `sim.state.log` (use `sim.replay`
+semantics incrementally), `diff` = `{eraId: count}` of improvements; `export function endingFor({control, alignment},
+cfg)` → 'symbiotic'|'runaway'|'contained' with v4 thresholds (`cfg.e5.controlHigh`, `cfg.e5.alignGood`). Era state at
+`state.eras[7]`: `progress` (0..1 of the shadow replay), `interruptsLeft` (starts 3), `veto` (open proposal or null),
+`control`, `alignment` (derived from choices + the feedback record; no per-second drain), `ending`. Actions:
+`interrupt`, `veto {how:'approve'|'negotiate'|'veto'}`. Files: `v5/engine/eras/mirror.js`, `v5/render/eras/mirror.js`,
+`v5/engine/cfg/e6.js` (append a `mirror` block), `v5/engine/voice/e6.js` (append), `v5/scenes/mirror.js`, `v5/test/wo07-*.test.js`.
+
 ## Acceptance
 `node v5/test.js` green (wo07: the replayer reproduces your state when run without the policy; with the policy it
 finishes earlier; exactly three interrupts; endings map per thresholds; determinism). Scenes shot + READ.
