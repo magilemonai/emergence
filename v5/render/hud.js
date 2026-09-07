@@ -32,7 +32,7 @@ export function fmt(v) {
   if (a >= 1) return n.toFixed(2);
   return n === 0 ? '0' : n.toFixed(2);
 }
-export function fmtRate(v) { const n = +v || 0; return (n > 0 ? '+' : n < 0 ? '' : '') + fmt(n) + '/s'; }
+export function fmtRate(v) { const n0 = +v || 0; const n = Math.abs(n0) < 0.005 ? 0 : n0; return (n > 0 ? '+' : n < 0 ? '' : '') + fmt(n) + '/s'; }   // a drained bank reads 0/s, never -0.00/s
 
 /** paint a stratum's palette onto a root element as CSS custom properties */
 export function applyPalette(root, n) {

@@ -8,13 +8,28 @@
 | WO-09 audio | C | **MERGED** 2026-09-06 | worktree-agent-a29578d155d9effc5 → main | 140 tests; probe re-run by Fable: ctx running, crossfade envelope, rupture glide, surface reversed. Nobody has LISTENED yet (Cody's ears; the rail button + Esc knobs wire in WO-11). Audio tunables live in synth.js AUDIO block (not cfg): accepted. |
 | WO-05 Deep | C | **MERGED** 2026-09-06 | worktree-agent-a430a67280a0c263c → main | 42 solo tests; 6 scenes re-shot by Fable (0 errors, 0 scroll). Pacing flag CLOSED by Fable: under the v4 test-bot's steering policy, v5 Deep tracks v4 Deep to the decimal (78.3% breadth at minute 4, 87.1% at 9) — the agent's steerers were weaker; no port drift. Proposals: drop the scene-name digit heuristic (app/shoot), a generic view.openDrawer(name) seam, a per-era restate seam. |
 | WO-04 Statistical | C | **MERGED** 2026-09-06 | worktree-agent-a9162acc8ee1bbbc1 → main | 61 tests; 5 scenes re-shot + read by Fable: instrument on the world canvas, riser into Datasets, ghost tag on the border, METHOD badge. Proposals → integration pass 2 (scene digit heuristic dropped, onDraw hook, per-era css, reduced in opts, available() menu, trials palette). |
-| WO-03 Symbolic | C | RUNNING (Opus worktree) | — | tests written; orders pinned |
-| WO-11 shell · WO-12 receipt | C/E | LAUNCHING (2 Opus worktrees) | — | shell: live era switching + title cards + save/offline + Esc + MAX + `?v=5` behind V5_ENABLED=false; receipt: pure + view |
-| WO-06 Foundation+turn → WO-07 mirror → WO-08 reveal+film | D | spec'd | — | serial |
-| WO-10 legacy · WO-12 receipt · WO-13 QA | E | spec'd | — | parallel |
+| WO-03 Symbolic | C | **MERGED** 2026-09-06 (+ layout pass) | worktree-agent-a5089aa2eb4f5c53e → main | 54+ tests. First shots: plates butted edge to edge (the order's anchors, Fable's fault) so no pipe showed; Fable ruled a four-row board (rules→ruleset on an empty top row so the Knowledge riser leg is visible; daemon/inference/proof; axioms + wide terminal; theorem row) — re-shot + READ: all five pipes carry particles, stratum full. Rulings pinned: rail rates are NET; replay = seed + logged actions (agent caught the orchestrator's contradictory assertion; fixed, no @era log). knowledgePerRuleset 0.05 stands until pipes get a length-aware particle floor. |
+| WO-12 receipt | E | **MERGED** 2026-09-06 | worktree-agent-a1f4735de0b44933a → main | pure `receipt(state)` + page + scene + 13 tests; shot READ by Fable: five rows, numbers first, ≤60 words each. Fable: plurals ('1 proof'). Lint exempts engine/receipt.js (the one page allowed to explain). Needs WO-11/08: mount after the film. Flag: v5/index.html viewport is width=1280 (desktop-first ruling; state it to Cody). |
+| WO-11 shell | C | RUNNING (Opus worktree) | — | live era switching, title cards, save/offline, Esc, ♪/⚙, MAX, packager v5 mode, `?v=5` behind V5_ENABLED=false |
+| WO-10 legacy | E | RUNNING (Opus worktree) | — | legacy.js + fx legacy section + boot-run2 scene + RUN3.md; run-2 alterations in other eras' files come back as proposals for Fable's pass |
+| WO-06 Foundation + the turn | D | RUNNING (Opus worktree) | — | engine seams added first by Fable: `sim.setCadence` (operated 1.6×) and `world.operated` (violet pipes) |
+| WO-07 mirror → WO-08 reveal+film | D | spec'd | — | serial after WO-06 |
+| WO-13 QA | E | spec'd | — | after WO-11 |
 | Fable's pass + `?v=5` (Cody's call) | F | — | — | |
 
-## Running right now (launched 2026-09-06, session 2)
+## Fable's integration ledger (do in the final pass unless noted)
+- Deep: Capability output now carries the compute-node milestone tier (v4 parity; the only pacing gap found). DONE.
+- Engine: `sim.setCadence` + `state.cadence` (operated strata); renderer: `world.operated`, `OPERATED_HUE`; `fmtRate` snaps |x|<0.005 to 0. DONE.
+- Plates truncate a second input ("−10§ −0.…" on the Ruleset): widen or stack inputs in nodes.js.
+- Pipes: particle density is per pipe, so a ~2900-unit riser reads thin; add a length-aware floor, then revert knowledgePerRuleset to 0.02.
+- Receipt mounts after the film (WO-08/11 seam); WO-12's scene mount is a stand-in.
+- Run-2 alterations in other eras' files (from WO-10's proposals). Wire `fx.operated`/`world.operated` + body class into the shell's era switch after WO-11.
+- Mobile: v5/index.html viewport width=1280 = desktop-first (standing ruling); tell Cody, do not skip silently.
+
+## Running right now (2026-09-06, session 3)
+WO-11 shell · WO-10 legacy · WO-06 Foundation — three Opus worktrees. Then WO-07 mirror → WO-08 reveal+film (serial), WO-13 QA.
+
+## (earlier) Running (launched 2026-09-06, session 2)
 WO-03 Symbolic · WO-04 Statistical · WO-05 Deep · WO-09 audio — four Opus worktrees. When they return: acceptance per
 ORCHESTRATION (scope diff, merge, `node v5/test.js`, shoot + READ scenes), then launch WO-06 (needs 03/04/05 merged) and
 WO-11 (needs the views). Tests for 06/07/08/10/12 already exist under v5/test/.

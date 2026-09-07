@@ -75,6 +75,9 @@ export const BORDER_BLEND = 60; // world px of gradient at every stratum seam
 
 /** the accent hue that identifies a stratum in the overview column */
 export function stratumHue(n) { return (STRATA[n] || STRATA[1]).accent; }
+/** pipes of an operated stratum (after emergence, SPEC "The turn" §3) draw in the surface's violet */
+export const OPERATED_HUE = (STRATA[6] && STRATA[6].good) || '#c9adf5';
+
 export function resHue(id) { return (RES[id] && RES[id].hue) || '#9aa2b0'; }
 export function resGlyph(id) { return (RES[id] && RES[id].glyph) || '●'; }
 

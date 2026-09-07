@@ -123,13 +123,14 @@ function figures(state) {
   };
 }
 
+const pl = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));   // '1 proof', '2 proofs', '1 foundry'
 function statLine(n, f) {
   const d = f[n];
-  if (n === 1) return d.min + ' min · ' + d.disco + ' discoveries · ' + d.foundries + ' foundries · ' + d.marks + ' hand strikes';
-  if (n === 2) return d.min + ' min · ' + d.proofs + ' proofs · ' + d.rules + ' rules by hand · ' + d.compiles + ' compiles';
-  if (n === 3) return d.min + ' min · ' + d.trials + ' trials · ' + d.acc + '% accuracy · ' + d.methods + ' methods · ' + d.shifts + ' shifts';
-  if (n === 4) return d.min + ' min · ' + d.nodes + ' compute nodes · ' + d.arch + ' architecture pieces · ' + d.breadth + '% breadth';
-  return d.min + ' min · ' + d.rated + ' outputs rated · ' + d.rewarded + ' rewarded · ' + d.lapsed + ' lapsed · ending ' + d.ending;
+  if (n === 1) return d.min + ' min · ' + pl(d.disco, 'discovery', 'discoveries') + ' · ' + pl(d.foundries, 'foundry', 'foundries') + ' · ' + pl(d.marks, 'hand strike');
+  if (n === 2) return d.min + ' min · ' + pl(d.proofs, 'proof') + ' · ' + pl(d.rules, 'rule') + ' by hand · ' + pl(d.compiles, 'compile');
+  if (n === 3) return d.min + ' min · ' + pl(d.trials, 'trial') + ' · ' + d.acc + '% accuracy · ' + pl(d.methods, 'method') + ' · ' + pl(d.shifts, 'shift');
+  if (n === 4) return d.min + ' min · ' + pl(d.nodes, 'compute node') + ' · ' + pl(d.arch, 'architecture piece') + ' · ' + d.breadth + '% breadth';
+  return d.min + ' min · ' + pl(d.rated, 'output') + ' rated · ' + d.rewarded + ' rewarded · ' + d.lapsed + ' lapsed · ending ' + d.ending;
 }
 
 /**

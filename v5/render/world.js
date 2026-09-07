@@ -4,7 +4,7 @@
 // Pure camera math is exported for the node tests; nothing here touches document at import time.
 
 import { STRATUM_H, WORLD_W, stratumTop } from '../engine/types.js';
-import { STRATA, BORDER_BLEND, blend, stratumHue, resHue, alpha } from './palette.js';
+import { STRATA, BORDER_BLEND, blend, stratumHue, resHue, alpha, OPERATED_HUE } from './palette.js';
 import { route, drawPipe } from './pipes.js';
 import { drawNodeGlyph, createPlates } from './nodes.js';
 
@@ -82,6 +82,7 @@ export function createWorld(opts) {
   const state = { locked: 1, over: false, tSec: 0, anim: null, drag: null };
   const stats = { particles: 0, frameMs: 0, plates: 0, lod: 'full' };
   const routeCache = new Map();
+  const operated = new Set();   // era numbers whose pipes draw violet: the agent runs them now (fx.rupture fills it)
 
   function vp() { return { w: canvas.clientWidth || 1280, h: canvas.clientHeight || 800 }; }
   function strataRange() {
@@ -212,7 +213,9 @@ export function createWorld(opts) {
       const s0 = worldToScreen(poly[0], camera, v), s1 = worldToScreen(poly[poly.length - 1], camera, v);
       const lo = Math.min(s0.y, s1.y), hi = Math.max(s0.y, s1.y);
       if (hi < -60 || lo > v.h + 60) continue;                 // cull whole pipes off screen
-      n += drawPipe(ctx, poly, resHue(edge.res), edge.flow, state.tSec, lod, { starved: !!edge.starved, pxScale: 1 / camera.zoom });
+      const src = sim.state.nodes[edge.from];
+      const hue = operated.size && src && operated.has(src.era) ? OPERATED_HUE : resHue(edge.res);
+      n += drawPipe(ctx, poly, hue, edge.flow, state.tSec, lod, { starved: !!edge.starved, pxScale: 1 / camera.zoom });
     }
     ctx.restore();
     return n;
@@ -303,6 +306,7 @@ export function createWorld(opts) {
 
   return {
     camera, frame, lockTo, overview, plates, stats, scene, onDraw,
+    operated,                 // Set<era>: pipes of these strata draw OPERATED_HUE (the agent runs them)
     get lod() { return state.over ? 'silhouette' : lodFor(camera.zoom); },
     zoomAt, worldPosOf,
     toScreen: (w) => worldToScreen(w, camera, vp()),
