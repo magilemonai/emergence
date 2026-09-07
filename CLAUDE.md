@@ -4,7 +4,18 @@
 > keep it current as the game evolves. Last updated 2026-09-06 (v4 "The Substrate Remembers" BUILT
 > beside the live v3; v3 archived in full; v4 awaits Cody's playtest + ship call).
 
-## ⭐ RESUME HERE — v4 "The Substrate Remembers" (built 2026-09-06, NOT yet live)
+## ⭐⭐ v5 "The Substrate" — the ground-up rebuild, spec'd + orchestrated (started 2026-09-06)
+
+Cody bought into the "sublime" direction (one zoomable canvas object; five strata stacked upward; pipes with
+particles; one graph economy; text rises with intelligence; it learns you; the mirror, the reveal, the film, the
+receipt; run 2 remembers). **Everything lives under `v5/`**, additive: `v5/SPEC.md` (vision + design bible),
+`v5/ARCHITECTURE.md`, `v5/GUARDRAILS.md` (rules for executing agents), `v5/ORCHESTRATION.md` (how Fable runs Opus
+5 work orders: contracts + tests first, one order = one agent = one worktree, owned files, hard acceptance),
+`v5/engine/CONTRACT.md` + `types.js` (frozen), `v5/workorders/WO-00..13`, `v5/test.js` (runner; acceptance tests
+are written by the orchestrator BEFORE each order), `v5/tools/shoot.js`. **`v5/STATUS.md` is the ledger — read it
+first to resume.** Phase A (engine + renderer) was launched on Opus 5 in worktrees this session.
+
+## ⭐ RESUME HERE — v4 "The Substrate Remembers" (built 2026-09-06, live behind ?v=4)
 
 **Mandate (Cody, 2026-09-06):** *"make every single bit of it more compelling… Inscryption as inspiration…
 increase the twists, the subversion, the mechanics — improve and refine… archive the current state so we
