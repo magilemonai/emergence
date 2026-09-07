@@ -1,10 +1,10 @@
-// render/palette.js — the fixed visual language (WO-01).
+// render/palette.js: the fixed visual language (WO-01).
 // Palettes are COPIED from emergence-v4.html body.theme-1..6; resource hues/glyphs from the v4 era modules.
 // Agents do not invent palettes (SPEC "The visual language"). No DOM here: pure data + color math.
 
 /** one stratum's palette. keys mirror the v4 CSS custom properties. */
 export const STRATA = {
-  1: { // Origins — carved stone and ink
+  1: { // Origins: carved stone and ink
     bg: '#120d08', panel: '#1c140c', panel2: '#231910', line: '#3a2a17', edge: '#4a3720',
     text: '#eadfce', dim: '#b6a583', dimmer: '#7d6f56', accent: '#d6a85f', good: '#8fd39a', danger: '#d98a6a',
     tease: '#7dffb7', railBg: 'rgba(12,9,5,0.82)', tipBg: 'rgba(14,10,6,0.97)',
@@ -12,7 +12,7 @@ export const STRATA = {
     font: "'Cinzel',Georgia,serif", body: "'EB Garamond',Georgia,serif", mono: 'ui-monospace,Menlo,monospace',
     name: 'Origins'
   },
-  2: { // Symbolic — phosphor terminal
+  2: { // Symbolic: phosphor terminal
     bg: '#050d08', panel: '#0a180e', panel2: '#0d1f12', line: '#1d3a26', edge: '#2b5237',
     text: '#c7f0d4', dim: '#7bbd93', dimmer: '#4f7a60', accent: '#ffcd6b', good: '#8dffb7', danger: '#ff8a5c',
     tease: '#7de6ff', railBg: 'rgba(5,13,8,0.86)', tipBg: 'rgba(4,12,7,0.97)',
@@ -20,7 +20,7 @@ export const STRATA = {
     font: "'VT323',ui-monospace,monospace", body: "'IBM Plex Mono',ui-monospace,monospace", mono: "'IBM Plex Mono',ui-monospace,monospace",
     name: 'Symbolic'
   },
-  3: { // Statistical — luminous instrument
+  3: { // Statistical: luminous instrument
     bg: '#040b0f', panel: '#06141a', panel2: '#081c22', line: '#18443f', edge: '#1f5a52',
     text: '#cdeee6', dim: '#6fa99c', dimmer: '#4f8579', accent: '#5fe0c0', good: '#a8ffea', danger: '#d98a6a',
     tease: '#6ea8ff', railBg: 'rgba(4,11,15,0.86)', tipBg: 'rgba(4,12,16,0.98)',
@@ -28,7 +28,7 @@ export const STRATA = {
     font: "'Space Grotesk',system-ui,sans-serif", body: "'Space Grotesk',system-ui,sans-serif", mono: "'IBM Plex Mono',ui-monospace,monospace",
     name: 'Statistical'
   },
-  4: { // Deep — hot industrial hall
+  4: { // Deep: hot industrial hall
     bg: '#04070d', panel: '#07111d', panel2: '#0b1420', line: '#1c2f4a', edge: '#2b4570',
     text: '#dceaff', dim: '#8ea6c8', dimmer: '#5f7799', accent: '#6ea8ff', good: '#82ffc8', danger: '#ff5f6d',
     tease: '#b78bff', railBg: 'rgba(4,7,13,0.86)', tipBg: 'rgba(4,9,16,0.97)',
@@ -36,7 +36,7 @@ export const STRATA = {
     font: "'Rajdhani',system-ui,sans-serif", body: "'Rajdhani',system-ui,sans-serif", mono: "'IBM Plex Mono',ui-monospace,monospace",
     name: 'Deep'
   },
-  5: { // Foundation — violet cosmic
+  5: { // Foundation: violet cosmic
     bg: '#0c0814', panel: '#160f24', panel2: '#1d1430', line: '#382a52', edge: '#4a3a6e',
     text: '#e6dbf6', dim: '#b29ad0', dimmer: '#7c6a99', accent: '#b78bff', good: '#7fe6c4', danger: '#ff7a8e',
     tease: '#ffffff', railBg: 'rgba(8,5,14,0.84)', tipBg: 'rgba(12,8,18,0.97)',
@@ -44,7 +44,7 @@ export const STRATA = {
     font: "'Space Grotesk','Inter',system-ui,sans-serif", body: "'Inter',system-ui,sans-serif", mono: 'ui-monospace,Menlo,monospace',
     name: 'Foundation'
   },
-  6: { // the agent's surface layer — appears at emergence, above Foundation
+  6: { // the agent's surface layer: appears at emergence, above Foundation
     bg: '#050308', panel: '#0c0814', panel2: '#120c1c', line: '#2a1f3d', edge: '#3d2d58',
     text: '#f4efff', dim: '#a494c4', dimmer: '#6d5f8a', accent: '#ffffff', good: '#c9adf5', danger: '#ff2a6d',
     tease: '#b78bff', railBg: 'rgba(4,2,8,0.9)', tipBg: 'rgba(6,3,10,0.98)',
@@ -98,7 +98,7 @@ const H = 700;
 function topOf(n) { return n === 6 ? -H : (5 - n) * H; }
 
 /**
- * blend(n, y) — the background color of stratum n at world y, softened across BORDER_BLEND
+ * blend(n, y): the background color of stratum n at world y, softened across BORDER_BLEND
  * of each seam so the column reads as one surface (SPEC: strata never hard-cut).
  */
 export function blend(n, y) {

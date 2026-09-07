@@ -1,4 +1,4 @@
-// render/nodes.js — canvas node glyphs (LOD) + the world-anchored DOM plates (WO-01).
+// render/nodes.js: canvas node glyphs (LOD) + the world-anchored DOM plates (WO-01).
 // BUILD-ONCE: one .plate per node of the locked stratum, created once and updated through the
 // change-detected setters in hud.js. Nothing here rewrites a live button on a frame.
 
@@ -27,7 +27,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /**
- * drawNodeGlyph — the node as the world draws it below plate LOD.
+ * drawNodeGlyph: the node as the world draws it below plate LOD.
  * store   = a rounded well holding the resource glyph and its amount
  * converter = a plate silhouette with the icon glyph and a count
  * source  = a small stacker
@@ -83,7 +83,7 @@ export function drawNodeGlyph(ctx, node, p, lod, info) {
 }
 
 /**
- * createPlates(hud, sim, opts) — the DOM half of a node.
+ * createPlates(hud, sim, opts): the DOM half of a node.
  * One plate per node of the LOCKED stratum, created once, positioned by translate3d each frame,
  * hidden below zoom 0.6. Buttons dispatch buy / pause actions through sim.apply.
  * opts.worldPos(node) -> {x,y}   opts.toScreen(worldPt) -> {x,y}
@@ -141,7 +141,7 @@ export function createPlates(layer, sim, opts) {
   }
 
   /**
-   * update(cam, viewport, lod, era) — structure only changes when the locked stratum changes.
+   * update(cam, viewport, lod, era): structure only changes when the locked stratum changes.
    * Everything else is a change-detected write, so an idle frame writes nothing.
    */
   function update(cam, viewport, lod, era) {

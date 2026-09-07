@@ -1,4 +1,4 @@
-/* render/hud.css — the fixed HUD frame over the world canvas (WO-01).
+/* render/hud.css: the fixed HUD frame over the world canvas (WO-01).
    The plate / verb / goal / chip look is carried from v4-kit/kit.css; the layout is new:
    the HUD is fixed to the viewport, the world pans under it, and the page never scrolls.
    Palette comes in as CSS custom properties set by hud.js applyPalette(). */
@@ -30,14 +30,14 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: 
 .rail-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .chip {
   display: flex; align-items: center; gap: 8px; padding: 5px 9px 5px 6px; border-radius: 10px;
-  border: 1px solid var(--line, #3a2a17); background: var(--panel, #1c140c); min-width: 108px;
+  border: 1px solid var(--line, #3a2a17); background: var(--panel, #1c140c); min-width: 124px; flex: none;
 }
 .chip .cdot { width: 24px; height: 24px; border-radius: 7px; flex: none; display: grid; place-items: center; }
 .chip .cglyph { font-size: 15px; line-height: 1; }
-.chip .cbody { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
-.chip .clab { font-family: var(--era-font, serif); font-size: 9px; letter-spacing: 0.14em; color: var(--dim, #b6a583); }
+.chip .cbody { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; flex: 1; }
+.chip .clab { font-family: var(--era-font, serif); font-size: 8.5px; letter-spacing: 0.1em; color: var(--dim, #b6a583); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip .cval { font-size: 17px; font-variant-numeric: tabular-nums; font-weight: 600; }
-.chip .cps { font-size: 11px; font-variant-numeric: tabular-nums; margin-left: auto; align-self: flex-start; }
+.chip .cps { font-size: 10.5px; font-variant-numeric: tabular-nums; margin-left: 8px; align-self: flex-start; white-space: nowrap; flex: none; }
 .cps.pos { color: var(--good, #8fd39a); } .cps.neg { color: var(--danger, #d98a6a); } .cps.zero { color: var(--dimmer, #7d6f56); }
 .rail-btn {
   font-family: var(--era-font, serif); font-size: 11px; letter-spacing: 0.1em; color: var(--dim, #b6a583);

@@ -1,4 +1,4 @@
-// render/pipes.js — orthogonal pipe routing + flow-driven particles (WO-01).
+// render/pipes.js: orthogonal pipe routing + flow-driven particles (WO-01).
 // Pure geometry + one canvas draw call. No DOM at import time.
 // SPEC: track drawn in the resource hue at 30%, particles at 100%, 120 world-px/s,
 // density = 1 particle per 0.5 units/s capped at 40, zero when idle; a starved mouth blinks red.
@@ -15,7 +15,7 @@ export const CORNER_R = 10;
 const mid = (ch) => (ch.lo + ch.hi) / 2;
 
 /**
- * route(a, b, opts) — a Manhattan polyline from a to b.
+ * route(a, b, opts): a Manhattan polyline from a to b.
  * Default: leave a horizontally, one vertical jog at the x midpoint, enter b horizontally.
  * opts.riser: cross-stratum. Run out to a riser channel, up or down it, then in to b.
  * The channel is the right one (x 960-1000) unless b sits left of x 400, which takes the left one.
@@ -25,7 +25,9 @@ export function route(a, b, opts) {
   const o = opts || {};
   if (o.riser) {
     const ch = b.x < 400 ? RISER_LEFT : RISER_RIGHT;
-    const rx = mid(ch);
+    // fan parallel risers inside the channel so two reach-backs read as two roads
+    const spread = (ch.hi - ch.lo) / 2 - 2;
+    const rx = mid(ch) + Math.max(-spread, Math.min(spread, o.jog || 0));
     return dedupe([{ x: a.x, y: a.y }, { x: rx, y: a.y }, { x: rx, y: b.y }, { x: b.x, y: b.y }]);
   }
   // opts.jog nudges the vertical leg so parallel pipes read as separate roads rather than one thick line
@@ -47,7 +49,7 @@ function dedupe(pts) {
   return out;
 }
 
-/** particleCount(flowPerSec) — density follows flow; idle pipes carry nothing */
+/** particleCount(flowPerSec): density follows flow; idle pipes carry nothing */
 export function particleCount(flow) {
   if (!(flow > 0)) return 0;
   return Math.min(PARTICLE_CAP, Math.max(1, Math.round(flow / PARTICLES_PER_UNIT)));
@@ -84,7 +86,7 @@ export function tracePipe(ctx, poly, radius) {
 }
 
 /**
- * particlePositions — where the dots sit this instant. Evenly spaced along the polyline,
+ * particlePositions: where the dots sit this instant. Evenly spaced along the polyline,
  * phase advancing at PARTICLE_SPEED so the motion reads as one direction of travel.
  */
 export function particlePositions(poly, flow, tSec) {
@@ -100,7 +102,7 @@ export function particlePositions(poly, flow, tSec) {
 }
 
 /**
- * drawPipe — track at 30%, particles at 100%.
+ * drawPipe: track at 30%, particles at 100%.
  * lod 'full' draws rounded track + round dots; 'glyph' thins the track; 'silhouette' draws particles only.
  * opts.starved blinks the last particle (the one at the mouth) red.
  * @returns {number} particles drawn, for world.stats
@@ -132,10 +134,11 @@ export function drawPipe(ctx, poly, hue, flow, tSec, lod, opts) {
   if (o.starved) {
     const last = pts[pts.length - 1];
     const on = Math.floor(tSec * 3) % 2 === 0;  // a 3Hz blink at the starved mouth
-    ctx.fillStyle = on ? '#ff3b53' : alpha('#ff3b53', 0.25);
-    ctx.beginPath();
-    ctx.rect(last.x - size, last.y - size, size * 2, size * 2);
-    ctx.fill();
+    const r = size * 1.7;
+    ctx.fillStyle = alpha('#ff3b53', on ? 0.34 : 0.16);
+    ctx.beginPath(); ctx.rect(last.x - r * 1.7, last.y - r * 1.7, r * 3.4, r * 3.4); ctx.fill();
+    ctx.fillStyle = on ? '#ff3b53' : alpha('#ff3b53', 0.5);
+    ctx.beginPath(); ctx.rect(last.x - r, last.y - r, r * 2, r * 2); ctx.fill();
   }
   return pts.length;
 }

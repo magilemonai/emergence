@@ -1,4 +1,4 @@
-// render/hud.js — the fixed HUD frame over the world canvas (WO-01).
+// render/hud.js: the fixed HUD frame over the world canvas (WO-01).
 // Rail (resource chips), left verbs column, right goal column, toasts, tooltips,
 // and the change-detected setters every DOM writer in v5 must go through.
 // No DOM at import time: everything runs inside createHud / the setters.
@@ -48,7 +48,7 @@ export function applyPalette(root, n) {
 }
 
 /**
- * createHud(root, opts) — builds the fixed frame ONCE and returns updaters.
+ * createHud(root, opts): builds the fixed frame ONCE and returns updaters.
  * root is an element already in the page; opts.onVerb(name) fires on a verb press.
  */
 export function createHud(root, opts) {
@@ -110,7 +110,7 @@ export function createHud(root, opts) {
     chips[id] = { root: c, val, ps };
     return chips[id];
   }
-  /** setRail(list) — list of {id, value, rate}. Order is stable; chips are never rebuilt. */
+  /** setRail(list): list of {id, value, rate}. Order is stable; chips are never rebuilt. */
   function setRail(list) {
     const seen = {};
     list.forEach(r => {
@@ -147,7 +147,7 @@ export function createHud(root, opts) {
     for (const k in verbs) if (!keep[k]) setStyle(verbs[k].btn, 'display', 'none');
   }
 
-  /** renderGoal({progress, ready, label, name, value, tease}) — the meter wakes in the NEXT stratum's hue */
+  /** renderGoal({progress, ready, label, name, value, tease}): the meter wakes in the NEXT stratum's hue */
   function renderGoal(g) {
     if (!g) { setStyle(goalCol, 'display', 'none'); return; }
     setStyle(goalCol, 'display', '');

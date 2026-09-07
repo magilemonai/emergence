@@ -1,4 +1,4 @@
-// render/world.js — the single zoomable canvas world (WO-01).
+// render/world.js: the single zoomable canvas world (WO-01).
 // Strata stack upward as bands with blended seams; pipes carry particles; nodes draw by LOD;
 // DOM plates ride the world in screen space. The page never scrolls: the world pans instead.
 // Pure camera math is exported for the node tests; nothing here touches document at import time.
@@ -28,7 +28,7 @@ export function screenToWorld(p, cam, vp) {
   return { x: (p.x - vp.w / 2) / cam.zoom + cam.x, y: (p.y - vp.h / 2) / cam.zoom + cam.y };
 }
 
-/** fitStratum(n, viewport) — frame one stratum whole, with FIT_MARGIN of margin on the tight axis */
+/** fitStratum(n, viewport): frame one stratum whole, with FIT_MARGIN of margin on the tight axis */
 export function fitStratum(n, vp) {
   const zx = (vp.w - FIT_MARGIN * 2) / WORLD_W;
   const zy = (vp.h - FIT_MARGIN * 2) / STRATUM_H;
@@ -36,7 +36,7 @@ export function fitStratum(n, vp) {
   return { x: WORLD_W / 2, y: stratumTop(n) + STRATUM_H / 2, zoom };
 }
 
-/** fitColumn(lo..hi, viewport) — the overview: the whole built column in one frame */
+/** fitColumn(lo..hi, viewport): the overview: the whole built column in one frame */
 export function fitColumn(lo, hi, vp) {
   const top = stratumTop(hi), bot = stratumTop(lo) + STRATUM_H, h = bot - top;
   const zoom = Math.max(ZOOM_MIN, Math.min(LOD_SILHOUETTE, Math.min((vp.w - 80) / WORLD_W, (vp.h - 60) / h)));
@@ -45,6 +45,17 @@ export function fitColumn(lo, hi, vp) {
 
 /** a node's WORLD position: its stratum-local anchor lifted by that stratum's top */
 export function worldPosOf(node) { return { x: node.pos.x, y: stratumTop(node.era) + node.pos.y }; }
+
+/** roughly half a plate, in world units at lock zoom: pipes stop at the plate edge instead of vanishing under it */
+export const NODE_INSET = 96;
+/** the two points a pipe should actually join, pulled back to the node bodies */
+export function pipeEnds(A, B) {
+  const a = worldPosOf(A), b = worldPosOf(B);
+  const dx = b.x - a.x;
+  if (Math.abs(dx) <= NODE_INSET * 2) return [a, b];
+  const s = dx > 0 ? 1 : -1;
+  return [{ x: a.x + s * NODE_INSET, y: a.y }, { x: b.x - s * NODE_INSET, y: b.y }];
+}
 
 /** which stratum contains a world y (null above the surface layer or below bedrock) */
 export function stratumAt(y) {
@@ -55,7 +66,7 @@ export function stratumAt(y) {
 const easeOut = (k) => 1 - Math.pow(1 - k, 3);
 
 /**
- * createWorld({canvas, hud, sim, reduced}) — the frame loop's engine room.
+ * createWorld({canvas, hud, sim, reduced}): the frame loop's engine room.
  * Returns { camera, frame(dtReal), lockTo(n, animate), overview(), plates, stats, scene(name) }.
  */
 export function createWorld(opts) {
@@ -140,6 +151,7 @@ export function createWorld(opts) {
   function drawStrata(v) {
     const r = strataRange();
     for (let n = 1; n <= 6; n++) {
+      if (n > r.hi && n !== 6) continue;   // never draw a stratum the run has not reached
       if (n === 6 && r.hi < 6) continue;
       const top = stratumTop(n), bot = top + STRATUM_H;
       const a = worldToScreen({ x: 0, y: top }, camera, v), b = worldToScreen({ x: WORLD_W, y: bot }, camera, v);
@@ -179,7 +191,8 @@ export function createWorld(opts) {
       if (!A || !B) return null;
       let h = 0; for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
       const jog = ((h % 7) - 3) * 11;   // a stable per-edge offset, so bundles fan out
-      poly = route(worldPosOf(A), worldPosOf(B), { riser: !!edge.riser || A.era !== B.era, jog });
+      const ends = pipeEnds(A, B);
+      poly = route(ends[0], ends[1], { riser: !!edge.riser || A.era !== B.era, jog });
       routeCache.set(key, poly);
     }
     return poly;
@@ -228,7 +241,7 @@ export function createWorld(opts) {
     milestone: opts.milestone || null
   });
 
-  /** frame(dtReal) — one pass: camera, bands, pipes, nodes, plates */
+  /** frame(dtReal): one pass: camera, bands, pipes, nodes, plates */
   function frame(dtReal) {
     const t0 = (win && win.performance) ? win.performance.now() : 0;
     const dt = Math.max(0, Math.min(0.25, dtReal || 0));
@@ -261,9 +274,9 @@ export function createWorld(opts) {
     return stats;
   }
 
-  /** scene(name) — camera presets the screenshot tool and dev bench address by name */
+  /** scene(name): camera presets the screenshot tool and dev bench address by name */
   function scene(name) {
-    if (/overview/.test(name)) { overview(false); return; }
+    if (/overview/.test(name)) { overview(false); camera.zoom = 0.22; state.anim = null; return; }
     const m = /(\d)/.exec(name);
     const n = m ? +m[1] : 1;
     lockTo(n, false);

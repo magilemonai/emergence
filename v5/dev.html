@@ -13,7 +13,7 @@
 <div id="hud"></div>
 
 <script type="module">
-// v5/dev.html — the renderer bench (WO-01).
+// v5/dev.html: the renderer bench (WO-01).
 // It drives render/* with a SYNTHETIC sim-shaped object: the same surface the frozen contract
 // promises (state.nodes / nodeOrder / edges / stocks / rates, tick, apply, node, goal, muted),
 // with no game rules at all. WO-00 builds the real engine/sim.js in parallel.
@@ -173,7 +173,8 @@ const hudEl = document.getElementById('hud');
 const hud = createHud(hudEl, { onVerb: (n) => sim.apply({ type: 'buy', node: n, n: 1 }), onGoal: () => {} });
 const world = createWorld({
   canvas: document.getElementById('world'), hud: hud.plateLayer, sim, reduced, hudApi: hud,
-  milestone: (n) => { const tiers = [10, 25, 50, 100]; const at = tiers.find(x => x > n.count); return at ? { at, near: at - n.count <= 3 } : null; }
+  milestone: (n) => { const tiers = [10, 25, 50, 100]; const at = tiers.find(x => x > n.count); return at ? { at, near: at - n.count <= 3 } : null; },
+  starved: (n) => sim.state.edges.some(e => e.to === n.id && e.starved)
 });
 world.setHud(hud);
 
@@ -186,11 +187,11 @@ const VERBS = {
 const GNAME = { 1: 'Logic Machine', 2: 'Formal Logic', 3: 'Generalize' };
 function syncHud() {
   const era = world.locked;
+  // the rail carries this stratum's own resources plus whatever its pipes reach in for
   const shown = [];
-  for (const id of sim.state.nodeOrder) {
-    const n = sim.state.nodes[id];
-    if (n.kind === 'store' && Math.abs(n.era - era) <= 1 && shown.indexOf(n.res) < 0) shown.push(n.res);
-  }
+  const want = {};
+  for (const id of sim.state.nodeOrder) { const n = sim.state.nodes[id]; if (n.era === era) { if (n.res) want[n.res] = 1; (n.inputs || []).forEach(p => { want[p.res] = 1; }); (n.outputs || []).forEach(p => { want[p.res] = 1; }); } }
+  for (const id of sim.state.nodeOrder) { const n = sim.state.nodes[id]; if (n.kind === 'store' && want[n.res] && shown.indexOf(n.res) < 0) shown.push(n.res); }
   hud.setRail(shown.map(r => ({ id: r, value: sim.state.stocks[r] || 0, rate: sim.state.rates[r] || 0 })));
   hud.renderVerbs(VERBS[era] || []);
   const g = sim.goal(era);
