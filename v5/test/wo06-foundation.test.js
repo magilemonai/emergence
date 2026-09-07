@@ -29,8 +29,8 @@ export async function run(t) {
   t.ok(!!sim.eras[6] && S.maxEra === 6 && S.nodes['operator'] && S.nodes['autonomy.store'], 'the surface (era 6) installs with THE OPERATOR and Autonomy');
   const rows = surface.ledgerRows(sim); t.ok(Array.isArray(rows) && rows.length >= 2 && rows.some(r => /rated/i.test(r[0])), 'ledger rows from the record');
   // operated: lower strata run faster after emergence (cadence multiplier applied by the sim)
-  const s2 = mk(4); const S2 = s2.state; S2.nodes.scribe.count = 10; const m0 = S2.stocks.marks; for (let i = 0; i < 10; i++) s2.tick(0.1); const before = S2.stocks.marks - m0;
-  const s3 = mk(4); const S3 = s3.state; S3.nodes.scribe.count = 10; S3.stocks.scale = cfg.e5.emergeScale + 5; s3.tick(0.1); const m1 = S3.stocks.marks; for (let i = 0; i < 10; i++) s3.tick(0.1); const after = S3.stocks.marks - m1;
+  const arm = (S) => { const sc = S.nodes.scribe; sc.locked = false; sc.count = 10; sc.outputs = [{ res: 'marks', rate: 1 }]; }; const s2 = mk(4); const S2 = s2.state; arm(S2); const m0 = S2.stocks.marks; for (let i = 0; i < 10; i++) s2.tick(0.1); const before = S2.stocks.marks - m0;
+  const s3 = mk(4); const S3 = s3.state; arm(S3); S3.stocks.scale = cfg.e5.emergeScale + 5; s3.tick(0.1); const m1 = S3.stocks.marks; for (let i = 0; i < 10; i++) s3.tick(0.1); const after = S3.stocks.marks - m1;
   t.ok(after > before * 1.4, 'after emergence the lower strata run at its cadence (≥1.4× here)');
   // legacy naming
   const sL = mk(5, { name: 'NOUS', runs: 1, ending: 'symbiotic', oddRule: 4471 }); sL.state.eras[4].reasoning = 0.9; sL.state.stocks.scale = cfg.e5.emergeScale + 5; sL.tick(0.1);

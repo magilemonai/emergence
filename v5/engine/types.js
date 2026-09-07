@@ -8,7 +8,7 @@
 /** @typedef {{ type:string, era?:number, t?:number, [k:string]:any }} Action */
 /** @typedef {{ v:number, seed:number, rng:{s:number}, t:number, era:number, maxEra:number, mute:boolean,
  *   stocks:{[res:string]:number}, rates:{[res:string]:number}, nodes:{[id:string]:NodeDef}, nodeOrder:string[], edges:Edge[],
- *   resources:{[id:string]:ResourceDef}, flags:{[k:string]:any}, eras:{[n:number]:any}, log:Action[], legacy:any }} State */
+ *   resources:{[id:string]:ResourceDef}, flags:{[k:string]:any}, eras:{[n:number]:any}, log:Action[], legacy:any, cadence:{[era:number]:number} }} State */
 /** @typedef {{ id:number, name:string, height:number, install:(sim:any)=>void, open?:(sim:any)=>void, tick:(sim:any, dt:number)=>void,
  *   actions:{[type:string]:{can:(sim:any,a:Action)=>boolean, apply:(sim:any,a:Action)=>void}}, goal:(sim:any)=>{progress:number, ready:boolean, label:string},
  *   voice?:(sim:any)=>string|null, layout:{anchors:{[id:string]:{x:number,y:number}}, verbs:string[], goal:string}, done:(sim:any)=>boolean }} EraModule */

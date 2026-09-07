@@ -27,6 +27,7 @@ const sim = createSim({ cfg, eras: [origins, symbolic, ...], seed: 12345, legacy
 | `sim.goal(era?)` | `=> {progress:0..1, ready:boolean, label:string}` | from the era's `goal(sim)` |
 | `sim.voice(era?)` | `=> string|null` | the machine's current line for that stratum |
 | `sim.muted()` / `sim.setMuted(b)` | offline catch-up flag | live-only systems skip while muted |
+| `sim.setCadence(era, mult)` | operated strata | era `n` runs at `mult`× wall time: the graph pass scales its nodes' dt and its module `tick` receives `dt × mult`; `1` clears. Stored in `state.cadence` (saved, replayed) |
 | `sim.eras` | `{[n]: EraModule}` | installed modules |
 | `sim.cfg` | the cfg object | read-only by convention |
 
@@ -65,6 +66,10 @@ Cross-era actions (reach-back) are actions on the TARGET era: `sim.apply({type:'
   replay byte-identically (wo03-symbolic-extra proves it across the handoff). Tests of replay reach an era via actions.
 - Rail rates are NET (`state.rates[res]`, the graph's opening-to-closing delta). A sink that drains a bank as fast as it
   fills reads `0/s` on the rail; the sink's own card carries the draw (Symbolic: the proof card shows the inference rate).
+
+- Operated cadence (SPEC "The turn" §3): after emergence, Foundation's tick calls `sim.setCadence(n, cfg.e6.operated)`
+  for every stratum below it. Pipes then carry the faster throughput (edge.flow is per WALL second), so the lower strata
+  visibly speed up. Rail rates stay per wall second. Nothing else scales time.
 
 ## Determinism rules (tested)
 - No `Date`, `Math.random`, `performance`, timers, or DOM in `engine/`.

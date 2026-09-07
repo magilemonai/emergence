@@ -84,6 +84,8 @@ export function multOf(node) {
  * input throttles every port of it (no free lunch).
  * edge.flow is per second, so the renderer turns it straight into particle density.
  */
+function cadenceOf(state, era) { const c = state.cadence && state.cadence[era]; return typeof c === 'number' && c > 0 ? c : 1; }
+
 export function tickGraph(state, dt, index) {
   const idx = index || deriveEdges(state);
   const order = idx.order && idx.order.length ? idx.order : passOrder(state);
@@ -97,9 +99,10 @@ export function tickGraph(state, dt, index) {
       if (!n || n.paused || n.count <= 0) continue;
       if (n.kind === 'store' || n.kind === 'goal') continue;
       const m = multOf(n);
+      const dn = dt * cadenceOf(state, n.era);   // an operated stratum runs faster than the wall clock
       if (n.kind === 'source') {
         for (const p of n.outputs) {
-          const give = n.count * p.rate * m * dt;
+          const give = n.count * p.rate * m * dn;
           if (!(give > 0)) continue;
           state.stocks[p.res] = (state.stocks[p.res] || 0) + give;
           const e = idx.out[id] && idx.out[id][p.res];
@@ -109,7 +112,7 @@ export function tickGraph(state, dt, index) {
       }
       let factor = 1;
       for (const p of n.inputs) {
-        const demand = n.count * p.rate * m * dt;
+        const demand = n.count * p.rate * m * dn;
         if (!(demand > 0)) continue;
         const f = (state.stocks[p.res] || 0) / demand;
         if (f < factor) factor = f;
@@ -118,14 +121,14 @@ export function tickGraph(state, dt, index) {
       if (!(factor > 0)) continue;
       if (factor > 1) factor = 1;
       for (const p of n.inputs) {
-        const take = factor * n.count * p.rate * m * dt;
+        const take = factor * n.count * p.rate * m * dn;
         if (!(take > 0)) continue;
         state.stocks[p.res] = (state.stocks[p.res] || 0) - take;
         const e = idx.in[id] && idx.in[id][p.res];
         if (e) e.flow += take / dt;
       }
       for (const p of n.outputs) {
-        const give = factor * n.count * p.rate * m * dt;
+        const give = factor * n.count * p.rate * m * dn;
         if (!(give > 0)) continue;
         state.stocks[p.res] = (state.stocks[p.res] || 0) + give;
         const e = idx.out[id] && idx.out[id][p.res];

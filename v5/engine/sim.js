@@ -33,11 +33,14 @@ function freshState(seed, legacy) {
     flags: {},
     eras: {},
     log: [],
-    legacy: legacy || null
+    legacy: legacy || null,
+    cadence: {}
   };
 }
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
+/** per-era time multiplier (State.cadence); missing or malformed reads as 1 */
+export function cadenceOf(state, era) { const c = state.cadence && state.cadence[era]; return typeof c === 'number' && c > 0 ? c : 1; }
 
 export function createSim(opts) {
   const o = opts || {};
@@ -108,9 +111,14 @@ export function createSim(opts) {
       const r = tickGraph(state, d, index);
       for (const n of Object.keys(installed).map(Number).sort((a, b) => a - b)) {
         const mod = installed[n];
-        if (mod && mod.tick) mod.tick(sim, d);
+        if (mod && mod.tick) mod.tick(sim, d * cadenceOf(state, n));
       }
       return r;
+    },
+    /** operated strata: era n runs at mult× wall time (graph pass + its module tick). 1 (or omitted) = live. */
+    setCadence(era, mult) {
+      const m = typeof mult === 'number' && mult > 0 ? mult : 1;
+      if (m === 1) delete state.cadence[era]; else state.cadence[era] = m;
     },
 
     /* ---------- actions ---------- */
