@@ -10,7 +10,7 @@ import { STRATA, resHue } from '../palette.js';
 import { stratumTop } from '../../engine/types.js';
 import symbolic, {
   stats, proofCost, proofName, canProve, theoremItems, isLemma, treeDef,
-  termLines, axiomGain, inferenceRate, rulesetGated, batchN,
+  termLines, axiomGain, inferenceRate, rulesetGated,
   THEOREM_GRID, TERMINAL_AT, HIDDEN_PLATES
 } from '../../engine/eras/symbolic.js';
 
@@ -22,6 +22,9 @@ const CSS = `
 .e2-layer { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
 .e2-layer > * { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; }
 
+/* the verb carries two numbers on one line, so it never wraps under the key hint */
+.hud .verb .vyield { font-size: 14px; white-space: nowrap; }
+
 /* the proof sink wears a card: the pipe from the Inference bank runs straight into it */
 .e2-proof { width: 176px; padding: 9px 10px 10px; border-radius: 12px; border: 1px solid var(--edge, #2b5237); background: var(--panel, #0a180e); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5); }
 .e2-proof.idle { border-style: dashed; opacity: 0.72; }
@@ -30,6 +33,9 @@ const CSS = `
 .e2-proof .pm { height: 7px; border-radius: 4px; background: rgba(0, 0, 0, 0.5); overflow: hidden; }
 .e2-proof .pm i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent, #ffcd6b), var(--good, #8dffb7)); transition: width 0.25s; }
 .e2-proof .pe { font-family: var(--mono, monospace); font-size: 10.5px; color: var(--dimmer, #4f7a60); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+/* the one-Ruleset gate, over the plate's build row */
+.e2-gate { transform: none; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-family: var(--mono, monospace); font-size: 9px; letter-spacing: 0.06em; color: var(--accent, #ffcd6b); border: 1px dashed var(--accent, #ffcd6b); background: var(--panel-2, #0d1f12); cursor: not-allowed; }
 
 /* the terminal: three lines of machine output, newest last, typed in */
 .e2-term { width: 330px; padding: 8px 11px 9px; border-radius: 10px; border: 1px solid var(--line, #1d3a26); background: rgba(0, 0, 0, 0.55); box-shadow: inset 0 0 24px rgba(141, 255, 183, 0.06); }
@@ -64,7 +70,7 @@ const CSS = `
 /* Compile: the stratum powers down to a line and comes back from a higher floor */
 body.crt-off #world, body.crt-off .plate-layer, body.crt-off .e2-layer { animation: crtOff 0.72s ease-in forwards; transform-origin: 50% 45%; }
 body.crt-on #world, body.crt-on .plate-layer, body.crt-on .e2-layer { animation: crtOn 0.68s ease-out; transform-origin: 50% 45%; }
-body.crt-hold #world, body.crt-hold .plate-layer, body.crt-hold .e2-layer { transform: scaleY(0.34) scaleX(1.02); filter: brightness(1.9) contrast(1.15); transform-origin: 50% 45%; }
+body.crt-hold #world, body.crt-hold .plate-layer, body.crt-hold .e2-layer { transform: scaleY(0.46) scaleX(1.02); filter: brightness(1.7) contrast(1.1); transform-origin: 50% 45%; }
 @keyframes crtOff { 0% { transform: none; filter: none; } 55% { transform: scaleY(0.16) scaleX(1.02); filter: brightness(2.1); } 100% { transform: scaleY(0.004) scaleX(0.55); filter: brightness(3.2); } }
 @keyframes crtOn { 0% { transform: scaleY(0.004) scaleX(0.55); filter: brightness(3.2); } 40% { transform: scaleY(0.2); filter: brightness(2); } 100% { transform: none; filter: none; } }
 @media (prefers-reduced-motion: reduce) {
@@ -117,13 +123,18 @@ export function createView(opts) {
   const layer = el('e2-layer');
   hud.root.appendChild(layer);
   const anchors = [];
-  const anchor = (node, x, y) => { layer.appendChild(node); const a = { el: node, x: x, y: y, on: true }; anchors.push(a); return a; };
+  const anchor = (node, x, y, ox, oy) => { layer.appendChild(node); const a = { el: node, x: x, y: y, ox: ox || 0, oy: oy || 0, on: true }; anchors.push(a); return a; };
 
   const proof = el('e2-proof');
   const pVal = el('pv'), pName = el('pn'), pMeter = el('pm'), pFill = doc.createElement('i'), pEta = el('pe');
   pMeter.appendChild(pFill);
   proof.appendChild(pVal); proof.appendChild(pName); proof.appendChild(pMeter); proof.appendChild(pEta);
-  const proofAt = anchor(proof, symbolic.layout.anchors.proof.x, symbolic.layout.anchors.proof.y);
+  anchor(proof, symbolic.layout.anchors.proof.x, symbolic.layout.anchors.proof.y);
+
+  // while the gate holds, this chip covers the plate's own BUILD button (one owner per element: BUILD-ONCE)
+  const gate = el('e2-gate');
+  setTxt(gate, 'PROVE FORMAL LOGIC');
+  layer.appendChild(gate);
 
   const term = el('e2-term');
   const tls = [];
@@ -203,7 +214,8 @@ export function createView(opts) {
     hud.setRail([
       { id: 'knowledge', value: st.stocks.knowledge || 0, rate: st.rates.knowledge || 0 },
       { id: 'rules', value: st.stocks.rules || 0, rate: st.rates.rules || 0 },
-      { id: 'inference', value: st.stocks.inference || 0, rate: st.rates.inference || 0 }
+      // the engine's gross emission, because an aimed proof drains the bank in the same tick it fills
+      { id: 'inference', value: st.stocks.inference || 0, rate: inferenceRate(sim) }
     ].concat(e.flags.compile || st.stocks.axioms > 0 ? [{ id: 'axioms', value: st.stocks.axioms || 0, rate: 0 }] : []));
     setTxt(bulk, '×' + buy.n);
     setTxt(mapBtn, world.isOverview ? '⤢ BOARD' : '⤢ MAP');
@@ -211,7 +223,7 @@ export function createView(opts) {
     // verbs: the yield leads. Writing by hand also pushes the proof you are aiming at.
     const verbs = [{
       name: 'writeRule', label: 'WRITE A RULE', key: 'SPACE',
-      yield: '+' + fmt(S.click) + ' rules' + (e.activeProof ? ' · +' + fmt(S.click * c.clickProof) + ' proof' : ''),
+      yield: '+' + fmt(S.click) + ' §' + (e.activeProof ? ' · +' + fmt(S.click * c.clickProof) + ' ∴' : ''),
       tip: '<b>Write a rule</b><br><i>Reasoning, written as explicit rules.</i>'
     }];
     if (e.flags.compile) verbs.push({
@@ -311,14 +323,14 @@ export function createView(opts) {
         setStyle(P.el, 'visibility', n.locked || HIDDEN_PLATES.indexOf(id) >= 0 ? 'hidden' : 'visible');
       }
       const R = made.ruleset;
-      if (R) {
-        const gated = rulesetGated(sim);
-        setStyle(R.buy, 'opacity', gated ? '0.45' : '');
-        if (gated) { setTxt(R.buy, 'PROVE FORMAL LOGIC'); setDis(R.buy, true); }
-        else {
-          const k = batchN(sim, 'ruleset', buy.n);
-          setTxt(R.buy, fmt(sim.costOf('ruleset', k)) + ' rules · BUILD' + (k > 1 ? ' ×' + k : ''));
-        }
+      const gated = R && rulesetGated(sim) && world.locked === 2 && world.lod === 'full' && !world.isOverview;
+      setStyle(gate, 'display', gated ? '' : 'none');
+      if (gated) {
+        const r = R.buy.getBoundingClientRect();       // sit exactly on the button rather than guess at it
+        setStyle(gate, 'left', Math.round(r.left) + 'px');
+        setStyle(gate, 'top', Math.round(r.top) + 'px');
+        setStyle(gate, 'width', Math.round(r.width) + 'px');
+        setStyle(gate, 'height', Math.round(r.height) + 'px');
       }
     }
 
@@ -329,10 +341,9 @@ export function createView(opts) {
       setStyle(a.el, 'display', on ? '' : 'none');
       if (!on) continue;
       const s = world.toScreen({ x: a.x, y: TOP + a.y });
-      setStyle(a.el, 'left', Math.round(s.x) + 'px');
-      setStyle(a.el, 'top', Math.round(s.y) + 'px');
+      setStyle(a.el, 'left', Math.round(s.x + a.ox) + 'px');
+      setStyle(a.el, 'top', Math.round(s.y + a.oy) + 'px');
     }
-    proofAt.on = true;
 
     if (compiles !== e.compiles) { compiles = e.compiles; if (e.compiles > 0) reboot(); }
   }

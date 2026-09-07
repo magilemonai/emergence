@@ -14,7 +14,7 @@ export default {
 
   // v5: a ruleset is a converter, so its fuel and its reach-back are real ports
   rulesPerRuleset: 0.6,        // Rules burned per Ruleset per second
-  knowledgePerRuleset: 0.02,   // the live trickle up the riser from Origins
+  knowledgePerRuleset: 0.05,   // the live trickle up the riser from Origins (dense enough to read as particles)
   // the proof sink pulls the Inference bank down with this time constant; it is longer than tickMax,
   // so the sink can never demand more than the bank holds (no false starve on the pipe mouth)
   proofTau: 0.6,

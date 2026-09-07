@@ -27,8 +27,8 @@ const ANCHORS = {
 };
 
 /** the view anchors its own surfaces in the same stratum-local space */
-export const THEOREM_GRID = { x: 300, y: 336, dx: 220, dy: 116, cols: 3 };
-export const TERMINAL_AT = { x: 820, y: 258 };
+export const THEOREM_GRID = { x: 300, y: 390, dx: 220, dy: 118, cols: 3 };
+export const TERMINAL_AT = { x: 820, y: 236 };
 /** the proof sink wears the view's own progress card, so its default plate stays hidden */
 export const HIDDEN_PLATES = ['proof'];
 

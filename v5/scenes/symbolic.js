@@ -59,7 +59,7 @@ export const SYMBOLIC_SCENES = {
   'symbolic-proving': (sim) => {
     if (!engine(sim)) return;
     sim.apply({ type: 'aim', era: 2, id: 'knowledge' });
-    run(sim, 7);
+    run(sim, 3.5);
   },
 
   // the second contradiction: the rule nobody wrote, beside the goal
