@@ -186,6 +186,9 @@ function emerge(sim) {
   if (st.legacy && st.legacy.name === e.agentName) e.legacyLine = LINES.legacy;
   e.fb.cur = null;
   e.fb.next = 0;
+  // the threshold has been crossed: there is nothing left for it to measure, so it stops drawing
+  const th = sim.node('threshold');
+  if (th) th.hidden = true;
   sim.openEra(6);
   const s6 = st.eras[6];
   if (s6) { s6.control = c.controlStart; s6.alignment = c.alignBase + e.coherence; s6.autonomy = e.agency; }

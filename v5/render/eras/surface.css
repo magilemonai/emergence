@@ -63,6 +63,14 @@
   border: 1px solid #b78bff; background: rgba(183, 139, 255, 0.16);
 }
 
+/* the board arrives WITH the layer: while the column is still tearing open, its stratum shows nothing.
+   render/fx.js holds body.rupturing for the length of the turn and drops it when the layer is in place. */
+.s-board { transition: opacity 0.45s ease; }
+body.operated .verbs .verb { transition: opacity 0.45s ease; }
+body.rupturing .s-board { opacity: 0; pointer-events: none; }
+body.rupturing .verbs .verb { opacity: 0; }
+body.rupturing .goal-col { opacity: 0; transition: opacity 0.45s ease; }
+
 @media (prefers-reduced-motion: reduce) {
-  .verb.pressing { transition: none; }
+  .verb.pressing, .s-board, body.operated .verbs .verb, body.rupturing .goal-col { transition: none; }
 }
