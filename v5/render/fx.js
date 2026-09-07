@@ -457,3 +457,440 @@ function ensureStyleRupture(d) {
 }
 
 // WO-08: reveal + film
+// The ending as a camera move and a film (SPEC "The turn" 5): the column pulls out to one silhouette, the
+// ending names itself over it, twelve seconds of the run replay from the log, your own first minute presses
+// its own buttons, and the endcard lands. Every number is cfg.e7; every word is engine/voice/e7.js.
+import CFG from '../engine/cfg.js';
+import { ENDINGS as END_TEXT } from '../engine/voice/e6.js';
+import { BEATS } from '../engine/voice/e7.js';
+import { filmPlan, firstMinute } from '../engine/film.js';
+import { setTxt } from './hud.js';
+
+const E7 = () => CFG.e7;
+const END_STYLE_ID = 'v5-end-css';
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const ease = (k) => 1 - Math.pow(1 - clamp01(k), 3);
+const mmss = (sec) => { const s = Math.max(0, Math.round(sec || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+
+const END_CSS = `
+.rv { position: fixed; inset: 0; z-index: 90; pointer-events: none; display: flex;
+  flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 8vh; gap: 10px; }
+.rv-name { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 34px; letter-spacing: 0.14em;
+  color: #f4efff; text-shadow: 0 0 34px rgba(183,139,255,0.5), 0 3px 24px rgba(0,0,0,0.9); white-space: pre; }
+.rv-body { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; letter-spacing: 0.06em;
+  color: #a494c4; opacity: 0; transition: opacity 0.9s ease; text-align: center; max-width: 640px; }
+.rv-body.on { opacity: 1; }
+.fm { position: fixed; left: 0; right: 0; top: 5vh; z-index: 90; pointer-events: none; display: flex;
+  flex-direction: column; align-items: center; gap: 10px; }
+.fm-line { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.2em;
+  color: #c9adf5; text-shadow: 0 2px 18px rgba(0,0,0,0.9); }
+.fm-clock { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 26px; font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em; color: #f4efff; }
+.fm-bar { width: 260px; height: 2px; background: rgba(183,139,255,0.22); border-radius: 2px; overflow: hidden; }
+.fm-bar i { display: block; height: 100%; width: 0; background: #b78bff; }
+.fm-ring { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; pointer-events: none; }
+.fm-ring b { position: relative; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 400; color: #c9adf5;
+  background: conic-gradient(#b78bff var(--k, 0%), rgba(183,139,255,0.14) 0); }
+.fm-ring b::after { content: ''; position: absolute; width: 44px; height: 44px; border-radius: 50%; background: #06040c; }
+.fm-ring span { position: relative; z-index: 1; }
+.gh-cur { position: fixed; top: 0; left: 0; z-index: 92; width: 15px; height: 15px; margin: -7px 0 0 -7px;
+  pointer-events: none; border-radius: 50% 50% 50% 2px; background: rgba(244,239,255,0.34);
+  border: 1px solid rgba(183,139,255,0.6); box-shadow: 0 0 12px rgba(183,139,255,0.34);
+  transform: translate3d(-100px,-100px,0); }
+.gh-cur.press { background: rgba(183,139,255,0.78); box-shadow: 0 0 24px rgba(183,139,255,0.85); }
+.gh-line { position: fixed; left: 0; right: 0; bottom: 5vh; z-index: 92; text-align: center; pointer-events: none;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.14em; color: #c9adf5;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.9); opacity: 0; transition: opacity 0.7s ease; }
+.gh-line.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .rv-body, .gh-line { transition: none; } }
+`;
+
+/** the strata this run actually built, so the reveal treats the column it has */
+export function topStratum(sim) {
+  let hi = 1, surface = false;
+  for (const id of sim.state.nodeOrder) { const e = sim.state.nodes[id].era; if (e === 6) surface = true; else if (e > hi) hi = e; }
+  return surface ? 6 : hi;
+}
+
+/** a clock a screenshot can stop dead: freeze(ms) pins it, freeze(null) lets it run again */
+function heldClock(win) {
+  const t0 = win.performance.now();
+  let frozen = null;
+  return {
+    get s() { return frozen !== null ? frozen : (win.performance.now() - t0) / 1000; },
+    freeze(ms) { frozen = ms === null || ms === undefined ? null : ms / 1000; },
+    get isHeld() { return frozen !== null; }
+  };
+}
+
+const docOf = (o) => o.doc || (o.hud && o.hud.root && o.hud.root.ownerDocument) || document;
+const hostOf = (o, doc) => (o.hud && o.hud.root && o.hud.root.parentNode) || doc.body;
+
+/**
+ * reveal({world, hud, sim, ending, reduced, doc}): the camera pulls out to the whole column, the strata drop to
+ * silhouette, the ending types itself in mono, and the ending's own treatment plays over the column.
+ * Returns { hold(ms), cancel(), get t() }.
+ */
+export function reveal(opts) {
+  const o = opts || {};
+  const world = o.world, sim = o.sim;
+  const ending = o.ending || 'runaway';
+  const reduced = !!o.reduced;
+  const doc = docOf(o), win = doc.defaultView;
+  const C = E7().reveal;
+  injectCss(doc, END_STYLE_ID, END_CSS);
+  const host = hostOf(o, doc);
+
+  const cam = world.camera;
+  const from = { x: cam.x, y: cam.y, zoom: cam.zoom };
+  world.overview(false);                                   // the flag first: silhouette LOD, the HUD steps back
+  const to = { x: cam.x, y: cam.y, zoom: cam.zoom };
+  if (reduced) { from.x = to.x; from.y = to.y; from.zoom = to.zoom; }
+  else { cam.x = from.x; cam.y = from.y; cam.zoom = from.zoom; }
+
+  const text = END_TEXT[ending] || END_TEXT.runaway;
+  const wrap = doc.createElement('div'); wrap.className = 'rv';
+  const name = doc.createElement('div'); name.className = 'rv-name'; name.style.fontSize = C.lineSize + 'px';
+  const body = doc.createElement('div'); body.className = 'rv-body'; body.textContent = text.body;
+  wrap.appendChild(name); wrap.appendChild(body);
+  host.appendChild(wrap);
+
+  const hi = topStratum(sim);
+  const clock = heldClock(win);
+  const camMs = reduced ? C.reducedMs : C.camMs;
+  let raf = 0, done = false;
+
+  /** the ending's own treatment, drawn in world units inside world.onDraw */
+  function draw(ctx) {
+    const t = clock.s * 1000 - camMs;
+    if (t < 0) return;
+    if (ending === 'symbiotic') {                          // every stratum breathes on the same beat
+      const k = reduced ? 0.5 : 0.5 - Math.cos((t / C.pulseMs) * Math.PI * 2) * 0.5;
+      for (let n = 1; n <= hi; n++) {
+        ctx.fillStyle = alpha(STRATA[n].accent, 0.05 + k * 0.13);
+        ctx.fillRect(0, stratumTop(n), WORLD_W, STRATUM_H);
+      }
+    } else if (ending === 'runaway') {                     // the lights go out from the bedrock up
+      for (let n = 1; n <= hi; n++) {
+        if (n === 6) continue;
+        const k = clamp01((t - (n - 1) * C.darkMs) / C.darkMs);
+        ctx.fillStyle = alpha('#000000', 0.86 * k);
+        ctx.fillRect(0, stratumTop(n), WORLD_W, STRATUM_H);
+      }
+      if (hi === 6) {
+        ctx.fillStyle = alpha(STRATA[6].good, 0.1 + 0.16 * clamp01(t / (C.darkMs * 5)));
+        ctx.fillRect(0, stratumTop(6), WORLD_W, STRATUM_H);
+      }
+    } else {                                               // contained: the top dims and a ring closes on it
+      const k = clamp01(t / C.ringMs);
+      const top = stratumTop(hi);
+      ctx.fillStyle = alpha('#000000', 0.62 * k);
+      ctx.fillRect(0, top, WORLD_W, STRATUM_H);
+      ctx.strokeStyle = alpha(STRATA[6].tease, 0.3 + 0.6 * k);
+      ctx.lineWidth = 5 + 6 * (1 - k);
+      ctx.beginPath();
+      ctx.arc(WORLD_W / 2, top + STRATUM_H / 2, STRATUM_H * (0.9 - 0.42 * ease(k)), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  const unDraw = world.onDraw('reveal', draw);
+
+  function paint() {
+    const ms = clock.s * 1000;
+    const k = ease(ms / camMs);
+    cam.x = from.x + (to.x - from.x) * k;
+    cam.y = from.y + (to.y - from.y) * k;
+    cam.zoom = from.zoom + (to.zoom - from.zoom) * k;
+    const chars = Math.max(0, Math.floor((ms - camMs * 0.55) / C.typeMs));
+    const cut = Math.min(text.title.length, chars);
+    setTxt(name, text.title.slice(0, cut) + (cut < text.title.length ? '_' : ''));
+    if (cut >= text.title.length) body.classList.add('on');
+  }
+
+  function step() { paint(); if (!clock.isHeld) raf = win.requestAnimationFrame(step); }
+  raf = win.requestAnimationFrame(step);
+
+  return {
+    hold(ms) {
+      clock.freeze(ms);
+      if (raf) win.cancelAnimationFrame(raf);
+      if (ms === null || ms === undefined) { raf = win.requestAnimationFrame(step); return; }
+      let n = 0;
+      const settle = () => { paint(); if (++n < 6) raf = win.requestAnimationFrame(settle); else raf = 0; };
+      settle();
+    },
+    cancel() {
+      if (done) return;
+      done = true;
+      if (raf) win.cancelAnimationFrame(raf);
+      unDraw();
+      if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    },
+    get t() { return clock.s; },
+    get el() { return wrap; }
+  };
+}
+
+/**
+ * frameGrowth(world, doc, hi): the film's own framing. The bedrock sits on the bottom edge of the viewport and
+ * the column grows up into the empty space above it, so the first mark is never clipped and the last stratum
+ * arrives in frame. The overview centres instead, which cuts a six-stratum column at both ends.
+ */
+function frameGrowth(world, doc, hi) {
+  const de = doc.documentElement || { clientWidth: 1280, clientHeight: 800 };
+  const h = de.clientHeight || 800;
+  const bottom = stratumTop(1) + STRATUM_H;
+  const span = bottom - stratumTop(hi);
+  const cam = world.camera;
+  const zoom = Math.max(0.18, Math.min(0.55, (h * 0.96) / span));
+  cam.zoom = zoom;
+  cam.x = WORLD_W / 2;
+  cam.y = bottom - (h / zoom) / 2;
+  return zoom;
+}
+
+/**
+ * film({world, hud, sim, reduced, doc, onDone}): twelve seconds of the run, precomputed once from the log and
+ * played back through world.setSource. The precompute runs in rAF-sized slices behind a progress ring, so the
+ * main thread never stalls; the sim is never re-run per frame. Returns { hold(ms), cancel(), get frame() }.
+ */
+export function film(opts) {
+  const o = opts || {};
+  const world = o.world, sim = o.sim;
+  const reduced = !!o.reduced;
+  const doc = docOf(o), win = doc.defaultView;
+  const C = E7().film;
+  injectCss(doc, END_STYLE_ID, END_CSS);
+  const host = hostOf(o, doc);
+
+  const ringWrap = doc.createElement('div'); ringWrap.className = 'fm-ring';
+  const ring = doc.createElement('b'); const ringTxt = doc.createElement('span');
+  ring.appendChild(ringTxt); ringWrap.appendChild(ring); host.appendChild(ringWrap);
+
+  const panel = doc.createElement('div'); panel.className = 'fm';
+  const clockEl = doc.createElement('div'); clockEl.className = 'fm-clock';
+  const bar = doc.createElement('div'); bar.className = 'fm-bar';
+  const barFill = doc.createElement('i'); bar.appendChild(barFill);
+  const line = doc.createElement('div'); line.className = 'fm-line'; line.textContent = BEATS.film;
+  panel.appendChild(clockEl); panel.appendChild(bar); panel.appendChild(line);
+  panel.style.display = 'none';
+  host.appendChild(panel);
+
+  const mods = [];
+  for (const k of Object.keys(sim.eras)) mods.push(sim.eras[k]);
+  const plan = filmPlan(sim.state.log, sim.state.seed, C.n, {
+    eras: mods, cfg: CFG, legacy: sim.state.legacy || null, end: sim.state.t
+  });
+  const budget = Math.max(1, Math.round(C.stepsPerMs * C.sliceMs));
+
+  let idx = 0, raf = 0, ready = false, done = false, playAt = 0;
+  const clock = heldClock(win);
+  world.overview(false);
+  frameGrowth(world, doc, topStratum(sim));
+  world.setSource(() => plan.frames[idx] || null);
+
+  function showRing(k) {
+    const pct = Math.round(k * 100);
+    ring.style.setProperty('--k', pct + '%');
+    setTxt(ringTxt, pct + '%');
+  }
+
+  function paint() {
+    const ms = Math.max(0, clock.s * 1000 - playAt);
+    const k = clamp01(ms / C.ms);
+    const last = Math.max(0, plan.frames.length - 1);
+    idx = Math.min(last, Math.floor(k * last));
+    const f = plan.frames[idx];
+    barFill.style.width = (k * 100).toFixed(1) + '%';
+    if (f) setTxt(clockEl, mmss(f.t));
+    return k >= 1;
+  }
+
+  function step() {
+    if (!ready) {
+      ready = plan.work(budget);
+      showRing(plan.progress);
+      if (ready) {
+        ringWrap.style.display = 'none';
+        panel.style.display = '';
+        playAt = clock.s * 1000;
+        if (reduced) { idx = plan.frames.length - 1; paint(); finish(); return; }
+      }
+    } else if (paint()) { finish(); return; }
+    if (!clock.isHeld) raf = win.requestAnimationFrame(step);
+  }
+  raf = win.requestAnimationFrame(step);
+
+  function finish() {
+    if (done) return;
+    done = true;
+    if (raf) win.cancelAnimationFrame(raf);
+    world.setSource(null);
+    if (ringWrap.parentNode) ringWrap.parentNode.removeChild(ringWrap);
+    if (panel.parentNode) panel.parentNode.removeChild(panel);
+    if (o.onDone) o.onDone();
+  }
+
+  return {
+    /** hold(ms): finish the precompute, then pin the film at that moment of its twelve seconds */
+    hold(ms) {
+      if (raf) win.cancelAnimationFrame(raf);
+      if (ms === null || ms === undefined) { clock.freeze(null); raf = win.requestAnimationFrame(step); return; }
+      plan.work(Infinity);
+      ready = true; playAt = 0;
+      ringWrap.style.display = 'none'; panel.style.display = '';
+      clock.freeze(ms);
+      let n = 0;
+      const settle = () => { paint(); if (++n < 6) raf = win.requestAnimationFrame(settle); else raf = 0; };
+      settle();
+    },
+    cancel() { finish(); },
+    get frame() { return idx; },
+    get frames() { return plan.frames; },
+    get progress() { return plan.progress; }
+  };
+}
+
+/** where on the screen an action of yours happened: its plate's BUILD, its verb, or the goal it aimed at */
+function targetOf(a, world, doc) {
+  const mid = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+  const made = (world.plates && world.plates.made) || {};
+  const plate = a.node ? made[a.node] : null;
+  if (plate && plate.buy && plate.el && plate.el.style.display !== 'none') return mid(plate.buy);
+  const verb = doc.querySelector('.verb[data-v="' + a.type + '"]');
+  if (verb) return mid(verb);
+  if (plate && plate.el) return mid(plate.el);
+  const goal = doc.querySelector('.goal-col .gact') || doc.querySelector('.goal');
+  if (goal) return mid(goal);
+  const v = doc.documentElement;
+  return { x: (v.clientWidth || 1280) / 2, y: (v.clientHeight || 800) / 2 };
+}
+
+/**
+ * ghosts({world, hud, sim, log, reduced, doc, onDone}): the first sixty seconds of your run, replayed on the
+ * bedrock as two faint cursors that travel to the thing you pressed and press it, one line underneath.
+ * Returns { hold(ms), cancel() }.
+ */
+export function ghosts(opts) {
+  const o = opts || {};
+  const world = o.world, sim = o.sim;
+  const reduced = !!o.reduced;
+  const doc = docOf(o), win = doc.defaultView;
+  const C = E7().ghosts;
+  injectCss(doc, END_STYLE_ID, END_CSS);
+  const host = hostOf(o, doc);
+
+  const acts = firstMinute(o.log || sim.state.log, C.seconds);
+  world.lockTo(1, !reduced);                                // back down to the bedrock, where your first minute was
+
+  const cursors = [doc.createElement('div'), doc.createElement('div')];
+  for (const c of cursors) { c.className = 'gh-cur'; host.appendChild(c); }
+  const line = doc.createElement('div'); line.className = 'gh-line'; line.textContent = BEATS.ghosts;
+  host.appendChild(line);
+
+  const clock = heldClock(win);
+  // two hands, the way you played: one lives on the verbs, one works the board
+  const spans = acts.map((a) => ({ a: a, at: (a.t * 1000) / Math.max(0.001, C.speed), hand: a.node ? 1 : 0 }));
+  const endMs = Math.min(C.maxMs, spans.length ? spans[spans.length - 1].at + C.moveMs * 2 : C.moveMs);
+  const seen = [{ x: 0, y: 0, has: false }, { x: 0, y: 0, has: false }];
+  let raf = 0, done = false;
+
+  function paint() {
+    const ms = clock.s * 1000;
+    if (ms > C.moveMs * 0.5) line.classList.add('on');
+    for (let h = 0; h < cursors.length; h++) {
+      let cur = null, prev = null;
+      for (const s of spans) {
+        if (s.hand !== h) continue;
+        if (s.at <= ms + C.moveMs) { prev = cur; cur = s; } else break;
+      }
+      if (!cur) continue;
+      const to = targetOf(cur.a, world, doc);
+      const src = prev ? targetOf(prev.a, world, doc) : (seen[h].has ? seen[h] : to);
+      const k = ease((ms - (cur.at - C.moveMs)) / C.moveMs);
+      const x = src.x + (to.x - src.x) * k, y = src.y + (to.y - src.y) * k;
+      seen[h] = { x: x, y: y, has: true };
+      cursors[h].style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
+      const pressing = ms >= cur.at && ms < cur.at + C.pressMs;
+      if (pressing !== cursors[h]._press) { cursors[h]._press = pressing; cursors[h].classList.toggle('press', pressing); }
+    }
+    return ms >= endMs;
+  }
+
+  function step() { if (paint()) { finish(); return; } if (!clock.isHeld) raf = win.requestAnimationFrame(step); }
+  raf = win.requestAnimationFrame(step);
+
+  function finish() {
+    if (done) return;
+    done = true;
+    if (raf) win.cancelAnimationFrame(raf);
+    for (const c of cursors) if (c.parentNode) c.parentNode.removeChild(c);
+    if (line.parentNode) line.parentNode.removeChild(line);
+    if (o.onDone) o.onDone();
+  }
+
+  return {
+    hold(ms) {
+      clock.freeze(ms);
+      if (raf) win.cancelAnimationFrame(raf);
+      if (ms === null || ms === undefined) { raf = win.requestAnimationFrame(step); return; }
+      let n = 0;
+      const settle = () => { paint(); if (++n < 8) raf = win.requestAnimationFrame(settle); else raf = 0; };
+      settle();
+    },
+    cancel() { finish(); },
+    get count() { return acts.length; },
+    get cursors() { return cursors; }
+  };
+}
+
+/**
+ * endingSequence({world, hud, sim, ending, reduced, doc, onDone}): reveal, film, ghosts, endcard, in order.
+ * Any key skips to the next beat. The shell calls this once, when the mirror writes eras[7].ending.
+ */
+export function endingSequence(opts) {
+  const o = opts || {};
+  const doc = docOf(o), win = doc.defaultView;
+  const C = E7().sequence;
+  const beats = ['reveal', 'film', 'ghosts', 'endcard'];
+  let i = -1, cur = null, timer = 0, killed = false;
+
+  const clear = () => { if (timer) { win.clearTimeout(timer); timer = 0; } };
+  const after = (ms, fn) => { clear(); timer = win.setTimeout(fn, ms); };
+
+  function next() {
+    if (killed) return;
+    clear();
+    if (cur && cur.cancel) cur.cancel();
+    cur = null;
+    i++;
+    const beat = beats[i];
+    if (!beat) { stop(); if (o.onDone) o.onDone(); return; }
+    if (beat === 'reveal') { cur = reveal(o); after(E7().reveal.camMs + C.revealHoldMs, next); }
+    else if (beat === 'film') { cur = film(Object.assign({}, o, { onDone: () => after(C.filmHoldMs, next) })); }
+    else if (beat === 'ghosts') { cur = ghosts(Object.assign({}, o, { onDone: () => after(C.ghostHoldMs, next) })); }
+    else { mountEndcard(); }
+  }
+
+  function mountEndcard() {
+    import('./eras/endcard.js').then((m) => {
+      if (killed) return;
+      cur = (m.createView || m.default)(o);
+      stop();
+      if (o.onDone) o.onDone();
+    }).catch(() => { stop(); if (o.onDone) o.onDone(); });
+  }
+
+  const onKey = (e) => { if (e.key === 'Escape') return; if (i < beats.length - 1) next(); };
+  doc.addEventListener('keydown', onKey);
+  function stop() { killed = true; clear(); doc.removeEventListener('keydown', onKey); }
+
+  next();
+  return {
+    next: next,
+    get beat() { return beats[i]; },
+    get view() { return cur; },
+    cancel() { const c = cur; stop(); if (c && c.cancel) c.cancel(); }
+  };
+}
