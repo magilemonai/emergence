@@ -49,10 +49,20 @@ function dedupe(pts) {
   return out;
 }
 
-/** particleCount(flowPerSec): density follows flow; idle pipes carry nothing */
-export function particleCount(flow) {
+/** field pipes (≤ FIELD_MAX_LEN, inside one stratum) keep 1 dot per 0.5 units/s; longer pipes (risers) scale by len / DENSITY_REF_LEN */
+export const FIELD_MAX_LEN = 500;
+export const DENSITY_REF_LEN = 300;
+
+/**
+ * particleCount(flowPerSec, len?): density follows flow; idle pipes carry nothing.
+ * With a length above FIELD_MAX_LEN (a cross-stratum riser), the count scales by len / DENSITY_REF_LEN so the riser
+ * reads as dense per screen as a field pipe at the same flow, and its cap grows with length (one dot per 25 units).
+ */
+export function particleCount(flow, len) {
   if (!(flow > 0)) return 0;
-  return Math.min(PARTICLE_CAP, Math.max(1, Math.round(flow / PARTICLES_PER_UNIT)));
+  const scale = len > FIELD_MAX_LEN ? len / DENSITY_REF_LEN : 1;
+  const cap = len > 0 ? Math.max(PARTICLE_CAP, Math.min(160, Math.floor(len / 25))) : PARTICLE_CAP;
+  return Math.min(cap, Math.max(1, Math.round(flow / PARTICLES_PER_UNIT * scale)));
 }
 
 /** total length of a polyline in world units */
@@ -90,10 +100,10 @@ export function tracePipe(ctx, poly, radius) {
  * phase advancing at PARTICLE_SPEED so the motion reads as one direction of travel.
  */
 export function particlePositions(poly, flow, tSec) {
-  const n = particleCount(flow);
-  if (!n) return [];
   const len = pipeLength(poly);
   if (len <= 0) return [];
+  const n = particleCount(flow, len);
+  if (!n) return [];
   const gap = len / n;
   const phase = ((tSec * PARTICLE_SPEED) % gap + gap) % gap;
   const out = [];

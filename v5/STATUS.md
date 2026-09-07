@@ -20,8 +20,8 @@
 ## Fable's integration ledger (do in the final pass unless noted)
 - Deep: Capability output now carries the compute-node milestone tier (v4 parity; the only pacing gap found). DONE.
 - Engine: `sim.setCadence` + `state.cadence` (operated strata); renderer: `world.operated`, `OPERATED_HUE`; `fmtRate` snaps |x|<0.005 to 0. DONE.
-- Plates truncate a second input ("−10§ −0.…" on the Ruleset): widen or stack inputs in nodes.js.
-- Pipes: particle density is per pipe, so a ~2900-unit riser reads thin; add a length-aware floor, then revert knowledgePerRuleset to 0.02.
+- Plates wrap a second input onto its own line (never truncate a number). DONE.
+- Pipes: density is per length above 500 units (risers scale by len/300, cap grows); re-shot Symbolic/Origins/Statistical: risers read as columns. knowledgePerRuleset stays 0.05 (0.02 would still read thin). DONE.
 - Receipt mounts after the film (WO-08/11 seam); WO-12's scene mount is a stand-in.
 - Run-2 alterations in other eras' files (from WO-10's proposals). Wire `fx.operated`/`world.operated` + body class into the shell's era switch after WO-11.
 - Mobile: v5/index.html viewport width=1280 = desktop-first (standing ruling); tell Cody, do not skip silently.
