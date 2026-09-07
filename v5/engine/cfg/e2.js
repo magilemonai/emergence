@@ -19,6 +19,7 @@ export default {
   // so the sink can never demand more than the bank holds (no false starve on the pipe mouth)
   proofTau: 0.6,
 
+  theoremSlots: 3,             // one row of tiles clears the terminal above and the stratum floor below
   milestones: [10, 25, 50, 100], milestoneBonus: 0.25,
   buyModes: [1, 10, 25],
 

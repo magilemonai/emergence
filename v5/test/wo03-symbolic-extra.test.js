@@ -4,7 +4,7 @@
 import { createSim } from '../engine/sim.js';
 import cfg from '../engine/cfg.js';
 import origins from '../engine/eras/origins.js';
-import symbolic, { stats, proofCost, axiomGain, termLines, theoremItems, HIDDEN_PLATES } from '../engine/eras/symbolic.js';
+import symbolic, { stats, proofCost, axiomGain, termLines, theoremItems, HIDDEN_PLATES, TERMINAL_AT, TERMINAL_W, THEOREM_GRID } from '../engine/eras/symbolic.js';
 import VOICE from '../engine/voice/e2.js';
 
 const mk = (seed = 3, legacy = null) => createSim({ cfg, eras: [origins, symbolic], seed, legacy });
@@ -106,14 +106,35 @@ export async function run(t) {
   t.ok(termLines(s4).length === Math.min(c.termLines, S4.eras[2].term.length), 'the terminal holds at most three lines');
   t.ok(typeof sim.voice(2) === 'string', 'the stratum always has a line to print');
 
-  /* ---------- layout: every anchor inside the stratum and clear of the verb column ---------- */
+  /* ---------- layout: anchors clear of the HUD columns and of the riser channel, pipes long enough to read ---------- */
+  // a plate is 176x72 SCREEN px, which is about 200x82 world units at the stratum's lock zoom
+  const PW = 200, PH = 82, MIN_PIPE = 80;
   const A = symbolic.layout.anchors;
   for (const id of Object.keys(A)) {
-    t.ok(A[id].x >= 240 && A[id].x <= 1180 && A[id].y >= 40 && A[id].y <= 660, 'anchor inside the stratum and clear of the verbs: ' + id);
+    t.ok(A[id].x >= 140 && A[id].x <= 960 && A[id].y >= 40 && A[id].y <= 660, 'anchor clear of the HUD columns and the riser channel: ' + id);
   }
+  const gap = (a, b) => (A[a].y === A[b].y ? Math.abs(A[a].x - A[b].x) - PW : Math.abs(A[a].y - A[b].y) - PH);
+  for (const pair of [['rules.store', 'ruleset'], ['ruleset', 'inference.store'], ['inference.store', 'proof'], ['daemon', 'rules.store']]) {
+    t.ok(gap(pair[0], pair[1]) >= MIN_PIPE, 'pipe visible between plate edges: ' + pair.join(' to ') + ' (' + gap(pair[0], pair[1]) + ' world units)');
+  }
+  t.ok(Object.keys(A).filter((id) => A[id].y === A.ruleset.y).length === 2, 'the Ruleset row holds only the Rules bank, so the riser leg is never hidden');
+  t.ok(TERMINAL_AT.x + TERMINAL_W / 2 * 1.14 <= 962, 'the terminal stops short of the riser channel');
+  t.ok(THEOREM_GRID.y + 60 <= 700 && THEOREM_GRID.y > TERMINAL_AT.y + 60, 'the theorem row sits under the terminal and above the stratum floor');
   t.eq(HIDDEN_PLATES, ['proof'], 'the proof sink wears the view card instead of a plate');
   t.ok(symbolic.layout.verbs.length === 2 && symbolic.layout.goal === 'expert', 'two verbs and the Expert System goal');
-  t.ok(theoremItems(s4).indexOf('optimization') === 0, 'the repeatable lemmas lead the theorem grid');
+
+  /* ---------- the grid never grows a second row, and a doctrine fork is never hidden by the cap ---------- */
+  const walk = mk(31); walk.state.stocks.knowledge = 100; walk.openEra(2);
+  const seen = {};
+  const forceProve = (id) => { walk.apply({ type: 'aim', era: 2, id: id }); walk.state.eras[2].proofAcc[id] = 1e9; walk.tick(0.1); };
+  for (const id of ['formalLogic', 'fwdChain', 'rete', 'inference', 'knowledge', 'metalogic']) {
+    const items = theoremItems(walk);
+    t.ok(items.length <= cfg.e2.theoremSlots, 'the theorem grid never exceeds one row of ' + cfg.e2.theoremSlots + ' (at ' + id + ': ' + items.length + ')');
+    for (const x of items) seen[x] = 1;
+    if (id === 'fwdChain') t.ok(items.indexOf('fwdChain') >= 0 && items.indexOf('bwdChain') >= 0, 'the doctrine fork shows both options inside the cap');
+    forceProve(id);
+  }
+  t.ok(seen.optimization && seen.capacity, 'both repeatable lemmas are reachable across the climb');
 
   /* ---------- replay across the REAL handoff (fabricate is a logged action) ---------- */
   const live = mk(21); const L = live.state;
