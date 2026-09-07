@@ -1,0 +1,68 @@
+/* render/eras/surface.css (WO-06) — the agent's stratum: its flow board of you, and its ledger.
+   Same reading as every board below, turned around. Loaded by app.js by convention. */
+
+.s-board {
+  position: fixed; left: 248px; right: 330px; top: 74px; bottom: 12px; z-index: 20;
+  display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 13px;
+  border-radius: 14px; border: 1px solid var(--edge, #3d2d58);
+  background: color-mix(in srgb, var(--panel, #0c0814) 90%, transparent);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6); pointer-events: auto;
+}
+.s-lane { display: flex; flex-direction: column; gap: 6px; }
+.s-lane.grow { flex: 1; min-height: 0; }
+.s-lh {
+  font-family: var(--mono, monospace); font-size: 9.5px; letter-spacing: 0.2em;
+  color: var(--dimmer, #6d5f8a); border-bottom: 1px solid var(--line, #2a1f3d); padding-bottom: 4px;
+}
+.s-row { display: flex; align-items: stretch; gap: 8px; }
+.s-row.op { align-items: center; }
+
+.s-src, .s-out {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 7px 6px 8px; border-radius: 10px; border: 1px solid var(--line, #2a1f3d); background: var(--panel-2, #120c1c);
+}
+.s-out { flex: none; min-width: 118px; }
+.s-g { font-size: 17px; line-height: 1; }
+.s-v { font-family: var(--mono, monospace); font-size: 14px; font-variant-numeric: tabular-nums; }
+.s-l { font-family: var(--mono, monospace); font-size: 9px; letter-spacing: 0.14em; color: var(--dimmer, #6d5f8a); text-transform: uppercase; }
+
+.s-arrow { flex: none; font-size: 15px; color: var(--tease, #b78bff); }
+.s-op {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; padding: 9px 11px 10px;
+  border-radius: 11px; border: 1px solid var(--accent, #ffffff); background: var(--panel-2, #120c1c);
+  box-shadow: 0 0 26px rgba(183, 139, 255, 0.16);
+}
+.s-op-n { font-family: var(--era-font, monospace); font-size: 13px; letter-spacing: 0.12em; color: var(--text, #f4efff); }
+.s-x { color: var(--dim, #a494c4); }
+.s-op-s { display: flex; gap: 12px; font-family: var(--mono, monospace); font-size: 11px; }
+.s-op-s .up { color: var(--good, #c9adf5); }
+.s-op-s .dn { color: var(--danger, #ff2a6d); }
+.s-op-s span:last-child { color: var(--dimmer, #6d5f8a); }
+.s-op .buy { align-self: flex-start; opacity: 0.5; }
+
+.s-ledger { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+.s-row-l {
+  display: flex; align-items: baseline; gap: 10px; padding: 5px 8px; border-radius: 7px;
+  font-family: var(--mono, monospace); font-size: 11.5px; color: var(--text, #f4efff);
+}
+.s-row-l:nth-child(odd) { background: rgba(255, 255, 255, 0.03); }
+.s-row-l .k { flex: 1; color: var(--dim, #a494c4); }
+.s-row-l.reveal { color: var(--tease, #b78bff); }
+.s-row-l.reveal .k { color: var(--tease, #b78bff); opacity: 0.8; }
+
+.s-head { margin-bottom: 8px; text-align: left; }
+.s-name { font-family: var(--era-font, monospace); font-size: 26px; letter-spacing: 0.18em; color: var(--text, #f4efff); line-height: 1.1; }
+.s-sub { font-family: var(--mono, monospace); font-size: 10.5px; color: var(--dim, #a494c4); margin-top: 3px; }
+
+/* the verb it is pressing right now */
+.verb.pressing { border-color: var(--tease, #b78bff); box-shadow: 0 0 0 1px var(--tease, #b78bff), 0 0 24px rgba(183, 139, 255, 0.3); opacity: 1; }
+
+.rx-key {
+  min-width: 26px; padding: 3px 8px; border-radius: 8px; text-align: center;
+  font-family: var(--mono, monospace); font-size: 13px; color: #f4efff;
+  border: 1px solid #b78bff; background: rgba(183, 139, 255, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verb.pressing { transition: none; }
+}
