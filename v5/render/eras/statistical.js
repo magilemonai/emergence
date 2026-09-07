@@ -142,7 +142,7 @@ export function createStatisticalView(opts) {
   supBtn.appendChild(supCost); supBtn.appendChild(supNm);
   sup.appendChild(supLab); sup.appendChild(supBtn);
   hud.goalAside(sup);
-  supBtn.addEventListener('click', () => world.lockTo(1, true));
+  supBtn.addEventListener('click', () => { if (opts.jump && opts.jump(1)) return; world.lockTo(1, true); });   // go and build it: the view follows
   setVar(hud.goalBox, '--tease', STRATA[4].accent);          // the goal wakes in Deep's cobalt
 
   /* ---------- the EXPERIMENTS drawer: three cards, built once, retargeted in place ---------- */

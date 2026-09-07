@@ -55,6 +55,7 @@ export function createSim(opts) {
   const step = typeof cfg.replayStep === 'number' ? cfg.replayStep : DEFAULT_REPLAY_STEP;
 
   const eraOf = (a) => (a && typeof a.era === 'number' ? a.era : state.era);
+  const canVisit = (a) => typeof a.era === 'number' && a.era >= 1 && a.era <= state.maxEra && !!installed[a.era] && a.era !== state.era;
   const actionDef = (a) => {
     const mod = installed[eraOf(a)];
     return mod && mod.actions ? mod.actions[a.type] : null;
@@ -124,11 +125,18 @@ export function createSim(opts) {
     /* ---------- actions ---------- */
     can(a) {
       if (!a || typeof a.type !== 'string') return false;
+      if (a.type === 'visit') return canVisit(a);
       const def = actionDef(a);
       return !!def && !!def.can(sim, a);
     },
     apply(a) {
       if (!a || typeof a.type !== 'string') return { ok: false, reason: 'no type' };
+      if (a.type === 'visit') {                      // the strata jump: the active era moves to an open stratum; logged, so replay follows you
+        if (!canVisit(a)) return { ok: false, reason: 'closed' };
+        state.era = a.era;
+        state.log.push({ type: 'visit', era: a.era, t: state.t });
+        return { ok: true };
+      }
       const def = actionDef(a);
       if (!def) return { ok: false, reason: 'unknown' };
       if (!def.can(sim, a)) return { ok: false, reason: 'blocked' };

@@ -27,6 +27,7 @@ const sim = createSim({ cfg, eras: [origins, symbolic, ...], seed: 12345, legacy
 | `sim.goal(era?)` | `=> {progress:0..1, ready:boolean, label:string}` | from the era's `goal(sim)` |
 | `sim.voice(era?)` | `=> string|null` | the machine's current line for that stratum |
 | `sim.muted()` / `sim.setMuted(b)` | offline catch-up flag | live-only systems skip while muted |
+| `{type:'visit', era:n}` | a built-in action | the strata jump: sets `state.era` to an OPEN stratum (`n ≤ maxEra`, installed, not the current one); logged like any action so replay follows where you were. The shell's keys 1–6 and every "→ Origins" supply button go through it |
 | `sim.setCadence(era, mult)` | operated strata | era `n` runs at `mult`× wall time: the graph pass scales its nodes' dt and its module `tick` receives `dt × mult`; `1` clears. Stored in `state.cadence` (saved, replayed) |
 | `sim.eras` | `{[n]: EraModule}` | installed modules |
 | `sim.cfg` | the cfg object | read-only by convention |
@@ -71,6 +72,7 @@ Cross-era actions (reach-back) are actions on the TARGET era: `sim.apply({type:'
   for every stratum below it. Pipes then carry the faster throughput (edge.flow is per WALL second), so the lower strata
   visibly speed up. Rail rates stay per wall second. Nothing else scales time.
 
+- `NodeDef.gated` (render-only, like `locked`/`hidden`): the plate's BUILD is disabled while true even when affordable; an era's tick sets it (Symbolic's one-Ruleset gate until Formal Logic).
 - `state.flags.dead` is UI telemetry: the shell increments it on a press that hits nothing actionable. It is the one
   field replay does not reproduce; tests and the mirror compare states with `flags.dead` stripped (like `log`).
 

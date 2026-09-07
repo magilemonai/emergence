@@ -48,6 +48,7 @@ const CSS = `
 .d-tool.ready { border-color: var(--good, #82ffc8); }
 
 /* the instrument: one plate in the pipeline field, under the furnaces it steers */
+.drawer.show { z-index: 30; }   /* the architecture drawer opens OVER the fabric, never behind it */
 .fabric { position: fixed; left: 248px; right: 330px; bottom: 12px; z-index: 20; display: flex; flex-direction: column; gap: 8px;
   padding: 10px 12px 11px; border-radius: 14px; border: 1px solid var(--edge, #2b4570);
   background: color-mix(in srgb, var(--panel, #07111d) 88%, transparent);

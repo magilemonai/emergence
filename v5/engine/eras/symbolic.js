@@ -283,6 +283,7 @@ const symbolic = {
 
   tick(sim, dt) {
     const c = C(sim), e = E(sim);
+    { const rs = sim.node('ruleset'); if (rs) rs.gated = rulesetGated(sim); }   // render flag: BUILD disabled under the one-Ruleset gate
     if (dt > 0) {
       // a daemon's rules are a pipe, so the run's rule total reads the pipe rather than a private counter
       for (const edge of sim.state.edges) if (edge.from === 'daemon' && edge.res === 'rules') e.runRules += edge.flow * dt;
@@ -409,7 +410,7 @@ const symbolic = {
     const c = C(sim), e = E(sim);
     let done = 0;
     for (const id of c.path) if (e.tech[id]) done++;
-    const ready = e.flags.symbolicDone || canProve(sim, 'expert');
+    const ready = !e.flags.symbolicDone && e.activeProof !== 'expert' && canProve(sim, 'expert');   // mirrors prove.can: never lit while inert
     return { progress: done / c.path.length, ready: ready, label: 'Expert System ' + done + ' / ' + c.path.length };
   },
 

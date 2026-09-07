@@ -180,7 +180,7 @@ export function createPlates(layer, sim, opts) {
       const afford = c ? (st.stocks[c.res] || 0) >= c.amount : false;
       setTxt(P.buy, c ? (c.n > 1 ? fmt(c.amount) + ' ' + resGlyph(c.res) + ' · BUILD ×' + c.n : fmt(c.amount) + ' ' + c.res + ' · BUILD') : '');   // under ×10/×25/MAX the glyph keeps the count on the button
       setStyle(P.buy, 'display', c ? '' : 'none');
-      setDis(P.buy, !afford);
+      setDis(P.buy, !afford || !!node.gated);   // a gated node (Symbolic's one Ruleset) never reads as pressable
       setCls(P.buy, 'buy' + (afford ? ' ok' : ''));
 
       const starved = !!(o.starved && o.starved(node));

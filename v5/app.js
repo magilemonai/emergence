@@ -230,7 +230,7 @@ async function boot() {
   function mountView(eraId) {
     const mod = viewMods[nameOf(eraId)]; if (!mod) return null;
     const make = mod.createView || mod.default;
-    const v = make({ hud: hud, world: world, sim: sim, buy: buy, assets: ASSETS, reduced: reduced });
+    const v = make({ hud: hud, world: world, sim: sim, buy: buy, assets: ASSETS, reduced: reduced, jump: jump });
     if (v && v.activate) v.activate();
     return v;
   }
@@ -268,12 +268,23 @@ async function boot() {
       startRupture(null);
     } else {
       world.lockTo(n, plan.lockAnimate);
-      if ((plan.lockAnimate || !scene) && !endingRun) showTitle(n);   // a screenshot scene boots without the card over it; the ending has no cards
+      if ((plan.lockAnimate || !scene) && !endingRun && jumping !== n) showTitle(n);   // no card on a jump, on a scene boot, or during the ending
+      if (jumping === n) jumping = 0;
     }
     if (audio) audio.setBed(n);
     if (view && view.sync) view.sync();
     return plan;
   }
+
+  /* ---------- strata jumps: a logged visit moves the active era; the loop then switches the view (no card) ---------- */
+  let jumping = 0, speed = 1;
+  function jump(n) {
+    if (endingRun || sim.state.era === 7 || n === sim.state.era) return false;
+    if (!sim.can({ type: 'visit', era: n })) return false;
+    jumping = n;
+    return sim.apply({ type: 'visit', era: n }).ok;
+  }
+  function setSpeed(n) { speed = typeof n === 'number' && n > 0 ? Math.min(20, n) : 1; return speed; }
 
   /* ---------- the ending: reveal → film → ghosts → endcard, once, when the mirror resolves (SPEC The turn 5) ---------- */
   let endingRun = null, ghostsBeat = false;
@@ -377,7 +388,7 @@ async function boot() {
     if (e.code === 'Space') { e.preventDefault(); if (m && m.layout && m.layout.verbs[0] && view && view.onVerb) view.onVerb(m.layout.verbs[0]); }
     else if (e.key === 'q' || e.key === 'Q') { if (m && m.layout && m.layout.verbs[1] && view && view.onVerb) view.onVerb(m.layout.verbs[1]); }
     else if (e.key === 'r' || e.key === 'R') { if (view && view.toggleResearch) view.toggleResearch(); }
-    else if (/^[1-6]$/.test(e.key)) { const n = +e.key; if (n <= sim.state.maxEra) world.lockTo(n, true); }
+    else if (/^[1-6]$/.test(e.key)) jump(+e.key);
   });
 
   let last = performance.now(), sinceSave = 0;
@@ -385,7 +396,7 @@ async function boot() {
     const dt = Math.min(0.25, (now - last) / 1000);
     last = now;
     if (!paused) {
-      sim.tick(dt);
+      if (speed === 1) sim.tick(dt); else { let d = dt * speed; while (d > 1e-9) { const st = Math.min(0.1, d); sim.tick(st); d -= st; } }   // dev speed: exact 0.1s substeps
       const e7 = sim.state.eras && sim.state.eras[7];
       if (!scene && !endingRun && ((e7 && e7.ending) || sim.state.flags.ending)) startEnding((e7 && e7.ending) || sim.state.flags.ending);   // screenshot scenes drive the fx themselves
       if (!endingRun && sim.state.era !== curEra) { switchEra(sim.state.era); if (legacyFx && legacyFx.sync) { try { legacyFx.sync(); } catch (e) { } } }
@@ -410,6 +421,8 @@ async function boot() {
   win.__V5 = {
     rupture: startRupture,        // (holdMs?) starts the world event and freezes it at holdMs for a screenshot
     ending: startEnding,          // (ending?) runs reveal → film → ghosts → endcard once
+    jump: jump,                   // (n) the strata jump the keys use
+    setSpeed: setSpeed,           // dev: run the sim n× real time in exact substeps (never saved)
     sim, world, hud, get view() { return view; }, scene, settle, applyScene, eras, buy,
     save, restart, switchEra, setPaused, get paused() { return paused; }, get audio() { return audio; },
     holdSave: (b) => { resetting = !!b; return resetting; },   // tools freeze persistence while they doctor a save
