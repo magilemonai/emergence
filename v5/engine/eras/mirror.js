@@ -152,11 +152,11 @@ export function createReplayer(sim, opts) {
 
 /* ---------- the resolution ---------- */
 
-/** endingFor({control, alignment}, cfg): the v4 thresholds, held in cfg */
+/** endingFor({control, alignment}, cfg): the v4 thresholds, held in cfg; the mirror block may pin its own */
 export function endingFor(m, cfg) {
-  const c6 = (cfg && cfg.e6) || {}, c5 = (cfg && cfg.e5) || {};
-  const high = c6.controlHigh !== undefined ? c6.controlHigh : c5.controlHigh;
-  const good = c6.alignGood !== undefined ? c6.alignGood : c5.alignGood;
+  const c6 = (cfg && cfg.e6) || {}, c5 = (cfg && cfg.e5) || {}, cm = c6.mirror || {};
+  const high = cm.controlHigh !== undefined ? cm.controlHigh : (c6.controlHigh !== undefined ? c6.controlHigh : c5.controlHigh);
+  const good = cm.alignGood !== undefined ? cm.alignGood : (c6.alignGood !== undefined ? c6.alignGood : c5.alignGood);
   const ctl = +(m && m.control) || 0, ali = +(m && m.alignment) || 0;
   if (ctl >= high) return 'contained';
   if (ali >= good) return 'symbiotic';

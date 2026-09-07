@@ -23,6 +23,9 @@ export default {
     speed: 10,          // sim-seconds of your run replayed per second of wall time
     step: 0.1,          // the replay step; matches cfg.replayStep so the shadow lands on your numbers
     interrupts: 3,
+    // three interrupts cap Control at controlStart + interrupts * vetoCtl = 64 + 18, so the containment line
+    // IS "you refused all three". e6.controlHigh (84) predates the three-interrupt mirror and cannot be reached.
+    controlHigh: 82,
     vetoWindow: 9,      // seconds a proposal stays open before it lapses on its own
     policyGap: 0.1,     // at most one improvement per replay step
     compileAt: 2,       // it compiles once the axiom yield reaches this
