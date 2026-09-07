@@ -9,9 +9,12 @@ banner, the Foundry Silicon-low pulse, and the one line it should not know.
 ## Read first
 `v4-kit/era-deep.js` (all), CFG `e4`, WO-02..04 modules, `v5/test/wo05-deep.test.js`.
 
-## Files you own
-`v5/engine/eras/deep.js`, `v5/render/eras/deep.js`, voice era 4 table (one line), cfg `e4`, scenes (`deep-early`,
-`deep-squall`, `deep-tools`, `deep-architecture`), `v5/test/wo05-*.test.js`.
+## Files you own (after the Phase-A split: one file per stratum, no shared edits)
+`v5/engine/eras/deep.js`, `v5/render/eras/deep.js` (must `export function createView(opts)` per
+ARCHITECTURE "Era views"), `v5/engine/voice/e4.js` (the era's voice table, default export array), `v5/engine/cfg/e4.js`
+(the era's tunables, default export object), `v5/scenes/deep.js` (default export `{sceneName: fn(sim)}`; each
+scene must `sim.openEra(...)` up to this stratum first: the app mounts the view of `sim.state.era`), `v5/test/wo05-*.test.js`.
+Do NOT edit app.js, index.html, cfg.js, voice.js, scenes.js, the engine, the renderer core, or any existing test.
 
 ## Build
 - Engine: resource capability; source `node` (compute); three `sink` nodes `run.vision/language/reasoning` drawing

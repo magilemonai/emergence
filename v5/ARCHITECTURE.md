@@ -83,6 +83,14 @@ v5/
 - Performance budget: sim tick + frame ≤ 6ms average with 2000 live particles at zoom 1 (measured by
   `test/perf.test.js` in node for the sim, and by `tools/shoot.js --perf` in headless for the frame).
 
+## Era views (render/eras/<name>.js) — the interface `app.js` mounts
+`export function createView({hud, world, sim, buy, assets}) → { sync(), onVerb(name), onGoal(), activate?(),
+deactivate?(), toggleResearch?() }`. `app.js` discovers engine modules and views by convention
+(`engine/eras/<name>.js`, `render/eras/<name>.js`) and never needs editing by an era order. HUD seams for a view:
+`hud.renderVerbs`, `hud.renderGoal`, `hud.goalExtra(el)` (top of the goal box), `hud.goalAside(el)` (the card beside
+the goal), `hud.toast`, `hud.plateLayer`; per-stratum tunables in `engine/cfg/eN.js`, voice in `engine/voice/eN.js`,
+scenes in `scenes/<name>.js` (exporting a default `{sceneName: fn(sim)}` object).
+
 ## Save / legacy / routing
 - Save: `localStorage['emergence_v5'] = {v:1, state, wall}`. The engine never truncates `state.log` (replay
   exactness); the SAVE layer (WO-11) caps what it persists at 12,000 actions by keeping the first 600 (the film's

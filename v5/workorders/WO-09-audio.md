@@ -12,7 +12,7 @@ SPEC audio section, `v4-kit/kit.js` (MUSIC controller, playSound profiles, persi
 or `sim.state.edges` for flows), `v5/test/wo09-*.test.js`.
 
 ## Files you own
-`v5/audio/beds.js`, `v5/audio/synth.js`, `v5/audio/index.js` (`createAudio({sim, world})` → `{start(), setBed(n),
+`v5/audio/beds.js`, `v5/audio/synth.js`, `v5/audio/index.js`, `v5/audio/bench.html` (your own headless bench page that loads the Origins scene from `v5/app.js` modules or a synthetic flow and starts the audio; `node v5/tools/shoot.js <scene> out.png --file v5/audio/bench.html`) (`createAudio({sim, world})` → `{start(), setBed(n),
 rupture(), surface(), setVol({bed, voices, sfx}), sfx(kind), tick(dt)}`), `v5/test/wo09-*.test.js` (pure parts:
 voice→pitch mapping, tempo smoothing, detune curve).
 

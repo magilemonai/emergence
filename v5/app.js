@@ -1,48 +1,69 @@
-// v5/app.js — boot for the Origins stratum (WO-02 minimal; WO-11 hardens it with save, settings, routing).
-// One sim, one world, one HUD, one view module. The frame loop ticks the sim in real time and draws.
-
+// v5/app.js — boot: one sim over every era module that exists, one world, one HUD, and the view of the active
+// stratum. Era engine modules and views are discovered by convention (engine/eras/<name>.js, render/eras/<name>.js)
+// so parallel work orders never edit this file. WO-11 hardens it (save, settings, live era switching, routing).
 import { createSim } from './engine/sim.js';
 import cfg from './engine/cfg.js';
-import origins, { milestoneOf } from './engine/eras/origins.js';
 import { createWorld } from './render/world.js';
 import { createHud } from './render/hud.js';
-import { createOriginsView } from './render/eras/origins.js';
 import { SCENES } from './scenes/scenes.js';
 
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const sim = createSim({ cfg: cfg, eras: [origins], seed: 1, legacy: null });
-const buy = { n: cfg.e1.buyModes[0] };
+export const ERA_FILES = ['origins', 'symbolic', 'statistical', 'deep', 'foundation', 'surface', 'mirror'];
+const eras = [], viewMods = {};
+for (const f of ERA_FILES) {
+  try { const m = await import('./engine/eras/' + f + '.js'); if (m && m.default) eras.push(m.default); } catch (e) { /* not built yet */ }
+  try { const v = await import('./render/eras/' + f + '.js'); if (v && (v.createView || v.default)) viewMods[f] = v; } catch (e) { /* no view yet */ }
+}
+eras.sort((a, b) => a.id - b.id);
+const byId = {}; for (const e of eras) byId[e.id] = e;
+const nameOf = (id) => ERA_FILES[id - 1];
 
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sim = createSim({ cfg: cfg, eras: eras, seed: 1, legacy: null });
+const buy = { n: (cfg.e1.buyModes && cfg.e1.buyModes[0]) || 1 };
+
+let view = null;
 const hud = createHud(document.getElementById('hud'), {
-  onVerb: (n) => view.onVerb(n),
-  onGoal: () => view.onGoal()
+  onVerb: (n) => view && view.onVerb && view.onVerb(n),
+  onGoal: () => view && view.onGoal && view.onGoal()
 });
 const world = createWorld({
   canvas: document.getElementById('world'), hud: hud.plateLayer, sim: sim, reduced: reduced, hudApi: hud,
-  buyN: () => buy.n,
-  milestone: (n) => milestoneOf(sim, n),
+  buyN: (node) => (typeof buy.n === 'number' ? buy.n : 1),
+  milestone: (n) => { const m = byId[n.era]; return m && m.milestoneOf ? m.milestoneOf(sim, n) : null; },
   starved: (n) => sim.state.edges.some((e) => e.to === n.id && e.starved)
 });
 world.setHud(hud);
-const view = createOriginsView({ hud: hud, world: world, sim: sim, buy: buy, assets: '../assets/' });
-if (world.titleCard) world.titleCard(1);     // WO-11 owns the title-card system; this is its seam
+
+/** the view interface every render/eras/<name>.js exports as createView(opts):
+ *  { sync(), onVerb(name), onGoal(), activate?(), deactivate?() } — opts = { hud, world, sim, buy, assets } */
+function mountView(eraId) {
+  const mod = viewMods[nameOf(eraId)]; if (!mod) return null;
+  const make = mod.createView || mod.default;
+  const v = make({ hud: hud, world: world, sim: sim, buy: buy, assets: '../assets/' });
+  if (v && v.activate) v.activate();
+  return v;
+}
 
 const scene = (location.hash.match(/scene=([\w-]+)/) || [])[1] || '';
 function applyScene(name) {
   const f = SCENES[name];
   if (f) f(sim);
-  world.scene(name || 'origins-1');
-  if (/research/.test(name)) view.toggleResearch();
-  view.sync();
+  view = mountView(sim.state.era);                       // the active stratum's view (one per page load for now)
+  world.lockTo(sim.state.era, false);
+  world.scene(name || (nameOf(sim.state.era) + '-1'));
+  if (/research/.test(name) && view && view.toggleResearch) view.toggleResearch();
+  if (view && view.sync) view.sync();
 }
 applyScene(scene);
+if (world.titleCard) world.titleCard(sim.state.era);   // WO-11 owns the title-card system; this is its seam
 
 document.addEventListener('keydown', (e) => {
   if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
-  if (e.code === 'Space') { e.preventDefault(); view.onVerb('inscribe'); }
-  else if (e.key === 'q' || e.key === 'Q') view.onVerb('quarry');
-  else if (e.key === 'r' || e.key === 'R') view.toggleResearch();
-  else if (e.key === '1') world.lockTo(1, true);
+  const m = byId[sim.state.era];
+  if (e.code === 'Space') { e.preventDefault(); if (m && m.layout && m.layout.verbs[0] && view && view.onVerb) view.onVerb(m.layout.verbs[0]); }
+  else if (e.key === 'q' || e.key === 'Q') { if (m && m.layout && m.layout.verbs[1] && view && view.onVerb) view.onVerb(m.layout.verbs[1]); }
+  else if (e.key === 'r' || e.key === 'R') { if (view && view.toggleResearch) view.toggleResearch(); }
+  else if (/^[1-6]$/.test(e.key)) { const n = +e.key; if (n <= sim.state.maxEra) world.lockTo(n, true); }
 });
 
 let last = performance.now();
@@ -51,7 +72,7 @@ function loop(now) {
   last = now;
   sim.tick(dt);
   world.frame(dt);
-  view.sync();
+  if (view && view.sync) view.sync();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -59,7 +80,7 @@ requestAnimationFrame(loop);
 /** settle(): let the camera and the plates reach their resting frame before a screenshot */
 function settle() {
   for (let i = 0; i < 3; i++) world.frame(0.016);
-  view.sync();
+  if (view && view.sync) view.sync();
   world.frame(0);
 }
-window.__V5 = { sim, world, hud, view, scene, settle, applyScene };
+window.__V5 = { sim, world, hud, get view() { return view; }, scene, settle, applyScene, eras };

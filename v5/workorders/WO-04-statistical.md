@@ -9,9 +9,12 @@ and Autopilot as a compact toggle, the violet point. Silicon arrives by riser fr
 SPEC (pillar 4: prediction is computed from the log), `v4-kit/era-statistical.js` (all rules incl. predDwell,
 policy(), the badge = METHOD only), CFG `e3`, WO-02/03 modules as patterns, `v5/test/wo04-statistical.test.js`.
 
-## Files you own
-`v5/engine/eras/statistical.js`, `v5/render/eras/statistical.js`, voice.js era 3 table, cfg `e3`,
-scenes (`stat-early`, `stat-shift`, `stat-autopilot`, `stat-drifting`), `v5/test/wo04-*.test.js`.
+## Files you own (after the Phase-A split: one file per stratum, no shared edits)
+`v5/engine/eras/statistical.js`, `v5/render/eras/statistical.js` (must `export function createView(opts)` per
+ARCHITECTURE "Era views"), `v5/engine/voice/e3.js` (the era's voice table, default export array), `v5/engine/cfg/e3.js`
+(the era's tunables, default export object), `v5/scenes/statistical.js` (default export `{sceneName: fn(sim)}`; each
+scene must `sim.openEra(...)` up to this stratum first: the app mounts the view of `sim.state.era`), `v5/test/wo04-*.test.js`.
+Do NOT edit app.js, index.html, cfg.js, voice.js, scenes.js, the engine, the renderer core, or any existing test.
 
 ## Build
 - Engine: resources data/insight; converter `dataset` (silicon riser → data), converter `model` (data + a little

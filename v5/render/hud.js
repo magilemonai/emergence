@@ -147,6 +147,10 @@ export function createHud(root, opts) {
     for (const k in verbs) if (!keep[k]) setStyle(verbs[k].btn, 'display', 'none');
   }
 
+  /** goalExtra(el): extra goal content from the era view (an age image), inserted once at the top of the goal box */
+  function goalExtra(node) { if (node && node.parentNode !== goalBox) goalBox.insertBefore(node, goalBox.firstChild); return node; }
+  /** goalAside(el): the era view card beside the goal (below it in the goal column): the timed decision lives here */
+  function goalAside(node) { if (node && node.parentNode !== goalCol) goalCol.appendChild(node); return node; }
   /** renderGoal({progress, ready, label, name, value, tease}): the meter wakes in the NEXT stratum's hue */
   function renderGoal(g) {
     if (!g) { setStyle(goalCol, 'display', 'none'); return; }
@@ -181,7 +185,7 @@ export function createHud(root, opts) {
   setCls(root, 'hud');
 
   return {
-    root, rail, railRight, verbList, goalBox, plateLayer, toasts, tip,
+    root, rail, railRight, verbList, goalBox, goalCol, goalExtra, goalAside, plateLayer, toasts, tip,
     setRail, renderVerbs, renderGoal, toast, setOverview,
     applyPalette: (n) => applyPalette(root, n),
     get overview() { return over; }

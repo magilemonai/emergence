@@ -114,7 +114,7 @@ export function createPlates(layer, sim, opts) {
     el.appendChild(head); el.appendChild(sub); el.appendChild(row);
     if (node.flavor) el.setAttribute('data-tip', '<b>' + node.name + '</b><br><i>' + node.flavor + '</i>' + (node.mech ? '<br>' + node.mech : ''));
 
-    buy.addEventListener('click', () => { sim.apply({ type: 'buy', era: node.era, node: node.id, n: (o.buyN && o.buyN()) || 1 }); });
+    buy.addEventListener('click', () => { sim.apply({ type: 'buy', era: node.era, node: node.id, n: (o.buyN && o.buyN(sim.node(node.id) || node)) || 1 }); });
     pause.addEventListener('click', () => { sim.apply({ type: 'pause', era: node.era, node: node.id, on: !sim.node(node.id).paused }); });
 
     layer.appendChild(el);
@@ -126,7 +126,7 @@ export function createPlates(layer, sim, opts) {
 
   function costOf(node) {
     if (!node.cost) return null;
-    const n = (o.buyN && o.buyN()) || 1;
+    const n = (o.buyN && o.buyN(node)) || 1;   // buyN(node): a MAX mode can price per node
     let total = 0;
     for (let i = 0; i < n; i++) total += node.cost.base * Math.pow(node.cost.growth, node.count + i);
     return { res: node.cost.res, amount: total, n };
@@ -156,7 +156,7 @@ export function createPlates(layer, sim, opts) {
     count = 0;
     list.forEach(node => {
       const P = made[node.id] || make(node);
-      if (hide) { setStyle(P.el, 'display', 'none'); return; }
+      if (hide || node.locked || node.hidden) { setStyle(P.el, 'display', 'none'); return; }   // a locked node owns no plate (nothing is pre-laid)
       const w = o.worldPos(node), s = o.toScreen(w);
       const on = s.x > -260 && s.x < viewport.w + 260 && s.y > -160 && s.y < viewport.h + 160;
       setStyle(P.el, 'display', on ? '' : 'none');

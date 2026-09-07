@@ -127,7 +127,7 @@ export async function run(t) {
   t.eq(stratumAt(stratumTop(6) + 10), 6, 'stratumAt: the surface layer sits above Foundation');
   t.eq(worldPosOf({ era: 2, pos: { x: 570, y: 130 } }), { x: 570, y: stratumTop(2) + 130 }, 'worldPosOf: lifts a stratum-local anchor into world space');
   const col = fitColumn(1, 3, { w: 1280, h: 713 });
-  t.ok(lodFor(col.zoom) === 'silhouette', 'fitColumn: the overview always lands in silhouette LOD');
+  t.ok(col.zoom <= 0.55 && col.zoom >= 0.18, 'fitColumn: zoom within [0.18, 0.55]; the overview forces the silhouette read itself');
   t.near(col.y, (stratumTop(3) + stratumTop(1) + STRATUM_H) / 2, 0.01, 'fitColumn: centres on the built column');
   t.ok(fitStratum(5, { w: 400, h: 300 }).zoom >= 0.18, 'fitStratum: never zooms below the camera floor');
   const ends = pipeEnds({ era: 1, pos: { x: 330, y: 130 } }, { era: 1, pos: { x: 810, y: 130 } });
@@ -199,7 +199,7 @@ export async function run(t) {
   t.ok(st.particles > 0, 'createWorld: a frame draws the particles the edges are carrying');
   t.eq(w2.locked, 1, 'createWorld: lockTo sets the locked stratum');
   w2.overview(false);
-  t.ok(w2.isOverview && lodFor(w2.camera.zoom) === 'silhouette', 'createWorld: overview drops to the silhouette read');
+  t.ok(w2.isOverview && w2.lod === 'silhouette', 'createWorld: overview drops to the silhouette read (forced while in overview)');
   w2.lockTo(2, false);
   t.ok(!w2.isOverview && w2.locked === 2, 'createWorld: locking to a stratum leaves the overview');
   t.ok(w2.camera.zoom > 0.6, 'createWorld: a locked stratum sits at plate LOD');

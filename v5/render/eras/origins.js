@@ -252,4 +252,5 @@ export function createOriginsView(opts) {
   return { sync, onVerb, onGoal, toggleResearch: () => setOpen(!open) };
 }
 
+export const createView = createOriginsView;   // the app's convention: every era view exports createView
 export default createOriginsView;

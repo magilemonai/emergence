@@ -10,10 +10,12 @@ the odd rule #4471, the one-Ruleset gate until Formal Logic, hand-written rules 
 `clickProof`), CFG `e2`, `v5/engine/eras/origins.js` + `v5/render/eras/origins.js` (the pattern to follow),
 `v5/test/wo03-symbolic.test.js`.
 
-## Files you own
-`v5/engine/eras/symbolic.js`, `v5/render/eras/symbolic.js`, `v5/engine/voice.js` **era 2 table only**,
-`engine/cfg.js` `e2` block, `v5/scenes/scenes.js` (append `symbolic-first`, `symbolic-proving`,
-`symbolic-contradiction`, `symbolic-reboot`), `v5/test/wo03-*.test.js`.
+## Files you own (after the Phase-A split: one file per stratum, no shared edits)
+`v5/engine/eras/symbolic.js`, `v5/render/eras/symbolic.js` (must `export function createView(opts)` per
+ARCHITECTURE "Era views"), `v5/engine/voice/e2.js` (the era's voice table, default export array), `v5/engine/cfg/e2.js`
+(the era's tunables, default export object), `v5/scenes/symbolic.js` (default export `{sceneName: fn(sim)}`; each
+scene must `sim.openEra(...)` up to this stratum first: the app mounts the view of `sim.state.era`), `v5/test/wo03-*.test.js`.
+Do NOT edit app.js, index.html, cfg.js, voice.js, scenes.js, the engine, the renderer core, or any existing test.
 
 ## Build
 - Engine: resources rules/inference/axioms; store `rules` fed by a riser from Origins `knowledge.store` (the

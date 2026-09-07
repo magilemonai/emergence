@@ -18,7 +18,7 @@ export async function run(t) {
       t.ok(!/\bnot\s+[^,.]{1,40},\s*(but|it'?s)\b/i.test(s), 'no contrastive construction: ' + rel + ' :: ' + s.slice(0, 60));
     }
     // explainer prose: 12+ word string literals outside voice.js, unless on a flavor/mech/tip line
-    if (!rel.endsWith('engine/voice.js')) {
+    if (!rel.endsWith('engine/voice.js') && !rel.startsWith('engine/voice/')) {
       const lines = src.split('\n');
       lines.forEach((line, i) => {
         if (/\b(flavor|mech|tip|title)\s*[:=]/.test(line) || /data-tip/.test(line) || line.trim().startsWith('//') || line.trim().startsWith('*')) return;

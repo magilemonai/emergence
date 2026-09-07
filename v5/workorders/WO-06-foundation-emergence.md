@@ -10,11 +10,12 @@ SPEC "The turn" §1–3 (build exactly this), `v4-kit/era-foundation.js` (FB_POO
 naming incl. legacy), `v4-kit/era-agent.js` (the sixth tab: sources, THE OPERATOR, verbs, ledger rows), CFG `e5`,
 `v5/render/fx.js` does not exist yet — you create it (rupture only; the reveal belongs to WO-08), `v5/test/wo06-*.test.js`.
 
-## Files you own
-`v5/engine/eras/foundation.js`, `v5/engine/eras/surface.js` (era 6), `v5/render/eras/foundation.js`,
-`v5/render/eras/surface.js`, `v5/render/fx.js` (rupture section only; leave a `// WO-08: reveal + film` marker),
-voice tables 5 and 6, cfg `e5`/`e6`, scenes (`found-early`, `found-feedback`, `found-critical`, `rupture-mid`,
-`surface`), `v5/test/wo06-*.test.js`.
+## Files you own (after the Phase-A split)
+`v5/engine/eras/foundation.js`, `v5/engine/eras/surface.js`, `v5/render/eras/foundation.js`, `v5/render/eras/surface.js`
+(both `export function createView(opts)`), `v5/render/fx.js` (rupture section; leave `// WO-08: reveal + film`),
+`v5/engine/voice/e5.js`, `v5/engine/voice/e6.js`, `v5/engine/cfg/e5.js`, `v5/engine/cfg/e6.js`, `v5/scenes/foundation.js`,
+`v5/scenes/surface.js`, `v5/test/wo06-*.test.js`. Do NOT edit app.js, index.html, the aggregators, the engine core,
+the renderer core, or existing tests.
 
 ## Build
 - Engine (5): resource scale; converter `recursion` (capability → scale); caps as one-time nodes? No: caps are era

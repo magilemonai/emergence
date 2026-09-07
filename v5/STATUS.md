@@ -4,8 +4,8 @@
 |---|---|---|---|---|
 | WO-00 engine core | A | **MERGED** 2026-09-06 | worktree-agent-ac54ca55335c8ef87 → main | 82 own tests; caught a bad assertion in the orchestrator's test (fixed) + a contract gap (`addResource`, now in CONTRACT). 0.006ms/tick. |
 | WO-01 renderer core | A | **MERGED** 2026-09-06 | worktree-agent-ac94fe3aa133e5bca → main | 67 own tests; 5 bench scenes re-shot + read by Fable (accepted); 1.49ms tick+frame at 2549 particles. Two contract questions → pinned in CONTRACT (pos is stratum-local; Edge.starved from the graph pass). Design note: the overview column is a tall spire (~260px wide at fit) — frame it deliberately in WO-08. |
-| WO-02 Origins | B | LAUNCHING (Opus, worktree) | — | acceptance: test/wo02-origins + 4 scenes; the paradigm proof |
-| WO-03 Symbolic · WO-04 Statistical · WO-05 Deep · WO-09 audio · WO-11 shell | C | spec'd | — | parallel after B accepted |
+| WO-02 Origins | B | **MERGED** 2026-09-06 | worktree-agent-adfdd407741fe33b8 → main | ACCEPTED by Fable's eye: nothing pre-laid, the hand is a pipe, upkeep visible, numbers-first plates, commission beside the goal. 67 own tests. Integration pass after: buyN(node), locked nodes hidden by the renderer, hud.goalExtra/goalAside, overview fit for short columns (forced silhouette), cfg/voice/scenes split per era, app.js discovers eras by convention. Open: MAX bulk mode (WO-11), title cards (WO-11). |
+| WO-03 Symbolic · WO-04 Statistical · WO-05 Deep · WO-09 audio | C | LAUNCHING (4 Opus worktrees) | — | tests written; orders pinned to per-era files. WO-11 shell waits (owns app.js) |
 | WO-06 Foundation+turn → WO-07 mirror → WO-08 reveal+film | D | spec'd | — | serial |
 | WO-10 legacy · WO-12 receipt · WO-13 QA | E | spec'd | — | parallel |
 | Fable's pass + `?v=5` (Cody's call) | F | — | — | |

@@ -37,9 +37,12 @@ export function fitStratum(n, vp) {
 }
 
 /** fitColumn(lo..hi, viewport): the overview: the whole built column in one frame */
+const OVERVIEW_ZOOM_MAX = 0.55;
 export function fitColumn(lo, hi, vp) {
   const top = stratumTop(hi), bot = stratumTop(lo) + STRATUM_H, h = bot - top;
-  const zoom = Math.max(ZOOM_MIN, Math.min(LOD_SILHOUETTE, Math.min((vp.w - 80) / WORLD_W, (vp.h - 60) / h)));
+  // a short column (one or two strata) may fit larger than the silhouette threshold; the overview forces the
+  // silhouette read regardless of zoom (see frame()), so the column never turns into a postage stamp
+  const zoom = Math.max(ZOOM_MIN, Math.min(OVERVIEW_ZOOM_MAX, Math.min((vp.w - 80) / WORLD_W, (vp.h * 0.78) / h)));
   return { x: WORLD_W / 2, y: (top + bot) / 2, zoom };
 }
 
@@ -220,7 +223,7 @@ export function createWorld(opts) {
     ctx.translate(v.w / 2 - camera.x * camera.zoom, v.h / 2 - camera.y * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
     for (const id of sim.state.nodeOrder) {
-      const node = sim.state.nodes[id]; if (!node) continue;
+      const node = sim.state.nodes[id]; if (!node || node.locked || node.hidden) continue;   // locked: nothing pre-laid
       if (lod === 'full' && node.era === state.locked) continue;   // the DOM plate owns the locked stratum
       const p = worldPosOf(node);
       const s = worldToScreen(p, camera, v);
@@ -261,7 +264,7 @@ export function createWorld(opts) {
       if (state.anim.k >= 1) state.anim = null;
     }
 
-    const lod = lodFor(camera.zoom);
+    const lod = state.over ? 'silhouette' : lodFor(camera.zoom);   // the overview is always the silhouette read
     stats.lod = lod;
     ctx.fillStyle = '#04030a';
     ctx.fillRect(0, 0, v.w, v.h);
@@ -276,7 +279,7 @@ export function createWorld(opts) {
 
   /** scene(name): camera presets the screenshot tool and dev bench address by name */
   function scene(name) {
-    if (/overview/.test(name)) { overview(false); camera.zoom = 0.22; state.anim = null; return; }
+    if (/overview/.test(name)) { overview(false); state.anim = null; return; }
     const m = /(\d)/.exec(name);
     const n = m ? +m[1] : 1;
     lockTo(n, false);
@@ -285,6 +288,7 @@ export function createWorld(opts) {
 
   return {
     camera, frame, lockTo, overview, plates, stats, scene,
+    get lod() { return state.over ? 'silhouette' : lodFor(camera.zoom); },
     zoomAt, worldPosOf,
     toScreen: (w) => worldToScreen(w, camera, vp()),
     get locked() { return state.locked; },
