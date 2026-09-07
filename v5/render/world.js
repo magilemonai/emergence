@@ -271,6 +271,7 @@ export function createWorld(opts) {
     drawStrata(v);
     stats.particles = drawPipes(v, lod);
     drawNodes(v, lod);
+    runDrawHooks(v, lod);
     plates.update(camera, v, lod, state.locked);
     stats.plates = plates.count;
     stats.frameMs = ((win && win.performance) ? win.performance.now() : 0) - t0;
@@ -280,14 +281,28 @@ export function createWorld(opts) {
   /** scene(name): camera presets the screenshot tool and dev bench address by name */
   function scene(name) {
     if (/overview/.test(name)) { overview(false); state.anim = null; return; }
-    const m = /(\d)/.exec(name);
-    const n = m ? +m[1] : 1;
-    lockTo(n, false);
+    // the dev bench names its strata by digit (bench-1); real scenes lock to the sim's era (app.js does that)
+    const m = /^bench/.test(name) ? /(\d)/.exec(name) : null;
+    if (m) lockTo(+m[1], false);
+    else if (sim && sim.state && typeof sim.state.era === 'number') lockTo(Math.min(sim.state.era, 6), false);
     if (/lod/.test(name)) { camera.zoom = 0.5; state.anim = null; }
+  }
+  // per-stratum draw hooks: era views draw inside the world canvas transform (after pipes and glyphs)
+  const drawHooks = {};
+  function onDraw(era, fn) { drawHooks[era] = fn; }
+  function runDrawHooks(v, lod) {
+    for (const k in drawHooks) {
+      const fn = drawHooks[k]; if (!fn) continue;
+      ctx.save();
+      ctx.translate(v.w / 2 - camera.x * camera.zoom, v.h / 2 - camera.y * camera.zoom);
+      ctx.scale(camera.zoom, camera.zoom);
+      try { fn(ctx, camera, v, lod); } catch (e) { /* a view's draw error must never kill the frame */ }
+      ctx.restore();
+    }
   }
 
   return {
-    camera, frame, lockTo, overview, plates, stats, scene,
+    camera, frame, lockTo, overview, plates, stats, scene, onDraw,
     get lod() { return state.over ? 'silhouette' : lodFor(camera.zoom); },
     zoomAt, worldPosOf,
     toScreen: (w) => worldToScreen(w, camera, vp()),

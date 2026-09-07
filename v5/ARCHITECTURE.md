@@ -89,7 +89,11 @@ deactivate?(), toggleResearch?() }`. `app.js` discovers engine modules and views
 (`engine/eras/<name>.js`, `render/eras/<name>.js`) and never needs editing by an era order. HUD seams for a view:
 `hud.renderVerbs`, `hud.renderGoal`, `hud.goalExtra(el)` (top of the goal box), `hud.goalAside(el)` (the card beside
 the goal), `hud.toast`, `hud.plateLayer`; per-stratum tunables in `engine/cfg/eN.js`, voice in `engine/voice/eN.js`,
-scenes in `scenes/<name>.js` (exporting a default `{sceneName: fn(sim)}` object).
+scenes in `scenes/<name>.js` (exporting a default `{sceneName: fn(sim)}` object). Views also get `opts.reduced`, may
+ship `render/eras/<name>.css` (loaded by app.js by convention), may implement `openDrawer(sceneName)` (called for
+every scene so screenshots can open a drawer), and may draw inside the world canvas via `world.onDraw(era, fn(ctx,
+camera, viewport, lod))` (runs after pipes and glyphs, inside the world transform). `world.scene(name)` no longer
+reads a stratum digit from real scene names; the app locks to `sim.state.era`.
 
 ## Save / legacy / routing
 - Save: `localStorage['emergence_v5'] = {v:1, state, wall}`. The engine never truncates `state.log` (replay

@@ -39,19 +39,29 @@ world.setHud(hud);
 function mountView(eraId) {
   const mod = viewMods[nameOf(eraId)]; if (!mod) return null;
   const make = mod.createView || mod.default;
-  const v = make({ hud: hud, world: world, sim: sim, buy: buy, assets: '../assets/' });
+  const v = make({ hud: hud, world: world, sim: sim, buy: buy, assets: '../assets/', reduced: reduced });
   if (v && v.activate) v.activate();
   return v;
+}
+/** per-era stylesheet by convention (render/eras/<name>.css); a missing file is fine */
+function loadEraCss(eraId) {
+  const href = './render/eras/' + nameOf(eraId) + '.css';
+  if (document.querySelector('link[data-era-css="' + href + '"]')) return;
+  const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.setAttribute('data-era-css', href);
+  link.onerror = () => link.remove();
+  document.head.appendChild(link);
 }
 
 const scene = (location.hash.match(/scene=([\w-]+)/) || [])[1] || '';
 function applyScene(name) {
   const f = SCENES[name];
   if (f) f(sim);
+  loadEraCss(sim.state.era);
   view = mountView(sim.state.era);                       // the active stratum's view (one per page load for now)
-  world.lockTo(sim.state.era, false);
-  world.scene(name || (nameOf(sim.state.era) + '-1'));
-  if (/research/.test(name) && view && view.toggleResearch) view.toggleResearch();
+  world.scene(name || '');                               // overview / bench handling
+  if (!/overview/.test(name)) world.lockTo(sim.state.era, false);
+  if (view && view.openDrawer) view.openDrawer(name);    // a scene may ask the view to open its drawer (research, experiments, architecture)
+  else if (/research/.test(name) && view && view.toggleResearch) view.toggleResearch();
   if (view && view.sync) view.sync();
 }
 applyScene(scene);

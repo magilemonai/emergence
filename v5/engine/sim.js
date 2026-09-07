@@ -137,6 +137,11 @@ export function createSim(opts) {
       const out = [];
       if (!mod || !mod.actions) return out;
       for (const type of Object.keys(mod.actions)) {
+        const def = mod.actions[type];
+        if (def && typeof def.menu === 'function') {      // parameterized actions enumerate themselves (focus {k}, fund {kind}, arch {id})
+          for (const a of (def.menu(sim) || [])) { const full = Object.assign({ type: type, era: n }, a); if (sim.can(full)) out.push(full); }
+          continue;
+        }
         if (type === 'buy' || type === 'pause') {
           for (const id of state.nodeOrder) {
             const node = state.nodes[id];

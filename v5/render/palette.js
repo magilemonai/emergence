@@ -66,6 +66,7 @@ export const RES = {
   axioms: { hue: '#ffcd6b', glyph: '⊢', era: 2, flavor: 'Truths banked forever, kept across runs.' },
   data: { hue: '#54d2ff', glyph: '◈', era: 3, flavor: 'Experience, stored for the machine to study.' },
   insight: { hue: '#6fe6a8', glyph: '◆', era: 3, flavor: 'The pattern beneath the noise.' },
+  trials: { hue: '#9fd6cc', glyph: '⌁', era: 3, flavor: 'One more pass over the data.' },
   capability: { hue: '#6ea8ff', glyph: '◈', era: 4, flavor: 'What the system can actually do.' },
   scale: { hue: '#b78bff', glyph: '✶', era: 5, flavor: 'How far past its start the system has climbed.' }
 };

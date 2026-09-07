@@ -55,6 +55,10 @@ Cross-era actions (reach-back) are actions on the TARGET era: `sim.apply({type:'
   (`available < demand`); reset to false every tick. The renderer blinks the pipe mouth red on it.
 - `sim.goal()` may be called per frame; era modules keep `goal()` O(1) (no scans of the log).
 
+- `sim.available()` enumerates parameterized actions through an optional `actions[type].menu(sim) → Action[]`
+  (partial actions without `type`/`era`; the sim fills those and filters by `can`). Every era with `focus`/`fund`/
+  `arch`/`aim`-style actions provides `menu` so bots and the mirror can see the whole board.
+
 ## Determinism rules (tested)
 - No `Date`, `Math.random`, `performance`, timers, or DOM in `engine/`.
 - Iteration order is insertion order (never `for…in` over objects whose insertion order isn't controlled).
