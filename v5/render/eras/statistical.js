@@ -57,7 +57,7 @@ const CSS = `
 .e3-fdy:disabled { opacity: 0.5; cursor: default; }
 .e3-fnm { font-weight: 600; }
 .e3-fcnt { color: var(--dim, #8fb5b0); }
-.e3-fcost { margin-left: auto; color: var(--dimmer, #5f8a86); font-size: 10px; }
+.e3-fcost { margin-left: auto; color: var(--dimmer, #5f8a86); font-size: 10px; white-space: nowrap; }
 .e3-sbtn { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 8px 10px; border-radius: 10px; cursor: pointer; text-align: left;
   color: var(--text); background: var(--panel-2); border: 1px solid var(--edge); }
 .e3-sbtn:hover { border-color: var(--accent); }
@@ -325,7 +325,7 @@ export function createStatisticalView(opts) {
     let amount = Infinity; try { amount = sim.costOf ? sim.costOf('foundry', n) : Infinity; } catch (e) { amount = Infinity; }
     const res = f && f.cost ? f.cost.res : '';
     setTxt(fCnt, '×' + (f ? f.count : 0));
-    setTxt(fCost, isFinite(amount) && res ? fmt(amount) + ' ' + res + ' · BUILD' + (n > 1 ? ' ×' + n : '') : 'BUILD');
+    setTxt(fCost, isFinite(amount) && res ? fmt(amount) + ' ' + res + (n > 1 ? ' ×' + n : '') : '');   // the whole row is the build button
     setDis(fdy, !(f && !f.locked) || !sim.can(a));
   }
   function sync() {
