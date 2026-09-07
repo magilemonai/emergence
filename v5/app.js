@@ -132,7 +132,7 @@ async function boot() {
   const win = window, doc = document;
   const ASSETS = win.__V5_ASSETS || '../assets/';
   // a module that exists but fails to parse must be LOUD: a swallowed import once hid a syntax error from every probe
-  const tryImport = async (p) => { try { return await import(p); } catch (e) { if (!/Failed to fetch|404|Cannot find module|Failed to resolve/i.test(String(e && e.message))) console.error('v5 import failed: ' + p, e); return null; } };
+  const tryImport = async (p) => { try { return await import(p); } catch (e) { if (!/Failed to fetch|404|Cannot find module|Failed to resolve/i.test(String(e && e.message))) console.error('v5 module failed to load: ' + p, e); return null; } };
 
   const eras = [], viewMods = {};
   for (const f of ERA_FILES) {
