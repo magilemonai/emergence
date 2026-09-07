@@ -6,9 +6,13 @@
 <script>
 // version switch: /emergence/?v=4 → the v4 build ("The Substrate Remembers"), anything else → the live v3 Flow Board.
 // Each version keeps its own save (different localStorage keys), so flipping between them is safe.
+// V5_ENABLED stays false until the orchestrator flips it; while it is false, ?v=5 lands on v3 like any
+// unknown value, so nothing changes for players (WO-11).
+var V5_ENABLED = false;
 (function () {
   var q = new URLSearchParams(location.search), v = String(q.get('v') || q.get('version') || '').toLowerCase().replace(/^v/, '');
   var map = { '4': 'emergence-v4.html', '3': 'emergence.html' };
+  if (V5_ENABLED) map['5'] = 'v5/index.html';
   location.replace((map[v] || 'emergence.html') + location.hash);
 })();
 </script>
