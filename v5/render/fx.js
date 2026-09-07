@@ -24,7 +24,7 @@ function jogOf(key) { let h = 0; for (let i = 0; i < key.length; i++) h = (h * 3
  */
 export function rupture(opts) {
   const world = opts.world, hud = opts.hud, sim = opts.sim, reduced = !!opts.reduced;
-  const doc = hud.root.ownerDocument, win = doc.defaultView;
+  const doc = opts.doc || hud.root.ownerDocument, win = doc.defaultView;   // opts.doc lets the node test drive a stub
   const canvas = doc.getElementById('world');
   const layer = hud.plateLayer;
   ensureStyle(doc);
