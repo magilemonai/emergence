@@ -59,6 +59,13 @@ Cross-era actions (reach-back) are actions on the TARGET era: `sim.apply({type:'
   (partial actions without `type`/`era`; the sim fills those and filters by `can`). Every era with `focus`/`fund`/
   `arch`/`aim`-style actions provides `menu` so bots and the mirror can see the whole board.
 
+- `sim.replay(seed, log)` rebuilds from the seed, the LOGGED actions, and deterministic ticks. Nothing else is
+  replayed: a direct `sim.openEra(n)` or a state poke (scenes, tests, dev) is outside the log by design. In play, every
+  stratum opens through a logged action (Origins `fabricate` → `openEra(2)`) or a tick-driven threshold, so real runs
+  replay byte-identically (wo03-symbolic-extra proves it across the handoff). Tests of replay reach an era via actions.
+- Rail rates are NET (`state.rates[res]`, the graph's opening-to-closing delta). A sink that drains a bank as fast as it
+  fills reads `0/s` on the rail; the sink's own card carries the draw (Symbolic: the proof card shows the inference rate).
+
 ## Determinism rules (tested)
 - No `Date`, `Math.random`, `performance`, timers, or DOM in `engine/`.
 - Iteration order is insertion order (never `for…in` over objects whose insertion order isn't controlled).

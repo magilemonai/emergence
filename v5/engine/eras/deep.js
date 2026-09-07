@@ -123,7 +123,8 @@ function restatePorts(sim) {
   const src = sim.node('node');
   if (src && src.outputs[0]) {
     const c = C(sim), chain = 1 + c.chainPerFoundry * ((sim.node('foundry') || { count: 0 }).count || 0);
-    src.outputs[0].rate = breadth(sim) * c.nodeCompute * c.capRate * throttleOf(sim) * chain;
+    // v4 parity: the count milestone on Compute Nodes multiplies Capability too (K.tierMult on computeRate)
+    src.outputs[0].rate = breadth(sim) * c.nodeCompute * tierMult(c, src.count) * c.capRate * throttleOf(sim) * chain;
   }
 }
 
