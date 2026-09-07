@@ -47,6 +47,14 @@ export default {
 Actions are named per era; the shared ones every era exposes: `buy {node, n}`, `pause {node, on}`.
 Cross-era actions (reach-back) are actions on the TARGET era: `sim.apply({type:'buy', era:1, node:'foundry', n:1})`.
 
+## Pinned semantics (rulings after Phase A)
+- `NodeDef.pos` is STRATUM-LOCAL: x ∈ [0,1180], y ∈ [0,700) measured from the stratum top. The renderer lifts it:
+  world = `{x: pos.x, y: stratumTop(node.era) + pos.y}` (`render/world.js` `worldPosOf`). `EraModule.layout.anchors`
+  holds the same local coordinates and is the source the era's `install` copies into each node's `pos`.
+- `Edge.starved` is set by the graph pass: true for the tick in which that input port could not meet its demand
+  (`available < demand`); reset to false every tick. The renderer blinks the pipe mouth red on it.
+- `sim.goal()` may be called per frame; era modules keep `goal()` O(1) (no scans of the log).
+
 ## Determinism rules (tested)
 - No `Date`, `Math.random`, `performance`, timers, or DOM in `engine/`.
 - Iteration order is insertion order (never `for…in` over objects whose insertion order isn't controlled).

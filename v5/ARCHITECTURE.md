@@ -51,7 +51,8 @@ v5/
   Rendering keeps its own ephemeral caches; nothing in State is DOM.
 - **Nodes** (`NodeDef`) are typed: `source` (outputs only), `converter` (inputs → outputs, per unit per second),
   `store` (a visible stock: a Resource's bank), `sink` (inputs only), `goal` (progress meter). A node has `count`,
-  `paused`, a `pos` in world units, `era`, and `mult` (named multipliers, product applied to its rates).
+  `paused`, a `pos` in STRATUM-LOCAL units (the renderer lifts it by `stratumTop(era)`), `era`, and `mult`
+  (named multipliers, product applied to its rates).
 - **Edges** are derived: every converter/sink input port connects from the resource's `store` node of the nearest
   stratum that has one; every output port connects to the store of its resource (the store's stratum = where the
   resource was introduced). Cross-stratum edges are `riser` edges (rendered in the riser channels). `edge.flow` is

@@ -36,6 +36,9 @@ export function passOrder(state) {
 export function deriveEdges(state) {
   const edges = [];
   const index = { in: {}, out: {}, order: [] };
+  // keep each edge's live fields (flow, starved) across a rebuild: restore() and addNode() must not zero the particles
+  const prev = {}; for (const e of (state.edges || [])) prev[e.from + '|' + e.to + '|' + e.res] = e;
+  const keep = (e) => { const p = prev[e.from + '|' + e.to + '|' + e.res]; if (p) { e.flow = p.flow || 0; e.starved = !!p.starved; } return e; };
   const order = passOrder(state);
   for (const id of order) {
     const n = state.nodes[id];
@@ -45,7 +48,7 @@ export function deriveEdges(state) {
       if (!from) continue;
       const bag = index.in[id] || (index.in[id] = {});
       if (bag[p.res]) continue;
-      const e = { from: from, to: id, res: p.res, flow: 0, riser: state.nodes[from].era !== n.era };
+      const e = keep({ from: from, to: id, res: p.res, flow: 0, riser: state.nodes[from].era !== n.era, starved: false });
       edges.push(e);
       bag[p.res] = e;
     }
@@ -54,7 +57,7 @@ export function deriveEdges(state) {
       if (!to) continue;
       const bag = index.out[id] || (index.out[id] = {});
       if (bag[p.res]) continue;
-      const e = { from: id, to: to, res: p.res, flow: 0, riser: state.nodes[to].era !== n.era };
+      const e = keep({ from: id, to: to, res: p.res, flow: 0, riser: state.nodes[to].era !== n.era, starved: false });
       edges.push(e);
       bag[p.res] = e;
     }
@@ -84,7 +87,7 @@ export function multOf(node) {
 export function tickGraph(state, dt, index) {
   const idx = index || deriveEdges(state);
   const order = idx.order && idx.order.length ? idx.order : passOrder(state);
-  for (const e of state.edges) e.flow = 0;
+  for (const e of state.edges) { e.flow = 0; e.starved = false; }
   const opening = {};
   for (const r of Object.keys(state.stocks)) opening[r] = state.stocks[r];
 
@@ -110,6 +113,7 @@ export function tickGraph(state, dt, index) {
         if (!(demand > 0)) continue;
         const f = (state.stocks[p.res] || 0) / demand;
         if (f < factor) factor = f;
+        if (f < 0.999) { const se = idx.in[id] && idx.in[id][p.res]; if (se) se.starved = true; } // this input is short: the renderer blinks its mouth
       }
       if (!(factor > 0)) continue;
       if (factor > 1) factor = 1;
