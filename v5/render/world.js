@@ -82,13 +82,18 @@ export function createWorld(opts) {
   const state = { locked: 1, over: false, tSec: 0, anim: null, drag: null };
   const stats = { particles: 0, frameMs: 0, plates: 0, lod: 'full' };
   const routeCache = new Map();
+  // render source: what the canvas draws. Live play draws sim.state; the mirror and the film hand in another State
+  // (a shadow replay, a film frame) through setSource(fn). Camera locks and goals still read the live sim.
+  let srcFn = null;
+  const S = () => (srcFn ? (srcFn() || sim.state) : sim.state);
+  function setSource(fn) { srcFn = typeof fn === 'function' ? fn : null; routeCache.clear(); }
   const operated = new Set();   // era numbers whose pipes draw violet: the agent runs them now (fx.rupture fills it)
 
   function vp() { return { w: canvas.clientWidth || 1280, h: canvas.clientHeight || 800 }; }
   function strataRange() {
     let hi = 1, surface = false;
-    for (const id of sim.state.nodeOrder) {
-      const e = sim.state.nodes[id].era;
+    for (const id of S().nodeOrder) {
+      const e = S().nodes[id].era;
       if (e === 6) surface = true; else if (e > hi) hi = e;
     }
     return { lo: 1, hi: surface ? 6 : hi };
@@ -191,7 +196,7 @@ export function createWorld(opts) {
     const key = edge.from + '>' + edge.to;
     let poly = routeCache.get(key);
     if (!poly) {
-      const A = sim.state.nodes[edge.from], B = sim.state.nodes[edge.to];
+      const A = S().nodes[edge.from], B = S().nodes[edge.to];
       if (!A || !B) return null;
       let h = 0; for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
       const jog = ((h % 7) - 3) * 11;   // a stable per-edge offset, so bundles fan out
@@ -208,12 +213,12 @@ export function createWorld(opts) {
     ctx.translate(v.w / 2 - camera.x * camera.zoom, v.h / 2 - camera.y * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
     ctx.lineWidth = 1;
-    for (const edge of sim.state.edges) {
+    for (const edge of S().edges) {
       const poly = polyFor(edge); if (!poly) continue;
       const s0 = worldToScreen(poly[0], camera, v), s1 = worldToScreen(poly[poly.length - 1], camera, v);
       const lo = Math.min(s0.y, s1.y), hi = Math.max(s0.y, s1.y);
       if (hi < -60 || lo > v.h + 60) continue;                 // cull whole pipes off screen
-      const src = sim.state.nodes[edge.from];
+      const src = S().nodes[edge.from];
       const hue = operated.size && src && operated.has(src.era) ? OPERATED_HUE : resHue(edge.res);
       n += drawPipe(ctx, poly, hue, edge.flow, state.tSec, lod, { starved: !!edge.starved, pxScale: 1 / camera.zoom });
     }
@@ -225,13 +230,13 @@ export function createWorld(opts) {
     ctx.save();
     ctx.translate(v.w / 2 - camera.x * camera.zoom, v.h / 2 - camera.y * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
-    for (const id of sim.state.nodeOrder) {
-      const node = sim.state.nodes[id]; if (!node || node.locked || node.hidden) continue;   // locked: nothing pre-laid
+    for (const id of S().nodeOrder) {
+      const node = S().nodes[id]; if (!node || node.locked || node.hidden) continue;   // locked: nothing pre-laid
       if (lod === 'full' && node.era === state.locked) continue;   // the DOM plate owns the locked stratum
       const p = worldPosOf(node);
       const s = worldToScreen(p, camera, v);
       if (s.x < -140 || s.x > v.w + 140 || s.y < -120 || s.y > v.h + 120) continue;
-      const info = node.kind === 'store' ? { stock: sim.state.stocks[node.res] } : (node.kind === 'goal' ? (sim.goal ? sim.goal(node.era) : null) : null);
+      const info = node.kind === 'store' ? { stock: S().stocks[node.res] } : (node.kind === 'goal' ? (sim.goal ? sim.goal(node.era) : null) : null);
       drawNodeGlyph(ctx, node, p, lod, info);
     }
     ctx.restore();
@@ -313,6 +318,7 @@ export function createWorld(opts) {
   return {
     camera, frame, lockTo, overview, plates, stats, scene, onDraw,
     operated,                 // Set<era>: pipes of these strata draw OPERATED_HUE (the agent runs them)
+    setSource,                // fn() => State | null: draw another State (mirror shadow, film frame); null = live
     get lod() { return state.over ? 'silhouette' : lodFor(camera.zoom); },
     zoomAt, worldPosOf,
     toScreen: (w) => worldToScreen(w, camera, vp()),

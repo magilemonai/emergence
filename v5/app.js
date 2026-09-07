@@ -10,7 +10,7 @@ import { createWorld } from './render/world.js';
 import { createHud } from './render/hud.js';
 import { SCENES } from './scenes/scenes.js';
 import { STRATA } from './render/palette.js';
-import { titleCard } from './render/fx.js';
+import { titleCard, rupture as fxRupture, operated as fxOperated } from './render/fx.js';
 
 export const ERA_FILES = ['origins', 'symbolic', 'statistical', 'deep', 'foundation', 'surface', 'mirror'];
 
@@ -254,15 +254,37 @@ async function boot() {
     if (view && view.deactivate) view.deactivate();
     view = null;
     if (curEra) hud.clearEra();
+    const from = curEra;
     curEra = n;
     loadEraCss(n);
     view = mountView(n);
     hud.finishRail();
-    world.lockTo(n, plan.lockAnimate);
-    if (plan.lockAnimate || !scene) showTitle(n);           // a screenshot scene boots without the card over it
+    syncOperated(n);
+    if (n === 6 && from === 5 && !ruptureFx) {
+      // the turn: a world event owns the camera for its length and IS the title (SPEC The turn 2); no card, no lock here
+      startRupture(null);
+    } else {
+      world.lockTo(n, plan.lockAnimate);
+      if (plan.lockAnimate || !scene) showTitle(n);           // a screenshot scene boots without the card over it
+    }
     if (audio) audio.setBed(n);
     if (view && view.sync) view.sync();
     return plan;
+  }
+
+  /* ---------- the turn: the shell starts the rupture and keeps the operated look in step with the state ---------- */
+  let ruptureFx = null;
+  function startRupture(holdMs) {
+    try {
+      ruptureFx = fxRupture({ world: world, hud: hud, sim: sim, audio: audio, reduced: reduced, doc: doc });
+      if (typeof holdMs === 'number' && ruptureFx && ruptureFx.hold) ruptureFx.hold(holdMs);
+    } catch (e) { ruptureFx = null; world.lockTo(6, true); }
+    return ruptureFx;
+  }
+  function syncOperated(n) {
+    const emerged = !!(sim.state.flags && sim.state.flags.emerged);
+    if (emerged) for (let k = 1; k <= 4; k++) world.operated.add(k);
+    try { fxOperated(emerged && n >= 1 && n <= 4, doc); } catch (e) { }
   }
 
   function applyScene(name) {
@@ -353,6 +375,7 @@ async function boot() {
     world.frame(0);
   }
   win.__V5 = {
+    rupture: startRupture,        // (holdMs?) starts the world event and freezes it at holdMs for a screenshot
     sim, world, hud, get view() { return view; }, scene, settle, applyScene, eras, buy,
     save, restart, switchEra, setPaused, get paused() { return paused; }, get audio() { return audio; },
     holdSave: (b) => { resetting = !!b; return resetting; },   // tools freeze persistence while they doctor a save
