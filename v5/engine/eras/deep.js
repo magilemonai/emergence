@@ -20,13 +20,13 @@ const FEED_RES = [
    node and its Capability bank, then the three furnaces the risers climb into. The instrument that steers
    them is the DOM plate below (render/eras/deep.js), so the band stays clear of it. */
 const ANCHORS = {
-  node: { x: 200, y: 190 },
-  'capability.store': { x: 380, y: 190 },
-  'run.vision': { x: 600, y: 190 },
-  'run.language': { x: 780, y: 190 },
-  'run.reasoning': { x: 960, y: 190 },
-  'data.store': { x: 600, y: 620 },
-  'insight.store': { x: 960, y: 620 },
+  node: { x: 260, y: 60 },
+  'capability.store': { x: 900, y: 60 },
+  'run.vision': { x: 330, y: 200 },
+  'run.language': { x: 590, y: 200 },
+  'run.reasoning': { x: 850, y: 200 },
+  'data.store': { x: 430, y: 560 },
+  'insight.store': { x: 850, y: 560 },
   generality: { x: 1150, y: 600 }
 };
 

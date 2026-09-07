@@ -36,7 +36,7 @@ export default {
     { id: 'distill', name: 'Distillation', glyph: '⇄', col: '#ffb15c', eff: 'DISTILL: peak run → lagging run', tip: '<i>Teach the small model what the big one knows.</i><br>Moves capability from your highest run to your lowest. Lossy, and usually right.' }
   ],
   // v4 parity: count milestones on the compute node (the shared incremental staple)
-  milestones: [10, 25, 50, 100], milestoneBonus: 0.25,
+  milestones: [10, 25, 50, 100], milestoneBonus: 0.25, buyModes: [1, 10, 25],
   // the one line it should not know
   oddBreadth: 0.6, oddDur: 9,
   seedNodes: 4, seedSilicon: 600, seedData: 200, seedInsight: 150, seedKnowledge: 150,
