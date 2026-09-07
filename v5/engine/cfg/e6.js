@@ -34,6 +34,7 @@ export default {
     diffCap: 24,        // improvements per stratum where the violet reaches full
     // the view
     holdOverview: 2,    // seconds in the overview before the camera follows the climb
+    zoom: 0.52,         // below the plate LOD on purpose: the replay is a read, so the column stays glyphs and pipes
     glowMin: 0.1, glowMax: 0.46, glowPulse: 0.09, pulseHz: 0.6,
     pipSize: 3
   }
