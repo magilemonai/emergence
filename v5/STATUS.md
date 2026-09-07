@@ -29,7 +29,7 @@
 ## Running right now (2026-09-07)
 WO-06 view pass · WO-07 mirror · WO-08 reveal/film · WO-13 QA — four Opus worktrees. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
 
-More for Fable's pass: plate BUILD button truncates under MAX ('BUILD ×…'); HUD dead-click counter → `flags.dead` (pin as UI telemetry outside replay); run-2 title-card subtitle from legacy (fx title-card section + voice); `installLegacyFx` sync is wired on era change.
+Fable's pass so far: plate BUILD label keeps its count under a multiplier (glyph) DONE; dead-click counter → `flags.dead` (pinned as UI telemetry) DONE; run-2 title-card subtitle from voice/legacy.js DONE; installLegacyFx synced on era change DONE. Left: full-arc play on the real UI (after WO-13), package, mobile statement.
 
 ## (earlier) Running (launched 2026-09-06, session 2)
 WO-03 Symbolic · WO-04 Statistical · WO-05 Deep · WO-09 audio — four Opus worktrees. When they return: acceptance per

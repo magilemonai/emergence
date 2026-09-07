@@ -336,6 +336,16 @@ async function boot() {
     } catch (e) { legacyWritten = true; }
   }
 
+  /* ---------- dead clicks: a press on the HUD that hits nothing actionable. UI telemetry only (CONTRACT): the surface's
+     ledger reads flags.dead; replay never reproduces it and comparisons strip it. The world canvas is not counted (panning). */
+  const ACTIONABLE = 'button, input, select, textarea, a, label, [role="button"], .v5set';
+  const hudRoot = doc.getElementById('hud');
+  if (hudRoot) hudRoot.addEventListener('pointerdown', (e) => {
+    if (!e.target || !e.target.closest || e.target.closest(ACTIONABLE)) return;
+    if (!e.target.closest('.col, .rail, .plate-layer')) return;         // toasts and tips are not surfaces you press
+    const f = sim.state.flags; f.dead = (f.dead || 0) + 1;
+  });
+
   /* ---------- keys: the strata jumps, the verbs, the drawer, the settings ---------- */
   doc.addEventListener('keydown', (e) => {
     if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;

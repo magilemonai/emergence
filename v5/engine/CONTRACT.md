@@ -71,6 +71,9 @@ Cross-era actions (reach-back) are actions on the TARGET era: `sim.apply({type:'
   for every stratum below it. Pipes then carry the faster throughput (edge.flow is per WALL second), so the lower strata
   visibly speed up. Rail rates stay per wall second. Nothing else scales time.
 
+- `state.flags.dead` is UI telemetry: the shell increments it on a press that hits nothing actionable. It is the one
+  field replay does not reproduce; tests and the mirror compare states with `flags.dead` stripped (like `log`).
+
 ## Determinism rules (tested)
 - No `Date`, `Math.random`, `performance`, timers, or DOM in `engine/`.
 - Iteration order is insertion order (never `for…in` over objects whose insertion order isn't controlled).
