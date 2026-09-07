@@ -59,7 +59,9 @@ Cross-era actions (reach-back) are actions on the TARGET era: `sim.apply({type:'
 
 - `sim.available()` enumerates parameterized actions through an optional `actions[type].menu(sim) → Action[]`
   (partial actions without `type`/`era`; the sim fills those and filters by `can`). Every era with `focus`/`fund`/
-  `arch`/`aim`-style actions provides `menu` so bots and the mirror can see the whole board.
+  `arch`/`aim`-style actions provides `menu` so bots and the mirror can see the whole board. As of 2026-09-07 every
+  parameterized action ships one (discover, commission, hands, refine, aim, resolve, focus, fund, alloc, lock, hold, supply,
+  arch, buyNode, rate, cap, respond); `wo00-menus.test.js` pins it and that every enumerated action is applicable.
 
 - `sim.replay(seed, log)` rebuilds from the seed, the LOGGED actions, and deterministic ticks. Nothing else is
   replayed: a direct `sim.openEra(n)` or a state poke (scenes, tests, dev) is outside the log by design. In play, every

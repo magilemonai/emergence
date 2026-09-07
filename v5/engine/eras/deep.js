@@ -331,11 +331,18 @@ const deep = {
       apply(sim, a) { sim.node(a.node).paused = !!a.on; }
     },
     buyNode: {
+      menu() { return [{ n: 1 }]; },
       can(sim, a) { return deep.actions.buy.can(sim, { node: 'node', n: a && a.n }); },
       apply(sim, a) { deep.actions.buy.apply(sim, { node: 'node', n: a && a.n }); }
     },
     /** the mixer: three weights, floored so no run is ever starved of the budget entirely */
     alloc: {
+      menu(sim) {   // balanced, then each run leading (70 / 15 / 15): enough for a bot or the mirror to steer
+        const ks = KEYS(sim), out = [];
+        const bal = {}; for (const k of ks) bal[k] = 1; out.push(bal);
+        for (const lead of ks) { const a = {}; for (const k of ks) a[k] = k === lead ? 0.7 : 0.15; out.push(a); }
+        return out;
+      },
       can(sim, a) {
         if (!a) return false;
         for (const k of KEYS(sim)) if (typeof a[k] !== 'number' || !isFinite(a[k]) || a[k] < 0) return false;
@@ -353,6 +360,7 @@ const deep = {
       }
     },
     lock: {
+      menu(sim) { return KEYS(sim).map((k) => ({ run: k })); },
       can(sim, a) {
         const e = E(sim);
         if (!a || !a.run || !(a.run in e.locks) || e.locks[a.run] > 0) return false;
@@ -368,11 +376,13 @@ const deep = {
     },
     /** the other half of the Knowledge story: the crafts that burn it, pausable from up here */
     hold: {
+      menu() { return [{ on: true }, { on: false }]; },
       can(sim, a) { return !!a && typeof a.on === 'boolean' && holdOn(sim) !== a.on; },
       apply(sim, a) { for (const h of C(sim).holdNodes) { const n = sim.node(h.node); if (n) n.paused = !!a.on; } }
     },
     /** build-here: a real node on a lower stratum, bought from up here and paid for in Silicon */
     supply: {
+      menu(sim) { return C(sim).supply.map((s) => ({ key: s.key, n: 1 })); },
       can(sim, a) {
         const s = a && supplyDef(sim, a.key);
         if (!s || !sim.node(s.node)) return false;
@@ -389,6 +399,7 @@ const deep = {
       }
     },
     arch: {
+      menu(sim) { return ['stabilizer'].concat(Object.keys(C(sim).arch)).map((id) => ({ id: id })); },
       can(sim, a) {
         if (!a || !a.id || !C(sim).arch[a.id] && a.id !== 'stabilizer') return false;
         if (archOwned(sim, a.id)) return false;

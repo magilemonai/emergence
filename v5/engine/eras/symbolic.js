@@ -354,6 +354,7 @@ const symbolic = {
       apply(sim, a) { sim.node(a.node).paused = !!a.on; retarget(sim); }
     },
     aim: {
+      menu(sim) { return theoremItems(sim).map((id) => ({ id: id })); },
       can(sim, a) {
         const e = E(sim);
         if (e.flags.symbolicDone) return false;
@@ -394,6 +395,7 @@ const symbolic = {
       }
     },
     resolve: {
+      menu() { return [{ side: 'fwd' }, { side: 'bwd' }]; },
       can(sim) { return !!E(sim).contra; },
       apply(sim, a) {
         const c = C(sim), e = E(sim), fwd = !a || a.side !== 'bwd';

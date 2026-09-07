@@ -299,6 +299,7 @@ const origins = {
       apply(sim, a) { sim.node(a.node).paused = !!a.on; }
     },
     discover: {
+      menu(sim) { return C(sim).disco.filter((n) => discoVisible(sim, n)).map((n) => ({ id: n.id })); },
       can(sim, a) { return a && a.id ? canDisco(sim, discoDef(sim, a.id)) : !!firstReady(sim); },
       apply(sim, a) {
         const e = E(sim), n = a && a.id ? discoDef(sim, a.id) : firstReady(sim);
@@ -310,6 +311,7 @@ const origins = {
       }
     },
     commission: {
+      menu() { return [{ accept: true }, { accept: false }]; },
       can(sim, a) {
         const e = E(sim);
         if (!e.comm || typeof a.accept !== 'boolean') return false;
@@ -330,10 +332,12 @@ const origins = {
       }
     },
     hands: {
+      menu() { return [{ lever: 0 }, { lever: 0.5 }, { lever: 1 }]; },
       can(sim, a) { return typeof a.lever === 'number' && a.lever >= 0 && a.lever <= 1; },
       apply(sim, a) { E(sim).lever = a.lever; restate(sim); }
     },
     refine: {
+      menu() { return [{ n: 1 }]; },
       can(sim, a) {
         const c = C(sim), e = E(sim), k = Math.max(1, Math.floor((a && a.n) || 1));
         return sim.stock('ore') >= refineCost(c, e.refine, k);

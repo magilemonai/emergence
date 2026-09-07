@@ -277,6 +277,7 @@ const statistical = {
       apply(sim) { runExperiment(sim, 1, true); }
     },
     focus: {
+      menu(sim) { return Object.keys(C(sim).focus).map((k) => ({ k: k })); },
       can(sim, a) {
         const c = C(sim), e = E(sim);
         if (!a || typeof a.k !== 'string' || !c.focus[a.k] || e.focus === a.k) return false;
@@ -303,6 +304,7 @@ const statistical = {
       }
     },
     fund: {
+      menu() { return ['method', 'calibrate', 'sweep', 'distill'].map((kind) => ({ kind: kind })); },
       can(sim, a) {
         if (!a || typeof a.kind !== 'string' || E(sim).done) return false;
         const c = expCost(sim, a.kind);
