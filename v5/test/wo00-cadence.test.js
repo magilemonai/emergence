@@ -7,7 +7,7 @@ import origins from '../engine/eras/origins.js';
 export async function run(t) {
   const seen = [];
   const probe = { id: 9, name: 'Probe', height: 700, install() {}, open() {}, tick(sim, dt) { seen.push(dt); }, actions: {}, goal() { return { progress: 0, ready: false, label: '' }; }, voice() { return null; }, layout: { anchors: {}, verbs: [], goal: '' }, done() { return false; } };
-  const mk = () => { const s = createSim({ cfg, eras: [origins, probe], seed: 3, legacy: null }); const sc = s.state.nodes.scribe; sc.locked = false; sc.count = 10; sc.outputs = [{ res: 'marks', rate: 1 }]; return s; };   // the scribe is a discovery in play; here it is just a live source
+  const mk = () => { const s = createSim({ cfg, eras: [origins, probe], seed: 3, legacy: null }); const sc = s.state.nodes.scribe; sc.locked = false; sc.count = 10; sc.outputs = [{ res: 'marks', rate: 1 }]; s.restore(s.snapshot()); return s; };   // restore rebuilds the edge index   // the scribe is a discovery in play; here it is just a live source
   const live = mk(); const m0 = live.state.stocks.marks; for (let i = 0; i < 10; i++) live.tick(0.1); const base = live.state.stocks.marks - m0;
   const fast = mk(); fast.setCadence(1, 1.6); const m1 = fast.state.stocks.marks; for (let i = 0; i < 10; i++) fast.tick(0.1); const quick = fast.state.stocks.marks - m1;
   t.ok(base > 0 && Math.abs(quick / base - 1.6) < 1e-6, 'an era at cadence 1.6 produces 1.6x per wall second');
