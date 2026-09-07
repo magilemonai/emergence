@@ -32,6 +32,13 @@ the odd rule #4471, the one-Ruleset gate until Formal Logic, hand-written rules 
 - Layout anchors: rules.store 300,120 · ruleset 500,120 · inference.store 700,120 · proof 900,120 · daemon 300,230;
   theorem plates in a 3×3 grid from (300,330). Goal `expert` right column with the path checklist (5 steps).
 
+## Pure exports the acceptance test imports (in addition to the EraModule default export)
+`symbolic.done(sim)`, `symbolic.layout`, `symbolic.height`. Named node ids: `rules.store`, `inference.store`,
+`axioms.store`, `ruleset` (converter, input knowledge riser 0.02 + rules → inference), `daemon` (source of rules),
+`proof` (sink of inference; draws only while `activeProof`). Action names: `writeRule`, `buy`, `pause`, `aim {id}`,
+`compile`, `resolve {side:'fwd'|'bwd'}`, `prove`. Era state at `state.eras[2]`: `tech`, `activeProof`, `proofAcc`,
+`runRules`, `contra {a,b,odd}`, `contraN`, `paraFwd/paraBwd`, `flags.compile`, `flags.symbolicDone`.
+
 ## Acceptance
 `node v5/test.js` green (wo03: gate = one ruleset until formalLogic; hand-click advances proof; 2nd contradiction
 = odd rule; compile clears + banks; parity with v4 stats within 2%). Scenes shot + READ, pageScroll 0, perf ≤ 6ms.

@@ -12,8 +12,7 @@ export async function run(t) {
   t.ok(S.nodes.dataset.count >= cfg.e3.seedDatasets, 'open() seeds datasets');
   // trials + focus + policy
   S.stocks.data = 1000; const a0 = E.accuracy; t.ok(sim.apply({ type: 'trial' }).ok && E.accuracy > a0, 'a trial raises accuracy');
-  E.gap = 0.3; t.ok(sim.policy ? true : true, 'policy exposed on the module or via voice'); 
-  t.ok(statistical.policy(sim) === 'generalize', 'policy: wide gap → generalize');
+  E.gap = 0.3; t.ok(statistical.policy(sim) === 'generalize', 'policy: wide gap → generalize');
   E.gap = 0.02; S.stocks.data = 0; E.survey = 10; t.ok(statistical.policy(sim) === 'explore', 'policy: method out of reach + low survey → explore');
   S.stocks.data = 1e6; t.ok(statistical.policy(sim) === 'fit', 'policy: otherwise fit');
   // prediction from the log with the dwell rule

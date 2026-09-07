@@ -26,6 +26,15 @@ scenes (`stat-early`, `stat-shift`, `stat-autopilot`, `stat-drifting`), `v5/test
   the supply-bus button "Silicon from Origins →" that `lockTo(1)`s the camera.
 - Voice era 3: `it expects: <FOCUS>` (ghost tag on the segment), `it has learned you` (once).
 
+## Pure exports the acceptance test imports
+`statistical.policy(sim)` → 'fit'|'generalize'|'explore'; `statistical.done(sim)`; `layout`; `height`. Node ids:
+`data.store`, `insight.store`, `dataset` (converter silicon→data), `model` (converter data (+silicon) → insight;
+its trials go through `runExperiment`). Actions: `trial`, `focus {k}` ('fit'|'generalize'|'explore'|'auto', with
+the predDwell rule; prediction reads the last 16 `focus` actions from `state.log`), `buy`, `pause`, `fund {kind}`
+('method'|'calibrate'|'sweep'|'distill'), `generalize`. Era state at `state.eras[3]`: `accuracy`, `gap`, `focus`,
+`survey`, `methods`, `utilLvl`, `shifts`, `dataPhase`, `trials`, `pred`, `predN`, `predHits`, `predStreak`,
+`flags.autopilot`; `state.flags.autopilotUsed`, `state.flags.oddPoint`.
+
 ## Acceptance
 `node v5/test.js` green (wo04: policy, prediction from the log, dwell, autopilot unlock, drift after shift 2, badge
 rule). Scenes shot + READ; pageScroll 0; the Autopilot scene keeps the drawer button in view; perf ≤ 6ms.
