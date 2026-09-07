@@ -15,3 +15,6 @@ KittyCapture/
 
 # v4 packaged artifact (EMG_SHELL=emergence-v4.html EMG_KIT=v4-kit node tools/build-single.js)
 emergence-v4-single.html
+
+# v5 packaged artifact (EMG_V5=1 node tools/build-single.js emergence-v5-single.html)
+emergence-v5-single.html

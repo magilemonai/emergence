@@ -157,7 +157,7 @@ async function boot() {
   const legacyMod = await tryImport('./engine/legacy.js');           // WO-10 builds it; the shell only calls it
   const legacyRec = readJSON(LEGACY_KEY);
   const sim = createSim({ cfg: cfg, eras: eras, seed: 1, legacy: legacyRec });
-  if (legacyMod && legacyMod.applyToFresh) { try { legacyMod.applyToFresh(sim, legacyRec); } catch (e) { } }
+  if (legacyMod && legacyMod.applyToFresh) { try { legacyMod.applyToFresh(sim.state, legacyRec); } catch (e) { } }   // the legacy API takes the State
 
   let away = null;
   if (!scene) {
@@ -203,6 +203,9 @@ async function boot() {
     starved: (n) => sim.state.edges.some((e) => e.to === n.id && e.starved)
   });
   world.setHud(hud);
+  // WO-10: run 2 shows the surface layer dark above Foundation from the first mark, and a `?` key lifts the camera to it
+  let legacyFx = null;
+  try { const fxMod = await import('./render/fx.js'); if (fxMod.installLegacyFx) legacyFx = fxMod.installLegacyFx({ world: world, sim: sim, doc: doc }); } catch (e) { legacyFx = null; }
 
   /* ---------- audio: silent until a gesture, three knobs, the bed follows the stratum ---------- */
   let audio = null;
@@ -300,9 +303,10 @@ async function boot() {
   function checkEnding() {
     if (legacyWritten || !legacyMod || !legacyMod.fromRun) return;
     const f = sim.state.flags || {};
-    if (!f.ending && !f.ended) return;
+    const e7 = sim.state.eras && sim.state.eras[7];
+    if (!f.ending && !f.ended && !(e7 && e7.ending)) return;   // the mirror (era 7) writes eras[7].ending
     try {
-      const rec = legacyMod.fromRun(sim, legacyRec);
+      const rec = legacyMod.fromRun(sim.state, legacyRec);
       if (rec) { store.setItem(LEGACY_KEY, JSON.stringify(rec)); legacyWritten = true; }
     } catch (e) { legacyWritten = true; }
   }
@@ -329,7 +333,7 @@ async function boot() {
     last = now;
     if (!paused) {
       sim.tick(dt);
-      if (sim.state.era !== curEra) switchEra(sim.state.era);
+      if (sim.state.era !== curEra) { switchEra(sim.state.era); if (legacyFx && legacyFx.sync) { try { legacyFx.sync(); } catch (e) { } } }
       sinceSave += dt;
       if (sinceSave >= AUTOSAVE_S) { sinceSave = 0; save(); }
       checkEnding();
