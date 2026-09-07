@@ -5,6 +5,8 @@ export default {
   datasetCost: 30, datasetGrowth: 1.16, datasetYield: 1.2,
   // v5: a Dataset is a converter now, so the Silicon it eats is a real pipe from Origins (v4 spent it only at build)
   datasetSilicon: 0.12,
+  // build-here: a real Origins Foundry bought from this stratum, paid in Silicon (Deep's bus uses the same shape)
+  supply: { foundry: { cost: 60, growth: 1.2 } },
   modelCost: 90, modelGrowth: 1.2, expPerModel: 0.3,
   modelSilicon: 0.05, expDataCost: 4, accGain: 0.0026, insightPerExp: 2,
   gapGrow: 0.0023, gapReduce: 0.0046, gapMax: 0.6,

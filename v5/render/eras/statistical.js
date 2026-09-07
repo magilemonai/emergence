@@ -11,6 +11,7 @@ import { stratumTop } from '../../engine/types.js';
 import {
   stats, effAccuracy, expCost, nextMethod, boardCards, surveyDisc, predicting,
   focusKey, HIDDEN_PLATES, PLOT_RECT, TRACK_RECT
+  foundrySupplyCost,
 } from '../../engine/eras/statistical.js';
 
 /** the world rect the instrument occupies: the plot band plus the track under it */
@@ -152,11 +153,11 @@ export function createStatisticalView(opts) {
   const fNm = el('e3-fnm'); setTxt(fNm, 'Foundry');
   const fCnt = el('e3-fcnt'); const fCost = el('e3-fcost');
   fdy.appendChild(fNm); fdy.appendChild(fCnt); fdy.appendChild(fCost);
-  fdy.setAttribute('data-tip', '<b>Foundry</b><br><i>Built where it stands, in Origins. Its Silicon climbs the riser to your Datasets.</i>');
+  fdy.setAttribute('data-tip', '<b>Foundry</b><br><i>Built where it stands, in Origins. Its Silicon climbs the riser to your Datasets.</i><br>Paid in Silicon. Pause a Dataset to bank it.');
   sup.appendChild(fdy);
   hud.goalAside(sup);
   supBtn.addEventListener('click', () => { if (opts.jump && opts.jump(1)) return; world.lockTo(1, true); });   // go and build it: the view follows
-  fdy.addEventListener('click', () => sim.apply({ type: 'buy', era: 1, node: 'foundry', n: buy.n }));
+  fdy.addEventListener('click', () => sim.apply({ type: 'supply', era: 3, n: buy.n }));
   setVar(hud.goalBox, '--tease', STRATA[4].accent);          // the goal wakes in Deep's cobalt
 
   /* ---------- the EXPERIMENTS drawer: three cards, built once, retargeted in place ---------- */
@@ -321,12 +322,11 @@ export function createStatisticalView(opts) {
   let snapped = false;
   function syncFoundry() {
     const f = sim.node('foundry'), n = buy.n;
-    const a = { type: 'buy', era: 1, node: 'foundry', n: n };
-    let amount = Infinity; try { amount = sim.costOf ? sim.costOf('foundry', n) : Infinity; } catch (e) { amount = Infinity; }
-    const res = f && f.cost ? f.cost.res : '';
+    const a = { type: 'supply', era: 3, n: n };
+    const amount = foundrySupplyCost(sim, n);
     setTxt(fCnt, '×' + (f ? f.count : 0));
-    setTxt(fCost, isFinite(amount) && res ? fmt(amount) + ' ' + res + (n > 1 ? ' ×' + n : '') : '');   // the whole row is the build button
-    setDis(fdy, !(f && !f.locked) || !sim.can(a));
+    setTxt(fCost, isFinite(amount) ? fmt(amount) + ' silicon' + (n > 1 ? ' ×' + n : '') : '');   // the whole row is the build button
+    setDis(fdy, !sim.can(a));
   }
   function sync() {
     syncFoundry();

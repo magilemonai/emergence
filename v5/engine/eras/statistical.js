@@ -87,6 +87,15 @@ export function nextMethod(sim) {
 export function utilDef(sim, id) { for (const u of C(sim).utils) if (u.id === id) return u; return null; }
 /** Explore trials survey the space; the survey discounts every card, and funding one spends it */
 export function surveyDisc(sim) { return 1 - C(sim).surveyDiscount * (E(sim).survey || 0) / 100; }
+/** the build-here Foundry price: geometric in the Foundry's own count, paid in Silicon (mirrors Deep's supply bus) */
+export function foundrySupplyCost(sim, n) {
+  const c = C(sim).supply && C(sim).supply.foundry, f = sim.node('foundry');
+  if (!c || !f) return Infinity;
+  const k = Math.max(1, Math.floor(n || 1));
+  let sum = 0;
+  for (let i = 0; i < k; i++) sum += Math.floor(c.cost * Math.pow(c.growth, f.count + i));
+  return sum;
+}
 export function expCost(sim, kind) {
   const c = C(sim), e = E(sim);
   if (kind === 'method') {
@@ -301,6 +310,21 @@ const statistical = {
           S.flags.autopilot = true;
           e.learnedAt = S.t;
         }
+      }
+    },
+    supply: {
+      menu() { return [{ n: 1 }]; },
+      can(sim, a) {
+        const f = sim.node('foundry');
+        if (!f || f.locked || E(sim).done) return false;
+        return sim.stock('silicon') >= foundrySupplyCost(sim, a && a.n);
+      },
+      apply(sim, a) {
+        const k = Math.max(1, Math.floor((a && a.n) || 1)), f = sim.node('foundry');
+        sim.state.stocks.silicon -= foundrySupplyCost(sim, k);
+        f.count += k;
+        const m1 = sim.cfg.e1;   // the shared count milestone on the node it just grew
+        if (m1 && m1.milestones) sim.setMult('foundry', 'milestone', 1 + (m1.milestoneBonus || 0.25) * m1.milestones.filter((x) => f.count >= x).length);
       }
     },
     fund: {
