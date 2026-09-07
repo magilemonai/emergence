@@ -164,7 +164,8 @@ const TITLE_CSS = `
   .v5-title { animation: v5TitleFade 2.2s linear forwards; }
   @keyframes v5TitleFade { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 }
-`;
+
+.v5-title .v5-title-sub { margin-top: 8px; font-family: var(--mono, ui-monospace, monospace); font-size: 12px; letter-spacing: 0.22em; color: #c9adf5; opacity: 0.85; text-transform: uppercase; }`;
 
 /** injectCss(doc, id, css): one style tag per section, added once, never at import time */
 export function injectCss(doc, id, css) {
@@ -202,6 +203,7 @@ export function titleCard(opts) {
   nm.textContent = String(o.name || '').toUpperCase();
   if (o.font) nm.style.fontFamily = o.font;
   wrap.appendChild(sig); wrap.appendChild(num); wrap.appendChild(nm);
+  if (o.sub) { const sb = doc.createElement('div'); sb.className = 'v5-title-sub'; sb.textContent = String(o.sub); wrap.appendChild(sb); }   // run 2: the card is subtly wrong
   host.appendChild(wrap);
 
   const ms = typeof o.ms === 'number' ? o.ms : TITLE_MS;

@@ -178,7 +178,7 @@ export function createPlates(layer, sim, opts) {
 
       const c = costOf(node);
       const afford = c ? (st.stocks[c.res] || 0) >= c.amount : false;
-      setTxt(P.buy, c ? fmt(c.amount) + ' ' + c.res + ' · BUILD' + (c.n > 1 ? ' ×' + c.n : '') : '');
+      setTxt(P.buy, c ? (c.n > 1 ? fmt(c.amount) + ' ' + resGlyph(c.res) + ' · BUILD ×' + c.n : fmt(c.amount) + ' ' + c.res + ' · BUILD') : '');   // under ×10/×25/MAX the glyph keeps the count on the button
       setStyle(P.buy, 'display', c ? '' : 'none');
       setDis(P.buy, !afford);
       setCls(P.buy, 'buy' + (afford ? ' ok' : ''));

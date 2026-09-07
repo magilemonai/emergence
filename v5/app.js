@@ -11,6 +11,7 @@ import { createHud } from './render/hud.js';
 import { SCENES } from './scenes/scenes.js';
 import { STRATA } from './render/palette.js';
 import { titleCard, rupture as fxRupture, operated as fxOperated } from './render/fx.js';
+import VOICE from './engine/voice.js';
 
 export const ERA_FILES = ['origins', 'symbolic', 'statistical', 'deep', 'foundation', 'surface', 'mirror'];
 
@@ -244,7 +245,9 @@ async function boot() {
   function showTitle(n) {
     if (world.titleCard) return world.titleCard(n);                    // the world may own the card later
     const p = STRATA[n] || STRATA[1];
-    return titleCard({ doc: doc, era: n, name: (byId[n] && byId[n].name) || p.name, font: p.font, reduced: reduced });
+    const f = sim.state.flags || {}, L = sim.state.legacy;
+    const sub = f.run2 && VOICE.legacy ? VOICE.legacy.remembers(L && L.name) + ' · ' + VOICE.legacy.run(f.runN) : null;
+    return titleCard({ doc: doc, era: n, name: (byId[n] && byId[n].name) || p.name, font: p.font, reduced: reduced, sub: sub });
   }
 
   /** switchEra(n): the whole handoff, in the order eraSwitchPlan names */
