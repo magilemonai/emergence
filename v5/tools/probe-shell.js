@@ -161,6 +161,15 @@ const ok = (name, pass, detail) => { checks.push({ name, pass: !!pass, detail: d
   await sleep(2400);
   ok('the title card clears itself', await ev('!document.querySelector(".v5-title")'));
 
+  /* ---------- 8. restart wipes the save and begins again (the v4 unload-save bug, guarded) ---------- */
+  await ev('document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))');
+  await sleep(150);
+  await ev('(function(){var b=document.querySelectorAll(".v5set-acts .buy")[1];b.click();b.click();})()');
+  await sleep(1600);
+  const fresh = await ev('(function(){var V=window.__V5;return {t:V&&V.sim.state.t, save:localStorage.getItem("emergence_v5")?1:0};})()');
+  ok('restart begins a new run', fresh && fresh.t < 30, fresh && fresh.t);
+  ok('restart does not rewrite the save on the way out', fresh && fresh.save === 0, fresh && fresh.save);
+
   /* ---------- report ---------- */
   const failed = checks.filter(c => !c.pass);
   checks.forEach(c => console.log((c.pass ? '  ✓ ' : '  ✗ ') + c.name + (c.detail ? '  [' + c.detail + ']' : '')));
