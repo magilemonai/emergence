@@ -243,6 +243,7 @@ export function rupture(opts) {
 
   if (audioOf(opts)) { try { audioOf(opts).rupture(); } catch (e) { /* audio is never load-bearing */ } }
   for (let n = 1; n <= 4; n++) world.operated.add(n);        // its violet reaches down through every floor
+  if (doc.body) doc.body.classList.add('rupturing');         // the layer's own board waits until it has arrived
 
   // its stratum exists in the graph the moment it wakes; nothing of it is drawn until the layer arrives
   const upper = [];
@@ -253,10 +254,6 @@ export function rupture(opts) {
   const wash = doc.createElement('div');
   wash.className = 'rx-wash';
   hud.root.appendChild(wash);
-  const key = doc.createElement('div');
-  key.className = 'rx-key';
-  key.textContent = '?';
-  hud.railRight.appendChild(key);
 
   // the rail chips claim themselves for a beat (found late: the rail builds itself on the view's first sync)
   let labs = null, was = null, mine = false;
@@ -380,6 +377,7 @@ export function rupture(opts) {
     done = true;
     if (raf) win.cancelAnimationFrame(raf);
     world.onDraw('rupture', null);
+    if (doc.body) doc.body.classList.remove('rupturing');
     revealUpper();
     setMine(false);
     if (canvas) canvas.style.transform = '';
@@ -400,7 +398,7 @@ export function rupture(opts) {
       const settleHeld = () => { step0(); if (++n < 8) raf = win.requestAnimationFrame(settleHeld); else raf = 0; };
       settleHeld();
     },
-    cancel() { finish(); if (key.parentNode) key.parentNode.removeChild(key); },
+    cancel() { finish(); },
     get t() { return clock(); }
   };
 

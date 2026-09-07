@@ -66,6 +66,7 @@ export async function run(t) {
 
   const before = doc.body.children[0].children.length;
   const fx = rupture({ world, hud, sim, audio: null, reduced: false, doc });
+  t.ok(doc.body.classList.has('rupturing'), 'the turn marks the page while it runs, so the layer can wait for it');
   t.eq([...world.operated].sort(), [1, 2, 3, 4], 'the four strata below draw in its violet');
   t.ok(!!world.hooks.rupture, 'the tear draws inside the world, not over it');
   const upperHidden = sim.state.nodeOrder.filter((id) => sim.state.nodes[id].era === 6).every((id) => sim.state.nodes[id].hidden);
@@ -90,9 +91,10 @@ export async function run(t) {
   t.ok(sim.state.nodeOrder.filter((id) => sim.state.nodes[id].era === 6).every((id) => !sim.state.nodes[id].hidden), 'the layer is visible once it has arrived');
   t.ok(world.locked === 6, 'the camera ends on its stratum');
   t.ok(hud.rail.querySelectorAll('.clab').every((c) => c.textContent !== 'MINE'), 'the chips go back to being yours');
+  t.ok(!doc.body.classList.has('rupturing'), 'body.rupturing drops when the layer has arrived');
   fx.cancel();
   t.eq(doc.body.children[0].children.length, before, 'the wash it added is gone');
-  t.eq(hud.railRight.children.length, 0, 'cancel takes the sixth key with it: no node left behind');
+  t.eq(hud.railRight.children.length, 0, 'the fx adds no chrome of its own: the sixth key is the view\'s');
 
   // reduced motion: a crossfade instead of the jitter and the tear
   {
@@ -102,6 +104,7 @@ export async function run(t) {
     d2.__step(400);
     t.ok(w2.locked === 6 && [...w2.operated].length === 4, 'the reduced path still arrives at its stratum, in violet');
     d2.__step(400);
+    t.ok(!d2.body.classList.has('rupturing'), 'the reduced crossfade clears the mark too');
     fx2.cancel();
     t.eq([d2.body.children[0].children.length, h2.railRight.children.length], [n0, 0], 'the reduced path leaves nothing behind either');
   }
