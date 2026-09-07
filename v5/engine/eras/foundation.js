@@ -16,8 +16,10 @@ const FEED_RES = [{ id: 'capability', name: 'Capability', hue: '#6ea8ff', glyph:
 /* Stratum-local anchors (CONTRACT: pos is local). One reading, left to right: the Capability riser climbs
    out of Deep into RECURSION, and RECURSION fills the Scale bank that the threshold measures. */
 const ANCHORS = {
-  recursion: { x: 520, y: 300 },
-  'scale.store': { x: 860, y: 300 },
+  // recursion sits left of x 400 on purpose: its Capability riser then climbs the LEFT channel, so the
+  // reach-back enters from the left and the Scale it makes leaves to the right, one reading across the band
+  recursion: { x: 270, y: 300 },
+  'scale.store': { x: 780, y: 300 },
   'capability.store': { x: 300, y: 560 },
   threshold: { x: 1150, y: 620 }
 };
