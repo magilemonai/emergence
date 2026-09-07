@@ -124,7 +124,24 @@ const ok = (name, pass, detail) => { checks.push({ name, pass: !!pass, detail: d
   ok('resume starts the clock again', t2 > t1, t1 + ' then ' + t2);
   ok('the settings panel closes', await ev('!window.__V5.hud.settingsOpen'));
 
-  /* ---------- 6. an era switch swaps the HUD and shows the title card ---------- */
+  /* ---------- 6. the bulk toggle cycles into MAX and MAX prices per node ---------- */
+  const bulk = '[].slice.call(document.querySelectorAll(".rail-btn")).filter(function(b){return /^\\u00d7/.test(b.textContent);})[0]';
+  const cycle = await ev(`(function(){var out=[],b=${bulk},V=window.__V5;for(var i=0;i<4;i++){b.click();out.push(V.buy.max?"MAX":String(V.buy.n));}return out.join(">");})()`);
+  ok('the rail toggle cycles into MAX', /MAX/.test(cycle), cycle);
+  await ev(`(function(){var V=window.__V5,b=${bulk};for(var i=0;i<8&&!V.buy.max;i++)b.click();})()`);
+  await sleep(120);
+  ok('the rail shows the MAX tag', await ev('document.querySelector(".bulk-tag").className.indexOf("on")>=0'));
+  // the first plate that actually prices a batch (store plates carry an empty button)
+  const plateLabel = '(function(){var out="";[].forEach.call(document.querySelectorAll(".plate .buy"),function(b){if(!out&&b.textContent.trim())out=b.textContent.trim();});return out;})()';
+  const priceMax = await ev(plateLabel);
+  await ev(`(function(){var V=window.__V5,b=${bulk};for(var i=0;i<8&&V.buy.max;i++)b.click();for(var j=0;j<8&&V.buy.n!==25;j++)b.click();})()`);
+  await sleep(220);
+  const price25 = await ev(plateLabel);
+  ok('MAX prices a plate for the whole bank', !!priceMax && !!price25 && priceMax !== price25, priceMax + ' vs ' + price25);
+  await ev(`(function(){var V=window.__V5,b=${bulk};for(var i=0;i<8&&V.buy.max;i++)b.click();})()`);
+  ok('the toggle leaves MAX again', await ev('window.__V5.buy.max === false'));
+
+  /* ---------- 7. an era switch swaps the HUD and shows the title card ---------- */
   const pre = await ev('(function(){return {verbs:[].map.call(document.querySelectorAll(".verb .vname"),function(e){return e.textContent;}).join(","),rail:document.querySelectorAll(".rail-btn").length,era:window.__V5.sim.state.era};})()');
   await ev('window.__V5.sim.openEra(3)');
   await sleep(260);
