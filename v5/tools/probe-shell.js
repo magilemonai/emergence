@@ -53,6 +53,15 @@ const ok = (name, pass, detail) => { checks.push({ name, pass: !!pass, detail: d
     await loaded; await sleep(1100);
   };
 
+  // the two screens this order owns get captured while the probe is standing on them
+  const shotDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : '/tmp';
+  const shot = async (name) => {
+    const s = await send('Page.captureScreenshot', { format: 'png' });
+    const file = path.join(shotDir, 'wo11-' + name + '.png');
+    (await import('node:fs')).writeFileSync(file, Buffer.from(s.data, 'base64'));
+    console.log('  · wrote ' + file);
+  };
+
   /* ---------- 1. a fresh run saves ---------- */
   await load('');
   ok('boot exposes __V5', await ev('!!window.__V5'));
@@ -108,6 +117,7 @@ const ok = (name, pass, detail) => { checks.push({ name, pass: !!pass, detail: d
   ok('the PAUSE button pauses the run', isPaused === true);
   ok('pause freezes sim.t', t0 === t1, t0 + ' then ' + t1);
   ok('the pause pill is up', await ev('document.querySelector(".pause-pill").className.indexOf("on")>=0'));
+  await shot('settings');
   await ev('document.querySelector(".v5set-acts .buy").click(); document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))');
   await sleep(700);
   const t2 = await ev('window.__V5.sim.state.t');
@@ -129,6 +139,7 @@ const ok = (name, pass, detail) => { checks.push({ name, pass: !!pass, detail: d
   ok('the camera locked to the new stratum', post && post.locked === 3, post && post.locked);
   ok('the title card is shown for the stratum', post && post.card && post.cardEra === '3', post && post.cardEra);
   ok('the rail keeps one set of buttons', post && post.rail === pre.rail, pre.rail + ' then ' + post.rail);
+  await shot('title');
   ok('the old view left no controls behind', await ev('document.querySelectorAll(".o-side").length===0'));
   await sleep(2400);
   ok('the title card clears itself', await ev('!document.querySelector(".v5-title")'));
