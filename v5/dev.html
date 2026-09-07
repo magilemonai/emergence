@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>v5 renderer bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=EB+Garamond:ital@0;1&family=VT323&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&family=Rajdhani:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="render/hud.css">
+</head>
+<body>
+<canvas id="world"></canvas>
+<div id="hud"></div>
+
+<script type="module">
+// v5/dev.html: the renderer bench (WO-01).
+// It drives render/* with a SYNTHETIC sim-shaped object: the same surface the frozen contract
+// promises (state.nodes / nodeOrder / edges / stocks / rates, tick, apply, node, goal, muted),
+// with no game rules at all. WO-00 builds the real engine/sim.js in parallel.
+import { createWorld } from './render/world.js';
+import { createHud } from './render/hud.js';
+import { STRATA, RES } from './render/palette.js';
+import { STRATUM_H } from './engine/types.js';
+
+const FIELD = { srcX: 330, storeX: 570, convX: 810 };   // the three lanes inside the pipeline field
+const ROWS = [130, 300, 470, 620];
+
+/* ---------- the synthetic sim ---------- */
+function makeSim() {
+  const state = {
+    v: 1, seed: 1, rng: { s: 1 }, t: 0, era: 1, maxEra: 3, mute: false,
+    stocks: {}, rates: {}, nodes: {}, nodeOrder: [], edges: [],
+    resources: {}, flags: {}, eras: {}, log: [], legacy: null
+  };
+  for (const id in RES) { state.resources[id] = RES[id]; state.stocks[id] = 0; state.rates[id] = 0; }
+  // a bench bank, so the rail and the stores read like a run in progress rather than a cold start
+  Object.assign(state.stocks, { marks: 1840, ore: 1260, knowledge: 430, silicon: 44, rules: 310, inference: 96, axioms: 21, data: 620, insight: 71 });
+
+  function add(d) {
+    const n = Object.assign({ inputs: [], outputs: [], count: 1, paused: false, mult: {}, tags: [] }, d);
+    state.nodes[n.id] = n; state.nodeOrder.push(n.id);
+    return n;
+  }
+  function edge(from, to, res, riser) { state.edges.push({ from, to, res, flow: 0, riser: !!riser, starved: false }); }
+
+  const sim = {
+    state,
+    node: (id) => state.nodes[id],
+    stock: (r) => state.stocks[r] || 0,
+    rate: (r) => state.rates[r] || 0,
+    muted: () => !!state.mute,
+    setMuted(b) { state.mute = !!b; },
+    can: () => true,
+    apply(a) {
+      const n = state.nodes[a.node];
+      if (!n) return { ok: false, reason: 'node' };
+      if (a.type === 'buy') { n.count += (a.n || 1); state.log.push(a); return { ok: true }; }
+      if (a.type === 'pause') { n.paused = !!a.on; state.log.push(a); return { ok: true }; }
+      return { ok: false, reason: 'type' };
+    },
+    goal(era) {
+      const e = era || state.era;
+      const p = Math.max(0, Math.min(1, (state.stocks.silicon || 0) / 90 + (e - 1) * 0.2));
+      return { progress: p, ready: p >= 1, label: Math.round(p * 100) + '% of 100%' };
+    },
+    /** the fake tick: flows breathe on a sine so particle density visibly moves */
+    tick(dt) {
+      state.t += dt;
+      const nodes = state.nodes;
+      for (const e of state.edges) {
+        const src = nodes[e.from], dst = nodes[e.to];
+        const carrier = src.kind === 'store' ? dst : src;
+        const port = (src.kind === 'store' ? carrier.inputs : carrier.outputs).find(p => p.res === e.res);
+        let base = (port ? port.rate : 1) * carrier.count;
+        if (carrier.paused) base = 0;
+        const wob = 0.55 + 0.45 * Math.sin(state.t * 0.5 + e.from.length * 1.7 + e.res.length);
+        e.flow = e.starved ? base * 0.06 : base * wob;
+      }
+      for (const id of state.nodeOrder) {
+        const n = nodes[id];
+        if (n.kind !== 'store') continue;
+        let net = 0;
+        for (const e of state.edges) { if (e.res !== n.res) continue; if (e.to === id) net += e.flow; if (e.from === id) net -= e.flow; }
+        state.rates[n.res] = net;
+        state.stocks[n.res] = Math.max(0, (state.stocks[n.res] || 0) + net * dt);
+      }
+      return { flows: state.edges.length };
+    }
+  };
+  sim._add = add; sim._edge = edge;
+  return sim;
+}
+
+/* ---------- the synthetic graph: 3 strata, sources to stores to converters, risers between ---------- */
+function buildGraph(sim, dense) {
+  const A = sim._add, E = sim._edge;
+  const src = (id, era, name, res, rate, y, count) => A({ id, era, kind: 'source', name, outputs: [{ res, rate }], pos: { x: FIELD.srcX, y }, count: count || 3, flavor: RES[res].flavor });
+  const store = (id, era, res, y) => A({ id, era, kind: 'store', name: res, res, pos: { x: FIELD.storeX, y }, flavor: RES[res].flavor });
+  const conv = (id, era, name, ins, outs, y, cost, count) => A({
+    id, era, kind: 'converter', name, inputs: ins, outputs: outs, pos: { x: FIELD.convX, y },
+    count: count === undefined ? 2 : count, cost, flavor: 'A converter on the bench.'
+  });
+
+  // ---- stratum 1 (Origins): 8 nodes
+  src('o.scribe', 1, 'Scribe', 'marks', 0.9, ROWS[0], 24);
+  src('o.miner', 1, 'Miner', 'ore', 0.7, ROWS[1], 20);
+  store('o.marks', 1, 'marks', ROWS[0]);
+  store('o.ore', 1, 'ore', ROWS[1]);
+  store('o.knowledge', 1, 'knowledge', ROWS[2]);
+  store('o.silicon', 1, 'silicon', ROWS[3]);
+  conv('o.scriptorium', 1, 'Scriptorium', [{ res: 'marks', rate: 2.2 }], [{ res: 'knowledge', rate: 0.55 }], 215, { res: 'marks', base: 40, growth: 1.15 }, 6);
+  conv('o.smelter', 1, 'Smelter', [{ res: 'ore', rate: 2.6 }, { res: 'knowledge', rate: 0.35 }], [{ res: 'silicon', rate: 0.35 }], 455, { res: 'ore', base: 90, growth: 1.18 }, 4);
+  E('o.scribe', 'o.marks', 'marks'); E('o.miner', 'o.ore', 'ore');
+  E('o.marks', 'o.scriptorium', 'marks'); E('o.scriptorium', 'o.knowledge', 'knowledge');
+  E('o.ore', 'o.smelter', 'ore'); E('o.knowledge', 'o.smelter', 'knowledge'); E('o.smelter', 'o.silicon', 'silicon');
+
+  // ---- stratum 2 (Symbolic): 8 nodes; TWO risers reach down into stratum 1
+  src('s.core', 2, 'Core', 'rules', 0.3, 215, 14);
+  src('s.probe', 2, 'Probe', 'inference', 0.2, 430, 16);
+  store('s.rules', 2, 'rules', ROWS[0]);
+  store('s.inference', 2, 'inference', ROWS[1]);
+  store('s.axioms', 2, 'axioms', ROWS[2]);
+  conv('s.ruleset', 2, 'Ruleset', [{ res: 'silicon', rate: 0.3 }, { res: 'knowledge', rate: 0.45 }], [{ res: 'rules', rate: 0.6 }], ROWS[0], { res: 'silicon', base: 25, growth: 1.2 }, 3);
+  conv('s.daemon', 2, 'Daemon', [{ res: 'rules', rate: 0.9 }], [{ res: 'inference', rate: 0.5 }], ROWS[1], { res: 'rules', base: 18, growth: 1.16 }, 5);
+  conv('s.compiler', 2, 'Compiler', [{ res: 'inference', rate: 1.2 }], [{ res: 'axioms', rate: 0.25 }], ROWS[2], { res: 'inference', base: 60, growth: 1.3 }, 3);
+  E('s.core', 's.rules', 'rules'); E('s.probe', 's.inference', 'inference');
+  E('o.silicon', 's.ruleset', 'silicon', true);          // riser 1
+  E('o.knowledge', 's.ruleset', 'knowledge', true);      // riser 2
+  E('s.ruleset', 's.rules', 'rules'); E('s.rules', 's.daemon', 'rules');
+  E('s.daemon', 's.inference', 'inference'); E('s.inference', 's.compiler', 'inference'); E('s.compiler', 's.axioms', 'axioms');
+
+  // ---- stratum 3 (Statistical): stores, a converter that reaches down for axioms, and the goal
+  src('t.sampler', 3, 'Sampler', 'data', 1.1, ROWS[0], 9);
+  store('t.data', 3, 'data', ROWS[0]);
+  store('t.insight', 3, 'insight', ROWS[1]);
+  conv('t.model', 3, 'Model', [{ res: 'data', rate: 1.4 }, { res: 'axioms', rate: 0.2 }], [{ res: 'insight', rate: 0.4 }], ROWS[1], { res: 'data', base: 55, growth: 1.22 }, 5);
+  A({ id: 't.goal', era: 3, kind: 'goal', name: 'Generalize', pos: { x: FIELD.convX, y: ROWS[2] }, count: 1, flavor: 'The gate to the next stratum.' });
+  E('t.sampler', 't.data', 'data'); E('t.data', 't.model', 'data');
+  E('s.axioms', 't.model', 'axioms', true);              // a riser up two strata
+  E('t.model', 't.insight', 'insight');
+
+  if (!dense) return;
+  // ---- density pass (bench-overview only): fill all three strata so the column reads as built
+  const RESBY = { 1: ['marks', 'ore', 'knowledge', 'silicon'], 2: ['rules', 'inference', 'axioms'], 3: ['data', 'insight'] };
+  const STOREOF = {
+    marks: 'o.marks', ore: 'o.ore', knowledge: 'o.knowledge', silicon: 'o.silicon',
+    rules: 's.rules', inference: 's.inference', axioms: 's.axioms', data: 't.data', insight: 't.insight'
+  };
+  for (let era = 1; era <= 3; era++) {
+    const list = RESBY[era];
+    for (let i = 0; i < 18; i++) {
+      const inRes = list[i % list.length], outRes = list[(i + 1) % list.length];
+      const id = 'd' + era + '.' + i;
+      A({
+        id, era, kind: 'converter', name: 'Bank ' + i,
+        inputs: [{ res: inRes, rate: 2.4 }], outputs: [{ res: outRes, rate: 1.8 }],
+        pos: { x: 280 + (i % 6) * 126, y: 90 + Math.floor(i / 6) * 190 }, count: 9,
+        cost: { res: inRes, base: 30, growth: 1.1 }
+      });
+      E(STOREOF[inRes], id, inRes, false); E(id, STOREOF[outRes], outRes, false);
+    }
+  }
+}
+
+/* ---------- boot ---------- */
+const scene = (location.hash.match(/scene=([\w-]+)/) || [])[1] || 'bench-1';
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let sim = makeSim();
+buildGraph(sim, /overview/.test(scene));
+
+const hudEl = document.getElementById('hud');
+const hud = createHud(hudEl, { onVerb: (n) => sim.apply({ type: 'buy', node: n, n: 1 }), onGoal: () => {} });
+const world = createWorld({
+  canvas: document.getElementById('world'), hud: hud.plateLayer, sim, reduced, hudApi: hud,
+  milestone: (n) => { const tiers = [10, 25, 50, 100]; const at = tiers.find(x => x > n.count); return at ? { at, near: at - n.count <= 3 } : null; },
+  starved: (n) => sim.state.edges.some(e => e.to === n.id && e.starved)
+});
+world.setHud(hud);
+
+/* the rail and the columns follow the locked stratum */
+const VERBS = {
+  1: [{ name: 'o.scribe', label: 'Inscribe', yield: '+1 marks', key: 'Q' }, { name: 'o.miner', label: 'Quarry', yield: '+1 ore', key: 'W' }],
+  2: [{ name: 's.core', label: 'Write a rule', yield: '+1 rules', key: 'Q' }, { name: 's.probe', label: 'Prove it', yield: '+1 inference', key: 'W' }],
+  3: [{ name: 't.sampler', label: 'Run trial', yield: '+1 data', key: 'Q' }]
+};
+const GNAME = { 1: 'Logic Machine', 2: 'Formal Logic', 3: 'Generalize' };
+function syncHud() {
+  const era = world.locked;
+  // the rail carries this stratum's own resources plus whatever its pipes reach in for
+  const shown = [];
+  const want = {};
+  for (const id of sim.state.nodeOrder) { const n = sim.state.nodes[id]; if (n.era === era) { if (n.res) want[n.res] = 1; (n.inputs || []).forEach(p => { want[p.res] = 1; }); (n.outputs || []).forEach(p => { want[p.res] = 1; }); } }
+  for (const id of sim.state.nodeOrder) { const n = sim.state.nodes[id]; if (n.kind === 'store' && want[n.res] && shown.indexOf(n.res) < 0) shown.push(n.res); }
+  hud.setRail(shown.map(r => ({ id: r, value: sim.state.stocks[r] || 0, rate: sim.state.rates[r] || 0 })));
+  hud.renderVerbs(VERBS[era] || []);
+  const g = sim.goal(era);
+  hud.renderGoal({ progress: g.progress, ready: g.ready, label: g.label, name: GNAME[era], action: 'FABRICATE' });
+}
+
+function applyScene(name) {
+  if (name === 'bench-risers') world.scene('bench-2');
+  else if (name === 'bench-lod') world.scene('bench-lod-1');
+  else if (name === 'bench-overview') world.scene('overview');
+  else world.scene('bench-1');
+  if (name === 'bench-starved') {
+    for (const e of sim.state.edges) if (e.to === 'o.smelter' && e.res === 'knowledge') e.starved = true;
+    sim.state.nodes['o.smelter'].count = 6;
+  }
+  syncHud();
+}
+applyScene(scene);
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  sim.tick(dt);
+  world.frame(dt);
+  syncHud();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/** settle(): run the bench to a steady state so a screenshot is stable and comparable */
+function settle() {
+  for (let i = 0; i < 60; i++) sim.tick(0.1);
+  applyScene(scene);
+  for (let i = 0; i < 3; i++) world.frame(0.016);
+  syncHud();
+  world.frame(0);
+}
+window.__V5 = { sim, world, hud, scene, settle, applyScene };
+</script>
+</body>
+</html>
