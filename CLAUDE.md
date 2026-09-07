@@ -1,8 +1,8 @@
 # EMERGENCE — Project State (CLAUDE.md)
 
 > The living source of truth for this project. Auto-loaded by Claude Code each session —
-> keep it current as the game evolves. Last updated 2026-09-07 (v5 "The Substrate" BUILT end to end under v5/,
-> local only; v4 live behind ?v=4; v3 live by default; both archived in full).
+> keep it current as the game evolves. Last updated 2026-09-07 (v5 "The Substrate" BUILT end to end under v5/ and
+> LIVE behind ?v=5 as emergence-v5.html; v4 live behind ?v=4; v3 live by default; v3 archived in full).
 
 ## ⭐⭐ v5 "The Substrate" — BUILT end to end, local only (2026-09-07)
 
@@ -32,7 +32,11 @@ NodeDef locked/hidden/gated, menus on every parameterized action). Orchestration
 | Package one file (760 KB, gitignored) | `EMG_V5=1 node tools/build-single.js emergence-v5-single.html` |
 | Root gate (v3 92 + v4 160 + v3 artifact freshness) still | `node test.js` |
 
-**Playing it:** open `v5/index.html` locally (ES modules: serve or open via the shoot tool's file mode). Keys 1–6 jump
+**LIVE behind a switch (Cody, 2026-09-07):** `https://magilemonai.github.io/emergence/?v=5` routes to **`emergence-v5.html`**,
+the packaged single file committed at the root (like v4). **Rebuild it before any v5 push:** `EMG_V5=1 node
+tools/build-single.js emergence-v5.html`, then `node v5/tools/probe-shell.js --file emergence-v5.html`. Default stays v3.
+
+**Playing it locally:** open `v5/index.html` (ES modules: serve or open via the shoot tool's file mode). Keys 1–6 jump
 strata (a logged `visit`: the view switches, the camera follows, and you can go back and build; the Statistical
 supply bus does the same), Space/Q verbs, R drawer, Esc settings. **Live routing is OFF:** root `index.html` has
 `V5_ENABLED = false`; flipping it makes `?v=5` route to `v5/index.html`. **Push only when Cody says.**

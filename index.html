@@ -6,19 +6,18 @@
 <script>
 // version switch: /emergence/?v=4 → the v4 build ("The Substrate Remembers"), anything else → the live v3 Flow Board.
 // Each version keeps its own save (different localStorage keys), so flipping between them is safe.
-// V5_ENABLED stays false until the orchestrator flips it; while it is false, ?v=5 lands on v3 like any
-// unknown value, so nothing changes for players (WO-11).
-var V5_ENABLED = false;
+// ?v=5 → the v5 build ("The Substrate", one packaged file with its fonts embedded). Cody flipped this on 2026-09-07.
+var V5_ENABLED = true;
 (function () {
   var q = new URLSearchParams(location.search), v = String(q.get('v') || q.get('version') || '').toLowerCase().replace(/^v/, '');
   var map = { '4': 'emergence-v4.html', '3': 'emergence.html' };
-  if (V5_ENABLED) map['5'] = 'v5/index.html';
+  if (V5_ENABLED) map['5'] = 'emergence-v5.html';
   location.replace((map[v] || 'emergence.html') + location.hash);
 })();
 </script>
 <noscript><meta http-equiv="refresh" content="0; url=emergence.html"></noscript>
 </head>
 <body style="background:#06080d;color:#c9925f;font-family:monospace;text-align:center;padding-top:20vh">
-<p>Loading EMERGENCE… <a href="emergence.html" style="color:#c9a26b">v3 (live)</a> · <a href="emergence-v4.html" style="color:#b78bff">v4 (next)</a></p>
+<p>Loading EMERGENCE… <a href="emergence.html" style="color:#c9a26b">v3 (live)</a> · <a href="emergence-v4.html" style="color:#b78bff">v4</a> · <a href="emergence-v5.html" style="color:#c9adf5">v5 (the substrate)</a></p>
 </body>
 </html>

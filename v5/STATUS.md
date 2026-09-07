@@ -37,9 +37,11 @@ Origins (marks 0, ore 0 at 7 min) makes metal unreachable from above. **Run 4 (S
 presses it like Deep's bus): 7.0 · 6.2 · 7.0 · 5.9 · 5.9 → emergence 32:08, 6 dead clicks, 0 errors, Foundries 2 → 8 through
 Statistical, Silicon never at zero.** SPEC targets sum to 34m + 3m mirror; the bot ceiling is 17.3m. Cody's hands decide the rest.
 
-## Running right now (2026-09-07)
-Nothing. Every order is merged, Fable's pass is complete, and the human-cadence run reaches emergence at 32:08 with 0
-errors. Waiting on Cody: play it (v5/index.html, or flip V5_ENABLED in index.html for ?v=5), record, rule on pacing, ship. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
+## LIVE behind a switch (Cody's call, 2026-09-07)
+`https://magilemonai.github.io/emergence/?v=5` → `emergence-v5.html`, the packaged single file (fonts embedded, assets at
+`assets/`), committed at the repo root like v4's. Default stays v3; `?v=4` stays v4; saves are separate (`emergence_v5`).
+**Rebuild before any v5 push:** `EMG_V5=1 node tools/build-single.js emergence-v5.html` (then probe it:
+`node v5/tools/probe-shell.js --file emergence-v5.html`). Waiting on Cody: play, record, rule on pacing. Then Fable's pass (dead-click counter, run-2 title cards, MAX label, full-arc play, package).
 
 Fable's pass so far: plate BUILD label keeps its count under a multiplier (glyph) DONE; dead-click counter → `flags.dead` (pinned as UI telemetry) DONE; run-2 title-card subtitle from voice/legacy.js DONE; installLegacyFx synced on era change DONE. Package DONE: `EMG_V5=1 node tools/build-single.js emergence-v5-single.html` → 760 KB, boots origins-bronze / surface / endcard-symbiotic with ERRORS none (gitignored). Root gate `node test.js` green (v3 92 + v4 160 + freshness). Left: full-arc play on the real UI with WO-13's playtest driver; pacing read from its bot; the mobile statement to Cody (v5 is desktop-first by the standing ruling; the endcard and receipt stack under 900px; v5/index.html pins viewport width=1280).
 
