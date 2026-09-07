@@ -291,15 +291,21 @@ export function createWorld(opts) {
     if (/lod/.test(name)) { camera.zoom = 0.5; state.anim = null; }
   }
   // per-stratum draw hooks: era views draw inside the world canvas transform (after pipes and glyphs)
+  // Several hooks may share an era (a view's instrument and the legacy layer both draw on stratum 6); each call
+  // appends and returns its own unsubscribe, so a view removes only its hook on deactivate. onDraw(era, null) clears all.
   const drawHooks = {};
-  function onDraw(era, fn) { drawHooks[era] = fn; }
+  function onDraw(era, fn) {
+    if (!fn) { delete drawHooks[era]; return () => {}; }
+    (drawHooks[era] = drawHooks[era] || []).push(fn);
+    return () => { const a = drawHooks[era]; if (!a) return; const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); if (!a.length) delete drawHooks[era]; };
+  }
   function runDrawHooks(v, lod) {
     for (const k in drawHooks) {
-      const fn = drawHooks[k]; if (!fn) continue;
+      const list = drawHooks[k]; if (!list || !list.length) continue;
       ctx.save();
       ctx.translate(v.w / 2 - camera.x * camera.zoom, v.h / 2 - camera.y * camera.zoom);
       ctx.scale(camera.zoom, camera.zoom);
-      try { fn(ctx, camera, v, lod); } catch (e) { /* a view's draw error must never kill the frame */ }
+      for (const fn of list) { try { fn(ctx, camera, v, lod); } catch (e) { /* a view's draw error must never kill the frame */ } }
       ctx.restore();
     }
   }
