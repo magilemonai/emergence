@@ -65,7 +65,7 @@ export function createAudio(opts) {
   const st = {
     started: false, ctx: null, master: null, comp: null, voiceBus: null, sfxBus: null,
     bank: null, bpm: AUDIO.bpmMin, phase: 0, era: (sim && sim.state.era) || 1,
-    sig: '', peak: 0, limit: 1, rup: -1, surf: null, surfSrc: null, surfFail: '',
+    sig: '', peak: 0, limit: 1, rup: -1, lastLock: 0, surf: null, surfSrc: null, surfFail: '',
     lastErr: '', frames: 0
   };
 
@@ -129,8 +129,9 @@ export function createAudio(opts) {
     const d = Math.max(0, Math.min(0.25, dt || 0));
     beds.tick(d);
     st.frames++;
-    const lock = world && world.locked;                // the bed follows the stratum the camera locks to
-    if (lock && lock !== st.era && st.rup < 0) setBed(lock);
+    // the bed follows the camera, but only when the lock CHANGES: an explicit setBed must stick
+    const lock = world && world.locked;
+    if (lock && lock !== st.lastLock) { st.lastLock = lock; if (st.rup < 0) setBed(lock); }
     const s = sim && sim.state;
     if (!s) return;
 

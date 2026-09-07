@@ -75,11 +75,12 @@ export function createBeds(opts) {
   }
 
   function apply() {
+    if (st.prev === st.key) st.prev = null;         // one element is never both sides of a fade
     const g = crossfadeGains(st.k), v = level();
-    const cur = st.key && els[st.key], prev = st.prev && els[st.prev];
+    const cur = st.key !== null && els[st.key], prev = st.prev !== null && els[st.prev];
     if (cur) cur.volume = st.on ? v * g.in : 0;
     if (prev) prev.volume = st.on ? v * g.out : 0;
-    if (prev && st.k >= 1) { prev.pause(); st.prev = null; }
+    if (prev && st.k >= 1) { prev.volume = 0; prev.pause(); st.prev = null; }   // land on exact silence
   }
 
   function level() { return clamp(st.vol, 0, AUDIO.bedMax); }
@@ -95,7 +96,9 @@ export function createBeds(opts) {
       if (key === st.key) return;
       const next = el(key);
       if (!next) return;
-      st.prev = st.k < 1 ? st.prev : st.key;   // a fade cut short keeps the older tail
+      const tail = st.prev !== null && st.prev !== key && els[st.prev];
+      if (tail) { tail.pause(); tail.volume = 0; }   // a fade cut short drops its older tail, never leaks it
+      st.prev = st.key;
       st.key = key;
       st.k = immediate ? 1 : 0;
       next.volume = 0;

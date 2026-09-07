@@ -60,11 +60,29 @@ export async function run(t) {
   t.eq(beds.els[1].playing, false, 'the old bed stops when the fade completes');
   t.near(beds.fade, 1, 1e-9, 'the fade is complete after 1.2s');
 
+  // a fade interrupted by another lock: the probe caught this leaving one element on both sides
+  beds.set(3, false);
+  beds.tick(0.3);
+  beds.set(4, false);
+  t.eq(beds.key, 4, 'the newest lock wins');
+  t.eq(beds.els[3].playing, true, 'the interrupted bed becomes the outgoing one');
+  for (let i = 0; i < 30; i++) beds.tick(0.05);
+  t.eq(beds.els[3].playing, false, 'the interrupted bed stops when the next fade lands');
+  t.eq(beds.els[2].volume, 0, 'the older tail is dropped, never left ringing');
+  t.near(beds.els[4].volume, 0.15, 1e-9, 'the newest bed reaches full level');
+  beds.set(4, false);
+  t.near(beds.els[4].volume, 0.15, 1e-9, 'setting the bed already playing changes nothing');
+  beds.set(2, false);
+  beds.set(4, false);
+  for (let i = 0; i < 30; i++) beds.tick(0.05);
+  t.near(beds.els[4].volume, 0.15, 1e-9, 'returning to a bed mid-fade leaves it at level');
+  t.eq(beds.els[2].volume, 0, 'the bed turned away from is silent');
+
   beds.setVol(0.9);
-  t.near(beds.els[2].volume, AUDIO.bedMax, 1e-9, 'a bed never passes the 0.2 ceiling');
+  t.near(beds.els[4].volume, AUDIO.bedMax, 1e-9, 'a bed never passes the 0.2 ceiling');
   beds.setOn(false);
-  t.eq(beds.els[2].volume, 0, 'the music toggle silences the bed');
-  t.eq(beds.els[2].playing, false, 'the music toggle pauses the bed');
+  t.eq(beds.els[4].volume, 0, 'the music toggle silences the bed');
+  t.eq(beds.els[4].playing, false, 'the music toggle pauses the bed');
   t.eq(Object.keys(BED_FILE).length, 7, 'five strata plus the surface plus the rupture bed');
   t.ok(BED_FILE.rupture.indexOf('unmoored') >= 0, 'the rupture crosses to Unmoored Presence');
 
@@ -84,7 +102,9 @@ export async function run(t) {
   const store = fakeStore({ [KEY_ON]: 'on', [KEY_BED]: '0.15', [KEY_SFX]: '0.6' });
   const state = { t: 0, era: 1, log: [], nodes: {}, nodeOrder: [], edges: [], eras: {} };
   const sim = { state: state };
-  const a = createAudio({ sim: sim, world: null, doc: fakeDoc(), win: {}, store: store, base: '../assets/' });
+  const doc2 = fakeDoc();
+  const a = createAudio({ sim: sim, world: null, doc: doc2, win: {}, store: store, base: '../assets/' });
+  t.eq(doc2.made.length, 0, 'no track is even fetched before the first gesture');
   t.eq(a.started, false, 'audio is silent until start');
   t.eq(a.ctx, null, 'no AudioContext exists before the first gesture');
   t.eq(a.music, true, 'the persisted music choice is read at boot');

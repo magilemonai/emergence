@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>EMERGENCE audio bench</title>
+<link rel="stylesheet" href="../render/hud.css">
+<style>
+/* the bench draws the real world plus one readout of what the audio layer is doing right now */
+#meters {
+  position: fixed; right: 14px; bottom: 14px; z-index: 90; width: 330px; padding: 10px 12px;
+  border-radius: 12px; border: 1px solid #3d2d58; background: rgba(6, 3, 10, 0.94); color: #f4efff;
+  font: 11px ui-monospace, Menlo, monospace; line-height: 1.45; white-space: pre;
+}
+#meters b { color: #b78bff; font-weight: 600; }
+.bar { display: block; height: 5px; margin: 3px 0 6px; border-radius: 3px; background: #241a3a; overflow: hidden; }
+.bar i { display: block; height: 100%; background: #b78bff; }
+</style>
+</head>
+<body>
+<canvas id="world"></canvas>
+<div id="hud"></div>
+<div id="meters"></div>
+<script type="module">
+// audio/bench.html (WO-09): boots the same engine and renderer app.js boots, seeds a scene with real
+// flow, then wires the audio layer itself. app.js is not edited by this work order.
+//
+// WHY a memory store: a bench must not write Cody prefs into the file origin. Persistence is pinned by
+// v5/test/wo09-mix.test.js against a fake store instead.
+import { createSim } from '../engine/sim.js';
+import cfg from '../engine/cfg.js';
+import { createWorld } from '../render/world.js';
+import { createHud } from '../render/hud.js';
+import { SCENES } from '../scenes/scenes.js';
+import { createAudio } from './index.js';
+
+const ERA_FILES = ['origins', 'symbolic', 'statistical', 'deep', 'foundation', 'surface', 'mirror'];
+const eras = [];
+for (const f of ERA_FILES) {
+  try { const m = await import('../engine/eras/' + f + '.js'); if (m && m.default) eras.push(m.default); } catch (e) {}
+}
+eras.sort((a, b) => a.id - b.id);
+const byId = {}; for (const e of eras) byId[e.id] = e;
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sim = createSim({ cfg: cfg, eras: eras, seed: 1, legacy: null });
+const hud = createHud(document.getElementById('hud'), {});
+const world = createWorld({
+  canvas: document.getElementById('world'), hud: hud.plateLayer, sim: sim, reduced: reduced, hudApi: hud,
+  buyN: () => 1,
+  milestone: (n) => { const m = byId[n.era]; return m && m.milestoneOf ? m.milestoneOf(sim, n) : null; },
+  starved: (n) => sim.state.edges.some((e) => e.to === n.id && e.starved)
+});
+world.setHud(hud);
+
+// a scene with pipes actually moving, so the voices have something to follow
+const wanted = (location.hash.match(/scene=([\w-]+)/) || [])[1] || '';
+const sceneName = SCENES[wanted] ? wanted : 'origins-bronze';
+if (SCENES[sceneName]) SCENES[sceneName](sim);
+world.lockTo(sim.state.era, false);
+world.scene(sceneName);
+
+const mem = { m: { emergence_v3_music: 'on', emergence_v3_musvol: '0.15', emergence_v3_sfxvol: '0.6' },
+  getItem(k) { return k in this.m ? this.m[k] : null; }, setItem(k, v) { this.m[k] = v; } };
+const audio = createAudio({ sim: sim, world: world, base: '../../assets/', store: mem });
+audio.arm(document);                       // the first real gesture starts it, exactly like the game
+
+// the synthetic gesture the headless probe rides in on. With the default autoplay policy the context
+// stays suspended and the page stays silent, which is the correct behaviour, not an error.
+function gesture() {
+  try { document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); } catch (e) { audio.start(); }
+}
+
+const meters = document.getElementById('meters');
+function paint() {
+  const i = audio.info();
+  const rows = [
+    '<b>ctx</b> ' + i.ctx + '   <b>bpm</b> ' + i.bpm.toFixed(1) + '   <b>era</b> ' + i.era,
+    '<b>bed</b> ' + i.bed.key + '  fade ' + i.bed.fade.toFixed(2) + '  vol ' + i.bed.vol.toFixed(3),
+    '<b>peak</b> ' + i.peak.toFixed(4) + '  limit x' + i.limit.toFixed(2) + '  cap ' + i.ceiling.toFixed(2),
+    '<span class="bar"><i style="width:' + Math.min(100, i.peak / i.ceiling * 100).toFixed(0) + '%"></i></span>'
+  ];
+  for (const v of i.voices) rows.push(v.id.padEnd(12) + String(v.hz).padStart(7) + ' Hz  f' + v.flow.toFixed(2).padStart(6) + '  g' + v.amp.toFixed(4));
+  meters.innerHTML = rows.join('\n');
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.25, (now - last) / 1000);
+  last = now;
+  sim.tick(dt);
+  world.frame(dt);
+  audio.tick(dt);
+  paint();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/** step(n, dt): drive sim, world and audio by hand, so a probe can hold the clock */
+function step(n, dt) {
+  const d = dt || 0.05;
+  for (let i = 0; i < (n || 1); i++) { sim.tick(d); world.frame(d); audio.tick(d); }
+  paint();
+  return audio.info();
+}
+function settle() { for (let i = 0; i < 3; i++) world.frame(0.016); audio.tick(0); paint(); world.frame(0); }
+
+window.__V5 = { sim, world, hud, audio, scene: sceneName, settle, step, gesture, eras };
+gesture();
+</script>
+</body>
+</html>
