@@ -1,0 +1,37 @@
+# WO-05 · Deep stratum
+
+## Goal
+Port v4 Deep: three runs as furnaces fed by risers (Data from Statistical, Knowledge from Origins, Insight from
+Statistical), the ternary mixer, drift/heat, the supply bus as real build-here actions on lower strata, the Hold
+lever, the Architecture drawer (7 upgrades), CHECKPOINT/RESTORE + DISTILL, the fed bonus, the color-strip event
+banner, the Foundry Silicon-low pulse, and the one line it should not know.
+
+## Read first
+`v4-kit/era-deep.js` (all), CFG `e4`, WO-02..04 modules, `v5/test/wo05-deep.test.js`.
+
+## Files you own
+`v5/engine/eras/deep.js`, `v5/render/eras/deep.js`, voice era 4 table (one line), cfg `e4`, scenes (`deep-early`,
+`deep-squall`, `deep-tools`, `deep-architecture`), `v5/test/wo05-*.test.js`.
+
+## Build
+- Engine: resource capability; source `node` (compute); three `sink` nodes `run.vision/language/reasoning` drawing
+  their feedstock (so each riser is a pipe with particles proportional to share × compute); run cap/erosion/heat/
+  events/geometry exactly as v4 (`geom`, `fedLevel`); actions `buyNode`, `alloc {vision,language,reasoning}`,
+  `lock {run}`, `hold {on}`, `supply {key}` (applies a `buy` on the lower era's node and, for scriptorium, staffs
+  it), `arch {id}`, `checkpoint`, `restore`, `distill`, `advance`. Capability accrues from breadth × compute.
+- View: the mixer (SVG inside a DOM plate, drag = pointer events, `user-select:none`), the three run plates side by
+  side with wind sparklines and LOCK, the gauges strip, the event banner as a colored strip with a countdown, the
+  supply bus as five buttons (Foundry pulses amber when Silicon can't cover the next node), ARCHITECTURE drawer
+  (7 tiles fit 713px), tool row(s), goal ADVANCE in Foundation violet.
+- Voice era 4: `hold course. I am watching the wind too.` once at breadth ≥ 60%, live only.
+
+## Acceptance
+`node v5/test.js` green (wo05: passive balanced play does NOT reach the gate in 9m; geometry effects; restore never
+lowers a run; distill raises breadth; fed bonus; the odd line fires once, live only). Scenes shot + READ; the tools
+scene has both tool rows in view; pageScroll 0; perf ≤ 6ms with three risers alive.
+
+## Checklist
+- [ ] Three risers from below visibly feed the three furnaces; a starved one blinks red at the mouth.
+- [ ] Balanced is never optimal (the guard test) and the corner glow steers without text.
+- [ ] The banner is color + two words + a countdown; no sentence alerts.
+- [ ] Architecture purchases land every 1–2 minutes at human cadence in the bot.
