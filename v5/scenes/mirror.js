@@ -66,14 +66,14 @@ export const MIRROR_SCENES = {
   'mirror-replay': (sim) => {
     const M = toMirror(sim);
     if (!M) return;
-    untilProgress(sim, 0.82);
+    untilProgress(sim, 0.83);
   },
 
   // stopped, with a proposal on the card and two of the three pips left
   'mirror-interrupt': (sim) => {
     const M = toMirror(sim);
     if (!M) return;
-    untilProgress(sim, 0.78);
+    untilProgress(sim, 0.83);
     sim.apply({ type: 'interrupt', era: 7 });
     tick(sim, 2);                       // the fuse has burned a little, so the card reads live
   },

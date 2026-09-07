@@ -138,6 +138,20 @@ export async function run(t) {
   t.ok(endingFor({ control: 0, alignment: GOOD }, cfg) === 'symbiotic', 'alignGood is inclusive');
   t.ok(endingFor({ control: 0, alignment: GOOD - 0.001 }, cfg) === 'runaway', 'just under alignGood is Runaway');
 
+  /* ---------- 8b. the mirror never opens itself during offline catch-up ---------- */
+  const m = mk(25), S = m.state;
+  for (let i = 0; i < 60; i++) { m.apply({ type: 'inscribe' }); m.tick(0.1); }
+  S.stocks.knowledge = 400; m.openEra(2); S.stocks.silicon = 900; m.openEra(3);
+  S.stocks.silicon = 2600; m.openEra(4); m.openEra(5);
+  S.stocks.scale = cfg.e5.emergeScale + 5;
+  m.tick(0.1);
+  m.setMuted(true);
+  for (let i = 0; i < 200; i++) m.tick(0.1);
+  t.ok(!m.eras[7], 'twenty muted seconds after the turn do not open the mirror');
+  m.setMuted(false);
+  for (let i = 0; i < 15; i++) m.tick(0.1);
+  t.ok(!!m.eras[7], 'the first live second after does');
+
   /* ---------- 9. shape ---------- */
   t.ok(mirror.id === 7 && mirror.height === 700 && mirror.layout.verbs[0] === 'interrupt', 'module shape: id 7, one verb');
   t.ok(typeof mirror.voice(h) === 'string', 'the mirror has a voice');

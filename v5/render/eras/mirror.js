@@ -81,7 +81,7 @@ export function createView(opts) {
   /* ---------- the world: it draws the shadow, and violet where the shadow did better ---------- */
   const wasOperated = [];
   let runner = null, verbBuilt = false, pips = null;
-  let phase = 'open', held = 0, lastT = sim.state.t, followed = 0, endShown = false;
+  let phase = 'open', held = 0, lastT = sim.state.t, followed = 0, endShown = false, claimed = false;
 
   function glowFor(era) {
     return function (ctx, camera) {
@@ -89,21 +89,26 @@ export function createView(opts) {
       if (!d) return;
       const k = Math.min(1, d / c.diffCap);
       const pulse = reduced ? 0 : c.glowPulse * Math.sin(sim.state.t * c.pulseHz * Math.PI * 2);
-      const a = Math.max(0, Math.min(0.7, c.glowMin + (c.glowMax - c.glowMin) * k + pulse));
-      const top = stratumTop(era);
-      const g = ctx.createLinearGradient(0, top, 0, top + STRATUM_H);
-      g.addColorStop(0, alpha(OPERATED_HUE, a));
-      g.addColorStop(0.5, alpha(OPERATED_HUE, a * 0.35));
-      g.addColorStop(1, alpha(OPERATED_HUE, a));
-      ctx.fillStyle = g;
-      ctx.fillRect(0, top, WORLD_W, STRATUM_H);
-      ctx.strokeStyle = alpha(OPERATED_HUE, Math.min(0.9, a + 0.3));
+      const a = Math.max(0, Math.min(0.75, c.glowMin + (c.glowMax - c.glowMin) * k + pulse));
+      const top = stratumTop(era), h = STRATUM_H * c.glowBand;
+      // an edge glow, so the pipes it is replaying still read through the middle of the band
+      const up = ctx.createLinearGradient(0, top, 0, top + h);
+      up.addColorStop(0, alpha(OPERATED_HUE, a)); up.addColorStop(1, alpha(OPERATED_HUE, 0));
+      ctx.fillStyle = up; ctx.fillRect(0, top, WORLD_W, h);
+      const dn = ctx.createLinearGradient(0, top + STRATUM_H, 0, top + STRATUM_H - h);
+      dn.addColorStop(0, alpha(OPERATED_HUE, a)); dn.addColorStop(1, alpha(OPERATED_HUE, 0));
+      ctx.fillStyle = dn; ctx.fillRect(0, top + STRATUM_H - h, WORLD_W, h);
+      ctx.strokeStyle = alpha(OPERATED_HUE, Math.min(0.95, a + 0.35));
       ctx.lineWidth = 3 / Math.max(0.2, camera.zoom);
       ctx.strokeRect(1, top + 1, WORLD_W - 2, STRATUM_H - 2);
+      // the count sits on the band's centre line: the two HUD columns never cover it, at any zoom
+      const fs = Math.round(17 / Math.max(0.2, camera.zoom));
+      ctx.font = fs + 'px ui-monospace,Menlo,monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(6,4,12,0.72)';
+      ctx.fillRect(WORLD_W / 2 - fs * 1.7, top + 16, fs * 3.4, fs * 1.7);
       ctx.fillStyle = OPERATED_HUE;
-      ctx.font = Math.round(15 / Math.max(0.2, camera.zoom)) + 'px ui-monospace,Menlo,monospace';
-      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      ctx.fillText('+' + d, 18, top + 16);
+      ctx.fillText('+' + d, WORLD_W / 2, top + 16 + fs * 0.85);
     };
   }
 
@@ -113,6 +118,11 @@ export function createView(opts) {
     world.operated.clear();              // during the replay the pipes are yours again, so violet can mean one thing
     for (let n = 1; n <= 5; n++) unhook.push(world.onDraw(n, glowFor(n)));
     hud.applyPalette(6);
+  }
+
+  /** the shell locks the camera as it mounts a view, so the mirror takes it on its first frame, not before */
+  function claimCamera() {
+    if (E().progress > C().startedAt) { phase = 'follow'; world.setSource(() => runner.shadow); followed = 0; return; }
     world.overview(true);                // SPEC "The turn" 5 opens on the whole column, then it starts at the bottom
     hud.setOverview(false);              // the interrupt stays reachable while the camera is out
   }
@@ -122,10 +132,18 @@ export function createView(opts) {
   function openDrawer() { }
 
   /* ---------- the camera: out for a beat, then up the column behind the shadow ---------- */
+  /** the target frame for one stratum; the mirror stays locked to its OWN stratum, which owns no nodes, so
+      every stratum below keeps drawing its glyphs and no live plate can appear over the replay */
+  function frameOf(era) { return { x: WORLD_W / 2, y: stratumTop(era) + STRATUM_H / 2, zoom: C().zoom }; }
+  function snap(to) { const cam = world.camera; cam.x = to.x; cam.y = to.y; cam.zoom = to.zoom; }
+
   function camera(dt) {
     const c = C(), e = E();
     if (e.ending) {
-      if (phase !== 'out') { phase = 'out'; world.setSource(null); world.overview(true); }
+      // SPEC "The turn" 5: the camera pulls all the way out and the whole column is one shape
+      if (phase !== 'out') { phase = 'out'; world.setSource(null); }
+      if (!world.isOverview) { world.overview(true); hud.setOverview(false); }
+      hud.applyPalette(6);
       return;
     }
     if (phase === 'open') {
@@ -136,10 +154,14 @@ export function createView(opts) {
       followed = 0;
     }
     const era = Math.max(1, Math.min(5, e.era || 1));
-    if (era !== followed) { followed = era; world.lockTo(era, true); }
-    // the replay is a read, never a board: hold the camera below the plate LOD so the column stays glyphs and pipes
-    const z = world.camera.zoom;
-    if (Math.abs(z - c.zoom) > 0.002) world.camera.zoom = z + (c.zoom - z) * Math.min(1, dt * 4);
+    const to = frameOf(era);
+    if (world.locked !== 7) { world.lockTo(7, false); snap(to); }   // take the camera back from anything that moved it
+    if (era !== followed) { followed = era; if (followed === 0) snap(to); }
+    const cam = world.camera, k = Math.min(1, dt * 3);
+    cam.x += (to.x - cam.x) * k;
+    cam.y += (to.y - cam.y) * k;
+    cam.zoom += (to.zoom - cam.zoom) * k;
+    hud.applyPalette(6);   // a lock to stratum 7 leaves the HUD on the fallback palette; the mirror is the agent's violet
   }
 
   function sync() {
@@ -147,6 +169,7 @@ export function createView(opts) {
     const dt = Math.max(0, st.t - lastT);
     lastT = st.t;
     if (!runner) runner = runnerFor(sim);
+    if (!claimed) { claimed = true; claimCamera(); }
 
     // the one button that is still yours, with a pip per interrupt left
     hud.renderVerbs([{
